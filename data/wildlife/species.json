@@ -1,0 +1,400 @@
+{
+  "_meta": {
+    "schema": "1.0",
+    "description": "Beyond Paradise Marine Wildlife Encounter Index — species × location × month × sighting-probability × legality × ethics. This is the keystone niche asset.",
+    "rules": "Ethics graded on observable criteria only. Every encounter must link to ≥1 peer-reviewed source or official regulation. Re-verify sighting probabilities every season.",
+    "last_updated": "2026-06-27",
+    "maintainer": "Tim Hennig"
+  },
+  "species": [
+    {
+      "id": "whale-shark",
+      "common_name": "Whale Shark",
+      "scientific_name": "Rhincodon typus",
+      "iucn_status": "EN",
+      "iucn_url": "https://www.iucnredlist.org/species/19488/2365291",
+      "category": "marine",
+      "tim_firsthand": false,
+      "kim_firsthand": false,
+      "locations": [
+        {
+          "region": "mafia-island",
+          "site_name": "Mafia Marine Park",
+          "country": "tz",
+          "months": [10, 11, 12, 1, 2],
+          "peak_months": [11, 12, 1],
+          "probability": "high",
+          "probability_notes": "~180–200 individually catalogued sharks in Tanzania waters (Sharkbook citizen science). Peak aggregations around Mafia December–January coincide with spawning events.",
+          "permit_required": true,
+          "permit_authority": "MPRU Tanzania (Marine Parks and Reserves Unit)",
+          "ethics": {
+            "swim_with": "permitted",
+            "restrictions": [
+              "No touching whale sharks",
+              "Minimum 3m distance from body, 4m from tail",
+              "Maximum 6 swimmers per individual at once",
+              "No flash photography underwater",
+              "No motorised underwater vehicles within 50m",
+              "Vessels must cut engine when within 50m of animal"
+            ],
+            "red_flags": [
+              "Operators ignoring 3m separation distance",
+              "Groups of 10+ swimmers crowding a single animal",
+              "Motorised approach within 50m"
+            ],
+            "grade": "permitted-with-regulation",
+            "grade_notes": "Permitted under Tanzania Marine Parks guidelines. Verify individual operator compliance — not all enforce distance rules equally."
+          },
+          "sources": [
+            {
+              "name": "Marine Megafauna Foundation — Tanzania whale shark research",
+              "url": "https://marinemegafauna.org/research/whale-sharks/",
+              "tier": 1
+            },
+            {
+              "name": "Wildbook for Whale Sharks (sharkbook.ai) — Tanzania sightings database",
+              "url": "https://www.sharkbook.ai",
+              "tier": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "indo-pacific-bottlenose-dolphin",
+      "common_name": "Indo-Pacific Bottlenose Dolphin",
+      "scientific_name": "Tursiops aduncus",
+      "iucn_status": "LC",
+      "iucn_url": "https://www.iucnredlist.org/species/41714/17600966",
+      "category": "marine",
+      "tim_firsthand": true,
+      "tim_firsthand_notes": "Seen from Matlai beach frequently. Menai Bay pod observable most mornings from October to March with a good guide.",
+      "kim_firsthand": false,
+      "locations": [
+        {
+          "region": "zanzibar",
+          "site_name": "Menai Bay Conservation Area",
+          "country": "tz",
+          "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "peak_months": [10, 11, 12, 1, 2, 3],
+          "probability": "moderate-high",
+          "probability_notes": "A resident pod of 200–400 individuals (Tursiops aduncus + Stenella longirostris mixed group) inhabits Menai Bay year-round. Tourism-impact studies document boat disturbance is a concern — ethical operator selection critical.",
+          "permit_required": false,
+          "permit_authority": "Menai Bay Conservation Area (MBCA)",
+          "ethics": {
+            "swim_with": "regulated",
+            "restrictions": [
+              "Vessels must not pursue dolphins",
+              "Engines off when dolphins approach",
+              "No swimming if dolphins show avoidance behaviour (direction change, speed increase, submerging)",
+              "MBCA recommends max 1 boat at any dolphin group",
+              "Morning tours only (dolphins more active and boats fewer)"
+            ],
+            "red_flags": [
+              "Multiple boats surrounding a single group",
+              "Boats revving engines to keep pace with dolphins",
+              "Operators permitting swimming when dolphins are clearly avoiding"
+            ],
+            "grade": "regulated-caution",
+            "grade_notes": "PLOS ONE (Amir et al. 2016) documents significant behavioural disruption in Menai Bay. The experience is available but operator selection is the most important factor — choose MBCA-registered operators only.",
+            "key_study": {
+              "citation": "Amir OA et al. (2016) Tourism impact on dolphin behaviour in Menai Bay, Zanzibar",
+              "journal": "PLOS ONE",
+              "doi": "10.1371/journal.pone.0152685"
+            }
+          },
+          "sources": [
+            {
+              "name": "PLOS ONE — Amir et al. 2016, Tourism impact on Indo-Pacific bottlenose dolphins in Menai Bay",
+              "doi": "10.1371/journal.pone.0152685",
+              "tier": 1
+            },
+            {
+              "name": "Menai Bay Conservation Area — official MBCA management guidelines",
+              "url": "https://www.menlbayconservation.org",
+              "tier": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spinner-dolphin",
+      "common_name": "Spinner Dolphin",
+      "scientific_name": "Stenella longirostris",
+      "iucn_status": "LC",
+      "iucn_url": "https://www.iucnredlist.org/species/20424/9199291",
+      "category": "marine",
+      "tim_firsthand": true,
+      "tim_firsthand_notes": "Seen in mixed groups with bottlenose dolphins in Menai Bay. Spinner dolphins rest/rest-travel during daytime — morning encounters are calmer.",
+      "kim_firsthand": false,
+      "locations": [
+        {
+          "region": "zanzibar",
+          "site_name": "Menai Bay Conservation Area",
+          "country": "tz",
+          "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "peak_months": [10, 11, 12, 1, 2, 3],
+          "probability": "moderate",
+          "probability_notes": "Mixed groups with T. aduncus. Spinner dolphins are more wary of boats than bottlenose — respect their approach distance.",
+          "permit_required": false,
+          "permit_authority": "MBCA",
+          "ethics": {
+            "swim_with": "regulated",
+            "restrictions": ["Same as T. aduncus — MBCA guidelines apply", "Particularly avoid approaching resting groups"],
+            "grade": "regulated-caution"
+          },
+          "sources": [
+            {
+              "name": "PLOS ONE — Amir et al. 2016",
+              "doi": "10.1371/journal.pone.0152685",
+              "tier": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "green-sea-turtle",
+      "common_name": "Green Sea Turtle",
+      "scientific_name": "Chelonia mydas",
+      "iucn_status": "EN",
+      "iucn_url": "https://www.iucnredlist.org/species/4615/11037468",
+      "category": "marine",
+      "tim_firsthand": true,
+      "tim_firsthand_notes": "Regular at Mnemba Atoll — feeding on seagrass beds at dawn. Nest protection active at Ras Nungwi and southern Zanzibar beaches.",
+      "kim_firsthand": false,
+      "locations": [
+        {
+          "region": "zanzibar",
+          "site_name": "Mnemba Atoll Marine Reserve",
+          "country": "tz",
+          "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "peak_months": [10, 11, 12, 1, 2],
+          "probability": "high",
+          "probability_notes": "Resident population. Most encounters in early morning snorkelling on seagrass feeding grounds. Nesting October–February on surrounding beaches.",
+          "permit_required": false,
+          "permit_authority": "Tanzania Fisheries Act (marine reserves)",
+          "ethics": {
+            "swim_with": "permitted",
+            "restrictions": [
+              "No touching turtles",
+              "Do not block their path to the surface to breathe",
+              "Minimum 2m distance",
+              "No flash photography",
+              "On nesting beaches: no lights at night, no approaching nests"
+            ],
+            "grade": "permitted",
+            "grade_notes": "Encounters are passive — turtles approach snorkellers on their own terms. The ethical concern is nesting beach disturbance, not in-water interaction."
+          },
+          "sources": [
+            {
+              "name": "IUCN Red List — Chelonia mydas",
+              "url": "https://www.iucnredlist.org/species/4615/11037468",
+              "tier": 1
+            },
+            {
+              "name": "WWF Tanzania Marine Programme — sea turtle conservation Zanzibar",
+              "url": "https://www.wwf.or.tz",
+              "tier": 2
+            }
+          ]
+        },
+        {
+          "region": "zanzibar",
+          "site_name": "Thanda Island Private Reserve",
+          "country": "tz",
+          "months": [10, 11, 12, 1, 2, 3, 4, 5],
+          "peak_months": [11, 12, 1],
+          "probability": "high",
+          "probability_notes": "Active nest protection programme since 2017. First documented hatchlings May 2017. 2023: 4 nests recorded, 100+ hatchlings. Five IUCN-listed species in surrounding waters.",
+          "permit_required": true,
+          "permit_authority": "Private island — Thanda Island access required",
+          "ethics": {
+            "swim_with": "permitted",
+            "restrictions": ["Guided only on Thanda Island property", "No nest disturbance"],
+            "grade": "permitted",
+            "grade_notes": "Conservation programme is documented and active. Best turtle encounter programme in Tanzania for accountability."
+          },
+          "sources": [
+            {
+              "name": "Thanda Island conservation programme documentation",
+              "url": "https://www.thandaisland.com/conservation",
+              "tier": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "humpback-whale",
+      "common_name": "Humpback Whale",
+      "scientific_name": "Megaptera novaeangliae",
+      "iucn_status": "LC",
+      "iucn_url": "https://www.iucnredlist.org/species/13006/50362794",
+      "category": "marine",
+      "tim_firsthand": false,
+      "kim_firsthand": false,
+      "locations": [
+        {
+          "region": "southern-tanzania-coast",
+          "site_name": "Southern Tanzania coast (Kilwa to Mtwara)",
+          "country": "tz",
+          "months": [7, 8, 9],
+          "peak_months": [8],
+          "probability": "moderate",
+          "probability_notes": "Southern Ocean humpbacks migrate north past Tanzania coast July–September. Boat-based sightings possible from Kilwa. Not a predictable encounter — whale-watching not commercially established here yet.",
+          "permit_required": false,
+          "ethics": {
+            "swim_with": "not-recommended",
+            "restrictions": ["Vessels must maintain 100m distance under WCPFC guidelines", "No swimming with humpbacks in Tanzanian waters — no operator currently offers this legally"],
+            "grade": "observe-only",
+            "grade_notes": "Humpback whale swimming is permitted in some regions (Tonga, Silver Bank) under strict permits. Not established or regulated in Tanzania — observe from boat only."
+          },
+          "sources": [
+            {
+              "name": "IUCN Red List — Megaptera novaeangliae",
+              "url": "https://www.iucnredlist.org/species/13006/50362794",
+              "tier": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "african-lion",
+      "common_name": "African Lion",
+      "scientific_name": "Panthera leo",
+      "iucn_status": "VU",
+      "iucn_url": "https://www.iucnredlist.org/species/15951A115130419",
+      "category": "terrestrial",
+      "tim_firsthand": true,
+      "tim_firsthand_notes": "Regular sightings in Serengeti Western Corridor and Masai Mara. Pride behaviour best in dry season when grass is short.",
+      "kim_firsthand": false,
+      "locations": [
+        {
+          "region": "serengeti",
+          "site_name": "Serengeti National Park",
+          "country": "tz",
+          "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "peak_months": [6, 7, 8, 9, 10],
+          "probability": "high",
+          "probability_notes": "Estimated 3,000+ lions in the Serengeti ecosystem. Year-round, probability highest dry season (June–October) when prey concentrates near water and short grass improves visibility.",
+          "permit_required": true,
+          "permit_authority": "TANAPA (Tanzania National Parks)",
+          "ethics": {
+            "swim_with": "N/A",
+            "restrictions": ["No off-road driving in national park zones", "No feeding", "Maintain 20m minimum vehicle distance"],
+            "grade": "permitted",
+            "grade_notes": "Standard safari ethics apply. Private conservancy lodges (Singita Grumeti, Lamai) allow off-road driving — significant advantage for getting close."
+          },
+          "sources": [
+            {
+              "name": "IUCN Red List — Panthera leo",
+              "url": "https://www.iucnredlist.org/species/15951A115130419",
+              "tier": 1
+            },
+            {
+              "name": "TANAPA — Serengeti National Park wildlife status",
+              "url": "https://tanzaniaparks.go.tz/serengeti",
+              "tier": 1
+            }
+          ]
+        },
+        {
+          "region": "masai-mara",
+          "site_name": "Masai Mara National Reserve + conservancies",
+          "country": "ke",
+          "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "peak_months": [7, 8, 9, 10],
+          "probability": "high",
+          "probability_notes": "One of the highest lion densities in Africa. Olare Motorogi and Mara North conservancies (private) allow off-road driving.",
+          "permit_required": true,
+          "permit_authority": "KWS (Kenya Wildlife Service)",
+          "ethics": {
+            "swim_with": "N/A",
+            "restrictions": ["Off-road driving permitted only in private conservancies, not public reserve"],
+            "grade": "permitted"
+          },
+          "sources": [
+            {
+              "name": "KWS — Masai Mara National Reserve",
+              "url": "https://www.kws.go.ke/content/masai-mara-national-reserve",
+              "tier": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wildebeest-migration",
+      "common_name": "Great Wildebeest Migration",
+      "scientific_name": "Connochaetes taurinus",
+      "iucn_status": "LC",
+      "iucn_url": "https://www.iucnredlist.org/species/5239/16146691",
+      "category": "terrestrial",
+      "tim_firsthand": true,
+      "tim_firsthand_notes": "I have tracked the migration pattern across four years. The Grumeti river crossing (June–August, Western Corridor) is less visited than Mara crossings but equally dramatic. Mara crossings (July–September) have larger herds but more vehicles.",
+      "kim_firsthand": false,
+      "locations": [
+        {
+          "region": "serengeti-western-corridor",
+          "site_name": "Grumeti River, Western Corridor, Serengeti",
+          "country": "tz",
+          "months": [5, 6, 7, 8],
+          "peak_months": [6, 7],
+          "probability": "high",
+          "probability_notes": "1.5 million wildebeest + 200k zebra move through Western Corridor May–August. Grumeti River crossings June–July. Fewer tourist vehicles than Mara — best balance of drama and exclusivity.",
+          "permit_required": true,
+          "permit_authority": "TANAPA or Singita Grumeti private concession",
+          "ethics": { "grade": "permitted" },
+          "sources": [
+            {
+              "name": "Frankfurt Zoological Society — Serengeti migration ecology",
+              "url": "https://www.zgf.de/en/animals-ecosystems/ecosystems/serengeti",
+              "tier": 1
+            }
+          ]
+        },
+        {
+          "region": "masai-mara",
+          "site_name": "Mara River crossings",
+          "country": "ke",
+          "months": [7, 8, 9, 10],
+          "peak_months": [8, 9],
+          "probability": "high",
+          "probability_notes": "Herd arrives Kenya from July. River crossings peak August–September. Unpredictable timing (hours-to-days wait for crossing). Private conservancy gives off-road positioning advantage.",
+          "permit_required": true,
+          "permit_authority": "KWS",
+          "ethics": { "grade": "permitted" },
+          "sources": [
+            {
+              "name": "KWS — Masai Mara National Reserve",
+              "url": "https://www.kws.go.ke/content/masai-mara-national-reserve",
+              "tier": 1
+            }
+          ]
+        },
+        {
+          "region": "serengeti-south",
+          "site_name": "Ndutu region, Southern Serengeti",
+          "country": "tz",
+          "months": [12, 1, 2, 3],
+          "peak_months": [1, 2],
+          "probability": "very-high",
+          "probability_notes": "Calving season January–March: 400,000+ calves born in a 3-week window. Highest predator density in Africa during this period (lions, cheetah, hyena, wild dog). The most underrated migration experience.",
+          "permit_required": true,
+          "permit_authority": "TANAPA (Ndutu is partly in NCA, partly Serengeti)",
+          "ethics": { "grade": "permitted" },
+          "sources": [
+            {
+              "name": "Frankfurt Zoological Society — Serengeti migration ecology",
+              "url": "https://www.zgf.de/en/animals-ecosystems/ecosystems/serengeti",
+              "tier": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

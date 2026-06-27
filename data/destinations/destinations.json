@@ -1,0 +1,157 @@
+{
+  "_meta": {
+    "schema": "1.0",
+    "description": "Beyond Paradise destination profiles — region-level intelligence for East Africa + Southeast Asia",
+    "last_updated": "2026-06-27",
+    "maintainer": "Tim Hennig (East Africa) + Kim (Southeast Asia)"
+  },
+  "destinations": [
+    {
+      "id": "zanzibar",
+      "name": "Zanzibar",
+      "country": "tz",
+      "region": "east-africa",
+      "lead": "Tim",
+      "description": "Archipelago off Tanzania's coast. Stone Town (UNESCO World Heritage), pristine east coast beaches, marine biodiversity (dolphins, turtles, reef fish), and world-class luxury lodges.",
+      "min_budget_per_night_eur": 800,
+      "best_months": [10, 11, 12, 1, 2, 3],
+      "avoid_months": [3, 4, 5],
+      "avoid_reason": "Long rains (March–May) — rough Indian Ocean, reduced marine visibility",
+      "anchor_lodges": ["mnemba-island-lodge"],
+      "key_wildlife": ["whale-shark", "indo-pacific-bottlenose-dolphin", "spinner-dolphin", "green-sea-turtle"],
+      "key_experiences": ["snorkelling-mnemba-atoll", "dolphin-menai-bay", "stone-town-history", "kitesurfing-paje", "zanzibar-spice-tour"],
+      "entry_requirements": {
+        "visa": "Visa on arrival for most nationalities. USD 50 for most Europeans.",
+        "health": "Yellow fever certificate required if arriving from endemic country. Malaria prophylaxis recommended."
+      },
+      "airports": [
+        { "code": "ZNZ", "name": "Abeid Amani Karume International Airport", "connections": "Direct from Dubai (flydubai), Nairobi, Dar es Salaam. No direct Europe flights — connect via NBO or DAR." }
+      ],
+      "tim_notes": "Zanzibar is the base — I live here. The east coast (Michamvi, Bwejuu, Matemwe) is quieter and more authentic than the north (Nungwi/Kendwa). Marine conditions dictate timing entirely — plan around the Indian Ocean seasons, not the calendar.",
+      "website_hub": "/east-africa/zanzibar/"
+    },
+    {
+      "id": "serengeti",
+      "name": "Serengeti",
+      "country": "tz",
+      "region": "east-africa",
+      "lead": "Tim",
+      "description": "The world's most iconic safari destination. 15,000 km² of open savannah, the Great Migration of 2+ million animals, and year-round big cat viewing.",
+      "min_budget_per_night_eur": 1500,
+      "best_months": [6, 7, 8, 9],
+      "secondary_best_months": [1, 2, 12],
+      "avoid_months": [3, 4],
+      "avoid_reason": "Long rains (March–May) — some roads impassable, reduced game viewing",
+      "anchor_lodges": ["singita-grumeti"],
+      "key_wildlife": ["wildebeest-migration", "african-lion", "african-leopard", "african-elephant", "african-cheetah", "wildebeest-calving"],
+      "key_zones": {
+        "western-corridor": { "best_for": "Grumeti migration crossings, Singita private concession", "best_months": [6, 7] },
+        "central-seronera": { "best_for": "Year-round big cats, accessible year-round", "best_months": [6, 7, 8, 9] },
+        "northern-lobo": { "best_for": "Migration Oct–Nov, fewer vehicles", "best_months": [10, 11] },
+        "southern-ndutu": { "best_for": "Calving season, cheetah, vast open plains", "best_months": [12, 1, 2] }
+      },
+      "entry_requirements": {
+        "visa": "Tanzania visa required. e-Visa available. USD 50–100.",
+        "health": "Yellow fever if from endemic country. Malaria prophylaxis required."
+      },
+      "airports": [
+        { "code": "SEU", "name": "Seronera Airstrip (within park)", "connections": "Charter flights from Arusha (ARK) or Kilimanjaro (JRO). No commercial service." },
+        { "code": "GRU", "name": "Grumeti Airstrip (private, Singita use)", "connections": "Charter from ARK/JRO/ZNZ" }
+      ],
+      "tim_notes": "The debate is always: Western Corridor (Grumeti crossings, fewer vehicles) vs Mara crossings (larger herds, more vehicles). I prefer Grumeti — the private Singita concession means we often watch crossings with no other vehicles. The calving season (December–February, Ndutu) is criminally underrated — highest predator density I've seen anywhere.",
+      "website_hub": "/east-africa/serengeti/"
+    },
+    {
+      "id": "masai-mara",
+      "name": "Masai Mara",
+      "country": "ke",
+      "region": "east-africa",
+      "lead": "Tim",
+      "description": "Kenya's most famous reserve. Famous for the annual wildebeest migration river crossings (July–October) and exceptional big cat concentrations year-round.",
+      "min_budget_per_night_eur": 1200,
+      "best_months": [7, 8, 9, 10],
+      "avoid_months": [4],
+      "avoid_reason": "Long rains peak — wettest month, difficult roads",
+      "anchor_lodges": ["mahali-mzuri"],
+      "key_wildlife": ["wildebeest-migration", "african-lion", "african-leopard", "african-cheetah", "african-elephant"],
+      "key_zones": {
+        "public-reserve": { "best_for": "Accessible, most wildlife, no off-road driving", "best_months": [7, 8, 9] },
+        "olare-motorogi-conservancy": { "best_for": "Off-road driving, fewer vehicles (Mahali Mzuri)", "best_months": [7, 8, 9] },
+        "mara-north-conservancy": { "best_for": "Walking safaris, off-road, community benefit", "best_months": [7, 8, 9] }
+      },
+      "entry_requirements": {
+        "visa": "Kenya e-Visa required. USD 50–100.",
+        "health": "Malaria prophylaxis required. Yellow fever if from endemic country."
+      },
+      "airports": [
+        { "code": "MRE", "name": "Mara North (Kichwa Tembo) Airstrip", "connections": "Scheduled and charter from Nairobi Wilson (WIL). 45 min." },
+        { "code": "OLX", "name": "Ol Kiombo Airstrip", "connections": "Charter from NBO" }
+      ],
+      "tim_notes": "The conservancy model is everything in the Mara. Public reserve = 40+ vehicles at a lion kill. Olare Motorogi = same sighting with 2–3 vehicles, off-road positioning. The choice of camp determines the quality of your experience more than the time of year.",
+      "website_hub": "/east-africa/masai-mara/"
+    },
+    {
+      "id": "mafia-island",
+      "name": "Mafia Island",
+      "country": "tz",
+      "region": "east-africa",
+      "lead": "Tim",
+      "description": "Tanzania's least-known marine park. Whale shark aggregation (October–February), pristine coral reefs, no mass tourism. 45 minutes from Dar es Salaam.",
+      "min_budget_per_night_eur": 600,
+      "best_months": [10, 11, 12, 1, 2],
+      "avoid_months": [3, 4, 5],
+      "avoid_reason": "Long rains — rough seas, whale sharks absent",
+      "anchor_lodges": [],
+      "key_wildlife": ["whale-shark", "green-sea-turtle", "hawksbill-turtle", "reef-fish"],
+      "key_experiences": ["whale-shark-snorkelling", "scuba-diving-mafia-marine-park", "fishing-village-visit"],
+      "entry_requirements": {
+        "visa": "Tanzania visa required. Same as mainland.",
+        "health": "Malaria prophylaxis. Yellow fever if from endemic country.",
+        "park_fee": "USD 20/person/day for Mafia Marine Park. Whale shark interaction requires permit (included with reputable operators)."
+      },
+      "airports": [
+        { "code": "MFA", "name": "Mafia Airport", "connections": "Charter or scheduled from Dar es Salaam (DAR). 30–45 min." }
+      ],
+      "tim_notes": "Mafia is the whale shark destination in East Africa — not the Maldives, not Donsol, not Cancun. 180–200 individual sharks catalogued in Tanzania waters. The island itself is basic — this is not a beach resort destination. It's a diving/snorkelling pilgrimage.",
+      "website_hub": "/east-africa/mafia-island/"
+    },
+    {
+      "id": "vietnam",
+      "name": "Vietnam",
+      "country": "vn",
+      "region": "southeast-asia",
+      "lead": "Kim",
+      "description": "Kim's home country. Hoi An's tailors and restaurants, Ha Long Bay's limestone karsts, Hanoi's French Quarter, Hue's Imperial Citadel. Beyond Paradise covers the luxury tier only.",
+      "min_budget_per_night_eur": 300,
+      "best_months": [11, 12, 1, 2, 3, 4],
+      "avoid_months": [9, 10],
+      "avoid_reason": "Typhoon season in central Vietnam",
+      "anchor_lodges": [],
+      "key_experiences": [
+        "hoi-an-old-town",
+        "ha-long-bay-cruise",
+        "hanoi-french-quarter",
+        "hue-imperial-citadel",
+        "mekong-delta"
+      ],
+      "key_lodges_to_review": [
+        "Anantara Hoi An Resort",
+        "Six Senses Con Dao",
+        "Four Seasons Nam Hai",
+        "Park Hyatt Saigon",
+        "Sofitel Legend Metropole Hanoi"
+      ],
+      "entry_requirements": {
+        "visa": "E-visa available online. 90-day multiple entry. USD 25.",
+        "health": "No mandatory vaccinations for most nationalities. Hepatitis A/B, typhoid recommended."
+      },
+      "airports": [
+        { "code": "DAD", "name": "Da Nang International Airport", "connections": "Direct from Singapore, Bangkok, Kuala Lumpur. Best gateway for Hoi An (30 min transfer)" },
+        { "code": "HAN", "name": "Noi Bai International Airport, Hanoi", "connections": "Direct flights from Europe, Gulf hubs" },
+        { "code": "SGN", "name": "Tan Son Nhat International Airport, Ho Chi Minh City", "connections": "Widest international connections" }
+      ],
+      "kim_notes": "Vietnam's luxury tier is genuinely world-class now — Four Seasons Nam Hai, Six Senses Con Dao, Sofitel Metropole Hanoi are not 'good for Vietnam', they're exceptional by any global standard. The mistake European travelers make is combining too many regions in one trip. Hoi An alone deserves three nights minimum.",
+      "website_hub": "/southeast-asia/vietnam/"
+    }
+  ]
+}

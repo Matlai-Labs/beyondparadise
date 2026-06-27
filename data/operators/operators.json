@@ -1,0 +1,93 @@
+{
+  "_meta": {
+    "schema": "1.0",
+    "description": "Beyond Paradise verified ethical operator directory. Operators are graded on observable, documented criteria only. This is a future revenue stream ($29–499/yr B2B listing). Do NOT list unverified operators.",
+    "verification_cadence": "Annual re-verification of all operators",
+    "last_updated": "2026-06-27",
+    "maintainer": "Tim Hennig"
+  },
+  "operators": [
+    {
+      "id": "singita-grumeti",
+      "name": "Singita Grumeti",
+      "type": "lodge-operator",
+      "region": "serengeti",
+      "country": "tz",
+      "status": "verified",
+      "tim_score_context": 94,
+      "ethics_grade": "A",
+      "ethics_criteria": {
+        "conservation_land": "350,000-acre private concession — prevents agricultural encroachment on critical wildlife corridor",
+        "anti_poaching": "Grumeti Fund anti-poaching unit (canine + ranger programme), documented annual reports",
+        "community": "Grumeti Fund community programme (schools, clinics, income for 50+ villages in buffer zone)",
+        "wildlife_impact": "Zero vehicle caps enforced. Off-road driving in private concession — no wildlife habituation harm from crowding",
+        "environment": "Solar power, water recycling documented in sustainability reports"
+      },
+      "verification_sources": ["Grumeti Fund annual reports (public)", "Tim Hennig on-site visit November 2025"],
+      "website": "https://singita.com",
+      "verified_date": "2026-06-27",
+      "next_verification": "2027-06-01"
+    },
+    {
+      "id": "andbeyond-mnemba",
+      "name": "andBeyond Mnemba Island",
+      "type": "lodge-operator",
+      "region": "zanzibar",
+      "country": "tz",
+      "status": "verified",
+      "tim_score_context": 91,
+      "ethics_grade": "A-",
+      "ethics_criteria": {
+        "conservation_land": "Private island — limits tourist volume to 12 guests max, protects turtle nesting beaches",
+        "marine_conservation": "Partnership with School for Field Studies, sea turtle monitoring, reef restoration",
+        "anti_poaching": "Not applicable (island setting)",
+        "community": "Documented Zanzibar community employment and training programme",
+        "wildlife_impact": "Marine encounters guided, no motorised water sports within protected zones"
+      },
+      "ethics_notes": "Minor deduction: boat disturbance near turtle nesting beaches documented in some reports. Tim to verify current protocols on next visit.",
+      "verification_sources": ["andBeyond sustainability report 2024", "Tim Hennig on-site visit September 2025"],
+      "website": "https://www.andbeyond.com/our-lodges/africa/tanzania/zanzibar/and-beyond-mnemba-island/",
+      "verified_date": "2026-06-27",
+      "next_verification": "2027-06-01"
+    },
+    {
+      "id": "mbca-registered-dolphin-operators",
+      "name": "MBCA-Registered Dolphin Tour Operators (Menai Bay)",
+      "type": "wildlife-operator",
+      "region": "zanzibar-menai-bay",
+      "country": "tz",
+      "status": "pending-verification",
+      "ethics_grade": "B",
+      "ethics_notes": "MBCA registers operators and sets guidelines but enforcement is inconsistent. Some operators comply; others allow crowding. Tim to document specific operator names and compliance on next Menai Bay observation.",
+      "verification_sources": ["MBCA official guidelines", "Amir et al. 2016 PLOS ONE — documents operator variation"],
+      "website": "https://www.menlbayconservation.org",
+      "verified_date": null,
+      "next_verification": "2026-10-01"
+    },
+    {
+      "id": "thanda-island",
+      "name": "Thanda Island",
+      "type": "lodge-operator",
+      "region": "tanzania-south",
+      "country": "tz",
+      "status": "pending-verification",
+      "ethics_grade": "B+",
+      "ethics_criteria": {
+        "conservation_land": "Private island with active turtle conservation programme since 2017",
+        "marine_conservation": "Documented turtle nest protection, 5 species in surrounding waters",
+        "community": "Not yet verified by Tim first-hand"
+      },
+      "ethics_notes": "Conservation programme is documented publicly. Tim has not visited — cannot assign Tim Score or full ethics grade until first-hand visit.",
+      "verification_sources": ["Thanda Island website conservation documentation"],
+      "website": "https://www.thandaisland.com",
+      "verified_date": null,
+      "next_verification": "2026-12-01",
+      "tim_visited": false
+    }
+  ],
+  "do_not_recommend": [
+    {
+      "note": "This list is intentionally empty at launch. Operators are only added to 'do not recommend' after Tim has direct evidence of ethics violations — not based on hearsay or online reviews."
+    }
+  ]
+}

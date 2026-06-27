@@ -1,0 +1,225 @@
+{
+  "_meta": {
+    "schema": "1.0",
+    "description": "Beyond Paradise wildlife encounter calendar — month-by-month matrix for East Africa + Vietnam. This is the migration intelligence product.",
+    "last_updated": "2026-06-27",
+    "maintainer": "Tim Hennig"
+  },
+  "months": {
+    "jan": {
+      "label": "January",
+      "season": {
+        "zanzibar": "Short dry season (NE monsoon ending), calm Indian Ocean, excellent snorkelling",
+        "serengeti": "Green season — Ndutu calving begins, exceptional predator density",
+        "masai-mara": "Dry, warm. No migration, but resident wildlife excellent",
+        "vietnam": "Cool and dry in north (Hanoi 15°C), warm in south. Best weather for Ha Long Bay"
+      },
+      "highlights": [
+        { "animal": "whale-shark", "location": "mafia-island", "probability": "high", "note": "Peak month alongside December–February" },
+        { "animal": "wildebeest-calving", "location": "serengeti-south-ndutu", "probability": "very-high", "note": "Calving season begins. Highest predator density in Africa" },
+        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Nesting season, feeding on seagrass" },
+        { "animal": "indo-pacific-bottlenose-dolphin", "location": "zanzibar-menai-bay", "probability": "high", "note": "Calm seas, best water clarity" }
+      ],
+      "avoid": [],
+      "weather_summary": "Zanzibar: warm (30°C), calm, ideal marine. Serengeti: green and wet, dramatic cloud skies, few tourists. Mara: dry season, good game but no migration."
+    },
+    "feb": {
+      "label": "February",
+      "season": {
+        "zanzibar": "Warm, clear, light NE winds. Best month for snorkelling and diving",
+        "serengeti": "Calving peak. Short rains ending. Ndutu lake fills",
+        "masai-mara": "Dry, good game",
+        "vietnam": "Dry, warm, low season (good value). Hoi An at its best"
+      },
+      "highlights": [
+        { "animal": "whale-shark", "location": "mafia-island", "probability": "high", "note": "Still peak season" },
+        { "animal": "wildebeest-calving", "location": "serengeti-south-ndutu", "probability": "very-high", "note": "Peak calving — up to 8,000 calves per day" },
+        { "animal": "cheetah", "location": "serengeti-south", "probability": "very-high", "note": "Cheetah hunting calves — best cheetah observation month" },
+        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high" }
+      ],
+      "avoid": [],
+      "weather_summary": "Best month in Zanzibar for marine activities. Best month for calving plains game in southern Serengeti."
+    },
+    "mar": {
+      "label": "March",
+      "season": {
+        "zanzibar": "Long rains beginning (March–May). Indian Ocean turns choppy. Avoid liveaboard",
+        "serengeti": "Long rains begin. Herds start moving north. Roads can flood",
+        "masai-mara": "Long rains — least visited month",
+        "vietnam": "Warm and dry in central Vietnam (Hoi An ideal). Hanoi warming"
+      },
+      "highlights": [
+        { "animal": "wildebeest-migration", "location": "serengeti-central", "probability": "moderate", "note": "Herds begin northward movement — early migration" },
+        { "animal": "indo-pacific-bottlenose-dolphin", "location": "zanzibar-menai-bay", "probability": "moderate", "note": "Seas turning choppier — early mornings still good" }
+      ],
+      "avoid": [
+        { "note": "Avoid Zanzibar liveaboard/snorkelling from mid-March — Indian Ocean swells increase" },
+        { "note": "Avoid Mara — wettest month, most lodges in low-season rates" }
+      ],
+      "weather_summary": "Transition month. East Africa rains begin. Best marine window closing for Zanzibar."
+    },
+    "apr": {
+      "label": "April",
+      "season": {
+        "zanzibar": "Long rains (heavy). Warm but rough. Many lodges close",
+        "serengeti": "Long rains peak. Some roads impassable. Green, lush, dramatic",
+        "masai-mara": "Wet season. Low prices, few tourists",
+        "vietnam": "Warm season begins in south. Central Vietnam occasional rain"
+      },
+      "highlights": [
+        { "animal": "migrant-birds", "location": "serengeti", "probability": "high", "note": "Hundreds of Palearctic migrants before departing to Europe" }
+      ],
+      "avoid": [
+        { "note": "Avoid Zanzibar marine — heavy rain, rough Indian Ocean, reduced visibility" }
+      ],
+      "weather_summary": "Shoulder/low season for most East Africa. Dramatic green landscapes but logistics harder."
+    },
+    "may": {
+      "label": "May",
+      "season": {
+        "zanzibar": "Long rains tapering. SE trade winds beginning",
+        "serengeti": "End of long rains. Herds gathering in north-central Serengeti",
+        "masai-mara": "Rains tapering. Transition to dry season",
+        "vietnam": "Hot season in south (Ho Chi Minh 34°C). Ideal in north (Hanoi)"
+      },
+      "highlights": [
+        { "animal": "wildebeest-migration", "location": "serengeti-north", "probability": "moderate", "note": "Migration concentrating before Grumeti River crossing" },
+        { "animal": "bird-watching", "location": "zanzibar", "probability": "high", "note": "Over 200 recorded species. Endemic species best before full dry season" }
+      ],
+      "avoid": [],
+      "weather_summary": "Good transition month. Rains easing. Prices still low in most camps."
+    },
+    "jun": {
+      "label": "June",
+      "season": {
+        "zanzibar": "SE trade winds (Kusi). Indian Ocean choppy. Cooler (25°C). Good diving on western coast",
+        "serengeti": "Dry season begins. Migration at Grumeti River. Excellent game viewing",
+        "masai-mara": "Long dry season starts. Migration arriving from Serengeti",
+        "vietnam": "Hot and humid in south. Central Vietnam: beach season begins (Hoi An)"
+      },
+      "highlights": [
+        { "animal": "wildebeest-migration", "location": "serengeti-western-corridor", "probability": "very-high", "note": "Grumeti River crossings begin. Most dramatic and least crowded migration spectacle" },
+        { "animal": "african-lion", "location": "serengeti", "probability": "high", "note": "Dry season: short grass, easier sighting. Pride interaction during migration" },
+        { "animal": "hippopotamus", "location": "serengeti-grumeti-river", "probability": "very-high", "note": "Concentrated in river pools during dry season" }
+      ],
+      "avoid": [
+        { "note": "Avoid Zanzibar snorkelling — SE monsoon makes Indian Ocean choppy on east coast" }
+      ],
+      "weather_summary": "Best safari month for Serengeti (Grumeti migration + excellent game). Zanzibar east coast marine activities reduced."
+    },
+    "jul": {
+      "label": "July",
+      "season": {
+        "zanzibar": "SE trade winds peak. Cool and breezy (24°C). Kitesurfing excellent (Paje). West coast calmer for diving",
+        "serengeti": "Dry season peak. Migration in northern Serengeti approaching Mara",
+        "masai-mara": "Migration arrives. River crossings building",
+        "vietnam": "Monsoon season in north (Hanoi heavy rain). Central (Hoi An) warm + sunny. South: dry"
+      },
+      "highlights": [
+        { "animal": "wildebeest-migration", "location": "masai-mara", "probability": "very-high", "note": "First herds crossing into Mara from Serengeti. River crossings from mid-July" },
+        { "animal": "african-lion", "location": "masai-mara", "probability": "very-high", "note": "Lion prides follow migration — highest lion viewing density of the year" },
+        { "animal": "humpback-whale", "location": "southern-tanzania-coast", "probability": "moderate", "note": "Migrating past Tanzania coast on way north from Southern Ocean" },
+        { "animal": "kitesurfing", "location": "zanzibar-paje", "probability": "very-high", "note": "Peak trade winds 18–25 knots. Beginner to advanced conditions" }
+      ],
+      "avoid": [],
+      "weather_summary": "Peak safari season for Mara migration and Serengeti. Book 12+ months ahead. Zanzibar east coast marine limited but kitesurf excellent."
+    },
+    "aug": {
+      "label": "August",
+      "season": {
+        "zanzibar": "Trade winds easing. Still cool. Kitesurf still excellent. Ocean improving east coast",
+        "serengeti": "Dry season peak. Northern Serengeti excellent. Migration at Mara",
+        "masai-mara": "Migration PEAK. River crossings daily. Most expensive month",
+        "vietnam": "Monsoon north (Hanoi), dry south, mixed central"
+      },
+      "highlights": [
+        { "animal": "wildebeest-migration", "location": "masai-mara", "probability": "very-high", "note": "PEAK. Multiple river crossings per day possible. Best photography conditions" },
+        { "animal": "african-lion", "location": "masai-mara", "probability": "very-high", "note": "Highest concentration of predators following migration" },
+        { "animal": "humpback-whale", "location": "southern-tanzania-coast", "probability": "moderate-high", "note": "Peak passage month through Tanzania waters" },
+        { "animal": "leopard", "location": "serengeti-seronera", "probability": "high", "note": "Dry season: excellent leopard sighting in Seronera woodland" }
+      ],
+      "avoid": [
+        { "note": "August is most expensive month in Masai Mara. Book 12–18 months ahead for premium camps" }
+      ],
+      "weather_summary": "The single best month for East Africa wildlife. Most expensive. Book extremely early."
+    },
+    "sep": {
+      "label": "September",
+      "season": {
+        "zanzibar": "SE winds calming. Indian Ocean warming. Ocean conditions improving east coast",
+        "serengeti": "Dry season ending. Migration beginning return south",
+        "masai-mara": "Migration still present but crossing intensity dropping",
+        "vietnam": "North: rains easing. Central: excellent (Hoi An, Hue best month). South: dry"
+      },
+      "highlights": [
+        { "animal": "wildebeest-migration", "location": "masai-mara", "probability": "high", "note": "Still excellent. Crossings continuing. Slightly fewer tourists than August" },
+        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "moderate-high", "note": "Post-monsoon: ocean settling, turtles returning to feeding grounds" }
+      ],
+      "avoid": [],
+      "weather_summary": "Good second choice to August for migration. Cheaper, often same sighting quality. Vietnam central coast at its best."
+    },
+    "oct": {
+      "label": "October",
+      "season": {
+        "zanzibar": "Short rains (vuli) beginning. Indian Ocean calming rapidly. Excellent snorkelling returns",
+        "serengeti": "Short rains. Herds in south. Calving season approaching",
+        "masai-mara": "Herds returning south. Short rains beginning in Kenya",
+        "vietnam": "North: cool and dry (best for Hanoi). Central: occasional rain. South: dry"
+      },
+      "highlights": [
+        { "animal": "whale-shark", "location": "mafia-island", "probability": "moderate-high", "note": "Season opens. Numbers building from October" },
+        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Nesting season begins" },
+        { "animal": "indo-pacific-bottlenose-dolphin", "location": "zanzibar-menai-bay", "probability": "high", "note": "Indian Ocean calming — ideal dolphin encounter conditions returning" }
+      ],
+      "avoid": [],
+      "weather_summary": "Excellent month for Zanzibar marine — ocean calming from monsoon. Whale shark season starting. Short rains add dramatic skies to safari."
+    },
+    "nov": {
+      "label": "November",
+      "season": {
+        "zanzibar": "Short rains (moderate). Ocean calming. Excellent snorkelling and diving",
+        "serengeti": "Short rains. Southern herds building. Excellent for photography (dramatic clouds, green)",
+        "masai-mara": "Short rains. Low season rates. Good game without crowds",
+        "vietnam": "North: cool dry. Central: mild (slight risk of storms fading). South: dry season begins"
+      },
+      "highlights": [
+        { "animal": "whale-shark", "location": "mafia-island", "probability": "very-high", "note": "Season peak building — best month alongside December" },
+        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Nesting + hatchlings" },
+        { "animal": "indo-pacific-bottlenose-dolphin", "location": "zanzibar-menai-bay", "probability": "high" },
+        { "animal": "wildebeest-calving", "location": "serengeti-south-ndutu", "probability": "moderate", "note": "First calves beginning late November in good rain years" }
+      ],
+      "avoid": [],
+      "weather_summary": "Underrated month. Marine conditions excellent in Zanzibar, whale sharks peaking at Mafia, Serengeti dramatic."
+    },
+    "dec": {
+      "label": "December",
+      "season": {
+        "zanzibar": "NE monsoon (Kasikazi) begins. Warm (30°C). Indian Ocean generally calm east coast",
+        "serengeti": "Short dry period before calving. Herds on southern plains",
+        "masai-mara": "Dry, warm. Christmas/New Year peak — book 12+ months ahead",
+        "vietnam": "North: cold (Hanoi 15°C). Central: best weather (Hoi An, Da Nang). South: ideal"
+      },
+      "highlights": [
+        { "animal": "whale-shark", "location": "mafia-island", "probability": "very-high", "note": "PEAK season — December–January highest probability" },
+        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Active nesting" },
+        { "animal": "wildebeest-calving", "location": "serengeti-south-ndutu", "probability": "moderate-high", "note": "Early calves arriving on the southern plains" }
+      ],
+      "avoid": [
+        { "note": "December Masai Mara prices peak at Christmas/NYE — often 50–100% premium" }
+      ],
+      "weather_summary": "Best month for whale sharks at Mafia Island. Zanzibar marine excellent. Serengeti building to calving season."
+    }
+  },
+  "quick_reference": {
+    "whale_sharks_mafia": "Oct–Feb (peak: Nov–Jan)",
+    "wildebeest_migration_grumeti": "May–Aug (peak: Jun–Jul)",
+    "wildebeest_migration_mara": "Jul–Oct (peak: Aug–Sep)",
+    "wildebeest_calving_ndutu": "Dec–Mar (peak: Jan–Feb)",
+    "dolphins_zanzibar": "Year-round (best: Oct–Mar, calm Indian Ocean)",
+    "green_turtle_zanzibar": "Year-round (nesting: Oct–Mar)",
+    "humpback_whales_tanzania": "Jul–Sep (passing migration)",
+    "best_kitesurf_zanzibar": "Jun–Sep (SE trade winds)",
+    "best_snorkel_zanzibar": "Oct–Mar (calm, clear water)",
+    "vietnam_best_weather": "Nov–Apr (dry season nationally, varies by region)"
+  }
+}

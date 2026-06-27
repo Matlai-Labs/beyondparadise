@@ -1,0 +1,182 @@
+{
+  "_meta": {
+    "schema": "1.0",
+    "description": "Beyond Paradise source tier registry. Every claim in facts.json must reference a source from this registry. Tier 1 = highest trust. Tier 6 = firsthand (Tim/Kim).",
+    "last_updated": "2026-06-27"
+  },
+  "tiers": {
+    "1": {
+      "label": "Official / Scientific authority",
+      "description": "Government bodies, IUCN, peer-reviewed journals, official park authorities. Highest trust — cite directly.",
+      "examples": ["IUCN Red List", "TANAPA", "KWS", "NOAA", "Marine Parks and Reserves Unit Tanzania", "Frankfurt Zoological Society", "peer-reviewed journals (PLOS ONE, Marine Mammal Science, Oryx)"]
+    },
+    "2": {
+      "label": "Established research institutions",
+      "description": "NGOs with peer-reviewed research output, citizen-science databases with methodology, conservation programme reports.",
+      "examples": ["Marine Megafauna Foundation", "WCS Tanzania", "Wildbook for Whale Sharks (sharkbook.ai)", "WWF Tanzania", "CORDIO East Africa", "African Wildlife Foundation"]
+    },
+    "3": {
+      "label": "Reputable reference organisations",
+      "description": "Industry bodies, national tourism authorities, established conservation trusts. Use with secondary corroboration.",
+      "examples": ["Tanzania Tourism Board", "Kenya Tourism Board", "UNESCO World Heritage Centre", "CITES", "PADI", "Thanda Island conservation reports"]
+    },
+    "4": {
+      "label": "Established travel / industry sources",
+      "description": "Reputable travel publishers, established tour operators with documented methodology. Use only for logistics (prices, transfers, distances) not wildlife claims.",
+      "examples": ["Lonely Planet", "Conde Nast Traveller (factual claims only)", "Singita official communications", "andBeyond official communications"]
+    },
+    "5": {
+      "label": "Operator communications",
+      "description": "Individual lodge or operator data. Treat as single source only — must have Tier 1–3 corroboration for any factual claim.",
+      "examples": ["Individual lodge price sheets", "Operator season calendars", "Camp manager interview notes"]
+    },
+    "6": {
+      "label": "Tim / Kim firsthand",
+      "description": "Tim Hennig or Kim direct observation during a paid visit. Highest value for subjective experience, lodge character, encounter quality. Must include date and location.",
+      "examples": ["Tim Hennig, on-site observation, Singita Grumeti, November 2025", "Kim, first-hand visit, Four Seasons Nam Hai, March 2026"]
+    }
+  },
+  "sources": {
+    "iucn-redlist": {
+      "tier": 1,
+      "name": "IUCN Red List of Threatened Species",
+      "url": "https://www.iucnredlist.org",
+      "type": "database",
+      "notes": "Authoritative for species conservation status, range maps, population trends"
+    },
+    "tanapa": {
+      "tier": 1,
+      "name": "Tanzania National Parks Authority",
+      "url": "https://tanzaniaparks.go.tz",
+      "type": "government"
+    },
+    "kws": {
+      "tier": 1,
+      "name": "Kenya Wildlife Service",
+      "url": "https://www.kws.go.ke",
+      "type": "government"
+    },
+    "mpru-tanzania": {
+      "tier": 1,
+      "name": "Marine Parks and Reserves Unit, Tanzania",
+      "url": "https://www.marineparks.go.tz",
+      "type": "government",
+      "notes": "Authority for whale shark interaction permits, Mafia Marine Park, Mnemba Atoll"
+    },
+    "noaa-fisheries": {
+      "tier": 1,
+      "name": "NOAA Fisheries — Marine Mammals",
+      "url": "https://www.fisheries.noaa.gov/topic/marine-mammals",
+      "type": "government"
+    },
+    "marine-megafauna-foundation": {
+      "tier": 2,
+      "name": "Marine Megafauna Foundation",
+      "url": "https://marinemegafauna.org",
+      "type": "ngo-research",
+      "notes": "Lead researcher for whale shark ecology in Tanzania/Mozambique. Citizen science via sharkbook.ai"
+    },
+    "sharkbook": {
+      "tier": 2,
+      "name": "Wildbook for Whale Sharks (sharkbook.ai)",
+      "url": "https://www.sharkbook.ai",
+      "type": "citizen-science-database",
+      "notes": "Photo-identification database of individual whale sharks globally. ~180–200 Tanzania individuals catalogued"
+    },
+    "wcs-tanzania": {
+      "tier": 2,
+      "name": "Wildlife Conservation Society — Tanzania",
+      "url": "https://tanzania.wcs.org",
+      "type": "ngo-research"
+    },
+    "cordio-ea": {
+      "tier": 2,
+      "name": "CORDIO East Africa — Coral Reef Degradation in the Indian Ocean",
+      "url": "https://www.cordioea.net",
+      "type": "ngo-research",
+      "notes": "Peer-reviewed coral health assessments for Pemba, Zanzibar, Mafia reefs"
+    },
+    "wwf-tanzania": {
+      "tier": 2,
+      "name": "WWF Tanzania",
+      "url": "https://www.wwf.or.tz",
+      "type": "ngo-research"
+    },
+    "wwf-kenya": {
+      "tier": 2,
+      "name": "WWF Kenya",
+      "url": "https://www.wwfkenya.org",
+      "type": "ngo-research"
+    },
+    "frankfurt-zoological-society": {
+      "tier": 2,
+      "name": "Frankfurt Zoological Society (FZS) — Serengeti",
+      "url": "https://www.zgf.de/en/animals-ecosystems/ecosystems/serengeti",
+      "type": "ngo-research",
+      "notes": "Lead scientific partner for Serengeti ecosystem since 1950s. Migration ecology data"
+    },
+    "amir-2016-plos-one": {
+      "tier": 1,
+      "name": "Amir OA et al. (2016) — Tourism impact on Indo-Pacific bottlenose dolphins, PLOS ONE",
+      "doi": "10.1371/journal.pone.0152685",
+      "type": "peer-reviewed-journal",
+      "notes": "Definitive study on dolphin tourism impact in Menai Bay, Zanzibar"
+    },
+    "mbca": {
+      "tier": 1,
+      "name": "Menai Bay Conservation Area",
+      "url": "https://www.menlbayconservation.org",
+      "type": "conservation-authority",
+      "notes": "Official management authority for Menai Bay. Boat registration and tourism guidelines"
+    },
+    "thanda-island": {
+      "tier": 3,
+      "name": "Thanda Island — Conservation Programme",
+      "url": "https://www.thandaisland.com/conservation",
+      "type": "operator-conservation",
+      "notes": "Active turtle nest protection programme. Reports from 2017 (first hatchlings) to present"
+    },
+    "singita": {
+      "tier": 4,
+      "name": "Singita — Official communications and conservation reports",
+      "url": "https://singita.com",
+      "type": "operator"
+    },
+    "andbeyond": {
+      "tier": 4,
+      "name": "andBeyond — Official communications",
+      "url": "https://www.andbeyond.com",
+      "type": "operator"
+    },
+    "tim-firsthand": {
+      "tier": 6,
+      "name": "Tim Hennig — First-hand observation",
+      "type": "firsthand",
+      "notes": "Tim Hennig, GM Hotel Matlai Zanzibar. 5+ years East Africa. All lodge reviews from paid stays."
+    },
+    "kim-firsthand": {
+      "tier": 6,
+      "name": "Kim — First-hand observation",
+      "type": "firsthand",
+      "notes": "Kim, Vietnamese, Beyond Paradise Asia correspondent. First-hand knowledge of Vietnam luxury travel."
+    }
+  },
+  "avoid_list": [
+    {
+      "domain": "tripadvisor.com",
+      "reason": "User-generated reviews, unverifiable claims, commercial bias in rankings"
+    },
+    {
+      "domain": "booking.com",
+      "reason": "Commercial platform — price data OK with date citation, wildlife/experience claims unreliable"
+    },
+    {
+      "domain": "liveaboard.com",
+      "reason": "Commercial aggregator with operator-supplied content — conflict of interest for ethics grading"
+    },
+    {
+      "domain": "padi.com/blog",
+      "reason": "Marketing content — PADI's research publications acceptable, blog posts are not"
+    }
+  ]
+}
