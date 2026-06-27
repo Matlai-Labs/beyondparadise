@@ -1,0 +1,11 @@
+{
+  "_comment": "Append-only log of every published URL. Never delete or change an entry. If a slug changes, add a 301 redirect AND keep the old entry. Used by indexnow-submit.mjs for diff-based submission.",
+  "permalinks": [
+    { "url": "/", "publishedAt": "2026-06-27", "title": "Beyond Paradise — Luxury Travel Intelligence" },
+    { "url": "/about/tim-score/", "publishedAt": "2026-06-27", "title": "The Tim Score — Luxury Lodge Rating Methodology" },
+    { "url": "/about/editorial-policy/", "publishedAt": "2026-06-27", "title": "Editorial Policy · Beyond Paradise" },
+    { "url": "/intelligence/migration-calendar/", "publishedAt": "2026-06-27", "title": "East Africa Migration Calendar 2026" },
+    { "url": "/reviews/singita-grumeti/", "publishedAt": "2026-06-27", "title": "Singita Grumeti Review — Tim Score 94/100" },
+    { "url": "/wildlife/whale-sharks-mafia-island/", "publishedAt": "2026-06-27", "title": "Whale Sharks at Mafia Island — Complete Guide" }
+  ]
+}

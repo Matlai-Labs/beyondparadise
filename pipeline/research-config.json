@@ -1,0 +1,64 @@
+{
+  "_meta": {
+    "description": "Beyond Paradise research pipeline configuration. Controls what gets researched, promoted to facts.json, and published.",
+    "pattern": "Clone from padelrevive-research-engine/ when ready to activate.",
+    "cost_cap_eur_per_month": 20,
+    "status": "configured-not-activated"
+  },
+  "fact_db": {
+    "path": "../data/facts/facts.json",
+    "sources_registry": "../data/facts/sources.json",
+    "taxonomy": "../data/facts/taxonomy.json",
+    "min_sources_for_confirmed": 2,
+    "volatile_recheck_days": 90
+  },
+  "research_queues": {
+    "wildlife_encounters": {
+      "topics": ["whale-sharks", "dolphins", "sea-turtles", "wildebeest-migration", "african-lion", "humpback-whales"],
+      "regions": ["mafia-island", "zanzibar", "serengeti", "masai-mara", "vietnam"],
+      "sources_to_check": ["marine-megafauna-foundation", "iucn-redlist", "sharkbook", "frankfurt-zoological-society", "tanapa", "kws"],
+      "priority": "high"
+    },
+    "lodge_prices": {
+      "topics": ["prices", "value"],
+      "lodges": ["singita-grumeti", "mnemba-island-lodge", "mahali-mzuri", "six-senses-zighy-bay"],
+      "recheck_days": 30,
+      "priority": "medium"
+    },
+    "seasons_and_entry": {
+      "topics": ["entry", "health", "seasons", "getting-there"],
+      "regions": ["tanzania", "kenya", "vietnam", "zanzibar"],
+      "recheck_days": 90,
+      "priority": "medium"
+    },
+    "vietnam_kim": {
+      "topics": ["lodge-review", "destinations", "seasons"],
+      "regions": ["vietnam", "hoi-an", "hanoi", "ha-long-bay", "con-dao"],
+      "lead": "kim",
+      "priority": "medium"
+    }
+  },
+  "promotion_rules": {
+    "auto_promote": false,
+    "require_human_review": true,
+    "reviewer": "tim",
+    "review_tool": "google-sheets"
+  },
+  "publishing_pipeline": {
+    "trigger": "manual",
+    "build_command": "cd ../site && npm run build",
+    "deploy": "git push origin main",
+    "search_submission": {
+      "indexnow": false,
+      "gsc": false,
+      "bing": false,
+      "status": "not-configured"
+    }
+  },
+  "banned_sources": [
+    "tripadvisor.com",
+    "booking.com/reviews",
+    "padi.com/blog",
+    "liveaboard.com"
+  ]
+}

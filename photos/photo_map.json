@@ -1,0 +1,29 @@
+{
+  "_meta": {
+    "description": "Map of Tim's and Kim's photos to pages. When a photo file exists, always prefer it over Unsplash. Replace all Unsplash placeholder URLs with real photos as Tim/Kim shoot them.",
+    "photo_directory": "photos/",
+    "status": "placeholder-only — Tim to add real photos"
+  },
+  "pages": {
+    "/": {
+      "hero": { "file": null, "placeholder": "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1440&q=80", "alt": "Safari vehicle on East Africa plains at sunset", "credit": "Unsplash placeholder" }
+    },
+    "/reviews/singita-grumeti/": {
+      "hero": { "file": null, "placeholder": "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1440&q=80", "alt": "Serengeti Western Corridor — wildebeest on the plains", "credit": "Unsplash placeholder", "note": "Replace with Tim's photo from November 2025 Singita visit" }
+    },
+    "/wildlife/whale-sharks-mafia-island/": {
+      "hero": { "file": null, "placeholder": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=1440&q=80", "alt": "Whale shark in open ocean water", "credit": "Unsplash placeholder", "note": "Replace when Tim visits Mafia Island Oct-Feb" }
+    },
+    "/east-africa/zanzibar/": {
+      "hero": { "file": null, "placeholder": null, "alt": "Zanzibar east coast beach, Indian Ocean, blue water", "note": "Tim to shoot from Matlai beach or Michamvi Pingwe" }
+    }
+  },
+  "shoot_list": [
+    { "priority": 1, "subject": "Singita Grumeti — lion pride, river crossing, camp exterior", "for_pages": ["/reviews/singita-grumeti/"], "tim_has_shots": true, "date": "November 2025" },
+    { "priority": 2, "subject": "Menai Bay dolphins — in-water, boat deck view", "for_pages": ["/wildlife/dolphins-menai-bay/"], "tim_has_shots": false },
+    { "priority": 3, "subject": "Whale sharks Mafia Island", "for_pages": ["/wildlife/whale-sharks-mafia-island/"], "tim_has_shots": false, "note": "Shoot Oct-Feb" },
+    { "priority": 4, "subject": "Mnemba Atoll — snorkelling, turtle, reef", "for_pages": ["/reviews/mnemba-island-lodge/", "/wildlife/green-sea-turtle-zanzibar/"], "tim_has_shots": false, "note": "Pending Mnemba visit" },
+    { "priority": 5, "subject": "Zanzibar east coast — beach, sunsets, Michamvi", "for_pages": ["/east-africa/zanzibar/"], "tim_has_shots": true, "note": "Tim can shoot from Matlai any day" },
+    { "priority": 6, "subject": "Vietnam — Hoi An Old Town, Ha Long Bay (Kim)", "for_pages": ["/southeast-asia/vietnam/"], "tim_has_shots": false, "lead": "kim" }
+  ]
+}

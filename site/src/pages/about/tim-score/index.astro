@@ -1,0 +1,222 @@
+---
+import Base from '../../../layouts/Base.astro';
+import TimScoreBadge from '../../../components/TimScoreBadge.astro';
+import AnswerBox from '../../../components/AnswerBox.astro';
+
+const criteria = [
+  { name: 'Wilderness position', weight: 15, desc: 'Isolation from other camps, habitat quality, zero light and noise pollution, protected land status.' },
+  { name: 'Accommodation quality', weight: 12, desc: 'Construction quality, materials, room size, maintenance standards, attention to detail.' },
+  { name: 'Wildlife access', weight: 12, desc: 'Animal density and diversity, proximity of sightings, guide expertise, vehicle quality, off-road access.' },
+  { name: 'Food & beverage', weight: 10, desc: 'Cooking quality, ingredient sourcing, creativity, wine list, beverage programme.' },
+  { name: 'Service', weight: 10, desc: 'Staff warmth, proactivity, personalisation, ability to anticipate needs without being intrusive.' },
+  { name: 'Activities', weight: 8, desc: 'Range of experiences offered, exclusivity of access, guide expertise beyond standard game drives.' },
+  { name: 'Conservation impact', weight: 8, desc: 'Verifiable, documented conservation contributions — land protection, anti-poaching, community programmes.' },
+  { name: 'Value for money', weight: 8, desc: 'At €6,000+ price points, value is relative. The question is: does the experience justify the premium over alternatives?' },
+  { name: 'Sustainability', weight: 7, desc: 'Observable, documented practices in energy, water, waste, and supply chain. Never marketing claims.' },
+  { name: 'Sense of place', weight: 5, desc: 'Architecture, materials, and design choices that root the lodge in its specific landscape and culture.' },
+  { name: 'Exclusivity', weight: 3, desc: 'Total guest numbers, privacy between guests, ability to feel truly alone in the wilderness.' },
+  { name: 'Repeat visit intention', weight: 2, desc: 'Would I personally book this lodge again? The ultimate test of a genuine recommendation.' },
+];
+
+const examples = [
+  { score: 94, lodge: 'Singita Grumeti', note: 'Exceptional wilderness position in 350,000-acre private concession. Zero compromise.' },
+  { score: 91, lodge: 'Mnemba Island Lodge', note: 'Best marine experience in Zanzibar waters. Private island exclusivity fully delivered.' },
+  { score: 88, lodge: 'Mahali Mzuri', note: 'Conservancy model and guiding quality strong. Minor deductions on accommodation age.' },
+  { score: 74, lodge: 'Example: Over-commercialised camp', note: 'Below 80 = not recommended. We do not publish sub-80 reviews by name — only to explain why we are not recommending a region\'s obvious choice.' },
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'The Tim Score — Luxury Safari Lodge Rating Methodology',
+  description: 'How the Tim Score works: 12 criteria, 0–100 scale, assigned only after a paid first-hand stay.',
+  url: 'https://beyondparadise.com/about/tim-score/',
+  author: { '@type': 'Person', name: 'Tim Hennig', sameAs: 'https://www.wikidata.org/wiki/Q140307013' },
+};
+---
+<Base
+  title="The Tim Score — Luxury Lodge Rating Methodology · Beyond Paradise"
+  description="The Tim Score rates luxury safari lodges 0–100 across 12 weighted criteria. Assigned only after a paid, first-hand stay. No press trips. No hosted experiences."
+  permalink="/about/tim-score/"
+>
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} slot="head" />
+
+  <div class="ts-page">
+    <!-- Hero -->
+    <div class="ts-hero section--dark">
+      <div class="container">
+        <p class="label reveal">THE RATING SYSTEM</p>
+        <h1 class="display-l reveal" style="margin-top:16px;max-width:700px;">The Tim Score</h1>
+        <p class="body-l reveal" style="max-width:600px;margin-top:20px;color:var(--cream-65);">A single number. Twelve criteria. Assigned only after a paid, first-hand stay. Because a press trip tells you nothing about what a lodge is actually like.</p>
+      </div>
+    </div>
+
+    <div class="container ts-body">
+
+      <AnswerBox answer="The Tim Score is a 0–100 rating assigned to luxury lodges after Tim Hennig's personal, paid stay. It weights 12 criteria including wilderness position (15%), wildlife access (12%), conservation impact (8%), and value for money (8%). Scores of 90+ are exceptional. Below 80 means Beyond Paradise does not recommend the lodge." />
+
+      <!-- Score examples -->
+      <section class="ts-examples reveal">
+        <h2 class="display-s" style="margin-bottom:32px;">What the numbers mean</h2>
+        <div class="ts-examples__grid">
+          {examples.map(ex => (
+            <div class="ts-example glass">
+              <TimScoreBadge score={ex.score} size="lg" />
+              <div>
+                <p class="ts-example__lodge">{ex.lodge}</p>
+                <p class="ts-example__note">{ex.note}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div class="ts-bands">
+          {[{range:'90–100',label:'Exceptional',desc:'Genuinely world-class. The best I have stayed at anywhere.'},{range:'85–89',label:'Excellent',desc:'Outstanding. One or two areas below perfection.'},{range:'80–84',label:'Very Good',desc:'Strong lodge. A legitimate choice — with caveats.'},{range:'<80',label:'Not Recommended',desc:'Does not meet the Beyond Paradise standard at this price point.'}].map(b => (
+            <div class="ts-band">
+              <span class="ts-band__range">{b.range}</span>
+              <span class="ts-band__label">{b.label}</span>
+              <span class="ts-band__desc">{b.desc}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Criteria -->
+      <section class="ts-criteria reveal" id="criteria">
+        <h2 class="display-s" style="margin-bottom:8px;">The 12 criteria</h2>
+        <p class="body-l" style="color:var(--cream-65);margin-bottom:40px;">Each criterion is scored 0–100, then multiplied by its weight. The weighted scores sum to the final Tim Score.</p>
+        <div class="ts-criteria__grid">
+          {criteria.map((c, i) => (
+            <div class="ts-criterion glass reveal">
+              <div class="ts-criterion__header">
+                <span class="ts-criterion__num">{String(i+1).padStart(2,'0')}</span>
+                <div>
+                  <p class="ts-criterion__name">{c.name}</p>
+                  <p class="ts-criterion__weight">{c.weight}% of total score</p>
+                </div>
+              </div>
+              <p class="ts-criterion__desc">{c.desc}</p>
+              <div class="ts-criterion__bar">
+                <div class="ts-criterion__fill" style={`width:${c.weight * 6.67}%`}></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Rules -->
+      <section class="ts-rules reveal">
+        <h2 class="display-s" style="margin-bottom:32px;">The non-negotiables</h2>
+        <div class="ts-rules__grid">
+          {[
+            { icon: '✦', title: 'Paid stays only', text: 'I pay for every lodge I review. No complimentary stays, no hosted press trips, no invited visits. I have stayed in every lodge at Beyond Paradise standard rates.' },
+            { icon: '✦', title: 'First-hand experience required', text: 'No Tim Score is assigned from secondary research, online reviews, or someone else\'s account. Every score is based on what I observed personally.' },
+            { icon: '✦', title: 'Matlai is never reviewed', text: 'I own Hotel Matlai, Zanzibar. An undisclosable conflict of interest. Matlai will never appear in Beyond Paradise — positive or negative.' },
+            { icon: '✦', title: 'Sub-80 scores are not published with names', text: 'If a lodge scores below 80, Beyond Paradise does not recommend it. We may reference the threshold without naming the lodge, to avoid harm to staff and operators from a public verdict.' },
+          ].map(r => (
+            <div class="ts-rule glass">
+              <span class="ts-rule__icon">{r.icon}</span>
+              <div>
+                <p class="ts-rule__title">{r.title}</p>
+                <p class="ts-rule__text">{r.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+    </div>
+  </div>
+</Base>
+
+<style>
+.ts-hero {
+  padding: 140px 0 80px;
+  background: var(--base);
+  border-bottom: 1px solid var(--glass-b);
+}
+.ts-body {
+  padding: 72px 0 120px;
+  max-width: 900px;
+}
+
+.ts-examples__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.ts-example {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 24px;
+  border-radius: 16px;
+}
+.ts-example__lodge {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 18px;
+  color: var(--cream);
+  margin-bottom: 4px;
+}
+.ts-example__note { font-size: 13px; color: var(--cream-65); }
+
+.ts-bands {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+.ts-band {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-b);
+  border-radius: 12px;
+}
+.ts-band__range { font-family: 'Playfair Display', Georgia, serif; font-size: 18px; color: var(--gold); white-space: nowrap; }
+.ts-band__label { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cream); padding-top: 4px; }
+.ts-band__desc { font-size: 13px; color: var(--cream-65); grid-column: 1 / -1; margin-top: -4px; }
+
+.ts-criteria__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.ts-criterion {
+  border-radius: 14px;
+  padding: 20px;
+}
+.ts-criterion__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.ts-criterion__num {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 28px;
+  color: var(--gold);
+  opacity: 0.5;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.ts-criterion__name { font-size: 14px; font-weight: 600; color: var(--cream); margin-bottom: 2px; }
+.ts-criterion__weight { font-size: 11px; color: var(--gold); letter-spacing: 0.08em; }
+.ts-criterion__desc { font-size: 13px; color: var(--cream-65); line-height: 1.6; margin-bottom: 12px; }
+.ts-criterion__bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+.ts-criterion__fill { height: 100%; background: var(--gold); border-radius: 2px; }
+
+.ts-rules__grid { display: flex; flex-direction: column; gap: 16px; }
+.ts-rule { display: flex; gap: 16px; padding: 20px 24px; border-radius: 14px; }
+.ts-rule__icon { color: var(--gold); font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.ts-rule__title { font-size: 15px; font-weight: 600; color: var(--cream); margin-bottom: 6px; }
+.ts-rule__text { font-size: 14px; color: var(--cream-65); line-height: 1.6; }
+
+@media (max-width: 700px) {
+  .ts-criteria__grid { grid-template-columns: 1fr; }
+  .ts-bands { grid-template-columns: 1fr; }
+}
+</style>

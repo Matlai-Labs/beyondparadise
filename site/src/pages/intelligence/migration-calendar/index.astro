@@ -1,0 +1,131 @@
+---
+import Base from '../../../layouts/Base.astro';
+import calendar from '@data/wildlife/calendar.json';
+
+const months = Object.entries(calendar.months);
+const quick = calendar.quick_reference;
+
+const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+---
+<Base
+  title="East Africa Migration Calendar 2026 — When to See the Great Migration · Beyond Paradise"
+  description="Month-by-month wildlife encounter calendar for East Africa and Vietnam. Whale sharks Mafia Island, wildebeest migration Serengeti and Masai Mara, dolphins Zanzibar, sea turtles. First-hand intelligence from Tim Hennig."
+  permalink="/intelligence/migration-calendar/"
+>
+  <div class="cal-page">
+    <div class="cal-hero section--dark">
+      <div class="container">
+        <p class="label reveal">MIGRATION INTELLIGENCE</p>
+        <h1 class="display-l reveal" style="margin-top:16px;max-width:720px;">East Africa Wildlife Calendar</h1>
+        <p class="body-l reveal" style="color:var(--cream-65);margin-top:20px;max-width:600px;">When to see what, where, and what your odds actually are. Updated by Tim Hennig from Zanzibar — not from a desk in London.</p>
+      </div>
+    </div>
+
+    <div class="container cal-body">
+
+      <!-- Quick reference table -->
+      <section class="cal-quick reveal">
+        <h2 class="display-s" style="margin-bottom:24px;">Quick Reference</h2>
+        <div class="cal-quick__grid">
+          {Object.entries(quick).map(([key, value]) => (
+            <div class="cal-quick__item glass">
+              <p class="cal-quick__key">{key.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase())}</p>
+              <p class="cal-quick__val">{value}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Month-by-month -->
+      <section class="cal-months">
+        <h2 class="display-s reveal" style="margin-bottom:32px;">Month by Month</h2>
+        <div class="cal-months__grid">
+          {months.map(([key, month]) => (
+            <div class="cal-month glass reveal" id={key}>
+              <div class="cal-month__header">
+                <span class="cal-month__name display-s">{month.label}</span>
+              </div>
+              <p class="cal-month__summary">{month.weather_summary}</p>
+
+              {month.highlights && month.highlights.length > 0 && (
+                <div class="cal-month__highlights">
+                  <p class="label" style="margin-bottom:10px;color:var(--gold);">Highlights</p>
+                  {month.highlights.map(h => (
+                    <div class="cal-highlight">
+                      <span class={`cal-prob cal-prob--${h.probability.replace(/[^a-z]/g,'-')}`}>{h.probability}</span>
+                      <div>
+                        <p class="cal-highlight__animal">{h.animal.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase())}</p>
+                        <p class="cal-highlight__loc">{h.location.replace(/-/g,' ')}</p>
+                        {h.note && <p class="cal-highlight__note">{h.note}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {month.avoid && month.avoid.length > 0 && (
+                <div class="cal-month__avoid">
+                  {month.avoid.map(a => (
+                    <p class="cal-avoid-note">⚠ {a.note}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+    </div>
+  </div>
+</Base>
+
+<style>
+.cal-hero { padding: 140px 0 80px; }
+.cal-body { padding: 64px 0 120px; }
+
+.cal-quick { margin-bottom: 80px; }
+.cal-quick__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.cal-quick__item { padding: 16px 20px; border-radius: 12px; }
+.cal-quick__key { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream-38); margin-bottom: 6px; }
+.cal-quick__val { font-size: 15px; color: var(--cream); font-weight: 500; }
+
+.cal-months__grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+.cal-month { border-radius: 20px; padding: 28px; }
+.cal-month__header { margin-bottom: 12px; }
+.cal-month__name { font-size: 24px; }
+.cal-month__summary { font-size: 13px; color: var(--cream-65); line-height: 1.6; margin-bottom: 20px; border-bottom: 1px solid var(--glass-b); padding-bottom: 16px; }
+
+.cal-month__highlights { margin-bottom: 16px; }
+.cal-highlight { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.cal-prob {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-weight: 600;
+}
+.cal-prob--very-high { background: rgba(201,169,110,0.2); color: var(--gold); }
+.cal-prob--high { background: rgba(42,123,140,0.2); color: var(--teal); }
+.cal-prob--moderate-high { background: rgba(42,123,140,0.12); color: var(--teal); }
+.cal-prob--moderate { background: rgba(255,255,255,0.06); color: var(--cream-65); }
+.cal-prob--low { background: rgba(255,255,255,0.04); color: var(--cream-38); }
+
+.cal-highlight__animal { font-size: 14px; font-weight: 600; color: var(--cream); margin-bottom: 2px; }
+.cal-highlight__loc { font-size: 11px; color: var(--cream-38); text-transform: capitalize; margin-bottom: 4px; }
+.cal-highlight__note { font-size: 12px; color: var(--cream-65); line-height: 1.5; }
+
+.cal-month__avoid { margin-top: 8px; }
+.cal-avoid-note { font-size: 12px; color: rgba(255,160,80,0.8); line-height: 1.5; margin-bottom: 6px; }
+
+@media (max-width: 900px) {
+  .cal-quick__grid { grid-template-columns: repeat(2, 1fr); }
+  .cal-months__grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .cal-quick__grid { grid-template-columns: 1fr; }
+}
+</style>

@@ -1,0 +1,30 @@
+---
+interface Props {
+  answer: string;
+  label?: string;
+}
+const { answer, label = 'The Short Answer' } = Astro.props;
+---
+<div class="answer-box" role="note" aria-label="Quick answer">
+  <p class="answer-box__label label">{label}</p>
+  <p class="answer-box__text">{answer}</p>
+</div>
+
+<style>
+.answer-box {
+  border-left: 3px solid var(--gold);
+  padding: 20px 24px;
+  margin: 32px 0;
+  background: rgba(201,169,110,0.06);
+  border-radius: 0 12px 12px 0;
+}
+.answer-box__label {
+  margin-bottom: 8px;
+  color: var(--gold);
+}
+.answer-box__text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--cream);
+}
+</style>

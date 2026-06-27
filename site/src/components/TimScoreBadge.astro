@@ -1,0 +1,66 @@
+---
+interface Props {
+  score: number;
+  size?: 'sm' | 'md' | 'lg';
+  showLabel?: boolean;
+}
+const { score, size = 'md', showLabel = true } = Astro.props;
+
+const band =
+  score >= 90 ? { label: 'Exceptional', color: '#C9A96E' } :
+  score >= 85 ? { label: 'Excellent', color: '#C9A96E' } :
+  score >= 80 ? { label: 'Very Good', color: '#9BA8A0' } :
+               { label: 'Not Recommended', color: '#6B7280' };
+
+const sizes = {
+  sm: { circle: 52, font: 18, label: 10 },
+  md: { circle: 72, font: 26, label: 11 },
+  lg: { circle: 96, font: 34, label: 12 },
+};
+const s = sizes[size];
+---
+<div class="tsb" style={`--sz:${s.circle}px;--ff:${s.font}px;--lf:${s.label}px;--c:${band.color}`} aria-label={`Tim Score: ${score} out of 100 — ${band.label}`}>
+  <svg viewBox="0 0 36 36" width={s.circle} height={s.circle} aria-hidden="true">
+    <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2.5"/>
+    <circle
+      cx="18" cy="18" r="15.9" fill="none"
+      stroke={band.color} stroke-width="2.5"
+      stroke-dasharray={`${score} ${100 - score}`}
+      stroke-dashoffset="25"
+      stroke-linecap="round"
+    />
+  </svg>
+  <span class="tsb__num">{score}</span>
+  {showLabel && <span class="tsb__band">{band.label}</span>}
+</div>
+
+<style>
+.tsb {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: var(--sz);
+}
+.tsb svg { display: block; transform: rotate(-90deg); }
+.tsb__num {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -52%);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: var(--ff);
+  font-weight: 400;
+  color: var(--c);
+  line-height: 1;
+}
+.tsb__band {
+  font-size: var(--lf);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c);
+  white-space: nowrap;
+  font-weight: 500;
+}
+</style>

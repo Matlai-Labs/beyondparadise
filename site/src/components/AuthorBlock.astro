@@ -1,0 +1,89 @@
+---
+interface Props {
+  author: 'tim' | 'kim';
+  visitDate?: string;
+  context?: string;
+}
+const { author, visitDate, context } = Astro.props;
+
+const authors = {
+  tim: {
+    name: 'Tim Hennig',
+    role: 'East Africa Lead · GM, Hotel Matlai, Zanzibar',
+    bio: 'I have lived on Zanzibar\'s east coast for over five years, managing Boutique Hotel Matlai. Every Beyond Paradise review is based on a paid, first-hand stay — I disclose all conflicts of interest, including the fact that I never review my own hotel.',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&q=80&auto=format',
+    link: '/about/',
+    accent: 'var(--gold)',
+  },
+  kim: {
+    name: 'Kim',
+    role: 'Southeast Asia Lead · Beyond Paradise Asia',
+    bio: 'I am Vietnamese and have lived in Zanzibar. My knowledge of Vietnam is first-hand — I grew up in the country, not from a guidebook. Beyond Paradise Asia covers the luxury tier that deserves an honest local perspective.',
+    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&q=80&auto=format',
+    link: '/about/kim/',
+    accent: 'var(--teal)',
+  },
+};
+
+const a = authors[author];
+---
+<aside class="author-block glass reveal" aria-label={`About the author: ${a.name}`}>
+  <img src={a.avatar} alt={`${a.name} — Beyond Paradise author`} class="author-block__avatar" width="64" height="64" loading="lazy" />
+  <div class="author-block__body">
+    <p class="author-block__name" style={`color:${a.accent}`}>{a.name}</p>
+    <p class="author-block__role">{a.role}</p>
+    <p class="author-block__bio">{a.bio}</p>
+    {visitDate && <p class="author-block__visit">Reviewed: <time>{visitDate}</time></p>}
+    {context && <p class="author-block__context">{context}</p>}
+  </div>
+</aside>
+
+<style>
+.author-block {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin: 48px 0;
+}
+.author-block__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid var(--glass-b);
+}
+.author-block__name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+.author-block__role {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cream-38);
+  margin-bottom: 10px;
+}
+.author-block__bio {
+  font-size: 14px;
+  color: var(--cream-65);
+  line-height: 1.65;
+  margin-bottom: 8px;
+}
+.author-block__visit {
+  font-size: 12px;
+  color: var(--cream-38);
+}
+.author-block__context {
+  font-size: 13px;
+  color: var(--gold);
+  font-style: italic;
+  margin-top: 8px;
+}
+@media (max-width: 600px) {
+  .author-block { flex-direction: column; padding: 20px; }
+}
+</style>

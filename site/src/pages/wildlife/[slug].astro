@@ -1,0 +1,34 @@
+---
+import { getCollection } from 'astro:content';
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+
+export async function getStaticPaths() {
+  const guides = await getCollection('wildlife', ({ data }) => !data.draft);
+  return guides.map(g => ({ params: { slug: g.slug }, props: { guide: g } }));
+}
+
+const { guide } = Astro.props;
+const { Content } = await guide.render();
+const d = guide.data;
+---
+<ArticleLayout
+  title={d.title}
+  description={d.description}
+  permalink={d.permalink}
+  heroImage={d.hero_image}
+  heroAlt={d.hero_alt}
+  author={d.author}
+  lastUpdated={d.last_updated}
+  faq={d.faq}
+  schemaType="Article"
+  schemaExtra={{
+    about: {
+      '@type': 'Taxon',
+      name: d.common_name,
+      scientificName: d.scientific_name,
+    },
+    contentLocation: { '@type': 'Place', name: d.region },
+  }}
+>
+  <Content />
+</ArticleLayout>

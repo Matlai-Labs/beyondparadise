@@ -1,0 +1,80 @@
+---
+import Base from '../../../layouts/Base.astro';
+---
+<Base
+  title="Editorial Policy · Beyond Paradise"
+  description="How Beyond Paradise maintains complete editorial independence. No press trips. No sponsored content. No advertiser influence. Every review paid for by Tim Hennig personally."
+  permalink="/about/editorial-policy/"
+>
+  <div class="ep-page">
+    <div class="ep-hero section--dark">
+      <div class="container">
+        <p class="label reveal">TRANSPARENCY</p>
+        <h1 class="display-l reveal" style="margin-top:16px;max-width:700px;">Editorial Policy</h1>
+        <p class="body-l reveal" style="color:var(--cream-65);margin-top:20px;max-width:580px;">The value of this site depends entirely on you being able to trust it. Here is exactly how we maintain that trust.</p>
+      </div>
+    </div>
+
+    <div class="container ep-body">
+
+      <section class="ep-section reveal">
+        <h2 class="display-s">The non-negotiables</h2>
+        <div class="ep-rules">
+          {[
+            { title: 'All stays are paid', body: 'Tim Hennig personally pays for every lodge stay reviewed on Beyond Paradise. Kim personally pays for every Vietnam property reviewed. We do not accept complimentary stays, hosted visits, or sponsored trips — from any operator, under any circumstances.' },
+            { title: 'No press trips, ever', body: 'Press trips exist to influence coverage. A lodge curates what you see on a press trip — the best room, the best food, the attentive manager who shadows you all week. Tim pays to stay as a regular guest, with no lodge knowing in advance that a review is coming.' },
+            { title: 'No sponsored content', body: 'Beyond Paradise does not publish sponsored content, native advertising, or paid placements. If you see a lodge reviewed here, it is because Tim or Kim stayed there and formed an honest opinion — not because the lodge paid for inclusion.' },
+            { title: 'No Tim Score without a stay', body: 'The Tim Score is never assigned from secondary research, other people\'s reviews, or online sources. The number exists only because Tim was there, paying, forming a direct opinion.' },
+            { title: 'Conflicts of interest are disclosed', body: 'Tim Hennig owns and manages Boutique Hotel Matlai in Zanzibar (Q140307008 on Wikidata). This is an undisclosable conflict of interest — Matlai will never appear in Beyond Paradise, positive or negative. If Tim has any other relationship with a property he reviews, that relationship is disclosed in the review.' },
+          ].map(r => (
+            <div class="ep-rule glass">
+              <h3 class="ep-rule__title">{r.title}</h3>
+              <p class="ep-rule__body">{r.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section class="ep-section reveal">
+        <h2 class="display-s">Affiliate revenue</h2>
+        <p class="body-l" style="color:var(--cream-65);max-width:680px;">Beyond Paradise earns affiliate commission from some operators, booking platforms, and tour operators linked on this site (GetYourGuide, Viator, Stay22, and others). This never influences editorial decisions — a lodge is reviewed because Tim stayed there, not because an affiliate programme exists. All affiliate relationships are disclosed on relevant pages with a "We earn commission" note.</p>
+      </section>
+
+      <section class="ep-section reveal">
+        <h2 class="display-s">Fact sourcing standards</h2>
+        <p class="body-l" style="color:var(--cream-65);max-width:680px;margin-bottom:24px;">Every specific claim on this site — prices, seasons, sighting probabilities, conservation statistics — must be traceable to at least two independent sources, stored in our internal fact database. We maintain a tiered source registry (IUCN, government authorities, peer-reviewed journals, NGO research, operator data, and Tim/Kim firsthand observation). We publish the source tier with every critical fact.</p>
+        <p class="body-l" style="color:var(--cream-65);max-width:680px;">Wildlife encounter probabilities and prices are volatile. We re-verify sighting data monthly during peak seasons and quarterly off-season. Prices are verified at time of writing and noted with a check date. Do not rely on price data more than 12 months old without checking the operator directly.</p>
+      </section>
+
+      <section class="ep-section reveal">
+        <h2 class="display-s">Ethics grading</h2>
+        <p class="body-l" style="color:var(--cream-65);max-width:680px;">Beyond Paradise grades wildlife operators on observable, documented criteria only: permit status, documented tourism-impact studies, verifiable conservation contributions, and habitat restoration records. We never assign an ethics grade based on marketing claims, sustainability certifications, or operator self-reporting without corroboration. When in doubt, the ethics grade is not assigned.</p>
+      </section>
+
+      <section class="ep-section reveal">
+        <h2 class="display-s">Corrections policy</h2>
+        <p class="body-l" style="color:var(--cream-65);max-width:680px;">If you believe a fact on this site is incorrect, email <a href="mailto:tim@beyondparadise.com" style="color:var(--gold)">tim@beyondparadise.com</a> with your source. If you are right, we correct the page immediately, add a correction note, and thank you. We are not embarrassed by corrections — we are embarrassed by uncorrected errors.</p>
+      </section>
+
+      <section class="ep-section reveal">
+        <h2 class="display-s">Contact</h2>
+        <p class="body-l" style="color:var(--cream-65);max-width:680px;">Tim Hennig · <a href="mailto:tim@beyondparadise.com" style="color:var(--gold)">tim@beyondparadise.com</a><br/>
+        Boutique Hotel Matlai, Michamvi Pingwe, Zanzibar, Tanzania<br/>
+        <br/>
+        <em style="font-size:13px;color:var(--cream-38);">Last updated: June 2026</em></p>
+      </section>
+
+    </div>
+  </div>
+</Base>
+
+<style>
+.ep-hero { padding: 140px 0 80px; }
+.ep-body { padding: 72px 0 120px; max-width: 860px; }
+.ep-section { margin-bottom: 72px; }
+.ep-section h2 { margin-bottom: 32px; }
+.ep-rules { display: flex; flex-direction: column; gap: 16px; }
+.ep-rule { padding: 24px 28px; border-radius: 14px; }
+.ep-rule__title { font-size: 16px; font-weight: 600; color: var(--cream); margin-bottom: 10px; }
+.ep-rule__body { font-size: 14px; color: var(--cream-65); line-height: 1.7; }
+</style>

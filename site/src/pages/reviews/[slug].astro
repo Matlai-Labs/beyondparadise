@@ -1,0 +1,44 @@
+---
+import { getCollection } from 'astro:content';
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+
+export async function getStaticPaths() {
+  const reviews = await getCollection('reviews', ({ data }) => !data.draft);
+  return reviews.map(r => ({ params: { slug: r.slug }, props: { review: r } }));
+}
+
+const { review } = Astro.props;
+const { Content } = await review.render();
+const d = review.data;
+
+const schemaExtra = {
+  '@type': 'Review',
+  itemReviewed: {
+    '@type': 'LodgingBusiness',
+    name: d.lodge_name,
+    address: { '@type': 'PostalAddress', addressCountry: d.country },
+  },
+  reviewRating: {
+    '@type': 'Rating',
+    ratingValue: d.tim_score,
+    bestRating: 100,
+    worstRating: 0,
+    ratingExplanation: 'Tim Score — 12-criterion weighted rating based on paid first-hand stay',
+  },
+};
+---
+<ArticleLayout
+  title={d.title}
+  description={d.description}
+  permalink={d.permalink}
+  heroImage={d.hero_image}
+  heroAlt={d.hero_alt}
+  author={d.author}
+  lastUpdated={d.last_updated}
+  visitDate={d.visit_date}
+  faq={d.faq}
+  schemaType="Review"
+  schemaExtra={schemaExtra}
+>
+  <Content />
+</ArticleLayout>

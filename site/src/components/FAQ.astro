@@ -1,0 +1,55 @@
+---
+interface Props {
+  items: { q: string; a: string }[];
+}
+const { items } = Astro.props;
+---
+<section class="faq reveal" aria-label="Frequently asked questions">
+  <h2 class="faq__heading display-s">Frequently Asked Questions</h2>
+  <div class="faq__list" itemscope itemtype="https://schema.org/FAQPage">
+    {items.map((item, i) => (
+      <details class="faq__item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+        <summary class="faq__q" itemprop="name">{item.q}</summary>
+        <div class="faq__a" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+          <p itemprop="text">{item.a}</p>
+        </div>
+      </details>
+    ))}
+  </div>
+</section>
+
+<style>
+.faq { margin: 64px 0; }
+.faq__heading { margin-bottom: 32px; }
+.faq__item {
+  border-bottom: 1px solid var(--glass-b);
+  padding: 20px 0;
+}
+.faq__item:first-of-type { border-top: 1px solid var(--glass-b); }
+.faq__q {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 18px;
+  color: var(--cream);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.faq__q::after {
+  content: '+';
+  font-family: Inter, sans-serif;
+  font-size: 22px;
+  color: var(--gold);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+details[open] .faq__q::after { transform: rotate(45deg); }
+.faq__a {
+  padding-top: 14px;
+  font-size: 15px;
+  color: var(--cream-65);
+  line-height: 1.7;
+}
+</style>
