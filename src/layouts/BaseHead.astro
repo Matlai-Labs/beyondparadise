@@ -1,0 +1,50 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+}
+const { title, description, ogImage = '/og-default.jpg', canonicalUrl } = Astro.props;
+const canon = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site).toString();
+---
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#09090B" />
+<link rel="canonical" href={canon} />
+<title>{title}</title>
+<meta name="description" content={description} />
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content={canon} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:site_name" content="Beyond Paradise" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+
+<!-- Schema: Website + Person -->
+<script type="application/ld+json" is:inline>{JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Beyond Paradise",
+  "url": "https://beyondparadise.com",
+  "description": "Luxury travel intelligence for East Africa and Southeast Asia. €6,000+ trips only.",
+  "author": {
+    "@type": "Person",
+    "name": "Tim Hennig",
+    "jobTitle": "General Manager, Boutique Hotel Matlai",
+    "address": { "@type": "PostalAddress", "addressLocality": "Zanzibar" }
+  }
+})}</script>

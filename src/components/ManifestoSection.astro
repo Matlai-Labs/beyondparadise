@@ -1,0 +1,84 @@
+---
+---
+<section class="section section--dark manifesto" aria-label="Our manifesto">
+  <div class="container manifesto__grid">
+    <div class="manifesto__left">
+      <blockquote class="manifesto__quote reveal">
+        <p class="display-xs">&ldquo;Every luxury travel guide is written by someone who visited once.<br/>We live here.&rdquo;</p>
+        <footer class="manifesto__attrib">
+          &mdash; Tim Hennig, General Manager, Boutique Hotel Matlai, Zanzibar
+        </footer>
+      </blockquote>
+
+      <div class="manifesto__body reveal reveal-delay-1">
+        <p class="body-l">Beyond Paradise isn't built from press trips and sponsored itineraries. It's built from five years of living and working in one of the world's great luxury destinations — and knowing exactly who does it right.</p>
+        <p class="body-m" style="margin-top:16px;color:var(--cream-65)">No hosted stays. No advertiser influence. Every lodge Tim or Kim visits, they pay for themselves.</p>
+      </div>
+    </div>
+
+    <div class="manifesto__right">
+      <div class="manifesto__card glass reveal reveal-delay-2">
+        <!-- Replace with Tim's portrait -->
+        <div class="manifesto__photo" style="background:linear-gradient(135deg,#1C1C21 0%,#2A7B8C22 100%);">
+          <span class="manifesto__photo-label">Tim Hennig · Zanzibar, 2026</span>
+        </div>
+        <div class="manifesto__card-body">
+          <p class="label" style="color:var(--gold)">BEYOND PARADISE AFRICA</p>
+          <p style="font-size:14px;color:var(--cream-65);margin-top:8px;">GM, Hotel Matlai · 5 years in East Africa · First-hand reviewer of 80+ luxury properties</p>
+        </div>
+      </div>
+
+      <div class="manifesto__card glass reveal reveal-delay-3" style="border-color:rgba(74,171,184,0.25);">
+        <div class="manifesto__card-body">
+          <p class="label label--teal">BEYOND PARADISE ASIA</p>
+          <p class="manifesto__kim-name">Kim</p>
+          <p style="font-size:14px;color:var(--cream-65);">Vietnamese, based in Zanzibar. First-hand knowledge of Hoi An, Hanoi, Ha Long Bay &amp; Hue.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.manifesto__grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 80px;
+  align-items: start;
+}
+.manifesto__left { display: flex; flex-direction: column; gap: 40px; padding-top: 20px; }
+.manifesto__quote { border: none; }
+.manifesto__quote p {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(24px,3.5vw,40px);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--cream);
+  line-height: 1.35;
+  margin-bottom: 24px;
+}
+.manifesto__attrib { font-size: 15px; color: var(--gold); }
+
+.manifesto__right { display: flex; flex-direction: column; gap: 20px; }
+.manifesto__card { border-radius: 20px; overflow: hidden; }
+.manifesto__photo {
+  height: 280px;
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+}
+.manifesto__photo-label { font-size: 12px; color: var(--cream-38); }
+.manifesto__card-body { padding: 20px 22px 24px; }
+.manifesto__kim-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 28px;
+  color: var(--cream);
+  margin: 8px 0 8px;
+}
+
+@media (max-width: 900px) {
+  .manifesto__grid { grid-template-columns: 1fr; gap: 48px; }
+  .manifesto__right { flex-direction: row; flex-wrap: wrap; }
+  .manifesto__card { flex: 1; min-width: 280px; }
+}
+</style>

@@ -1,0 +1,87 @@
+---
+const scores = [
+  { name: 'Singita Grumeti', score: '94', region: 'Serengeti, Tanzania' },
+  { name: 'Mnemba Island',   score: '91', region: 'Zanzibar, Tanzania' },
+  { name: 'Mahali Mzuri',    score: '88', region: 'Masai Mara, Kenya' },
+  { name: 'Six Senses',      score: '87', region: 'Con Dao, Vietnam' },
+];
+const criteria = [
+  'Wildlife quality & guide expertise',
+  'Accommodation & room size',
+  'Food & beverage',
+  'Conservation commitment',
+  'Value at price point',
+  'Location & views',
+  'Privacy & exclusivity',
+  'Service quality',
+  'Activities range',
+  'Environmental impact',
+  'Connectivity & logistics',
+  'Child & family policy',
+];
+---
+<section id="tim-score" class="section score-section" aria-label="The Tim Score">
+  <div class="container score-grid">
+    <div class="score-left reveal">
+      <p class="label">THE TIM SCORE</p>
+      <h2 class="display-m" style="margin-top:12px;margin-bottom:24px;">A Rating Built on<br/>Actual Stays</h2>
+      <p class="body-l" style="color:var(--cream-65);margin-bottom:32px;">12 criteria, weighted by what sophisticated travelers actually care about. No press trips. No hosted stays. Tim and Kim pay their own way, every time.</p>
+      <div class="score-criteria reveal reveal-delay-1">
+        {criteria.map((c, i) => (
+          <div class="score-criterion">
+            <span class="score-criterion__num">{String(i+1).padStart(2,'0')}</span>
+            <span class="score-criterion__text">{c}</span>
+          </div>
+        ))}
+      </div>
+      <a href="/about/tim-score/" class="btn btn-glass" style="margin-top:32px;">See Full Methodology</a>
+    </div>
+
+    <div class="score-right">
+      <div class="cards-grid cards-grid--2" style="gap:16px;">
+        {scores.map((s, i) => (
+          <div class={`score-card reveal reveal-delay-${i+1}`}>
+            <div class="score-card__num">{s.score}</div>
+            <div class="score-card__name">{s.name}</div>
+            <div class="score-card__region">{s.region}</div>
+          </div>
+        ))}
+      </div>
+      <div class="score-note reveal reveal-delay-3">
+        <p class="meta" style="color:var(--cream-38);">Scores updated after each verified visit. Tim Score 90+ = exceptional. 85–89 = excellent. Below 80 = not recommended.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.score-section {
+  background: linear-gradient(135deg, var(--s1) 0%, #1A1208 100%);
+  padding: 100px 0;
+}
+.score-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.score-criteria {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.score-criterion {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--glass-sub);
+}
+.score-criterion__num { font-size: 11px; color: var(--gold); font-weight: 600; min-width: 28px; }
+.score-criterion__text { font-size: 14px; color: var(--cream-65); }
+.score-note { margin-top: 20px; padding: 16px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-sub); }
+
+@media (max-width: 900px) {
+  .score-grid { grid-template-columns: 1fr; gap: 48px; }
+}
+</style>

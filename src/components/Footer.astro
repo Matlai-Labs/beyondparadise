@@ -1,0 +1,95 @@
+---
+const year = new Date().getFullYear();
+const eastAfrica = [
+  { label: 'Zanzibar', href: '/east-africa/zanzibar/' },
+  { label: 'Serengeti', href: '/east-africa/serengeti/' },
+  { label: 'Masai Mara', href: '/east-africa/masai-mara/' },
+  { label: 'Rwanda', href: '/east-africa/rwanda/' },
+  { label: 'Lodge Reviews', href: '/reviews/' },
+];
+const southeastAsia = [
+  { label: 'Vietnam', href: '/southeast-asia/vietnam/' },
+  { label: 'Hoi An', href: '/southeast-asia/hoi-an/' },
+  { label: 'Ha Long Bay', href: '/southeast-asia/ha-long-bay/' },
+  { label: 'Bali', href: '/southeast-asia/bali/' },
+];
+const intelligence = [
+  { label: 'The Tim Score', href: '/about/tim-score/' },
+  { label: 'Migration Calendar', href: '/east-africa/migration-calendar/' },
+  { label: 'Price Database', href: '/intelligence/prices/' },
+  { label: 'Newsletter', href: '#newsletter' },
+  { label: 'Editorial Policy', href: '/about/editorial-policy/' },
+];
+---
+<footer class="footer" role="contentinfo">
+  <div class="footer__top">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <span class="footer__wordmark">Beyond Paradise</span>
+          <p class="footer__desc">Luxury travel intelligence for East Africa and Southeast Asia. Written by people who live there.</p>
+          <p class="footer__credit">Tim Hennig — Zanzibar &nbsp;·&nbsp; Kim — Vietnam</p>
+        </div>
+        <div class="footer__col">
+          <p class="footer__col-title">East Africa</p>
+          {eastAfrica.map(l => <a href={l.href} class="footer__link">{l.label}</a>)}
+        </div>
+        <div class="footer__col">
+          <p class="footer__col-title">Southeast Asia</p>
+          {southeastAsia.map(l => <a href={l.href} class="footer__link">{l.label}</a>)}
+        </div>
+        <div class="footer__col">
+          <p class="footer__col-title">Intelligence</p>
+          {intelligence.map(l => <a href={l.href} class="footer__link">{l.label}</a>)}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <div class="container footer__bottom-inner">
+      <p class="footer__legal">&copy; {year} Beyond Paradise. All reviews are independent. <a href="/about/editorial-policy/">Editorial policy.</a></p>
+      <p class="footer__legal">Affiliate links may appear — they never influence our ratings.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer { background: #09090B; border-top: 1px solid rgba(255,255,255,0.07); }
+.footer__top { padding: 80px 0 60px; }
+.footer__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 48px;
+}
+.footer__wordmark {
+  display: block;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 24px;
+  color: #F5F0E8;
+  margin-bottom: 16px;
+}
+.footer__desc { font-size: 14px; color: rgba(245,240,232,0.55); line-height: 1.65; max-width: 280px; margin-bottom: 12px; }
+.footer__credit { font-size: 12px; color: #C9A96E; }
+.footer__col { display: flex; flex-direction: column; gap: 10px; }
+.footer__col-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #C9A96E;
+  margin-bottom: 4px;
+}
+.footer__link { font-size: 14px; color: rgba(245,240,232,0.6); transition: color 0.18s; }
+.footer__link:hover { color: #F5F0E8; }
+.footer__bottom { border-top: 1px solid rgba(255,255,255,0.06); padding: 20px 0; }
+.footer__bottom-inner { display: flex; gap: 32px; flex-wrap: wrap; }
+.footer__legal { font-size: 12px; color: rgba(245,240,232,0.32); }
+.footer__legal a { color: rgba(245,240,232,0.5); text-decoration: underline; }
+@media (max-width: 900px) {
+  .footer__grid { grid-template-columns: 1fr 1fr; }
+  .footer__brand { grid-column: 1 / -1; }
+}
+@media (max-width: 480px) {
+  .footer__grid { grid-template-columns: 1fr; }
+}
+</style>

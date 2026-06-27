@@ -1,0 +1,147 @@
+---
+const links = [
+  { label: 'East Africa', href: '#destinations' },
+  { label: 'Southeast Asia', href: '#destinations' },
+  { label: 'Tim Score', href: '#tim-score' },
+  { label: 'Intelligence', href: '#intelligence' },
+  { label: 'About', href: '/about/' },
+];
+---
+<header id="bp-nav" class="nav glass-nav" role="banner">
+  <div class="nav__inner">
+    <a href="/" class="nav__brand" aria-label="Beyond Paradise home">
+      <span class="nav__wordmark">Beyond Paradise</span>
+      <span class="nav__tagline">Luxury Travel Intelligence</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary navigation">
+      {links.map(l => <a href={l.href} class="nav__link">{l.label}</a>)}
+    </nav>
+
+    <a href="#newsletter" class="btn btn-gold nav__cta">Get Intelligence</a>
+
+    <button class="nav__burger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <div id="mobile-menu" class="nav__mobile" hidden>
+    {links.map(l => <a href={l.href} class="nav__mobile-link">{l.label}</a>)}
+    <a href="#newsletter" class="btn btn-gold" style="margin-top:8px;width:100%;justify-content:center;">Get Intelligence</a>
+  </div>
+</header>
+
+<style>
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+.nav.scrolled {
+  background: rgba(9,9,11,0.85);
+  border-bottom-color: rgba(255,255,255,0.1);
+}
+.nav__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 60px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+.nav__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.nav__wordmark {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: #F5F0E8;
+  line-height: 1;
+}
+.nav__tagline {
+  font-size: 10px;
+  color: #C9A96E;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.nav__links {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  margin-left: auto;
+}
+.nav__link {
+  font-size: 14px;
+  color: rgba(245,240,232,0.72);
+  text-decoration: none;
+  transition: color 0.18s;
+  white-space: nowrap;
+}
+.nav__link:hover { color: #F5F0E8; }
+.nav__cta { flex-shrink: 0; padding: 10px 20px; font-size: 13px; }
+.nav__burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  padding: 4px;
+  margin-left: auto;
+}
+.nav__burger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #F5F0E8;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+.nav__mobile {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.nav__mobile-link {
+  padding: 14px 0;
+  font-size: 18px;
+  color: #F5F0E8;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .nav__links, .nav__cta { display: none; }
+  .nav__burger { display: flex; }
+  .nav__inner { padding: 0 24px; }
+  .nav__mobile[hidden] { display: none; }
+  .nav__mobile:not([hidden]) { display: flex; }
+}
+</style>
+
+<script is:inline>
+  (function () {
+    var btn = document.querySelector('.nav__burger');
+    var menu = document.getElementById('mobile-menu');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function () {
+      var open = menu.hasAttribute('hidden');
+      if (open) { menu.removeAttribute('hidden'); btn.setAttribute('aria-expanded', 'true'); }
+      else { menu.setAttribute('hidden', ''); btn.setAttribute('aria-expanded', 'false'); }
+    });
+    menu.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        menu.setAttribute('hidden', '');
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  })();
+</script>

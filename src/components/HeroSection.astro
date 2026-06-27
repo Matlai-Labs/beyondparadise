@@ -1,0 +1,115 @@
+---
+---
+<section class="hero" aria-label="Hero">
+  <div class="hero__bg">
+    <!-- Replace src with Tim's cinematic hero photo -->
+    <img
+      src="https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1440&q=80&auto=format"
+      alt="East Africa landscape at golden hour"
+      class="hero__img"
+      fetchpriority="high"
+      loading="eager"
+    />
+    <div class="hero__overlay"></div>
+  </div>
+
+  <div class="hero__content container">
+    <p class="label reveal">EAST AFRICA &nbsp;·&nbsp; SOUTHEAST ASIA &nbsp;·&nbsp; €6,000+ ONLY</p>
+    <h1 class="hero__title reveal reveal-delay-1">Beyond<br/>Paradise</h1>
+    <p class="hero__sub reveal reveal-delay-2">
+      The only luxury travel guide written by<br/>someone who never went home.
+    </p>
+    <div class="hero__ctas reveal reveal-delay-3">
+      <a href="#destinations" class="btn btn-gold">Explore East Africa</a>
+      <a href="#newsletter" class="btn btn-glass">Get the Newsletter</a>
+    </div>
+  </div>
+
+  <div class="hero__stats glass-dark">
+    <div class="stats-bar container">
+      {[
+        ['80+',    'Luxury Lodges Reviewed'],
+        ['94',     'Highest Tim Score 2026'],
+        ['5 Years','Living in East Africa'],
+        ['€6k+',   'Only the Best Covered'],
+        ['2,500+', 'Newsletter Subscribers'],
+      ].map(([num, lbl]) => (
+        <div class="stat">
+          <div class="stat__num">{num}</div>
+          <div class="stat__label">{lbl}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 72px;
+  overflow: hidden;
+}
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.hero__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(42,123,140,0.3) 0%,
+    rgba(9,9,11,0.1) 40%,
+    rgba(9,9,11,0.55) 70%,
+    rgba(201,169,110,0.15) 100%
+  );
+}
+.hero__content {
+  position: relative;
+  z-index: 1;
+  padding-top: 80px;
+  padding-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+}
+.hero__title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(64px, 10vw, 112px);
+  font-weight: 700;
+  font-style: italic;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: #F5F0E8;
+  max-width: 700px;
+}
+.hero__sub {
+  font-size: clamp(16px, 2vw, 22px);
+  color: rgba(245,240,232,0.7);
+  line-height: 1.55;
+  max-width: 500px;
+}
+.hero__ctas {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.hero__stats {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+}
+</style>

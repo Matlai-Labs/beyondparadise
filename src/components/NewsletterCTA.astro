@@ -1,0 +1,108 @@
+---
+---
+<section id="newsletter" class="section section--dark newsletter" aria-label="Newsletter signup">
+  <div class="container">
+    <div class="newsletter__inner glass reveal">
+      <p class="label" style="text-align:center;">WEEKLY INTELLIGENCE</p>
+      <h2 class="display-m newsletter__title">The Only Luxury Travel<br/>Intelligence You Need</h2>
+      <p class="body-l newsletter__sub">Migration updates. Honest lodge verdicts. Price changes as they happen. Directly from Zanzibar and Vietnam — not from a press trip.</p>
+
+      <!-- Replace action with real Beehiiv embed URL -->
+      <form class="newsletter__form" action="https://app.beehiiv.com/subscribe" method="post" target="_blank">
+        <input
+          type="email"
+          name="email"
+          placeholder="your@email.com"
+          class="newsletter__input"
+          required
+          aria-label="Email address"
+        />
+        <button type="submit" class="btn btn-gold newsletter__btn">Join Free</button>
+      </form>
+
+      <p class="newsletter__proof">
+        2,500+ luxury travelers &nbsp;·&nbsp; One email per week &nbsp;·&nbsp; Unsubscribe anytime
+      </p>
+
+      <div class="newsletter__features">
+        {[
+          ['📍', 'Migration Intelligence', 'Real-time Masai Mara & Serengeti updates'],
+          ['⭐', 'New Tim Scores', 'Every lodge review before it’s published'],
+          ['💰', 'Price Alerts', 'Significant price changes across 80+ properties'],
+          ['📰', 'Kim’s Asia Report', 'Monthly Vietnam & Southeast Asia intelligence'],
+        ].map(([icon, title, desc]) => (
+          <div class="nl-feature">
+            <span class="nl-feature__icon">{icon}</span>
+            <div>
+              <p class="nl-feature__title">{title}</p>
+              <p class="nl-feature__desc">{desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.newsletter__inner {
+  border-radius: 28px;
+  padding: 72px 80px;
+  text-align: center;
+  max-width: 860px;
+  margin: 0 auto;
+}
+.newsletter__title {
+  margin-top: 16px;
+  margin-bottom: 20px;
+}
+.newsletter__sub {
+  color: var(--cream-65);
+  max-width: 560px;
+  margin: 0 auto 40px;
+}
+.newsletter__form {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.newsletter__input {
+  flex: 1;
+  min-width: 260px;
+  max-width: 360px;
+  padding: 14px 20px;
+  border-radius: 100px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: var(--cream);
+  font-size: 15px;
+  font-family: var(--ff-sans);
+  outline: none;
+  transition: border-color 0.2s;
+  backdrop-filter: blur(8px);
+}
+.newsletter__input::placeholder { color: var(--cream-38); }
+.newsletter__input:focus { border-color: var(--gold); }
+.newsletter__btn { flex-shrink: 0; }
+.newsletter__proof { font-size: 13px; color: var(--cream-38); margin-bottom: 48px; }
+
+.newsletter__features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  text-align: left;
+  border-top: 1px solid var(--glass-b);
+  padding-top: 40px;
+}
+.nl-feature { display: flex; gap: 14px; align-items: flex-start; }
+.nl-feature__icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.nl-feature__title { font-size: 14px; font-weight: 600; color: var(--cream); margin-bottom: 4px; }
+.nl-feature__desc { font-size: 13px; color: var(--cream-65); line-height: 1.5; }
+
+@media (max-width: 700px) {
+  .newsletter__inner { padding: 48px 24px; }
+  .newsletter__features { grid-template-columns: 1fr; }
+}
+</style>

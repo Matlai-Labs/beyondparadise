@@ -1,0 +1,88 @@
+---
+const channels = [
+  {
+    name: 'Beyond Paradise Africa',
+    host: 'Tim Hennig',
+    desc: 'First-hand lodge reviews, migration intelligence, and the honest truth about East Africa luxury travel — from someone who lives there.',
+    img: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&q=80&auto=format',
+    alt: 'Beyond Paradise Africa YouTube channel — East Africa luxury travel',
+    url: 'https://youtube.com/@BeyondParadiseAfrica',
+    color: 'var(--teal)',
+    region: 'EAST AFRICA',
+  },
+  {
+    name: 'Beyond Paradise Asia',
+    host: 'Kim',
+    desc: 'Vietnam, Bali, Thailand — reviewed by a Vietnamese local who knows where the luxury experience is genuine and where it’s staged.',
+    img: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80&auto=format',
+    alt: 'Beyond Paradise Asia YouTube channel — Southeast Asia luxury travel',
+    url: 'https://youtube.com/@BeyondParadiseAsia',
+    color: 'var(--gold)',
+    region: 'SOUTHEAST ASIA',
+  },
+];
+---
+<section class="section section--s2" aria-label="YouTube channels">
+  <div class="container">
+    <div class="section-head reveal" style="text-align:center;">
+      <p class="label">WATCH</p>
+      <h2 class="display-m" style="margin-top:12px;">Two Channels. One Mission.</h2>
+      <p class="body-l" style="color:var(--cream-65);margin-top:16px;max-width:520px;margin-left:auto;margin-right:auto;">No press trips. No scripted tours. Just honest walkthroughs from people who know these destinations better than the brochures do.</p>
+    </div>
+
+    <div class="yt-grid">
+      {channels.map((ch, i) => (
+        <a href={ch.url} target="_blank" rel="noopener noreferrer" class={`yt-card glass reveal reveal-delay-${i+1}`} aria-label={`Watch ${ch.name} on YouTube`}>
+          <div class="yt-card__thumb">
+            <img src={ch.img} alt={ch.alt} class="yt-card__img" loading="lazy" width="560" height="315" />
+            <div class="yt-card__overlay"></div>
+            <div class="yt-card__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <span class="yt-card__region label" style={`color:${ch.color}`}>{ch.region}</span>
+          </div>
+          <div class="yt-card__body">
+            <h3 class="yt-card__name">{ch.name}</h3>
+            <p class="yt-card__host">Hosted by {ch.host}</p>
+            <p class="yt-card__desc">{ch.desc}</p>
+            <span class="btn btn-glass" style="margin-top:20px;display:inline-flex;">Watch on YouTube ↗</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+.yt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.yt-card { border-radius: 20px; overflow: hidden; transition: transform 0.28s ease; display: block; }
+.yt-card:hover { transform: translateY(-4px); }
+.yt-card__thumb { position: relative; overflow: hidden; }
+.yt-card__img { width: 100%; height: 280px; object-fit: cover; display: block; transition: transform 0.5s ease; }
+.yt-card:hover .yt-card__img { transform: scale(1.04); }
+.yt-card__overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(9,9,11,0.7) 0%, transparent 50%); }
+.yt-card__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  width: 72px;
+  height: 72px;
+  background: rgba(9,9,11,0.6);
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: background 0.22s ease, transform 0.22s ease;
+  backdrop-filter: blur(8px);
+}
+.yt-card:hover .yt-card__play { background: rgba(201,169,110,0.85); transform: translate(-50%,-50%) scale(1.1); }
+.yt-card__region { position: absolute; bottom: 16px; left: 16px; font-size: 10px; }
+.yt-card__body { padding: 24px 24px 28px; }
+.yt-card__name { font-family: 'Playfair Display', Georgia, serif; font-size: 24px; font-weight: 400; color: var(--cream); margin-bottom: 6px; }
+.yt-card__host { font-size: 12px; color: var(--gold); margin-bottom: 12px; }
+.yt-card__desc { font-size: 14px; color: var(--cream-65); line-height: 1.6; }
+@media (max-width: 700px) { .yt-grid { grid-template-columns: 1fr; } }
+</style>

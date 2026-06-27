@@ -1,0 +1,128 @@
+---
+const calendarMonths = [
+  { month: 'Jan–Mar', where: 'Zanzibar, Vietnam', icon: '🌊' },
+  { month: 'Apr–Jun', where: 'Rwanda, Uganda', icon: '🦍' },
+  { month: 'Jul–Oct', where: 'Masai Mara, Serengeti', icon: '🦁' },
+  { month: 'Nov–Dec', where: 'Zanzibar, Vietnam', icon: '☀️' },
+];
+---
+<section id="intelligence" class="section section--s1" aria-label="Beyond Paradise Intelligence">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="label">INTELLIGENCE</p>
+      <h2 class="display-m" style="margin-top:12px;">Always Up to Date</h2>
+    </div>
+
+    <div class="intel-grid">
+      <!-- Newsletter preview -->
+      <div class="intel-card glass reveal">
+        <div class="intel-card__header">
+          <p class="label">WEEKLY INTELLIGENCE</p>
+          <span class="intel-badge">Issue 14</span>
+        </div>
+        <h3 class="intel-card__title">Migration Update: The Mara River Crossing Has Started</h3>
+        <p class="intel-card__excerpt">This week's confirmed sightings from our Masai Mara correspondent — plus a price change at Singita Grumeti and Kim's report from her first week in Hoi An...</p>
+        <div class="intel-card__meta">
+          <span class="meta">27 June 2026</span>
+          <span class="meta" style="color:var(--cream-38);">·</span>
+          <span class="meta">Tim Hennig</span>
+        </div>
+        <a href="#newsletter" class="btn btn-gold" style="margin-top:24px;display:inline-flex;">Subscribe Free</a>
+      </div>
+
+      <!-- Migration calendar -->
+      <div class="intel-card glass reveal reveal-delay-1">
+        <div class="intel-card__header">
+          <p class="label label--teal">MIGRATION CALENDAR</p>
+          <span class="intel-badge" style="background:var(--teal);color:#fff;">Live</span>
+        </div>
+        <h3 class="intel-card__title">When to Go — At a Glance</h3>
+        <div class="cal-grid">
+          {calendarMonths.map(m => (
+            <div class="cal-row">
+              <span class="cal-icon">{m.icon}</span>
+              <span class="cal-month">{m.month}</span>
+              <span class="cal-where">{m.where}</span>
+            </div>
+          ))}
+        </div>
+        <a href="/east-africa/migration-calendar/" class="btn btn-glass" style="margin-top:24px;display:inline-flex;">Full Calendar</a>
+      </div>
+
+      <!-- Price database -->
+      <div class="intel-card glass reveal reveal-delay-2">
+        <div class="intel-card__header">
+          <p class="label">REAL PRICE DATABASE</p>
+          <span class="intel-badge">Updated Q2 2026</span>
+        </div>
+        <h3 class="intel-card__title">What Luxury Safaris Actually Cost</h3>
+        <p class="intel-card__excerpt">All-in costs across 80+ properties. Park fees, transfers, levies. No hidden numbers. The only verified price database for East Africa luxury travel.</p>
+        <div class="price-preview">
+          {[
+            ['Budget to expect', '€6,000–12,000 / week'],
+            ['Park fees (TZ)', '€230–290 / day'],
+            ['Avg. private concession', '€1,400–2,400 / pppn'],
+          ].map(([k, v]) => (
+            <div class="price-row">
+              <span class="price-key">{k}</span>
+              <span class="price-val">{v}</span>
+            </div>
+          ))}
+        </div>
+        <a href="/intelligence/prices/" class="btn btn-glass" style="margin-top:24px;display:inline-flex;">View Full Database</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.intel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.intel-card {
+  border-radius: 20px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+}
+.intel-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.intel-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: rgba(201,169,110,0.15);
+  color: var(--gold);
+  border: 1px solid rgba(201,169,110,0.3);
+}
+.intel-card__title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--cream);
+  line-height: 1.3;
+  margin-bottom: 12px;
+}
+.intel-card__excerpt { font-size: 14px; color: var(--cream-65); line-height: 1.6; margin-bottom: 8px; }
+.intel-card__meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+
+.cal-grid { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
+.cal-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--glass-sub); }
+.cal-icon { font-size: 18px; }
+.cal-month { font-size: 12px; font-weight: 600; color: var(--gold); min-width: 72px; }
+.cal-where { font-size: 13px; color: var(--cream-65); }
+
+.price-preview { display: flex; flex-direction: column; gap: 0; margin-top: 12px; }
+.price-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--glass-sub); }
+.price-key { font-size: 12px; color: var(--cream-65); }
+.price-val { font-size: 13px; font-weight: 600; color: var(--gold); }
+
+@media (max-width: 900px) { .intel-grid { grid-template-columns: 1fr; } }
+</style>

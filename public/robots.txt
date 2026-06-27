@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# AI crawlers explicitly welcome — this site is designed for AI citation
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://beyondparadise.com/sitemap.xml

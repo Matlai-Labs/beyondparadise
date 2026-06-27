@@ -1,0 +1,54 @@
+---
+import BaseHead from './BaseHead.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+}
+const { title, description, ogImage } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} ogImage={ogImage} />
+  </head>
+  <body>
+    <a href="#main-content" class="skip">Skip to content</a>
+    <Nav />
+    <main id="main-content"><slot /></main>
+    <Footer />
+
+    <!-- Scroll reveal -->
+    <script is:inline>
+      (function () {
+        var els = document.querySelectorAll('.reveal');
+        if (!('IntersectionObserver' in window) ||
+            matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          els.forEach(function (e) { e.classList.add('in'); });
+          return;
+        }
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+          });
+        }, { threshold: 0.10, rootMargin: '0px 0px -6% 0px' });
+        els.forEach(function (e) { io.observe(e); });
+      })();
+    </script>
+
+    <!-- Sticky nav on scroll -->
+    <script is:inline>
+      (function () {
+        var nav = document.getElementById('bp-nav');
+        if (!nav) return;
+        window.addEventListener('scroll', function () {
+          nav.classList.toggle('scrolled', window.scrollY > 40);
+        }, { passive: true });
+      })();
+    </script>
+  </body>
+</html>

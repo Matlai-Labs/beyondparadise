@@ -1,0 +1,77 @@
+---
+const destinations = [
+  {
+    name: 'Zanzibar',
+    sub: 'Indian Ocean · Tanzania',
+    author: 'Tim Hennig',
+    img: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&q=80&auto=format',
+    alt: 'Zanzibar turquoise waters and white sand beach',
+    href: '/east-africa/zanzibar/',
+    color: '#2A7B8C',
+  },
+  {
+    name: 'Serengeti',
+    sub: 'Migration Season · Tanzania',
+    author: 'Tim Hennig',
+    img: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&q=80&auto=format',
+    alt: 'Serengeti plains at golden hour with wildlife',
+    href: '/east-africa/serengeti/',
+    color: '#4A3728',
+  },
+  {
+    name: 'Masai Mara',
+    sub: 'Kenya · July–October',
+    author: 'Tim Hennig',
+    img: 'https://images.unsplash.com/photo-1547970810-dc1eac37d174?w=800&q=80&auto=format',
+    alt: 'Masai Mara open savanna with big sky',
+    href: '/east-africa/masai-mara/',
+    color: '#3D2E1C',
+  },
+  {
+    name: 'Vietnam',
+    sub: 'Hoi An · Hanoi · Ha Long',
+    author: 'Kim — Asia Lead',
+    img: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80&auto=format',
+    alt: 'Vietnam river and lantern-lit streets',
+    href: '/southeast-asia/vietnam/',
+    color: '#2A7B8C',
+  },
+];
+---
+<section id="destinations" class="section section--s1" aria-label="Destinations">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="label">DESTINATIONS</p>
+      <h2 class="display-m" style="margin-top:12px;">Where We Go</h2>
+    </div>
+
+    <div class="cards-grid cards-grid--4">
+      {destinations.map((d, i) => (
+        <a href={d.href} class={`dest-card glass reveal reveal-delay-${i+1}`} aria-label={`Explore ${d.name}`}>
+          <div class="dest-card__img-wrap">
+            <img
+              src={d.img}
+              alt={d.alt}
+              class="dest-card__img"
+              loading="lazy"
+              width="400"
+              height="230"
+            />
+          </div>
+          <div class="dest-card__body">
+            <span class="label label--teal" style="font-size:9px;">{d.sub.toUpperCase()}</span>
+            <p class="dest-card__name">{d.name}</p>
+            <p class="dest-card__sub">{d.sub}</p>
+            <p class="dest-card__author">✍ {d.author}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+.dest-card__img-wrap { overflow: hidden; border-radius: 12px 12px 0 0; }
+.dest-card__img { transition: transform 0.5s ease; }
+.dest-card:hover .dest-card__img { transform: scale(1.04); }
+</style>
