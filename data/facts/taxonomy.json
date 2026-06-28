@@ -10,6 +10,13 @@
     "sea-turtles",
     "humpback-whales",
     "big-five",
+    "entry",
+    "entry-requirements",
+    "health",
+    "destinations",
+    "getting-there",
+    "big-cats",
+    "scuba-diving",
     "african-lion",
     "african-leopard",
     "african-cheetah",
@@ -77,7 +84,10 @@
       "menai-bay",
       "mnemba-atoll",
       "ndutu",
-      "stone-town"
+      "stone-town",
+      "east-africa",
+      "global",
+      "serengeti-western-corridor"
     ],
     "southeast-asia": [
       "vietnam",

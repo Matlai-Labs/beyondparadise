@@ -1,0 +1,139 @@
+{
+  "_meta": {
+    "description": "Beyond Paradise research queue. Each item maps to one gather-facts.js run. Add new items here; research-daily.js works through them in priority order, skipping anything already in facts.json or the candidates buffer.",
+    "priority_order": "high → medium → low"
+  },
+  "items": [
+    {
+      "type": "wildlife",
+      "key": "whale-shark-mafia",
+      "name": "Whale Sharks Mafia Island Tanzania",
+      "topic": "whale-sharks",
+      "region": "mafia-island",
+      "priority": "high",
+      "notes": "Core wildlife guide already live — research fills gaps and verifies existing facts"
+    },
+    {
+      "type": "wildlife",
+      "key": "dolphins-menai-bay",
+      "name": "Indo-Pacific Bottlenose Dolphins Menai Bay Zanzibar",
+      "topic": "dolphins",
+      "region": "menai-bay",
+      "priority": "high",
+      "notes": "Next wildlife guide — ethical dolphin swimming is a major decision question"
+    },
+    {
+      "type": "wildlife",
+      "key": "sea-turtles-zanzibar",
+      "name": "Sea Turtles Zanzibar Mnemba Atoll",
+      "topic": "sea-turtles",
+      "region": "mnemba-atoll",
+      "priority": "high",
+      "notes": "High search intent — which beaches, which months, which operators are ethical"
+    },
+    {
+      "type": "wildlife",
+      "key": "wildebeest-migration-serengeti",
+      "name": "Wildebeest Great Migration Serengeti",
+      "topic": "wildebeest-migration",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Most-searched East Africa safari question — month-by-month location data"
+    },
+    {
+      "type": "wildlife",
+      "key": "humpback-whales-mozambique",
+      "name": "Humpback Whales Mozambique Channel Zanzibar",
+      "topic": "humpback-whales",
+      "region": "zanzibar",
+      "priority": "medium",
+      "notes": "July–October season; swim-with regulations vary by country"
+    },
+    {
+      "type": "lodge",
+      "key": "singita-grumeti",
+      "name": "Singita Grumeti Lodge Serengeti",
+      "topic": "lodge-review",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Page live but review has AI-fabricated prose — source real facts here to replace them"
+    },
+    {
+      "type": "lodge",
+      "key": "mnemba-island-lodge",
+      "name": "Mnemba Island Lodge andBeyond Zanzibar",
+      "topic": "lodge-review",
+      "region": "mnemba-atoll",
+      "priority": "high",
+      "notes": "Tim's next lodge review — gather price, capacity, conservation data"
+    },
+    {
+      "type": "lodge",
+      "key": "mahali-mzuri",
+      "name": "Mahali Mzuri Richard Branson Masai Mara",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "priority": "medium"
+    },
+    {
+      "type": "lodge",
+      "key": "singita-sasakwa",
+      "name": "Singita Sasakwa Lodge Serengeti",
+      "topic": "lodge-review",
+      "region": "serengeti",
+      "priority": "medium"
+    },
+    {
+      "type": "destination",
+      "key": "tanzania-entry",
+      "name": "Tanzania Entry Requirements Visa Health",
+      "topic": "entry-requirements",
+      "region": "tanzania",
+      "priority": "high",
+      "notes": "Prerequisite for Tanzania destination hub page"
+    },
+    {
+      "type": "destination",
+      "key": "kenya-entry",
+      "name": "Kenya Entry Requirements Visa Health",
+      "topic": "entry-requirements",
+      "region": "kenya",
+      "priority": "medium"
+    },
+    {
+      "type": "destination",
+      "key": "zanzibar-seasons",
+      "name": "Zanzibar Weather Seasons When to Go",
+      "topic": "seasons",
+      "region": "zanzibar",
+      "priority": "medium"
+    },
+    {
+      "type": "destination",
+      "key": "mafia-island-getting-there",
+      "name": "Mafia Island Tanzania Getting There Transfers",
+      "topic": "getting-there",
+      "region": "mafia-island",
+      "priority": "medium",
+      "notes": "Coastal Aviation charter flights, Dar es Salaam connection"
+    },
+    {
+      "type": "operator",
+      "key": "aquatica-zanzibar",
+      "name": "Aquatica Zanzibar Marine Tours",
+      "topic": "wildlife-ethics",
+      "region": "zanzibar",
+      "priority": "medium",
+      "notes": "Dolphin tour operator — ethics verification needed before recommending"
+    },
+    {
+      "type": "wildlife",
+      "key": "whale-sharks-mafia-operators",
+      "name": "Whale Shark Snorkelling Operators Mafia Island Ethics",
+      "topic": "wildlife-ethics",
+      "region": "mafia-island",
+      "priority": "medium",
+      "notes": "Operator ethics grading for whale shark swim operators at Mafia"
+    }
+  ]
+}

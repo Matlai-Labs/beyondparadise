@@ -23,6 +23,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const cliArgs = process.argv.slice(2);
 const arg = k => (cliArgs.find(a => a.startsWith(`--${k}=`)) || '').split('=').slice(1).join('=');
@@ -135,5 +136,10 @@ if (!DRY && promoted > 0) {
   fs.writeFileSync(FACTS_FILE, JSON.stringify(factsDb, null, 2) + '\n');
   fs.writeFileSync(CANDIDATES_FILE, JSON.stringify(store, null, 2) + '\n');
   console.log(`\n→ ${path.relative(ROOT, FACTS_FILE)} (${factsDb.facts.length} total facts)`);
-  console.log(`→ ${path.relative(ROOT, CANDIDATES_FILE)} (${keep.length} remaining candidates)\n`);
+  console.log(`→ ${path.relative(ROOT, CANDIDATES_FILE)} (${keep.length} remaining candidates)`);
+
+  try {
+    execSync(`"${process.execPath}" "${path.join(__dirname, 'build-facts-index.js')}"`, { stdio: 'inherit' });
+  } catch { /* index rebuild is best-effort */ }
+  console.log('');
 }
