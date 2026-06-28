@@ -6,7 +6,7 @@ Beyond Paradise is an independent luxury travel editorial brand for East Africa 
 `/Users/tim/Desktop/AI_projects/shared_knowledge/docs/new-site-master-checklist.md`
 
 **Design system (visual/brand rules):**
-`/Users/tim/Desktop/AI_projects/beyondparadise/DESIGN.md`
+`/Users/tim/Desktop/AI_projects/beyondparadiseadventures/DESIGN.md`
 
 ---
 
@@ -26,7 +26,7 @@ The keystone product is the **Marine Wildlife Encounter Index**: species × loca
 ## Tech stack
 
 - **Framework:** Astro 4 (static site, zero JS bloat, AI-crawler friendly)
-- **Deploy:** Cloudflare Pages — auto-deploys on `git push main` (`github.com/Matlai-Labs/beyondparadise`)
+- **Deploy:** Cloudflare Pages — auto-deploys on `git push main` (`github.com/Matlai-Labs/beyondparadiseadventures`)
 - **URL:** `beyondparadise.com` (owned, domain connected after first deploy)
 - **Styling:** Custom CSS only, no Tailwind. Design tokens in `site/src/styles/global.css`
 - **Data:** JSON databases in `data/` (not inside `site/`) — lodges, wildlife, destinations, operators, facts
@@ -140,7 +140,7 @@ Fix all errors before pushing. `git push` triggers Cloudflare Pages rebuild.
 ## File map
 
 ```
-beyondparadise/
+beyondparadiseadventures/
 ├── CLAUDE.md                         # This file — agent instructions
 ├── DESIGN.md                         # Visual/brand system (colors, type, spacing, components)
 ├── data/                             # Knowledge base — all structured data

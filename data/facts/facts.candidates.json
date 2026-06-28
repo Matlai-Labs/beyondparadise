@@ -1,0 +1,8 @@
+{
+  "_meta": {
+    "description": "Beyond Paradise research candidates buffer. gather-facts.js writes here. Tim reviews and promotes to facts.json via promote-fact.js.",
+    "schema": "1.0"
+  },
+  "candidates": [],
+  "updated": "2026-06-28"
+}
