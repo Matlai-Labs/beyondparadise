@@ -115,6 +115,111 @@
       "type": "ngo-research",
       "notes": "Lead scientific partner for Serengeti ecosystem since 1950s. Migration ecology data"
     },
+    "grumeti-fund": {
+      "tier": 2,
+      "name": "Grumeti Fund",
+      "url": "https://grumetifund.org",
+      "type": "ngo-research",
+      "notes": "Conservation partner for the Singita Grumeti concessions and Serengeti ecosystem protection"
+    },
+    "unesco-world-heritage": {
+      "tier": 1,
+      "name": "UNESCO World Heritage Centre",
+      "url": "https://whc.unesco.org",
+      "type": "international-authority",
+      "notes": "Official World Heritage inscriptions and site descriptions"
+    },
+    "tz-immigration-official": {
+      "tier": 1,
+      "name": "Tanzania Immigration Department",
+      "url": "https://www.immigration.go.tz",
+      "type": "government",
+      "notes": "Official Tanzania visa and entry requirement source"
+    },
+    "kenya-immigration-official": {
+      "tier": 1,
+      "name": "Kenya Directorate of Immigration Services",
+      "url": "https://immigration.go.ke",
+      "type": "government",
+      "notes": "Official Kenya entry, eTA, passport, and immigration source"
+    },
+    "vietnam-immigration-official": {
+      "tier": 1,
+      "name": "Vietnam Immigration Department",
+      "url": "https://evisa.gov.vn",
+      "type": "government",
+      "notes": "Official Vietnam e-visa and immigration source"
+    },
+    "visitzanzibar-official": {
+      "tier": 1,
+      "name": "Visit Zanzibar — Official Tourism Portal",
+      "url": "https://visitzanzibar.go.tz",
+      "type": "government-tourism",
+      "notes": "Official Zanzibar tourism and travel requirement source"
+    },
+    "zanzibar-tourism-board": {
+      "tier": 3,
+      "name": "Zanzibar Tourism Board",
+      "url": "https://www.zanzibartourism.go.tz",
+      "type": "tourism-board",
+      "notes": "Official Zanzibar tourism information"
+    },
+    "vietnam-tourism-board": {
+      "tier": 3,
+      "name": "Vietnam National Authority of Tourism",
+      "url": "https://vietnam.travel",
+      "type": "tourism-board",
+      "notes": "Official Vietnam tourism information"
+    },
+    "rdb-rwanda": {
+      "tier": 1,
+      "name": "Rwanda Development Board",
+      "url": "https://rdb.rw",
+      "type": "government",
+      "notes": "Official Rwanda tourism, permits, and conservation authority"
+    },
+    "gorilla-doctors": {
+      "tier": 2,
+      "name": "Gorilla Doctors",
+      "url": "https://www.gorilladoctors.org",
+      "type": "ngo-research",
+      "notes": "Veterinary and conservation programme for mountain and Grauer's gorillas"
+    },
+    "uk-fcdo": {
+      "tier": 1,
+      "name": "UK Foreign, Commonwealth & Development Office Travel Advice",
+      "url": "https://www.gov.uk/foreign-travel-advice",
+      "type": "government",
+      "notes": "Official UK government travel advice"
+    },
+    "who-yellow-fever": {
+      "tier": 1,
+      "name": "World Health Organization — Yellow Fever",
+      "url": "https://www.who.int/health-topics/yellow-fever",
+      "type": "health-authority",
+      "notes": "International authority for yellow fever vaccination and disease risk"
+    },
+    "who-malaria": {
+      "tier": 1,
+      "name": "World Health Organization — Malaria",
+      "url": "https://www.who.int/health-topics/malaria",
+      "type": "health-authority",
+      "notes": "International authority for malaria risk and prevention"
+    },
+    "cdc-tz": {
+      "tier": 1,
+      "name": "CDC Travelers' Health — Tanzania",
+      "url": "https://wwwnc.cdc.gov/travel/destinations/traveler/none/tanzania",
+      "type": "health-authority",
+      "notes": "US CDC traveler health guidance for Tanzania"
+    },
+    "znz-airport-official": {
+      "tier": 1,
+      "name": "Abeid Amani Karume International Airport",
+      "url": "https://www.zanzibar-airport.com",
+      "type": "airport-authority",
+      "notes": "Official Zanzibar airport information"
+    },
     "amir-2016-plos-one": {
       "tier": 1,
       "name": "Amir OA et al. (2016) — Tourism impact on Indo-Pacific bottlenose dolphins, PLOS ONE",

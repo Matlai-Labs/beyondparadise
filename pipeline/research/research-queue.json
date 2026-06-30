@@ -134,6 +134,132 @@
       "region": "mafia-island",
       "priority": "medium",
       "notes": "Operator ethics grading for whale shark swim operators at Mafia"
+    },
+    {
+      "type": "wildlife",
+      "key": "whale-shark-regulations-tz",
+      "name": "Whale Shark Snorkelling Regulations Tanzania MPRU Permit Rules",
+      "topic": "whale-sharks",
+      "region": "mafia-island",
+      "priority": "high",
+      "notes": "MPRU permit requirements, max swimmers per animal, distance rules, seasonal closures — needed for wildlife guide"
+    },
+    {
+      "type": "lodge",
+      "key": "singita-grumeti-details",
+      "name": "Singita Grumeti Reserves Activities Conservation Rooms Rates",
+      "topic": "lodge-review",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Existing entry has only 1 fact — need room count, activities, Grumeti Fund land area, nightly rates, what's included"
+    },
+    {
+      "type": "lodge",
+      "key": "mahali-mzuri-details",
+      "name": "Mahali Mzuri Virgin Limited Edition Masai Mara Suites Rates Conservation",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "priority": "high",
+      "notes": "Existing entry has only 1 fact — need tent count, all-inclusive pricing, Olare Motorogi Conservancy details, activities"
+    },
+    {
+      "type": "destination",
+      "key": "zanzibar-seasons-detail",
+      "name": "Zanzibar Climate Kaskazi Masika Seasons Best Time to Visit by Activity",
+      "topic": "seasons",
+      "region": "zanzibar",
+      "priority": "high",
+      "notes": "Existing has only 1 fact — need month-by-month breakdown, Kaskazi vs Masika, best months for diving/whale sharks/kite"
+    },
+    {
+      "type": "wildlife",
+      "key": "serengeti-big-cats",
+      "name": "Serengeti Lions Leopards Cheetahs Big Cat Sightings Month by Month",
+      "topic": "big-cats",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Lions, leopards, cheetahs — sighting probability, best areas (Seronera, Northern), calving season predator concentration"
+    },
+    {
+      "type": "wildlife",
+      "key": "serengeti-wildebeest-calving",
+      "name": "Serengeti Wildebeest Calving Season Southern Serengeti January February",
+      "topic": "wildebeest-calving",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "January–March calving in Ndutu — distinct from the annual migration circuit; only 1 fact in DB on this topic"
+    },
+    {
+      "type": "wildlife",
+      "key": "rwanda-mountain-gorilla",
+      "name": "Rwanda Mountain Gorilla Trekking Volcanoes National Park Permits Ethics",
+      "topic": "gorilla-trekking",
+      "region": "rwanda",
+      "priority": "high",
+      "notes": "Tim covers Rwanda — gorilla trekking is the #1 decision question. Permit prices, habituated groups, best lodges, ethics"
+    },
+    {
+      "type": "destination",
+      "key": "mafia-island-seasons",
+      "name": "Mafia Island Tanzania Best Time to Visit Seasons Diving Whale Sharks",
+      "topic": "seasons",
+      "region": "mafia-island",
+      "priority": "medium",
+      "notes": "When to dive, when whale sharks are present, wet vs dry season, airport access reliability"
+    },
+    {
+      "type": "destination",
+      "key": "serengeti-when-to-go",
+      "name": "Serengeti Tanzania Best Time to Visit Migration Calendar Month by Month",
+      "topic": "seasons",
+      "region": "serengeti",
+      "priority": "medium",
+      "notes": "Month-by-month breakdown: calving, migration north, river crossings, green season — the decision guide"
+    },
+    {
+      "type": "destination",
+      "key": "masai-mara-migration",
+      "name": "Masai Mara Kenya Great Migration River Crossings Mara River July October",
+      "topic": "wildebeest-migration",
+      "region": "masai-mara",
+      "priority": "medium",
+      "notes": "Kenya side — Mara River crossing spectacle, when to be there, best camps near crossing points"
+    },
+    {
+      "type": "destination",
+      "key": "zanzibar-beaches-guide",
+      "name": "Zanzibar Best Beaches by Month Swimming Snorkelling Kite Surfing",
+      "topic": "destinations",
+      "region": "zanzibar",
+      "priority": "medium",
+      "notes": "Which beach for which activity, tidal patterns, jellyfish season, seaweed harvest impact on swimming"
+    },
+    {
+      "type": "wildlife",
+      "key": "mafia-island-diving",
+      "name": "Mafia Island Scuba Diving Coral Reefs Dive Sites Marine Park",
+      "topic": "scuba-diving",
+      "region": "mafia-island",
+      "priority": "medium",
+      "notes": "Chole Bay dive sites, visibility, coral health, Barracuda Reef, best dive season, liveaboard options"
+    },
+    {
+      "type": "destination",
+      "key": "safari-costs-east-africa",
+      "name": "East Africa Safari Cost Breakdown Tanzania Kenya Serengeti Masai Mara Prices",
+      "topic": "prices",
+      "region": "east-africa",
+      "priority": "medium",
+      "notes": "Price ranges by category: budget/mid/luxury; park fees; internal flights; what drives the all-in cost"
+    },
+    {
+      "type": "destination",
+      "key": "vietnam-hoi-an-luxury",
+      "name": "Hoi An Vietnam Luxury Hotels Experiences When to Visit",
+      "topic": "destinations",
+      "region": "hoi-an",
+      "priority": "medium",
+      "notes": "Kim's first Vietnam content — top luxury stays, ancient town access, river cruises, lantern festival, flood season"
     }
   ]
 }
