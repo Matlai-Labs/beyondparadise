@@ -575,6 +575,258 @@
       "region": "serengeti",
       "priority": "medium",
       "notes": "Definitive month-by-month data: where the herds are, what's happening (calving/rut/crossings), which camps to book — structured for the intelligence/migration-calendar page"
+    },
+    {
+      "type": "wildlife",
+      "key": "african-lion-deep-dive",
+      "name": "African Lion Serengeti Pride Structure Territory Mane Population IUCN",
+      "topic": "african-lion",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Panthera leo — Serengeti lion population (est. 3,000), pride size range, territory km², mane colour temperature link, cub mortality rate, IUCN Vulnerable status, infanticide"
+    },
+    {
+      "type": "destination",
+      "key": "kilimanjaro-trekking",
+      "name": "Kilimanjaro Tanzania Climbing Routes Altitude Sickness Ethics Best Operators",
+      "topic": "safari",
+      "region": "kilimanjaro",
+      "priority": "high",
+      "notes": "Africa's highest peak — route comparison (Machame vs Lemosho vs Marangu), summit success rates, AMS altitude sickness facts, porter ethics, KINAPA regulations, best guide companies"
+    },
+    {
+      "type": "destination",
+      "key": "tsavo-east-west-safari",
+      "name": "Tsavo National Park Kenya Red Elephants Lions Poaching Recovery",
+      "topic": "safari",
+      "region": "tsavo",
+      "priority": "high",
+      "notes": "Kenya's largest park — red dust elephants (iron-oxide soil), Man-Eaters of Tsavo history, ivory poaching recovery stats, Sheldrick Wildlife Trust, best camps, self-drive vs guided"
+    },
+    {
+      "type": "wildlife",
+      "key": "samburu-special-five",
+      "name": "Samburu Special Five Kenya Grevy Zebra Reticulated Giraffe Gerenuk Oryx Ostrich",
+      "topic": "safari",
+      "region": "samburu",
+      "priority": "high",
+      "notes": "Samburu's 5 endemic/rare species: Grevy's zebra (IUCN Endangered), reticulated giraffe, gerenuk, Beisa oryx, Somali ostrich — population facts, why found only in arid north Kenya"
+    },
+    {
+      "type": "wildlife",
+      "key": "zanzibar-red-colobus",
+      "name": "Zanzibar Red Colobus Monkey Critically Endangered Jozani Forest Facts",
+      "topic": "wildlife-ethics",
+      "region": "zanzibar",
+      "priority": "high",
+      "notes": "Piliocolobus kirkii — endemic to Zanzibar, IUCN Critically Endangered, Jozani-Chwaka Bay NP, population estimate (~3,000), biggest threats, responsible viewing distance rules"
+    },
+    {
+      "type": "destination",
+      "key": "tanzania-park-fees",
+      "name": "Tanzania National Park Fees TANAPA Conservation Levy Entry Costs 2024",
+      "topic": "national-park",
+      "region": "tanzania",
+      "priority": "high",
+      "notes": "TANAPA per-night conservation fees for Serengeti, Ngorongoro, Tarangire, Kilimanjaro, Ruaha — non-resident rates, vehicle fees, why fees have risen, what they fund"
+    },
+    {
+      "type": "destination",
+      "key": "lodge-sustainability-facts",
+      "name": "East Africa Safari Lodge Sustainability Solar Energy Water Carbon Singita andBeyond",
+      "topic": "sustainability",
+      "region": "east-africa",
+      "priority": "high",
+      "notes": "Verifiable sustainability claims: Singita solar %, andBeyond water recycling, Wilderness carbon neutral target, lodge certifications (Rainforest Alliance, LEED, Travelife) — no greenwashing"
+    },
+    {
+      "type": "destination",
+      "key": "guide-certification-standards",
+      "name": "Safari Guide Certification FGASA Tanzania Kenya Standards Armed Guide Training",
+      "topic": "guide-quality",
+      "region": "east-africa",
+      "priority": "high",
+      "notes": "FGASA Level 1/2/3, TGSF Tanzania guide standards, WHatS wilderness first aid, armed guide permit, why guide quality varies — what to look for when booking"
+    },
+    {
+      "type": "wildlife",
+      "key": "nile-crocodile-mara-rufiji",
+      "name": "Nile Crocodile Mara River Rufiji Tanzania Population Size Behaviour",
+      "topic": "wildlife-ethics",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Crocodylus niloticus — Mara River ambush during crossings, Rufiji River population (largest in East Africa), size records, IUCN Least Concern, ethical photography distance"
+    },
+    {
+      "type": "wildlife",
+      "key": "photography-safari-golden-hour",
+      "name": "Photography Safari Serengeti Best Light Season Positioning Wildlife Tips",
+      "topic": "photography",
+      "region": "serengeti",
+      "priority": "medium",
+      "notes": "Golden hour timing in Serengeti by month, low vehicle angle advantages, best focal lengths, operator vehicles with roof hatches vs fixed tops, ethics of off-road positioning"
+    },
+    {
+      "type": "wildlife",
+      "key": "night-drive-conservancy-facts",
+      "name": "Night Game Drive Private Conservancy Kenya Tanzania Rules Species Encountered",
+      "topic": "night-drive",
+      "region": "masai-mara",
+      "priority": "medium",
+      "notes": "Night drives permitted in private conservancies (Olare Motorogi, Mara North) but NOT in national reserves — species encountered (aardvark, serval, bush baby, porcupine), spotlight rules"
+    },
+    {
+      "type": "destination",
+      "key": "value-all-inclusive-safari",
+      "name": "Luxury Safari Value All-Inclusive What's Included Hidden Costs Price Justification",
+      "topic": "value",
+      "region": "east-africa",
+      "priority": "medium",
+      "notes": "What €3,000+/night actually covers: accommodation, all meals, drinks, game drives, park fees, laundry, guides, trackers — what's excluded (premium alcohol, conservation levies, transfers)"
+    },
+    {
+      "type": "destination",
+      "key": "tanzania-internal-flights",
+      "name": "Tanzania Internal Flights Safari Airstrips Coastal Aviation Air Excel Auric Air",
+      "topic": "transfers",
+      "region": "tanzania",
+      "priority": "medium",
+      "notes": "Bush flight operators — Coastal Aviation, Air Excel, Auric Air, ZanAir — airstrip locations, DAR to Serengeti routing, Zanzibar to Mafia Island, weight limits, booking lead time"
+    },
+    {
+      "type": "destination",
+      "key": "marine-park-fees-tanzania",
+      "name": "Tanzania Marine Parks Authority Fees Regulations Dive Permits MPA Zones",
+      "topic": "marine-park",
+      "region": "mafia-island",
+      "priority": "medium",
+      "notes": "MPRU/MNRT daily fees for Mafia Marine Park, Mnemba Atoll, Chumbe Island — non-resident daily entry, dive permit, whale shark snorkelling surcharge, no-take zone boundaries"
+    },
+    {
+      "type": "destination",
+      "key": "vietnam-con-dao-luxury",
+      "name": "Con Dao Islands Vietnam Sea Turtle Sanctuary Remote Luxury Six Senses",
+      "topic": "destinations",
+      "region": "con-dao",
+      "priority": "medium",
+      "notes": "Kim's content — Six Senses Con Dao, sea turtle nesting beach, national park, best season (May–Sep), getting there from Ho Chi Minh City, why it remains uncrowded"
+    },
+    {
+      "type": "destination",
+      "key": "vietnam-phu-quoc-luxury",
+      "name": "Phu Quoc Vietnam Luxury Resorts Coral Reefs Best Season Getting There",
+      "topic": "destinations",
+      "region": "phu-quoc",
+      "priority": "medium",
+      "notes": "Kim's content — Aman Phu Quoc, JW Marriott, Anantara, coral reef snorkelling, national park, pepper farms, dry season Nov–Apr, direct international flights vs domestic from HCMC"
+    },
+    {
+      "type": "wildlife",
+      "key": "hippo-facts-africa",
+      "name": "Hippo Africa Population Danger Behaviour Rufiji Mara Zanzibar Facts",
+      "topic": "wildlife-ethics",
+      "region": "selous-nyerere",
+      "priority": "medium",
+      "notes": "Hippopotamus amphibius — Africa's most dangerous mammal statistics, Rufiji River largest concentration, territorial aggression, IUCN Vulnerable, ethical viewing distance from boats"
+    },
+    {
+      "type": "destination",
+      "key": "ndutu-plains-ecosystem",
+      "name": "Ndutu Plains Southern Serengeti Short Grass Ecosystem Calving Habitat",
+      "topic": "safari",
+      "region": "ndutu",
+      "priority": "medium",
+      "notes": "Ndutu vs Ngorongoro border area, short-grass plains geology (volcanic soil = nutrition), why calving happens here, Lake Ndutu flamingos, best camps (Ndutu Safari Lodge, &Beyond)"
+    },
+    {
+      "type": "destination",
+      "key": "bush-dining-safari-lodges",
+      "name": "Bush Dining Safari Lodges East Africa Sundowners Local Ingredients Food Culture",
+      "topic": "food-and-beverage",
+      "region": "east-africa",
+      "priority": "medium",
+      "notes": "Bush dinner traditions at top lodges, boma dining, Singita vs andBeyond F&B, local sourcing (Serengeti honey, Zanzibar vanilla), sundowner locations, dietary accommodation at remote camps"
+    },
+    {
+      "type": "wildlife",
+      "key": "big-five-concept-origin",
+      "name": "Big Five Africa Origin Concept Conservation Safari Marketing",
+      "topic": "big-five",
+      "region": "east-africa",
+      "priority": "high",
+      "notes": "Term coined by big-game hunters for the five most dangerous to hunt — lion, leopard, elephant, rhino, buffalo. Conservation irony: now top-five photographed. Combined current Serengeti/Masai Mara population estimates for all five"
+    },
+    {
+      "type": "destination",
+      "key": "visa-tanzania-kenya-2024",
+      "name": "Tanzania Kenya Visa Requirements E-Visa East Africa Tourist Visa 2024",
+      "topic": "visa",
+      "region": "tanzania",
+      "priority": "high",
+      "notes": "Tanzania e-visa portal, cost ($50 USD), EAC single-tourist visa option, Kenya ETA system, processing time, validity, multiple entry, overstay consequences — practical decision facts"
+    },
+    {
+      "type": "destination",
+      "key": "lodge-exclusivity-guests",
+      "name": "Safari Lodge Exclusivity Guest Limits Singita andBeyond Wilderness Capacity",
+      "topic": "exclusivity",
+      "region": "east-africa",
+      "priority": "high",
+      "notes": "Exact guest counts: Singita Lamai (12), Mnemba Island (18), Mahali Mzuri (18), Bisate (12 villas) — why fewer guests = better experience, private concession exclusivity, vehicle ratios"
+    },
+    {
+      "type": "wildlife",
+      "key": "african-cheetah-facts-deep",
+      "name": "African Cheetah Population East Africa Hunting Success Rate Conservation Threats",
+      "topic": "african-cheetah",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Deeper facts: ~7,100 left globally, East Africa subpopulation, 50% hunting success rate, cub mortality from lions (up to 90%), IUCN Vulnerable, conflict with livestock farmers"
+    },
+    {
+      "type": "destination",
+      "key": "conservation-east-africa-overview",
+      "name": "East Africa Conservation Protected Area Coverage Kenya Tanzania Rwanda Facts",
+      "topic": "conservation",
+      "region": "east-africa",
+      "priority": "high",
+      "notes": "% land under protection in Tanzania (38%), Kenya (12%), Rwanda (10%), total ecosystem corridors, wildlife corridor threats, IUCN managed area categories, what conservation fees pay for"
+    },
+    {
+      "type": "destination",
+      "key": "stone-town-luxury-hotels",
+      "name": "Zanzibar Stone Town Luxury Hotels Park Hyatt Emerson Spice Serena Inn",
+      "topic": "lodge-review",
+      "region": "stone-town",
+      "priority": "medium",
+      "notes": "Top Stone Town luxury properties — Park Hyatt Zanzibar, Emerson Spice, Serena Inn, Zanzibar Serena Hotel — room counts, historic buildings, rooftop dining, proximity to Old Fort, rates"
+    },
+    {
+      "type": "destination",
+      "key": "vietnam-mekong-delta-luxury",
+      "name": "Mekong Delta Vietnam Floating Markets Rice Paddies Luxury Cruises",
+      "topic": "destinations",
+      "region": "mekong-delta",
+      "priority": "medium",
+      "notes": "Kim's content — Cai Rang floating market, luxury river cruises (Bassac, Victoria Mekong), best season (Dec–Apr), Can Tho as base, homestay vs boutique lodge, bird sanctuary"
+    },
+    {
+      "type": "wildlife",
+      "key": "spotted-hyena-serengeti",
+      "name": "Spotted Hyena Serengeti Clan Structure Matriarchal Predator Scavenger Facts",
+      "topic": "wildlife-ethics",
+      "region": "serengeti",
+      "priority": "medium",
+      "notes": "Crocuta crocuta — largest clan sizes, matriarchal society, more efficient predator than lions (75% successful hunts), Serengeti population est. 7,000–10,000, nocturnal vs diurnal activity"
+    },
+    {
+      "type": "wildlife",
+      "key": "masai-giraffe-facts",
+      "name": "Masai Giraffe Serengeti Masai Mara Population IUCN Conservation Status",
+      "topic": "wildlife-ethics",
+      "region": "serengeti",
+      "priority": "medium",
+      "notes": "Giraffa camelopardalis tippelskirchi — IUCN Vulnerable since 2016, Serengeti population 13,000+, tallest land animal (5.5–6m), silent extinction (30% decline in 30 years), ossicones fact"
     }
   ]
 }

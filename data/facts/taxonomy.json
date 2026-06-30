@@ -40,6 +40,18 @@
     "primate-trekking",
     "african-wild-dog",
     "african-elephant",
+    "night-drive",
+    "photography",
+    "sustainability",
+    "guide-quality",
+    "value",
+    "food-and-beverage",
+    "national-park",
+    "marine-park",
+    "transfers",
+    "big-five",
+    "visa",
+    "exclusivity",
     "african-leopard",
     "african-cheetah",
     "african-buffalo",
@@ -112,7 +124,11 @@
       "ruaha",
       "lake-manyara",
       "pemba",
-      "stone-town"
+      "stone-town",
+      "kilimanjaro",
+      "tsavo",
+      "samburu",
+      "ndutu"
     ],
     "southeast-asia": [
       "vietnam",
@@ -125,6 +141,9 @@
       "da-nang",
       "con-dao",
       "phu-quoc",
+      "mekong-delta",
+      "ho-chi-minh-city",
+      "stone-town",
       "mekong-delta"
     ],
     "coming-2027": [
