@@ -38,6 +38,7 @@
     "boat-safari",
     "gorilla-trekking",
     "primate-trekking",
+    "african-wild-dog",
     "lodge-review",
     "tim-score",
     "wildlife-ethics",
@@ -89,7 +90,13 @@
       "stone-town",
       "east-africa",
       "global",
-      "serengeti-western-corridor"
+      "serengeti-western-corridor",
+      "ngorongoro",
+      "tarangire",
+      "ndutu",
+      "selous-nyerere",
+      "laikipia",
+      "amboseli"
     ],
     "southeast-asia": [
       "vietnam",
@@ -97,6 +104,7 @@
       "hanoi",
       "ha-long-bay",
       "hue",
+      "hanoi",
       "ho-chi-minh-city",
       "da-nang",
       "con-dao",

@@ -260,6 +260,141 @@
       "region": "hoi-an",
       "priority": "medium",
       "notes": "Kim's first Vietnam content — top luxury stays, ancient town access, river cruises, lantern festival, flood season"
+    },
+    {
+      "type": "destination",
+      "key": "ngorongoro-crater-safari",
+      "name": "Ngorongoro Crater Safari Tanzania Big Five Conservation Area",
+      "topic": "safari",
+      "region": "ngorongoro",
+      "priority": "high",
+      "notes": "Tanzania's most iconic safari destination — caldera stats, Big Five density, park fees, best lodges on the rim, Olduvai Gorge"
+    },
+    {
+      "type": "wildlife",
+      "key": "zanzibar-kitesurfing-paje",
+      "name": "Kitesurfing Zanzibar Paje Beach Season Wind Conditions Schools",
+      "topic": "kitesurfing",
+      "region": "zanzibar",
+      "priority": "high",
+      "notes": "Paje is one of East Africa's top kite spots — Kusi (Jun–Oct) and Kaskazi (Dec–Mar) windows, operator ethics, best schools"
+    },
+    {
+      "type": "wildlife",
+      "key": "zanzibar-reef-diving-detail",
+      "name": "Zanzibar Coral Reef Health Dive Sites Bleaching Status Marine Conservation",
+      "topic": "coral-reefs",
+      "region": "zanzibar",
+      "priority": "high",
+      "notes": "Reef bleaching 2016/2024 events, recovery status, best dive sites (Mnemba, Leven Bank, Chumbe), marine protected areas"
+    },
+    {
+      "type": "destination",
+      "key": "zanzibar-health-malaria",
+      "name": "Zanzibar Tanzania Health Requirements Malaria Prophylaxis Vaccinations",
+      "topic": "health",
+      "region": "zanzibar",
+      "priority": "high",
+      "notes": "Malaria risk level, recommended prophylaxis, yellow fever cert requirement, vaccinations for Tanzania safari — currently only 2 health facts in DB"
+    },
+    {
+      "type": "lodge",
+      "key": "bisate-lodge-detail",
+      "name": "Bisate Lodge Rwanda Wilderness Safaris Gorilla Trekking Base Rates",
+      "topic": "lodge-review",
+      "region": "rwanda",
+      "priority": "high",
+      "notes": "Wilderness Safaris flagship Rwanda property — room count, all-inclusive rates, conservation model, gorilla trek access, reforestation program"
+    },
+    {
+      "type": "lodge",
+      "key": "singita-lamai-serengeti",
+      "name": "Singita Lamai Camp Northern Serengeti River Crossings",
+      "topic": "lodge-review",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Northern Serengeti camp positioned for river crossings (Jul–Oct) — suite count, Wogakuria Hill location, Mara River access, Singita conservation"
+    },
+    {
+      "type": "destination",
+      "key": "stone-town-zanzibar-heritage",
+      "name": "Zanzibar Stone Town UNESCO World Heritage Site Cultural Guide",
+      "topic": "destinations",
+      "region": "zanzibar",
+      "priority": "medium",
+      "notes": "UNESCO status facts, House of Wonders, spice market, Freddie Mercury birthplace, best luxury hotels in Stone Town"
+    },
+    {
+      "type": "destination",
+      "key": "ndutu-calving-lodges",
+      "name": "Ndutu Serengeti Calving Season Lodges Camps January March",
+      "topic": "lodge-review",
+      "region": "serengeti",
+      "priority": "medium",
+      "notes": "Best camps at Ndutu for calving — Ndutu Safari Lodge, &Beyond Ndutu Safari Lodge, seasonal camps, road access from Arusha"
+    },
+    {
+      "type": "destination",
+      "key": "vietnam-ha-long-bay",
+      "name": "Ha Long Bay Vietnam Luxury Cruises Best Junks UNESCO Heritage",
+      "topic": "destinations",
+      "region": "ha-long-bay",
+      "priority": "medium",
+      "notes": "Kim's content — UNESCO status, best luxury cruise boats (Heritage Line, Indochine, Paradise), best season, avoiding crowds"
+    },
+    {
+      "type": "destination",
+      "key": "vietnam-hue-luxury",
+      "name": "Hue Vietnam Imperial City Royal Tombs Luxury Stays",
+      "topic": "destinations",
+      "region": "hue",
+      "priority": "medium",
+      "notes": "Kim's content — Imperial Citadel, royal tombs, Perfume River, Azerai La Residence Hotel, best time to visit, avoiding crowds"
+    },
+    {
+      "type": "destination",
+      "key": "tarangire-national-park",
+      "name": "Tarangire National Park Tanzania Elephants Baobabs Best Season",
+      "topic": "safari",
+      "region": "tarangire",
+      "priority": "medium",
+      "notes": "Tanzania's elephant capital — annual dry-season concentration (Jun–Oct), baobab landscape, lesser-visited, recommended camps"
+    },
+    {
+      "type": "wildlife",
+      "key": "african-wild-dog-selous",
+      "name": "African Wild Dog Nyerere Selous Tanzania Sightings Ethics",
+      "topic": "african-wild-dog",
+      "region": "selous-nyerere",
+      "priority": "medium",
+      "notes": "Most endangered large carnivore in Africa — pack behavior, denning season, best operators, why Nyerere/Selous is the #1 location"
+    },
+    {
+      "type": "wildlife",
+      "key": "mnemba-snorkelling-reef",
+      "name": "Mnemba Atoll Zanzibar Snorkelling Coral Restoration House Reef",
+      "topic": "snorkelling",
+      "region": "mnemba-atoll",
+      "priority": "medium",
+      "notes": "andBeyond Mnemba conservation, coral nursery, house reef species list, snorkelling ethics, guest-only access rules"
+    },
+    {
+      "type": "destination",
+      "key": "serengeti-balloon-safari",
+      "name": "Serengeti Hot Air Balloon Safari Operators Prices Season",
+      "topic": "safari",
+      "region": "serengeti",
+      "priority": "medium",
+      "notes": "Serengeti Balloon Safaris prices, flight duration, launch sites (Seronera, northern), season availability, what's included, safety record"
+    },
+    {
+      "type": "destination",
+      "key": "kenya-laikipia-conservancies",
+      "name": "Laikipia Plateau Kenya Private Conservancies Black Rhino Elephants",
+      "topic": "private-conservancy",
+      "region": "laikipia",
+      "priority": "medium",
+      "notes": "OI Pejeta, Borana, Lewa — black rhino strongholds, elephant numbers, community conservancy model, best luxury camps"
     }
   ]
 }
