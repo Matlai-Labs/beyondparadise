@@ -395,6 +395,186 @@
       "region": "laikipia",
       "priority": "medium",
       "notes": "OI Pejeta, Borana, Lewa — black rhino strongholds, elephant numbers, community conservancy model, best luxury camps"
+    },
+    {
+      "type": "wildlife",
+      "key": "african-elephant-serengeti",
+      "name": "African Elephant Serengeti Tanzania Behaviour Herds Conservation",
+      "topic": "african-elephant",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Loxodonta africana — matriarchal herd structure, musth, Grumeti elephant population, IUCN status, Tanzania population estimate, best sighting areas"
+    },
+    {
+      "type": "wildlife",
+      "key": "african-leopard-serengeti",
+      "name": "African Leopard Serengeti Sightings Behaviour Territory Night Activity",
+      "topic": "african-leopard",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Panthera pardus — Seronera riverine woodland hotspot, nocturnal behaviour, territory size, population in Serengeti, best sighting conditions, tree-hoisting kills"
+    },
+    {
+      "type": "wildlife",
+      "key": "african-cheetah-serengeti",
+      "name": "African Cheetah Serengeti Speed Hunting Cubs Conservation Status",
+      "topic": "african-cheetah",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Acinonyx jubatus — population in Serengeti ecosystem, coalition males, cub survival rate, calving season hunting, IUCN Vulnerable status, fastest land animal facts"
+    },
+    {
+      "type": "wildlife",
+      "key": "black-rhino-east-africa",
+      "name": "Black Rhino East Africa Conservation IUCN Status Kenya Tanzania Numbers",
+      "topic": "black-rhino",
+      "region": "kenya",
+      "priority": "high",
+      "notes": "Diceros bicornis — Critically Endangered, total Africa population, Kenya vs Tanzania numbers, Ol Pejeta sanctuary, Ngorongoro black rhino population, dehorning debate"
+    },
+    {
+      "type": "wildlife",
+      "key": "african-buffalo-serengeti",
+      "name": "African Buffalo Cape Buffalo Serengeti Herd Size Predator Interaction",
+      "topic": "african-buffalo",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Syncerus caffer — Serengeti population, bachelor herds vs breeding herds, lion predation, dangerous animal facts, best sighting conditions"
+    },
+    {
+      "type": "wildlife",
+      "key": "great-migration-annual-circuit",
+      "name": "Great Wildebeest Migration Full Annual Circuit Serengeti to Masai Mara",
+      "topic": "great-migration",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Complete circuit: Ndutu calving (Jan–Mar) → Southern Serengeti (Apr) → Western Corridor/Grumeti (May–Jun) → Northern Serengeti (Jul) → Masai Mara crossings (Aug–Oct) → return south (Nov–Dec)"
+    },
+    {
+      "type": "wildlife",
+      "key": "mara-river-crossing-facts",
+      "name": "Mara River Wildebeest Crossing Nile Crocodile Crossing Points Timing",
+      "topic": "wildebeest-migration",
+      "region": "masai-mara",
+      "priority": "high",
+      "notes": "How river crossings happen — trigger conditions, Nile crocodile ambush, main crossing points (Mara Triangle, Serena), unpredictability, best camps for sightings"
+    },
+    {
+      "type": "wildlife",
+      "key": "anti-poaching-grumeti-tusk",
+      "name": "Anti-Poaching Conservation Grumeti Fund AWF Tusk Trust Singita",
+      "topic": "anti-poaching",
+      "region": "serengeti",
+      "priority": "high",
+      "notes": "Grumeti Fund ranger training, snare removal stats, Singita anti-poaching model, AWF corridors, Tusk Trust projects — verifiable facts for lodge review conservation sections"
+    },
+    {
+      "type": "wildlife",
+      "key": "walking-safari-regulations",
+      "name": "Walking Safari Tanzania Kenya Ethics Regulations Armed Guide Requirements",
+      "topic": "walking-safari",
+      "region": "selous-nyerere",
+      "priority": "high",
+      "notes": "Which parks allow walking (Nyerere/Selous, Ruaha, Laikipia — not Serengeti), armed guide licensing, minimum group size, best operators offering walking"
+    },
+    {
+      "type": "destination",
+      "key": "ruaha-national-park",
+      "name": "Ruaha National Park Tanzania Remote Safari Lions Wild Dogs Elephants",
+      "topic": "safari",
+      "region": "ruaha",
+      "priority": "high",
+      "notes": "Tanzania's largest national park — remoteness (no tourist crowds), 10%+ of Africa's lion population, African wild dog, Great Ruaha River, best camps, dry season access"
+    },
+    {
+      "type": "destination",
+      "key": "amboseli-national-park",
+      "name": "Amboseli National Park Kenya Kilimanjaro Elephants Photography",
+      "topic": "safari",
+      "region": "amboseli",
+      "priority": "high",
+      "notes": "Kilimanjaro backdrop, Amboseli Trust for Elephants research, elephant family identification, dusty lake bed, swamp habitat, best luxury camps, photography guide"
+    },
+    {
+      "type": "wildlife",
+      "key": "pemba-island-diving",
+      "name": "Pemba Island Tanzania Scuba Diving Walls Hammerheads Channel Current",
+      "topic": "scuba-diving",
+      "region": "pemba",
+      "priority": "high",
+      "notes": "Pemba Channel, near-vertical walls, hammerhead aggregation, strong currents (advanced divers), best dive sites, best season, how to get there from Zanzibar"
+    },
+    {
+      "type": "wildlife",
+      "key": "lake-manyara-birds-flamingo",
+      "name": "Lake Manyara Tanzania Flamingos Tree-Climbing Lions Bird List",
+      "topic": "birds",
+      "region": "lake-manyara",
+      "priority": "medium",
+      "notes": "Lesser flamingo flocks up to 75,000 birds, tree-climbing lions, 380+ bird species, groundwater forest, best time to visit for flamingos"
+    },
+    {
+      "type": "destination",
+      "key": "vietnam-hanoi-luxury",
+      "name": "Hanoi Vietnam Old Quarter Luxury Hotels Experiences Best Season",
+      "topic": "destinations",
+      "region": "hanoi",
+      "priority": "medium",
+      "notes": "Kim's content — Sofitel Legend Metropole history, Old Quarter 36 streets, Hoan Kiem Lake, Hanoi opera, best season to visit, what to avoid"
+    },
+    {
+      "type": "wildlife",
+      "key": "chumbe-island-marine-park",
+      "name": "Chumbe Island Coral Park Zanzibar Private Marine Reserve Reef Facts",
+      "topic": "marine-conservation",
+      "region": "zanzibar",
+      "priority": "medium",
+      "notes": "Privately managed marine sanctuary, coral species count, fish species, no-take zone since 1992, eco-bungalows, guided snorkelling rules, conservation research"
+    },
+    {
+      "type": "wildlife",
+      "key": "green-turtle-nesting-zanzibar",
+      "name": "Green Sea Turtle Nesting Zanzibar Ras Nungwi Mnemba Atoll Breeding Facts",
+      "topic": "sea-turtles",
+      "region": "zanzibar",
+      "priority": "medium",
+      "notes": "Chelonia mydas — nesting beaches on Zanzibar, Ras Nungwi hatchery, Mnemba nesting population, nesting season (Oct–Feb), ethical viewing rules, IUCN status"
+    },
+    {
+      "type": "wildlife",
+      "key": "boat-safari-rufiji-river",
+      "name": "Boat Safari Rufiji River Nyerere National Park Hippo Crocodile Birds",
+      "topic": "boat-safari",
+      "region": "selous-nyerere",
+      "priority": "medium",
+      "notes": "Rufiji River boat safari — largest hippo concentration in Africa, Nile crocodile density, waterbird species, boat safari permit, best camps (Roho ya Selous, Jongomero)"
+    },
+    {
+      "type": "destination",
+      "key": "zanzibar-spice-trade-heritage",
+      "name": "Zanzibar Spice Trade History Stone Town Culture Swahili Heritage",
+      "topic": "destinations",
+      "region": "zanzibar",
+      "priority": "medium",
+      "notes": "Zanzibar as historic spice trading hub — cloves (90% of world supply at peak), UNESCO Stone Town, Arab slave trade history, Swahili coast culture, spice farm tours"
+    },
+    {
+      "type": "wildlife",
+      "key": "marine-conservation-indian-ocean",
+      "name": "Indian Ocean Marine Conservation Tanzania Kenya Coral Bleaching Climate",
+      "topic": "marine-conservation",
+      "region": "tanzania",
+      "priority": "medium",
+      "notes": "1998 / 2016 / 2024 mass bleaching events, reef recovery data, Marine Megafauna Foundation work, sea surface temperature trends, WCS Tanzania programme"
+    },
+    {
+      "type": "destination",
+      "key": "migration-calendar-monthly",
+      "name": "Great Migration Calendar Month by Month Where to Be Tanzania Kenya",
+      "topic": "migration-calendar",
+      "region": "serengeti",
+      "priority": "medium",
+      "notes": "Definitive month-by-month data: where the herds are, what's happening (calving/rut/crossings), which camps to book — structured for the intelligence/migration-calendar page"
     }
   ]
 }
