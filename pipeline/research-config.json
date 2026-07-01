@@ -12,6 +12,84 @@
     "min_sources_for_confirmed": 2,
     "volatile_recheck_days": 90
   },
+  "provider_policy": {
+    "locked": true,
+    "locked_on": "2026-06-28",
+    "principle": "Use free/local/cheap providers before paid fallbacks. Never remove providers just because one path works today.",
+    "grounded_source_research_order": [
+      {
+        "provider": "gemini-grounding",
+        "keys": ["GEMINI_API_KEY"],
+        "role": "primary grounded web research",
+        "cost_posture": "free under normal daily tier"
+      },
+      {
+        "provider": "tavily-search",
+        "keys": ["TAVILY_API_KEY"],
+        "role": "free-search fallback/snippets",
+        "cost_posture": "free quota; fall through on quota/plan limit"
+      },
+      {
+        "provider": "brave-search",
+        "keys": ["BRAVE_API_KEY", "BRAVE_SEARCH_API_KEY"],
+        "role": "search fallback after Tavily",
+        "cost_posture": "existing keyed search fallback"
+      },
+      {
+        "provider": "perplexity-sonar",
+        "keys": ["PERPLEXITY_API_KEY"],
+        "role": "final grounded research fallback",
+        "cost_posture": "paid; use sparingly"
+      }
+    ],
+    "json_structuring_order": [
+      {
+        "provider": "ollama-qwen3-8b",
+        "keys": ["RESEARCH_USE_OLLAMA", "OLLAMA_BASE_URL"],
+        "role": "local free structuring when running",
+        "cost_posture": "free/local"
+      },
+      {
+        "provider": "gemini-json",
+        "keys": ["GEMINI_API_KEY"],
+        "role": "default cloud JSON structuring",
+        "cost_posture": "cheap/free-tier friendly"
+      },
+      {
+        "provider": "openrouter",
+        "keys": ["OPENROUTER_API_KEY"],
+        "models": ["google/gemini-2.5-flash-lite", "deepseek/deepseek-chat"],
+        "role": "cheap model gateway fallback",
+        "cost_posture": "cheap"
+      },
+      {
+        "provider": "deepseek-direct",
+        "keys": ["DEEPSEEK_API_KEY"],
+        "model": "deepseek-chat",
+        "role": "cheap direct extraction fallback",
+        "cost_posture": "cheap, non-PII only"
+      },
+      {
+        "provider": "openai",
+        "keys": ["OPENAI_API_KEY"],
+        "model": "gpt-4o-mini",
+        "role": "structured-output fallback",
+        "cost_posture": "moderate"
+      },
+      {
+        "provider": "anthropic-claude",
+        "keys": ["ANTHROPIC_API_KEY", "CLAUDE_API_KEY"],
+        "role": "final JSON fallback",
+        "cost_posture": "most expensive; use last"
+      }
+    ],
+    "known_non_research_keys": {
+      "BING_API_KEY": "IndexNow/Bing Webmaster submission, not web research",
+      "VALUESERP_API_KEY": "AI visibility/rank tracking projects, not fact gathering",
+      "SERPAPI_API_KEY": "AI visibility/Copilot tracking projects, not fact gathering"
+    },
+    "missing_but_future_supported": ["YOU_API_KEY", "SERPER_API_KEY", "EXA_API_KEY"]
+  },
   "research_queues": {
     "wildlife_encounters": {
       "topics": ["whale-sharks", "dolphins", "sea-turtles", "wildebeest-migration", "african-lion", "humpback-whales"],

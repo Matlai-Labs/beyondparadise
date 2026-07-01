@@ -35,6 +35,42 @@ The keystone product is the **Marine Wildlife Encounter Index**: species × loca
 - **Pipelines:** ≤€20/month total cap across all pipelines. Hard fail-closed — no exceptions.
 - **Daily pipeline:** (to be built) research → promote → feed → push → IndexNow → GSC → Bing
 
+### Research provider stack — locked memory
+
+Do not rediscover or simplify the research stack. Beyond Paradise uses the shared Matlai free/cheap-first provider policy:
+
+**Grounded/source research order:**
+1. Gemini grounding (`GEMINI_API_KEY`) — primary, free under the normal daily tier, best default for source-safe grounded domains.
+2. Tavily search (`TAVILY_API_KEY`) — free-search fallback when `RESEARCH_USE_SEARCH_FALLBACK=1` or Gemini is skipped. If quota is exhausted, fall through.
+3. Brave search (`BRAVE_API_KEY` or `BRAVE_SEARCH_API_KEY`) — search fallback after Tavily.
+4. Perplexity Sonar (`PERPLEXITY_API_KEY`) — final grounded fallback; best citation UX but paid, so keep behind free/cheap options.
+
+**JSON/extraction/structuring order:**
+1. Ollama local qwen3:8b (`RESEARCH_USE_OLLAMA=1`) — free local option when running.
+2. Gemini JSON mode.
+3. OpenRouter (`OPENROUTER_API_KEY`) with `google/gemini-2.5-flash-lite`, then `deepseek/deepseek-chat`.
+4. DeepSeek direct (`DEEPSEEK_API_KEY`) — cheap direct extraction fallback.
+5. OpenAI (`OPENAI_API_KEY`, default `gpt-4o-mini`) — structured-output fallback.
+6. Anthropic/Claude (`ANTHROPIC_API_KEY` or `CLAUDE_API_KEY`) — final fallback for stubborn JSON failures.
+
+Supported aliases: `BRAVE_SEARCH_API_KEY` = Brave, `CLAUDE_API_KEY` = Anthropic. `BING_API_KEY` is for IndexNow/Bing Webmaster submission, not fact research. `YOU_API_KEY`, `SERPER_API_KEY`, and `EXA_API_KEY` were not found in local projects as of 2026-06-28; if added later, slot them between Tavily and Brave in the free-search cascade.
+
+### Research status memory — 2026-07-01
+
+`pipeline/research/research-daily.js --dry` reports 5 items remaining in the queue (paced at 3/day by design). Knowledge base status after the latest run:
+
+- `data/facts/facts.json`: 813 facts
+- Confirmed facts: 625
+- Single-source facts: 188
+- Pending candidates: 0
+- Spend guard on completion day: 4 / 200 grounded calls
+- Multi-provider fallback stack (`pipeline/research/research-providers.js`) verified end-to-end this session: Gemini grounding succeeded on all 4 research calls run (no fallback path exercised yet — Tavily/Brave/Perplexity/Ollama/OpenRouter/DeepSeek/OpenAI/Anthropic paths are implemented but untested against live failures)
+
+Verification status:
+- `node pipeline/research/kb-validate.js` passes with 0 errors.
+- Remaining validator warnings are non-blocking: mostly inline generated sources missing tier assignments, plus a few older confirmed legacy facts where owner independence cannot be fully resolved from source IDs.
+- Notable finding from this run: andBeyond Ngorongoro Crater Lodge closed January 2025 for a full rebuild, expected to reopen 2027 — do not schedule lodge-review content work on it until reopening is confirmed.
+
 ---
 
 ## Non-negotiable rules

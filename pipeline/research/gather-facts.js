@@ -1,19 +1,19 @@
 'use strict';
 
 // ============================================================
-// gather-facts.js — Gemini-grounded research for Beyond Paradise
+// gather-facts.js — multi-provider grounded research for Beyond Paradise
 //
 // Two-step, honesty-guarded fact gathering for wildlife, lodges,
 // destinations, and operators → structured, cross-checked candidates
 // in data/facts/facts.candidates.json. Tim reviews; promote-fact.js
 // moves approved entries into data/facts/facts.json.
 //
-// Pattern (same as PadelRevive gather-evidence.js):
-//   1. GROUNDED call (google_search tool) → assessment text + the REAL
-//      source domains Gemini actually used (groundingChunks[].web.title)
-//   2. STRUCTURE call (ungrounded, JSON mode) → facts array restricted
+// Pattern (same as PadelRevive gather-evidence.js, with fallbacks):
+//   1. GROUNDED call (Gemini grounding, Perplexity fallback) → assessment
+//      text + the REAL source domains actually used
+//   2. STRUCTURE call (Ollama/Gemini/OpenRouter/Claude JSON) → facts restricted
 //      to real domains only — no hallucinated URLs
-//   3. Resolve Gemini redirect links → persistent article URLs
+//   3. Resolve provider redirect links → persistent article URLs
 //   4. Cross-check by OWNER (not domain): a fact needs ≥2 independent
 //      owners to be "confirmed". Two pages on singita.com = 1 owner.
 //
@@ -40,10 +40,9 @@ const fs = require('fs');
 const path = require('path');
 const { ownerOf, distinctOwners, isAvoided, tierFor } = require('./owners');
 const guard = require('./spend-guard');
+const providers = require('./research-providers');
 
-const KEY = process.env.GEMINI_API_KEY;
-const MODEL = 'gemini-2.5-flash';
-const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
+const HAS_GROUNDED_PROVIDER = process.env.GEMINI_API_KEY || process.env.PERPLEXITY_API_KEY;
 
 const cliArgs = process.argv.slice(2);
 const arg = k => (cliArgs.find(a => a.startsWith(`--${k}=`)) || '').split('=').slice(1).join('=');
@@ -62,7 +61,7 @@ const TAXONOMY_FILE = path.join(DATA_FACTS, 'taxonomy.json');
 
 const VALID_TYPES = ['wildlife', 'lodge', 'destination', 'operator'];
 
-if (!KEY) { console.error('\nGEMINI_API_KEY missing — add it to .env at the project root\n'); process.exit(1); }
+if (!HAS_GROUNDED_PROVIDER) { console.error('\nNo grounded research provider key found — add GEMINI_API_KEY or PERPLEXITY_API_KEY to .env\n'); process.exit(1); }
 if (!KEY_ARG) { console.error('\n--key required  e.g. --key=whale-shark-mafia\n'); process.exit(1); }
 if (!VALID_TYPES.includes(TYPE)) { console.error(`\n--type must be one of: ${VALID_TYPES.join(', ')}\n`); process.exit(1); }
 if (!REGION) { console.error('\n--region required  e.g. --region=mafia-island\n'); process.exit(1); }
@@ -83,10 +82,8 @@ if (!allRegions.has(REGION)) {
 // ── helpers ──────────────────────────────────────────────────
 
 const domainOf = u => {
-  try { return new URL(u).hostname.replace(/^www\./, ''); }
-  catch { return (u || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '') || null; }
+  return providers.domainOf(u);
 };
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 const today = () => new Date().toISOString().slice(0, 10);
 
 function slugify(str) {
@@ -206,45 +203,7 @@ RULES:
 - Dim must be one of the options listed in the dimension field above`.trim();
 }
 
-// ── Gemini client ─────────────────────────────────────────────
-
-async function gemini(parts, grounded, json) {
-  if (grounded) guard.checkAffordable(1); // fail-closed BEFORE the paid grounded call
-  const body = {
-    contents: [{ parts }],
-    generationConfig: { temperature: 0.2 },
-  };
-  if (grounded) body.tools = [{ google_search: {} }];
-  if (json) body.generationConfig.responseMimeType = 'application/json';
-
-  let r;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    r = await axios.post(ENDPOINT, body, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 120000,
-      validateStatus: () => true,
-    });
-    if (r.status === 200) break;
-    if (r.status === 429 || r.status >= 500) {
-      const wait = 20000 * (attempt + 1); // 20s, 40s, 60s, 80s, 100s
-      console.log(`  ${r.status} — waiting ${wait / 1000}s before retry…`);
-      await sleep(wait);
-      continue;
-    }
-    throw new Error(`HTTP ${r.status}: ${JSON.stringify(r.data).slice(0, 300)}`);
-  }
-  if (r.status !== 200) throw new Error('Rate-limited after 5 retries');
-  if (grounded) guard.record(1); // log successful call AFTER success
-
-  const cand = r.data.candidates?.[0];
-  const text = (cand?.content?.parts || []).map(p => p.text).filter(Boolean).join('\n');
-  const chunks = (cand?.groundingMetadata?.groundingChunks || [])
-    .map(c => ({ domain: domainOf(c.web?.title) || c.web?.title, redirect: c.web?.uri }))
-    .filter(c => c.domain);
-  return { text, chunks };
-}
-
-// Resolve Gemini's temporary redirect → real persistent article URL
+// Resolve temporary redirect links → real persistent article URL
 async function resolve(redirect, domain) {
   try {
     const r = await axios.get(redirect, { maxRedirects: 5, timeout: 12000, validateStatus: () => true });
@@ -281,10 +240,11 @@ async function main() {
   // 1. Grounded call — web search
   console.log('\n[1/3] Grounded web research…');
   const gPrompt = groundedPrompt(TYPE, NAME, REGION);
-  const g = await gemini([{ text: gPrompt }], true);
+  const g = await providers.groundedResearch(gPrompt);
 
   const realDomains = [...new Set(g.chunks.map(c => c.domain).filter(Boolean))];
-  console.log(`  sources Gemini used: ${realDomains.length} domains`);
+  console.log(`  provider: ${g.provider}`);
+  console.log(`  sources used: ${realDomains.length} domains`);
   realDomains.forEach(d => console.log(`    - ${d}`));
 
   if (realDomains.length === 0) {
@@ -295,7 +255,8 @@ async function main() {
   // 2. Structure call — extract fact candidates (JSON mode, no search)
   console.log('\n[2/3] Structuring facts…');
   const sPrompt = structurePrompt(NAME, g.text, realDomains, TYPE);
-  const s = await gemini([{ text: sPrompt }], false, true);
+  const s = await providers.structureJson(sPrompt);
+  console.log(`  structure provider: ${s.provider}`);
 
   let parsed;
   try {

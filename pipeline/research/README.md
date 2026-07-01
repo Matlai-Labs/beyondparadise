@@ -4,13 +4,54 @@ Gather verified, cited facts. Tim reviews. Publish with confidence.
 
 ## Setup (one time)
 
-1. Copy `.env.example` to `.env` at the project root and add your Gemini API key:
+1. Copy `.env.example` to `.env` at the project root and add your provider keys:
    ```
    GEMINI_API_KEY=AIza...
+   PERPLEXITY_API_KEY=pplx-...
+   OPENROUTER_API_KEY=sk-or-v1-...
+   DEEPSEEK_API_KEY=sk-...
+   OPENAI_API_KEY=sk-...
+   ANTHROPIC_API_KEY=sk-ant-api03-...
+   TAVILY_API_KEY=tvly-...
+   BRAVE_API_KEY=BSA_...
    ```
-   Get a free key at https://aistudio.google.com/apikey
+   Gemini remains the primary grounded provider because grounding is free under the daily tier.
 
 2. Dependencies are already installed (`npm install` in this directory).
+
+## Provider routing
+
+The engine follows the shared Matlai cost plan: free/cheap first, paid fallback only when needed.
+
+### Grounded web research
+
+1. **Gemini grounding** (`GEMINI_API_KEY`) — primary. Best default for this project because it returns real grounded domains and is free under the normal daily tier.
+2. **Tavily search** (`TAVILY_API_KEY`) — free-search fallback when `RESEARCH_USE_SEARCH_FALLBACK=1` or Gemini is skipped. It feeds real snippets into the structuring step.
+3. **Brave search** (`BRAVE_API_KEY`) — search fallback after Tavily.
+4. **Perplexity Sonar** (`PERPLEXITY_API_KEY`) — final grounded fallback if Gemini/search fail. Better citation UX, but paid, so use sparingly.
+
+Set `RESEARCH_SKIP_GEMINI=1` to force the fallback chain for a test run. Set `RESEARCH_USE_SEARCH_FALLBACK=1` to try Tavily/Brave before Perplexity when Gemini fails.
+
+### JSON structuring
+
+1. **Ollama qwen3:8b** (`RESEARCH_USE_OLLAMA=1`) — free local option when Ollama is running.
+2. **Gemini JSON mode** — default cloud structuring path.
+3. **OpenRouter** (`OPENROUTER_API_KEY`) — cheap fallback via `google/gemini-2.5-flash-lite`, then `deepseek/deepseek-chat`.
+4. **DeepSeek direct** (`DEEPSEEK_API_KEY`) — cheap direct extraction fallback when OpenRouter is unavailable.
+5. **OpenAI** (`OPENAI_API_KEY`) — structured-output fallback.
+6. **Anthropic Haiku** (`ANTHROPIC_API_KEY` or `CLAUDE_API_KEY`) — final fallback for stubborn JSON failures.
+
+### Search keys staged for v2
+
+`YOU_API_KEY`, `SERPER_API_KEY`, and `EXA_API_KEY` are not present in the local projects I checked. If added later, slot them between Tavily and Brave in the same free-search cascade.
+
+Older/local aliases now supported:
+- `BRAVE_SEARCH_API_KEY` works as a Brave alias.
+- `CLAUDE_API_KEY` works as an Anthropic alias.
+
+Keys found but not used in this research engine:
+- `BING_API_KEY` is for IndexNow/Bing Webmaster submission, not source research. Bing Web Search is retired.
+- `VALUESERP_API_KEY`, `SERPAPI_API_KEY`, and `SERPAPI`-style adapters belong to AI visibility/rank tracking projects, not this fact-gathering pipeline.
 
 ## Daily workflow
 
