@@ -1,0 +1,48 @@
+---
+import Base from '../../layouts/Base.astro';
+import AnswerBox from '../../components/AnswerBox.astro';
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Lodge Reviews — Beyond Paradise',
+  description: 'Luxury safari and beach lodge reviews, published only after a paid, unhosted stay and an assigned Tim Score.',
+  url: 'https://beyondparadise.com/reviews/',
+};
+---
+<Base
+  title="Lodge Reviews · Beyond Paradise"
+  description="Luxury lodge reviews for East Africa and Southeast Asia, published only after a paid, first-hand stay and a Tim Score. No press trips, no hosted stays."
+  permalink="/reviews/"
+>
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} slot="head" />
+
+  <div class="rv-page">
+    <div class="rv-hero section--dark">
+      <div class="container">
+        <p class="label reveal">LODGE REVIEWS</p>
+        <h1 class="display-l reveal" style="margin-top:16px;max-width:700px;">In Progress</h1>
+        <p class="body-l reveal" style="max-width:600px;margin-top:20px;color:var(--cream-65);">No lodge is reviewed here until Tim has paid for and completed the stay himself. That means this page is empty right now — on purpose.</p>
+      </div>
+    </div>
+
+    <div class="container rv-body">
+      <AnswerBox answer="Beyond Paradise has not yet published a lodge review. Every review requires a paid, unhosted stay and an assigned Tim Score before it goes live — see the Tim Score methodology for the full standard. Check back as first reviews are completed." />
+      <p class="body-l" style="color:var(--cream-65);margin-top:32px;">
+        <a href="/about/tim-score/" class="btn btn-glass">Read the Tim Score Methodology</a>
+      </p>
+    </div>
+  </div>
+</Base>
+
+<style>
+.rv-hero {
+  padding: 140px 0 80px;
+  background: var(--base);
+  border-bottom: 1px solid var(--glass-b);
+}
+.rv-body {
+  padding: 72px 0 120px;
+  max-width: 900px;
+}
+</style>

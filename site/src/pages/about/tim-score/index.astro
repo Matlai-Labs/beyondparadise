@@ -1,6 +1,5 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import TimScoreBadge from '../../../components/TimScoreBadge.astro';
 import AnswerBox from '../../../components/AnswerBox.astro';
 
 const criteria = [
@@ -16,13 +15,6 @@ const criteria = [
   { name: 'Sense of place', weight: 5, desc: 'Architecture, materials, and design choices that root the lodge in its specific landscape and culture.' },
   { name: 'Exclusivity', weight: 3, desc: 'Total guest numbers, privacy between guests, ability to feel truly alone in the wilderness.' },
   { name: 'Repeat visit intention', weight: 2, desc: 'Would I personally book this lodge again? The ultimate test of a genuine recommendation.' },
-];
-
-const examples = [
-  { score: 94, lodge: 'Singita Grumeti', note: 'Exceptional wilderness position in 350,000-acre private concession. Zero compromise.' },
-  { score: 91, lodge: 'Mnemba Island Lodge', note: 'Best marine experience in Zanzibar waters. Private island exclusivity fully delivered.' },
-  { score: 88, lodge: 'Mahali Mzuri', note: 'Conservancy model and guiding quality strong. Minor deductions on accommodation age.' },
-  { score: 74, lodge: 'Example: Over-commercialised camp', note: 'Below 80 = not recommended. We do not publish sub-80 reviews by name — only to explain why we are not recommending a region\'s obvious choice.' },
 ];
 
 const schema = {
@@ -55,20 +47,9 @@ const schema = {
 
       <AnswerBox answer="The Tim Score is a 0–100 rating assigned to luxury lodges after Tim Hennig's personal, paid stay. It weights 12 criteria including wilderness position (15%), wildlife access (12%), conservation impact (8%), and value for money (8%). Scores of 90+ are exceptional. Below 80 means Beyond Paradise does not recommend the lodge." />
 
-      <!-- Score examples -->
+      <!-- Score bands -->
       <section class="ts-examples reveal">
         <h2 class="display-s" style="margin-bottom:32px;">What the numbers mean</h2>
-        <div class="ts-examples__grid">
-          {examples.map(ex => (
-            <div class="ts-example glass">
-              <TimScoreBadge score={ex.score} size="lg" />
-              <div>
-                <p class="ts-example__lodge">{ex.lodge}</p>
-                <p class="ts-example__note">{ex.note}</p>
-              </div>
-            </div>
-          ))}
-        </div>
         <div class="ts-bands">
           {[{range:'90–100',label:'Exceptional',desc:'Genuinely world-class. The best I have stayed at anywhere.'},{range:'85–89',label:'Excellent',desc:'Outstanding. One or two areas below perfection.'},{range:'80–84',label:'Very Good',desc:'Strong lodge. A legitimate choice — with caveats.'},{range:'<80',label:'Not Recommended',desc:'Does not meet the Beyond Paradise standard at this price point.'}].map(b => (
             <div class="ts-band">
@@ -138,27 +119,6 @@ const schema = {
   padding: 72px 0 120px;
   max-width: 900px;
 }
-
-.ts-examples__grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 40px;
-}
-.ts-example {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 20px 24px;
-  border-radius: 16px;
-}
-.ts-example__lodge {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 18px;
-  color: var(--cream);
-  margin-bottom: 4px;
-}
-.ts-example__note { font-size: 13px; color: var(--cream-65); }
 
 .ts-bands {
   display: grid;

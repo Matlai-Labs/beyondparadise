@@ -17,7 +17,7 @@ hero_alt: "Singita Grumeti — lion on the Serengeti plains at sunset, Western C
 author: "tim"
 visit_date: "November 2025"
 last_updated: "2026-06-27"
-draft: false
+draft: true
 answer: "Singita Grumeti earns a Tim Score of 94 — the highest I have given any African safari property. The private 350,000-acre concession means zero vehicle crowding at sightings. Twice-daily game drives with expert guides in a landscape most tourists never reach. All-in at €3,200/night per couple, which is significant — but in the migration season, it is the best safari investment in East Africa."
 faq:
   - q: "What is the best time to visit Singita Grumeti?"

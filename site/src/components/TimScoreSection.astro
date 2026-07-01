@@ -1,10 +1,4 @@
 ---
-const scores = [
-  { name: 'Singita Grumeti', score: '94', region: 'Serengeti, Tanzania' },
-  { name: 'Mnemba Island',   score: '91', region: 'Zanzibar, Tanzania' },
-  { name: 'Mahali Mzuri',    score: '88', region: 'Masai Mara, Kenya' },
-  { name: 'Six Senses',      score: '87', region: 'Con Dao, Vietnam' },
-];
 const criteria = [
   'Wildlife quality & guide expertise',
   'Accommodation & room size',
@@ -38,17 +32,11 @@ const criteria = [
     </div>
 
     <div class="score-right">
-      <div class="cards-grid cards-grid--2" style="gap:16px;">
-        {scores.map((s, i) => (
-          <div class={`score-card reveal reveal-delay-${i+1}`}>
-            <div class="score-card__num">{s.score}</div>
-            <div class="score-card__name">{s.name}</div>
-            <div class="score-card__region">{s.region}</div>
-          </div>
-        ))}
+      <div class="score-note reveal reveal-delay-1" style="margin-top:0;">
+        <p class="body-l" style="color:var(--cream-65);">No lodge has been scored yet — a Tim Score only exists after a paid, unhosted stay. The first scored reviews are in progress now.</p>
       </div>
       <div class="score-note reveal reveal-delay-3">
-        <p class="meta" style="color:var(--cream-38);">Scores updated after each verified visit. Tim Score 90+ = exceptional. 85–89 = excellent. Below 80 = not recommended.</p>
+        <p class="meta" style="color:var(--cream-38);">Tim Score 90+ = exceptional. 85–89 = excellent. 80–84 = very good. Below 80 = not recommended.</p>
       </div>
     </div>
   </div>

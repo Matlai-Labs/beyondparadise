@@ -1,75 +1,15 @@
 ---
-const lodges = [
-  {
-    name: 'Singita Grumeti',
-    region: 'SERENGETI, TANZANIA',
-    score: '94',
-    desc: 'The gold standard for Serengeti luxury. Private concession covering 350,000 acres. Migration views from every tent July–October.',
-    price: 'From €1,950 / person / night',
-    visited: 'Tim visited: March 2026 · 2 nights',
-    img: 'https://images.unsplash.com/photo-1631662386699-1b2e73f50cb2?w=800&q=80&auto=format',
-    alt: 'Luxury safari tent overlooking the Serengeti plains',
-    href: '/reviews/singita-grumeti/',
-  },
-  {
-    name: 'Mnemba Island Lodge',
-    region: 'ZANZIBAR, TANZANIA',
-    score: '91',
-    desc: 'Private island, 12 bandas. The definitive Zanzibar underwater experience. Coral reef 30 seconds from your door.',
-    price: 'From €2,200 / person / night',
-    visited: 'Tim visited: January 2026 · 3 nights',
-    img: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&q=80&auto=format',
-    alt: 'Mnemba Island overwater view with crystal clear Indian Ocean',
-    href: '/reviews/mnemba-island/',
-  },
-  {
-    name: 'Mahali Mzuri',
-    region: 'MASAI MARA, KENYA',
-    score: '88',
-    desc: 'Richard Branson\'s Kenyan camp. Twelve tents on a ridge with a 360° Mara view. Migration crossing 15 minutes on foot.',
-    price: 'From €1,100 / person / night',
-    visited: 'Tim visited: August 2025 · 2 nights',
-    img: 'https://images.unsplash.com/photo-1547970810-dc1eac37d174?w=800&q=80&auto=format',
-    alt: 'Luxury safari tent on Masai Mara ridge at sunset',
-    href: '/reviews/mahali-mzuri/',
-  },
-];
 ---
-<section class="section section--dark" aria-label="Featured lodge reviews">
+<section class="section section--dark" aria-label="Lodge reviews status">
   <div class="container">
     <div class="section-head reveal">
       <p class="label">HAND-PICKED LODGES</p>
-      <h2 class="display-m" style="margin-top:12px;">This Season's Best</h2>
-      <p class="body-l" style="color:var(--cream-65);margin-top:16px;max-width:580px;">Every lodge below has been visited, paid for, and rated by Tim personally. The score doesn't lie.</p>
-    </div>
-
-    <div class="cards-grid cards-grid--3">
-      {lodges.map((l, i) => (
-        <a href={l.href} class={`lodge-card glass reveal reveal-delay-${i+1}`} aria-label={`Read review: ${l.name}`}>
-          <div class="lodge-card__img-wrap">
-            <img src={l.img} alt={l.alt} class="lodge-card__img" loading="lazy" width="400" height="220" />
-          </div>
-          <span class="lodge-card__badge tim-badge">{l.score}</span>
-          <div class="lodge-card__body">
-            <p class="lodge-card__region label label--teal" style="font-size:9px;">{l.region}</p>
-            <h3 class="lodge-card__name">{l.name}</h3>
-            <p class="lodge-card__desc">{l.desc}</p>
-            <p class="lodge-card__price">{l.price}</p>
-            <p class="lodge-card__meta">{l.visited}</p>
-          </div>
-        </a>
-      ))}
+      <h2 class="display-m" style="margin-top:12px;">Lodge Reviews: In Progress</h2>
+      <p class="body-l" style="color:var(--cream-65);margin-top:16px;max-width:580px;">Every Tim Score requires a paid, unhosted stay — no exceptions, no press trips. Tim is currently completing first-hand stays across the Serengeti, Zanzibar, and the Masai Mara. Scored reviews publish here the moment they're earned, never before.</p>
     </div>
 
     <div class="reviews-cta reveal" style="margin-top:48px;text-align:center;">
-      <a href="/reviews/" class="btn btn-glass">View All Lodge Reviews</a>
+      <a href="/about/tim-score/" class="btn btn-glass">Read the Tim Score Methodology</a>
     </div>
   </div>
 </section>
-
-<style>
-.lodge-card__img-wrap { overflow: hidden; border-radius: 16px 16px 0 0; position: relative; }
-.lodge-card__img { transition: transform 0.5s ease; }
-.lodge-card:hover .lodge-card__img { transform: scale(1.04); }
-.lodge-card__badge { position: absolute; top: 188px; right: 14px; }
-</style>

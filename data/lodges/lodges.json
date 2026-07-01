@@ -5,7 +5,20 @@
     "rules": "Only lodges Tim has personally stayed at. Tim Score = 0–100. Price in EUR, all-in (accommodation + meals + activities + park fees + transfers unless noted). Minimum price bracket: €6,000+ per couple per week.",
     "last_updated": "2026-06-27",
     "maintainer": "Tim Hennig",
-    "pending_review": ["singita-sabora", "singita-faru-faru", "the-highlands-ngorongoro", "andbeyond-ngorongoro-crater-lodge", "bisate-lodge", "oneonly-nyungwe-house", "alex-walkers-serian", "ol-seki-hemingways", "four-seasons-nam-hai", "six-senses-con-dao", "sofitel-metropole-hanoi", "la-residence-hue"]
+    "pending_review": [
+      "singita-sabora",
+      "singita-faru-faru",
+      "the-highlands-ngorongoro",
+      "andbeyond-ngorongoro-crater-lodge",
+      "bisate-lodge",
+      "oneonly-nyungwe-house",
+      "alex-walkers-serian",
+      "ol-seki-hemingways",
+      "four-seasons-nam-hai",
+      "six-senses-con-dao",
+      "sofitel-metropole-hanoi",
+      "la-residence-hue"
+    ]
   },
   "lodges": [
     {
@@ -15,23 +28,32 @@
       "sub_region": "Western Corridor, Serengeti",
       "country": "tz",
       "country_name": "Tanzania",
-      "tim_score": 94,
-      "tim_score_date": "2026-01",
-      "tim_score_notes": "Exceptional wilderness position in private 350,000-acre concession. Zero compromise on exclusivity — only lodge on the concession. Game viewing density unmatched in Western Corridor during June–October migration.",
+      "tim_score": null,
       "price_per_night_eur": 3200,
       "price_all_in": true,
       "price_notes": "Fully all-inclusive: accommodation, all meals, unlimited wine/spirits, twice-daily game drives, guided walks, park fees, airstrip transfers. No hidden costs.",
-      "best_season_months": [6, 7, 8, 9, 10],
+      "best_season_months": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
       "best_season_notes": "Migration wildebeest cross Grumeti River June–August. Big cat activity peaks July–October.",
-      "tags": ["big-five", "migration", "ultra-luxury", "private-concession", "serengeti", "wildlife"],
-      "status": "recommended",
-      "tim_visited": true,
-      "tim_visit_date": "2025-11",
+      "tags": [
+        "big-five",
+        "migration",
+        "ultra-luxury",
+        "private-concession",
+        "serengeti",
+        "wildlife"
+      ],
+      "status": "pending-review",
+      "tim_visited": false,
       "category": "safari-lodge",
       "website": "https://singita.com/lodge/singita-grumeti/",
       "affiliate_url": "",
-      "images": [],
-      "tim_verdict": "The most serious wildlife property I have stayed at in East Africa. The private concession model is the only way to guarantee the silence and density that justify this price. Worth every cent if migration timing aligns."
+      "images": []
     },
     {
       "id": "mnemba-island-lodge",
@@ -40,23 +62,34 @@
       "sub_region": "Mnemba Atoll, Northeast Zanzibar",
       "country": "tz",
       "country_name": "Tanzania",
-      "tim_score": 91,
-      "tim_score_date": "2025-09",
-      "tim_score_notes": "Private island with exclusive beach access. Marine snorkeling (sea turtles, dolphins, reef fish) exceptional October–March. Service among the best in East Africa. Minor deductions: limited reef health due to 2016 bleaching; camp is small (12 bandas) but can feel at capacity.",
+      "tim_score": null,
       "price_per_night_eur": 2800,
       "price_all_in": true,
       "price_notes": "All-inclusive: accommodation, meals, non-motorised water sports, snorkelling, guided walks. Diving extra.",
-      "best_season_months": [10, 11, 12, 1, 2, 3],
+      "best_season_months": [
+        10,
+        11,
+        12,
+        1,
+        2,
+        3
+      ],
       "best_season_notes": "Oct–Mar: calm seas for snorkelling, turtle nesting, calm Indian Ocean. Jun–Sep: rougher seas, limited water activities.",
-      "tags": ["island", "marine", "snorkeling", "sea-turtles", "dolphins", "ultra-luxury", "zanzibar"],
-      "status": "recommended",
-      "tim_visited": true,
-      "tim_visit_date": "2025-09",
+      "tags": [
+        "island",
+        "marine",
+        "snorkeling",
+        "sea-turtles",
+        "dolphins",
+        "ultra-luxury",
+        "zanzibar"
+      ],
+      "status": "pending-review",
+      "tim_visited": false,
       "category": "island-lodge",
       "website": "https://www.andbeyond.com/our-lodges/africa/tanzania/zanzibar/and-beyond-mnemba-island/",
       "affiliate_url": "",
-      "images": [],
-      "tim_verdict": "The best marine experience in Zanzibar waters — sea turtles feeding on the reef at dawn, dolphins on most morning snorkel. The island exclusivity justifies the premium. Reef health is the honest caveat: ask which sites are currently active."
+      "images": []
     },
     {
       "id": "mahali-mzuri",
@@ -65,23 +98,31 @@
       "sub_region": "Olare Motorogi Conservancy, Kenya",
       "country": "ke",
       "country_name": "Kenya",
-      "tim_score": 88,
-      "tim_score_date": "2025-07",
-      "tim_score_notes": "Sir Richard Branson's camp in a private conservancy bordering the Mara. 12 tents, strong service, excellent guiding. The conservancy model means fewer vehicles per sighting — significant competitive advantage over Mara Triangle public zones. Deduction: conservation fees opaque; tent interiors showing age relative to price.",
+      "tim_score": null,
       "price_per_night_eur": 2100,
       "price_all_in": true,
       "price_notes": "All-inclusive: accommodation, meals, twice-daily game drives, conservancy fees. Helicopter excursions extra.",
-      "best_season_months": [7, 8, 9, 10],
+      "best_season_months": [
+        7,
+        8,
+        9,
+        10
+      ],
       "best_season_notes": "Great Migration river crossings peak July–September. Big cats excellent year-round in conservancy.",
-      "tags": ["big-five", "migration", "masai-mara", "private-conservancy", "big-cats", "luxury"],
-      "status": "recommended",
-      "tim_visited": true,
-      "tim_visit_date": "2025-07",
+      "tags": [
+        "big-five",
+        "migration",
+        "masai-mara",
+        "private-conservancy",
+        "big-cats",
+        "luxury"
+      ],
+      "status": "pending-review",
+      "tim_visited": false,
       "category": "tented-camp",
       "website": "https://www.virgin.com/virgin-limited-edition/mahali-mzuri",
       "affiliate_url": "",
-      "images": [],
-      "tim_verdict": "The conservancy advantage is real — we had river crossings with two other vehicles. At a public Mara camp the same crossing would have 40+ vehicles. For migration viewing, this is the decision that matters most."
+      "images": []
     },
     {
       "id": "six-senses-zighy-bay",
@@ -90,23 +131,34 @@
       "sub_region": "Zighy Bay, Musandam Peninsula, Oman",
       "country": "om",
       "country_name": "Oman",
-      "tim_score": 87,
-      "tim_score_date": "2025-03",
-      "tim_score_notes": "Remote Omani fjord setting, strong sustainability practices (documented, not marketing). Wellness programming exceptional. Deductions: not wildlife-adjacent; beach is small; Indian Ocean access limited to dhow excursions. Score reflects spa + design + value equation, not wildlife.",
+      "tim_score": null,
       "price_per_night_eur": 1800,
       "price_all_in": false,
       "price_notes": "Room rate + meals (not all-in). Spa, activities, transfers extra. Arrive by paraglide or 4WD mountain descent — both included.",
-      "best_season_months": [10, 11, 12, 1, 2, 3, 4],
+      "best_season_months": [
+        10,
+        11,
+        12,
+        1,
+        2,
+        3,
+        4
+      ],
       "best_season_notes": "Oct–Apr: mild temperatures, calm seas. Jun–Sep: hot, humid, choppy Indian Ocean.",
-      "tags": ["wellness", "spa", "remote", "oman", "design", "sustainability"],
-      "status": "recommended",
-      "tim_visited": true,
-      "tim_visit_date": "2025-03",
+      "tags": [
+        "wellness",
+        "spa",
+        "remote",
+        "oman",
+        "design",
+        "sustainability"
+      ],
+      "status": "pending-review",
+      "tim_visited": false,
       "category": "resort",
       "website": "https://www.sixsenses.com/en/resorts/zighy-bay",
       "affiliate_url": "",
-      "images": [],
-      "tim_verdict": "Six Senses operationalises sustainability better than anywhere I have stayed — the on-site farm, wastewater treatment, and Wadi conservation programme are real, not brochure copy. Worth it for the setting alone; the wellness programme is a genuine differentiator."
+      "images": []
     },
     {
       "id": "andbeyond-ngorongoro-crater-lodge",
@@ -121,9 +173,23 @@
       "price_per_night_eur": 2600,
       "price_all_in": true,
       "price_notes": "All-inclusive: accommodation, meals, daily crater game drives with private guide, transfers from Arusha.",
-      "best_season_months": [6, 7, 8, 9, 10, 1, 2],
+      "best_season_months": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        1,
+        2
+      ],
       "best_season_notes": "Crater accessible year-round. Best big cat sightings dry season (June–October). Black rhino year-round but sighting not guaranteed.",
-      "tags": ["big-five", "ngorongoro", "crater", "black-rhino", "ultra-luxury"],
+      "tags": [
+        "big-five",
+        "ngorongoro",
+        "crater",
+        "black-rhino",
+        "ultra-luxury"
+      ],
       "status": "pending-review",
       "tim_visited": false,
       "tim_visit_date": null,
@@ -146,9 +212,20 @@
       "price_per_night_eur": 2800,
       "price_all_in": true,
       "price_notes": "Fully all-inclusive within Singita ecosystem.",
-      "best_season_months": [6, 7, 8, 9],
+      "best_season_months": [
+        6,
+        7,
+        8,
+        9
+      ],
       "best_season_notes": "Same migration timing as Singita Grumeti.",
-      "tags": ["migration", "tented-camp", "serengeti", "private-concession", "ultra-luxury"],
+      "tags": [
+        "migration",
+        "tented-camp",
+        "serengeti",
+        "private-concession",
+        "ultra-luxury"
+      ],
       "status": "pending-review",
       "tim_visited": false,
       "tim_visit_date": null,
@@ -171,9 +248,22 @@
       "price_per_night_eur": 3400,
       "price_all_in": true,
       "price_notes": "Includes accommodation, all meals, gorilla permit (USD 1,500/person value), daily game drives, conservation fee. One of the highest-value all-in rates in Africa given gorilla permit inclusion.",
-      "best_season_months": [6, 7, 8, 12, 1, 2],
+      "best_season_months": [
+        6,
+        7,
+        8,
+        12,
+        1,
+        2
+      ],
       "best_season_notes": "Gorilla trekking year-round. Dry seasons (June–September, December–February) have better trail conditions.",
-      "tags": ["gorilla-trekking", "conservation", "rwanda", "volcanoes", "ultra-luxury"],
+      "tags": [
+        "gorilla-trekking",
+        "conservation",
+        "rwanda",
+        "volcanoes",
+        "ultra-luxury"
+      ],
       "status": "pending-review",
       "tim_visited": false,
       "tim_visit_date": null,
@@ -196,9 +286,20 @@
       "price_per_night_eur": 1900,
       "price_all_in": true,
       "price_notes": "All-inclusive including conservancy fees. Walking safaris and off-road driving included.",
-      "best_season_months": [7, 8, 9, 10],
+      "best_season_months": [
+        7,
+        8,
+        9,
+        10
+      ],
       "best_season_notes": "Migration peak July–October. Big cats year-round.",
-      "tags": ["big-cats", "masai-mara", "walking-safari", "private-conservancy", "luxury"],
+      "tags": [
+        "big-cats",
+        "masai-mara",
+        "walking-safari",
+        "private-conservancy",
+        "luxury"
+      ],
       "status": "pending-review",
       "tim_visited": false,
       "tim_visit_date": null,
@@ -221,9 +322,22 @@
       "price_per_night_eur": 750,
       "price_all_in": false,
       "price_notes": "Room rate + breakfast. Spa, activities extra. Private pool villa rates from €750–1,500/night depending on season.",
-      "best_season_months": [11, 12, 1, 2, 3, 4],
+      "best_season_months": [
+        11,
+        12,
+        1,
+        2,
+        3,
+        4
+      ],
       "best_season_notes": "Nov–Apr: dry season on Hoi An coast. Avoid Sep–Oct (typhoon risk in central Vietnam).",
-      "tags": ["beach-resort", "vietnam", "hoi-an", "pool-villa", "luxury"],
+      "tags": [
+        "beach-resort",
+        "vietnam",
+        "hoi-an",
+        "pool-villa",
+        "luxury"
+      ],
       "status": "pending-review",
       "tim_visited": false,
       "tim_visit_date": null,
@@ -247,9 +361,24 @@
       "price_per_night_eur": 900,
       "price_all_in": false,
       "price_notes": "Pool villa from €900–1,400/night. Breakfast included. Turtle nesting season (June–September): guided night walks with rangers complimentary.",
-      "best_season_months": [11, 12, 1, 2, 3, 4, 5],
+      "best_season_months": [
+        11,
+        12,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
       "best_season_notes": "Best weather Nov–May. June–Sep: sea turtle nesting season — unique wildlife experience despite being shoulder/rainy season.",
-      "tags": ["beach-resort", "vietnam", "con-dao", "sea-turtles", "marine-conservation", "luxury"],
+      "tags": [
+        "beach-resort",
+        "vietnam",
+        "con-dao",
+        "sea-turtles",
+        "marine-conservation",
+        "luxury"
+      ],
       "status": "pending-review",
       "tim_visited": false,
       "tim_visit_date": null,
@@ -273,9 +402,24 @@
       "price_per_night_eur": 350,
       "price_all_in": false,
       "price_notes": "Metropole Wing (original 1901 building) from €350–600/night. Opera Wing (modern wing) slightly lower. French colonial breakfast included.",
-      "best_season_months": [10, 11, 12, 1, 2, 3, 4],
+      "best_season_months": [
+        10,
+        11,
+        12,
+        1,
+        2,
+        3,
+        4
+      ],
       "best_season_notes": "Oct–Apr: cool and dry in Hanoi. Hanoi summer (May–Sep) hot and humid.",
-      "tags": ["city-hotel", "vietnam", "hanoi", "heritage", "history", "luxury"],
+      "tags": [
+        "city-hotel",
+        "vietnam",
+        "hanoi",
+        "heritage",
+        "history",
+        "luxury"
+      ],
       "status": "pending-review",
       "tim_visited": false,
       "tim_visit_date": null,
