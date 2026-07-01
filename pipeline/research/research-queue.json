@@ -827,6 +827,78 @@
       "region": "serengeti",
       "priority": "medium",
       "notes": "Giraffa camelopardalis tippelskirchi — IUCN Vulnerable since 2016, Serengeti population 13,000+, tallest land animal (5.5–6m), silent extinction (30% decline in 30 years), ossicones fact"
+    },
+    {
+      "type": "lodge",
+      "key": "angama-mara",
+      "name": "Angama Mara Kenya Masai Mara Great Rift Valley Escarpment",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "priority": "high",
+      "notes": "Perched on the Oloololo Escarpment overlooking the Mara — suite count, rates, views, conservation partnerships, Angama Foundation community work"
+    },
+    {
+      "type": "lodge",
+      "key": "cottars-1920s-camp",
+      "name": "Cottar's 1920s Safari Camp Masai Mara Olderikesi Conservancy",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "priority": "medium",
+      "notes": "Vintage-style luxury camp on private conservancy bordering the Mara — tent count, rates, conservation model, Cottar family heritage since 1919"
+    },
+    {
+      "type": "lodge",
+      "key": "ol-donyo-lodge",
+      "name": "Ol Donyo Lodge Chyulu Hills Kenya Great Plains Conservation",
+      "topic": "lodge-review",
+      "region": "kenya",
+      "priority": "medium",
+      "notes": "Great Plains Conservation property in the Chyulu Hills/Mbirikani Group Ranch — room count, rates, big tusker elephants, horseback safari, community conservancy fees"
+    },
+    {
+      "type": "lodge",
+      "key": "roho-ya-selous",
+      "name": "Roho ya Selous Nyerere National Park Tanzania Asilia Africa",
+      "topic": "lodge-review",
+      "region": "selous-nyerere",
+      "priority": "medium",
+      "notes": "Asilia Africa camp on the Rufiji floodplain — tent count, rates, boat safari access, walking safari, conservation fee structure"
+    },
+    {
+      "type": "lodge",
+      "key": "andbeyond-ngorongoro-crater-lodge",
+      "name": "andBeyond Ngorongoro Crater Lodge Tanzania Rim Rates Conservation",
+      "topic": "lodge-review",
+      "region": "ngorongoro",
+      "priority": "high",
+      "notes": "Iconic rim-top lodge overlooking the caldera — suite count across three camps, rates, conservation levy, why it commands ultra-luxury pricing"
+    },
+    {
+      "type": "wildlife",
+      "key": "pemba-flying-fox",
+      "name": "Pemba Flying Fox Fruit Bat Endemic Species Conservation Status",
+      "topic": "wildlife-ethics",
+      "region": "pemba",
+      "priority": "medium",
+      "notes": "Pteropus voeltzkowi — endemic to Pemba Island, IUCN status, population recovery after 1990s hunting ban, Ngezi Forest Reserve, roost viewing ethics"
+    },
+    {
+      "type": "wildlife",
+      "key": "tanzania-usambara-birding",
+      "name": "Usambara Mountains Tanzania Endemic Birds Eastern Arc Forest",
+      "topic": "birds",
+      "region": "tanzania",
+      "priority": "medium",
+      "notes": "Eastern Arc endemic bird species, Amani Nature Reserve, Usambara biodiversity hotspot status, best season for birding, access from Zanzibar/Arusha"
+    },
+    {
+      "type": "destination",
+      "key": "zanzibar-dhow-heritage",
+      "name": "Zanzibar Dhow Building Sailing Heritage Swahili Coast Craftsmanship",
+      "topic": "destinations",
+      "region": "zanzibar",
+      "priority": "medium",
+      "notes": "Traditional dhow construction (Mtepe/jahazi), sailing trade routes, remaining dhow-building yards, dhow sunset cruise operators, monsoon-driven trade history"
     }
   ]
 }

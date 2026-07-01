@@ -24611,7 +24611,802 @@
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
       "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "masai-giraffe-facts-iucn-status-1",
+      "claim": "The Masai Giraffe (*Giraffa tippelskirchi*) is classified as Endangered on the IUCN Red List, based on a 2018 assessment, and the IUCN Red List indicates a decreasing population trend.",
+      "sources": [
+        {
+          "name": "IUCN Red List",
+          "url": "https://iucn.org/press-release/202508/four-giraffe-species-officially-recognised-major-conservation-reclassification",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The Masai Giraffe (*Giraffa tippelskirchi*) is currently classified as **Endangered** on the IUCN Red List of Threatened Species. This assessment was last made in **2018**. The IUCN Red List indicates a **decreasing** population trend for the Masai Giraffe."
+        },
+        {
+          "name": "Giraffe Conservation Foundation",
+          "url": "https://giraffeconservation.org/giraffe-species/masai-giraffe/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Historically, the Masai giraffe population declined by approximately 50% over the past thirty years."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "serengeti",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "masai-giraffe-facts-population-1",
+      "claim": "The Giraffe Conservation Foundation (GCF) estimates the total Masai Giraffe population at approximately 43,900 individuals across Kenya, Rwanda, Tanzania, and Zambia, with their \"State of Giraffe 2025\" report indicating stable numbers for the species over the last five years.",
+      "sources": [
+        {
+          "name": "Giraffe Conservation Foundation",
+          "url": "https://giraffeconservation.org/giraffe-species/masai-giraffe/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The Giraffe Conservation Foundation (GCF) states that fewer than **44,000** Masai Giraffes remain in their natural habitats. The GCF's \"State of Giraffe 2025\" report estimates the population at approximately **43,900** individuals across Kenya, Rwanda, Tanzania, and Zambia."
+        },
+        {
+          "name": "Giraffe Conservation Foundation",
+          "url": "https://giraffeconservation.org/giraffe-species/masai-giraffe/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "More recent scientific investigations by the Giraffe Conservation Foundation (GCF) and partners, including their \"State of Giraffe 2025\" report, offer a more optimistic outlook, indicating a slow but steady rebound and **stable numbers** for the species over the last five years."
+        }
+      ],
+      "status": "single-source",
+      "topic": "wildlife-ethics",
+      "region": "serengeti",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "masai-giraffe-facts-population-2",
+      "claim": "A 2009 study reported a decline of up to 95% in the giraffe population of Kenya's Masai Mara reserve between 1989 and 2003, attributed to increased human settlement.",
+      "sources": [
+        {
+          "name": "Mongabay",
+          "url": "https://news.mongabay.com/short-article/2025/08/giraffe-is-now-officially-four-species/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "A 2009 study by the International Livestock Research Institute (ILRI), funded by WWF, reported a decline of up to **95%** in the giraffe population of Kenya's Masai Mara reserve between 1989 and 2003, attributed to increased human settlement."
+        },
+        {
+          "name": "African Wildlife Foundation",
+          "url": "https://www.awf.org/sites/default/files/2024-08/Njueini_Masai%20Giraffe%20%28Giraffa%20Camelopardalis%20Tippelskirchi%29%20Population%20and%20Landuse%20Trends%20in%20the%20Tsavo%20Landscape%2C%20Kenya.pdf",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "A 2009 study by the International Livestock Research Institute (ILRI), funded by WWF, reported a decline of up to **95%** in the giraffe population of Kenya's Masai Mara reserve between 1989 and 2003, attributed to increased human settlement."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "serengeti",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "masai-giraffe-facts-probability-1",
+      "claim": "Masai Giraffes are spotted daily year-round in the Serengeti-Mara ecosystem, with high sighting chances, \"up to 95%,\" reported for July, August, and September.",
+      "sources": [
+        {
+          "name": "Go2Africa",
+          "url": "https://www.go2africa.com/destinations/serengeti/when-to-go",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "They are \"spotted daily throughout the Serengeti-Mara ecosystem year-round\"."
+        },
+        {
+          "name": "Shadows of Africa",
+          "url": "https://www.shadowsofafrica.com/blog/park-rules-in-kenya/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "High sighting chances, \"up to 95%,\" are reported for July, August, and September in the Serengeti/Masai Mara ecosystem."
+        },
+        {
+          "name": "Altezza Travel",
+          "url": "https://altezzatravel.com/articles/national-parks-rules",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "High sighting chances, \"up to 95%,\" are reported for July, August, and September in the Serengeti/Masai Mara ecosystem."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "serengeti",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "masai-giraffe-facts-permit-1",
+      "claim": "In Masai Mara, not more than 5 safari cars are allowed around one animal for a long time, with a 10-minute time limit if many cars are present, and a minimum distance of 25 meters (or 100 meters maximum) from wildlife is required.",
+      "sources": [
+        {
+          "name": "Masai Mara Travel Guide",
+          "url": "https://www.masaimara.travel/masai-giraffe-kenya.php",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Not more than **5 safari cars** are allowed around one animal for a long time. If there are many cars, a **10-minute time limit** is followed."
+        },
+        {
+          "name": "Go2Africa",
+          "url": "https://www.go2africa.com/destinations/serengeti/when-to-go",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Other sources state a minimum distance of **25 meters** (roughly five vehicle lengths)."
+        },
+        {
+          "name": "Shadows of Africa",
+          "url": "https://www.shadowsofafrica.com/blog/park-rules-in-kenya/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "A maximum of **100 meters** between visitors and wildlife is necessary."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "serengeti",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "masai-giraffe-facts-permit-2",
+      "claim": "In Serengeti (Tanzania National Parks), all visitors must remain in their vehicle within 200 meters of any game animal, and drivers are discouraged from approaching closer than 25 meters for nervous animals.",
+      "sources": [
+        {
+          "name": "Altezza Travel",
+          "url": "https://altezzatravel.com/articles/national-parks-rules",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "All visitors must remain in their vehicle within **200 meters** of any game animal."
+        },
+        {
+          "name": "Shadows of Africa",
+          "url": "https://www.shadowsofafrica.com/blog/park-rules-in-kenya/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Drivers are discouraged from approaching animals too close (e.g., **25 meters** for nervous animals like lions, cheetahs, and leopards)."
+        },
+        {
+          "name": "Go2Africa",
+          "url": "https://www.go2africa.com/destinations/serengeti/when-to-go",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Drivers are discouraged from approaching animals too close (e.g., **25 meters** for nervous animals like lions, cheetahs, and leopards)."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "serengeti",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "masai-giraffe-facts-permit-3",
+      "claim": "Off-roading and feeding wildlife are strictly prohibited in both Serengeti and Masai Mara, as these actions disturb wildlife, damage habitats, and can lead to fines or expulsion.",
+      "sources": [
+        {
+          "name": "Altezza Travel",
+          "url": "https://altezzatravel.com/articles/national-parks-rules",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Off-roading: Strictly prohibited in both Serengeti and Masai Mara to protect the landscape and habitat. Violations can result in fines or expulsion."
+        },
+        {
+          "name": "Masai Mara Travel Guide",
+          "url": "https://www.masaimara.travel/masai-giraffe-kenya.php",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Off-roading: Strictly prohibited in both Serengeti and Masai Mara to protect the landscape and habitat. Violations can result in fines or expulsion."
+        },
+        {
+          "name": "Go2Africa",
+          "url": "https://www.go2africa.com/destinations/serengeti/when-to-go",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Feeding Wildlife: Completely prohibited as it disrupts natural diets, creates dependency, and can be dangerous."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "serengeti",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "angama-mara-price-1",
+      "claim": "For 2026, Angama Mara's Standard Season rate is USD $1,850 per person per night, applicable from January 5 – June 30 and October 1 – December 22.",
+      "sources": [
+        {
+          "name": "Angama Mara Official Website",
+          "url": "https://angama.com/rates-availability/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "For 2026, the rates are: Standard Season (January 5 – June 30; October 1 – December 22): USD $1,850 per person per night."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "angama-mara-price-2",
+      "claim": "Maasai Mara Park Fees, excluded from Angama Mara's rates, are USD $160 per adult from January to June and USD $260 per adult from July to December.",
+      "sources": [
+        {
+          "name": "Angama Mara Official Website",
+          "url": "https://angama.com/rates-availability/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Excluded from the rates are Maasai Mara Park Fees (USD $160 per adult and USD $90 per child aged 9-17 from January-June; USD $260 per adult and USD $90 per child aged 9-17 from July-December; children 8 and under are free)"
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "angama-mara-capacity-1",
+      "claim": "Angama Mara consists of two separate camps, each featuring 15 en-suite Tented Suites, totaling 30 suites, and each camp can accommodate a maximum of 30 guests.",
+      "sources": [
+        {
+          "name": "Angama Mara Official Website",
+          "url": "https://angama.com/rates-availability/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Angama Mara consists of two identical and separate camps, each featuring 15 en-suite Tented Suites, totaling 30 tented suites. Each camp can accommodate a maximum of 30 guests."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "angama-mara-conservation-1",
+      "claim": "Angama Mara has been awarded a Gold Eco-rating by Ecotourism Kenya, the highest level of certification, demonstrating \"outstanding best practice\" in resource use, community engagement, and waste/emissions management.",
+      "sources": [
+        {
+          "name": "Angama Mara Official Website",
+          "url": "https://angama.com/rates-availability/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Angama Mara has been awarded a Gold Eco-rating by Ecotourism Kenya, the highest level of certification, demonstrating \"outstanding best practice\" in resource use, community engagement, and waste/emissions management."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "angama-mara-conservation-2",
+      "claim": "The Angama Foundation, a non-profit organization, is primarily funded by a USD $20 nightly donation from each guest and focuses on Education, Healthcare, and Conservation.",
+      "sources": [
+        {
+          "name": "Angama Mara Official Website",
+          "url": "https://angama.com/rates-availability/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The lodge operates the Angama Foundation, a non-profit organization primarily funded by a USD $20 nightly donation from each guest. The Foundation focuses on Education, Healthcare, and Conservation..."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "angama-mara-conservation-3",
+      "claim": "The Angama Foundation supports the Mara Elephant Project (MEP) by funding elephant collaring to monitor movement and prevent human-wildlife conflict.",
+      "sources": [
+        {
+          "name": "Angama Mara Official Website",
+          "url": "https://angama.com/rates-availability/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Angama Foundation is a proud supporter of MEP, an organization dedicated to elephant conservation and human-wildlife conflict mitigation. The Foundation has funded elephant collaring to monitor movement and prevent conflict."
+        },
+        {
+          "name": "Mara Elephant Project",
+          "url": "https://maraelephantproject.org/angama-foundation-photography-contest/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Angama Foundation is a proud supporter of MEP, an organization dedicated to elephant conservation and human-wildlife conflict mitigation. The Foundation has funded elephant collaring to monitor movement and prevent conflict."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "angama-mara-seasons-1",
+      "claim": "The Great Migration typically arrives in the Maasai Mara between July and October.",
+      "sources": [
+        {
+          "name": "Angama Mara Official Website",
+          "url": "https://angama.com/rates-availability/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The Great Migration typically arrives in the Maasai Mara between July and October, offering dramatic river crossings."
+        },
+        {
+          "name": "Maasai Mara Official Website",
+          "url": "https://masaimara.com/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The Great Migration typically arrives in the Maasai Mara between July and October, offering dramatic river crossings."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "angama-mara-access-1",
+      "claim": "Angama Mara has its own private hardtop airfield, known as Angama Airstrip (ANA), which is a 5-minute drive from the lodge.",
+      "sources": [
+        {
+          "name": "Angama Mara Official Website",
+          "url": "https://angama.com/rates-availability/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Angama Mara has its own private hardtop airfield, known as Angama Airstrip (ANA)... Upon arrival at Angama Airstrip, the lodge is just a 5-minute drive away."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "angama-mara-access-2",
+      "claim": "Scheduled flights from Nairobi's Wilson Airport (WIL) to Angama Mara's private airfield take approximately 45 minutes to 1 hour 15 minutes.",
+      "sources": [
+        {
+          "name": "Angama Mara Official Website",
+          "url": "https://angama.com/rates-availability/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Guests typically take one of the several daily scheduled flights from Nairobi's Wilson Airport to Angama Mara's private airfield. This flight takes approximately 45 minutes to 1 hour 15 minutes, depending on the routing."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "andbeyond-ngorongoro-crater-lodge-seasons-1",
+      "claim": "andBeyond Ngorongoro Crater Lodge ceased operations in January 2025 for an extensive rebuild and is expected to reopen in 2027 with an entirely redesigned lodge.",
+      "sources": [
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "andBeyond Ngorongoro Crater Lodge... ceased operations in January 2025. It is expected to reopen in 2027 with an entirely redesigned lodge."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "ngorongoro",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "andbeyond-ngorongoro-crater-lodge-price-1",
+      "claim": "Prior to its closure, andBeyond Ngorongoro Crater Lodge was considered 'Top Luxury,' with rates starting from $1,500 per night, and other sources indicated suite rates from $1,325 and family suite rates from $1,160.",
+      "sources": [
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "Prior to its closure, the lodge's price tier was considered 'Top Luxury,' with rates starting from $1,500 per night. Other sources indicate rates for a suite starting from $1,325 and a family suite from $1,160."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "ngorongoro",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "andbeyond-ngorongoro-crater-lodge-price-2",
+      "claim": "The typical rate at andBeyond Ngorongoro Crater Lodge included accommodation, three meals daily, soft drinks, house wines, local brand spirits and beers, teas and coffees, refreshments on game drives, laundry, and emergency medical evacuation insurance.",
+      "sources": [
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "The rate typically included accommodation, three meals daily, soft drinks, house wines, local brand spirits and beers, teas and coffees, and refreshments on game drives. Other inclusions were laundry, Swarovski Optik binoculars for use during the stay, a Guides' Journal, an area map, and participation in the WILDchild programme. Emergency medical evacuation insurance was also covered."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "ngorongoro",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "andbeyond-ngorongoro-crater-lodge-capacity-1",
+      "claim": "Before its rebuild, andBeyond Ngorongoro Crater Lodge consisted of 30 stilted suites, divided into three separate camps (North Camp with 12 suites, South Camp with 12 suites, and Tree Camp with 6 suites), and could accommodate a maximum of 60 guests.",
+      "sources": [
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "Before its rebuild, andBeyond Ngorongoro Crater Lodge consisted of 30 stilted suites, divided into three separate camps: North Camp (12 suites), South Camp (12 suites), and Tree Camp (6 suites). Each camp operated independently with its own dining room, lounge, and viewing deck. The lodge could accommodate a maximum of 60 guests at one time."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "ngorongoro",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "andbeyond-ngorongoro-crater-lodge-conservation-1",
+      "claim": "andBeyond aims to conserve 40 million acres of key biospheres by 2030 and partners with KopeLion, offering guests interaction with the conservation team which generates a donation to KopeLion.",
+      "sources": [
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "andBeyond has a strong commitment to conservation, aiming to expand its impact by 2030 through partnerships and investment to conserve 40 million acres of key biospheres."
+        },
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "Guests have the opportunity to interact with the KopeLion conservation team to understand their operations and the coexistence of Maasai and wildlife. These experiences generate a donation to KopeLion."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "ngorongoro",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "andbeyond-ngorongoro-crater-lodge-conservation-2",
+      "claim": "andBeyond, in collaboration with the Africa Foundation, has invested over USD 420,000 since 2006 into education and healthcare in neighboring communities, supporting 42 tertiary-level students and providing conservation lessons to over 130 children and adults annually.",
+      "sources": [
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "andBeyond collaborates closely with the Africa Foundation on community development programs, having invested over USD 420,000 since 2006 into education and healthcare in neighboring communities. This includes supporting 42 tertiary-level students through bursaries and providing conservation lessons to over 130 children and adults annually."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "ngorongoro",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "andbeyond-ngorongoro-crater-lodge-conservation-3",
+      "claim": "andBeyond facilitated the translocation of southern white rhinos from South Africa to the Ngorongoro Crater in Tanzania, partnering with Tanzania's Ministry of Natural Resources and Tourism (MNRT) and the Ngorongoro Conservation Area Authority (NCAA).",
+      "sources": [
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "In an innovative collaboration, andBeyond facilitated the translocation of southern white rhinos from South Africa to the Ngorongoro Crater in Tanzania, partnering with Tanzania's Ministry of Natural Resources and Tourism (MNRT) and the Ngorongoro Conservation Area Authority (NCAA)."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "ngorongoro",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "andbeyond-ngorongoro-crater-lodge-access-1",
+      "claim": "The nearest domestic airport to andBeyond Ngorongoro Crater Lodge is Lake Manyara Airstrip (LKY), and the nearest international airport is Kilimanjaro International Airport (JRO).",
+      "sources": [
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "The nearest domestic airport is Lake Manyara Airstrip (LKY)."
+        },
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "Kilimanjaro International Airport (JRO) is an international airport that serves as a gateway to the region."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "ngorongoro",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "andbeyond-ngorongoro-crater-lodge-access-2",
+      "claim": "The typical transfer from Lake Manyara Airstrip (LKY) to andBeyond Ngorongoro Crater Lodge takes approximately 1.5 hours in closed game viewing vehicles.",
+      "sources": [
+        {
+          "name": "andBeyond Official Website",
+          "url": "https://www.andbeyond.com/our-lodges/africa/tanzania/ngorongoro-crater/andbeyond-ngorongoro-crater-lodge/",
+          "tier": 4,
+          "accessed": "2026-07-01",
+          "quote": "Guests were typically collected from Lake Manyara Airstrip in closed game viewing vehicles, with the drive to the lodge taking approximately 1.5 hours."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "ngorongoro",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "cottars-1920s-camp-access-1",
+      "claim": "Cottar's 1920s Safari Camp is located in the Olderikesi Conservancy, bordering the Maasai Mara National Reserve in Kenya.",
+      "sources": [
+        {
+          "name": "Cottar's 1920s Safari Camp Official Site",
+          "url": "https://cottars.com/availability-cottars-safaris-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Cottar's 1920s Safari Camp, located in the Olderikesi Conservancy bordering the Maasai Mara National Reserve in Kenya..."
+        },
+        {
+          "name": "Maasai Mara Official Site",
+          "url": "https://masaimara.com/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Cottar's 1920s Safari Camp, located in the Olderikesi Conservancy bordering the Maasai Mara National Reserve in Kenya..."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "cottars-1920s-camp-capacity-1",
+      "claim": "Cottar's 1920s Safari Camp accommodates up to 28 guests across 11 guest tents and one private villa.",
+      "sources": [
+        {
+          "name": "Cottar's 1920s Safari Camp Official Site",
+          "url": "https://cottars.com/availability-cottars-safaris-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Cottar's 1920s Safari Camp accommodates up to 28 guests in its tented camp. The lodge offers a total of 11 guest tents and one private villa..."
+        },
+        {
+          "name": "Go2Africa",
+          "url": "https://www.go2africa.com/accommodation/cottars-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Cottar's 1920s Safari Camp accommodates up to 28 guests in its tented camp. The lodge offers a total of 11 guest tents and one private villa..."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "cottars-1920s-camp-conservation-1",
+      "claim": "The camp is a certified Global Ecosphere Retreat® (GER®) since 2015 and holds a \"Gold\" certification for eco-tourism standards.",
+      "sources": [
+        {
+          "name": "The Long Run",
+          "url": "https://www.thelongrun.org/ger-members/cottars-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The camp is a certified Global Ecosphere Retreat® (GER®), having received this recognition in 2015."
+        },
+        {
+          "name": "Cottar's 1920s Safari Camp Official Site",
+          "url": "https://cottars.com/availability-cottars-safaris-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The facility holds a \"Gold\" certification, indicating adherence to high eco-tourism standards."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "cottars-1920s-camp-conservation-2",
+      "claim": "Cottar's Wildlife Conservation Trust (CWCT), established in 1996, manages the 6,000 to 7,608-acre Olderikesi Wildlife Conservancy on behalf of 7,300 Maasai landowners.",
+      "sources": [
+        {
+          "name": "Cottar's 1920s Safari Camp Official Site",
+          "url": "https://cottars.com/availability-cottars-safaris-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Cottar's Wildlife Conservation Trust (CWCT): Established in 1996 (with initiation also noted in September 2006), the CWCT is central to the camp's conservation efforts. It supports the establishment and management of the Olderikesi Wildlife Conservancy. ... This conservancy is owned by a community of 7,300 Maasai landowners, and CWCT manages the land for wildlife use on their behalf."
+        },
+        {
+          "name": "The Long Run",
+          "url": "https://www.thelongrun.org/ger-members/cottars-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Cottar's Wildlife Conservation Trust (CWCT): Established in 1996 (with initiation also noted in September 2006), the CWCT is central to the camp's conservation efforts. It supports the establishment and management of the Olderikesi Wildlife Conservancy. ... This conservancy is owned by a community of 7,300 Maasai landowners, and CWCT manages the land for wildlife use on their behalf."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "cottars-1920s-camp-seasons-1",
+      "claim": "The Great Wildebeest Migration typically passes through the area near Cottar's 1920s Safari Camp between May and October, with peak viewing from July to October.",
+      "sources": [
+        {
+          "name": "Maasai Mara Official Site",
+          "url": "https://masaimara.com/",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The camp's location is ideal for witnessing the Great Wildebeest Migration, which typically passes through the area between May and October, with peak viewing from July to October."
+        },
+        {
+          "name": "Go2Africa",
+          "url": "https://www.go2africa.com/accommodation/cottars-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The camp's location is ideal for witnessing the Great Wildebeest Migration, which typically passes through the area between May and October, with peak viewing from July to October."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "cottars-1920s-camp-access-2",
+      "claim": "Guests typically access Cottar's 1920s Safari Camp by flying into Cottar's Private Airstrip (10-15 minute transfer) or Keekorok Airstrip (90 minute transfer) via light aircraft from Nairobi Wilson Airport.",
+      "sources": [
+        {
+          "name": "Go2Africa",
+          "url": "https://www.go2africa.com/accommodation/cottars-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Guests typically fly into either Cottar's Private Airstrip or Keekorok Airstrip via light aircraft, followed by a game drive transfer to the lodge. ... Cottar's Private Airstrip: ... Transfers from this airstrip to the camp take approximately 10-15 minutes by vehicle. Direct flights from Nairobi Wilson Airport (WIL) are available to Cottar's Private Airstrip... Keekorok Airstrip (KEU): ... transfers to the camp taking approximately 1.5 hours (90 minutes) by road."
+        },
+        {
+          "name": "Cottar's 1920s Safari Camp Official Site",
+          "url": "https://cottars.com/availability-cottars-safaris-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Guests typically fly into either Cottar's Private Airstrip or Keekorok Airstrip via light aircraft, followed by a game drive transfer to the lodge. ... Cottar's Private Airstrip: ... Transfers from this airstrip to the camp take approximately 10-15 minutes by vehicle. Direct flights from Nairobi Wilson Airport (WIL) are available to Cottar's Private Airstrip..."
+        },
+        {
+          "name": "Kenya Safari",
+          "url": "https://www.kenyasafari.com/cottars-1920s-safari-camp-masai-mara_location.html",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "Guests typically fly into either Cottar's Private Airstrip or Keekorok Airstrip via light aircraft, followed by a game drive transfer to the lodge. ... Keekorok Airstrip (KEU): ... transfers to the camp taking approximately 1.5 hours (90 minutes) by road."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "cottars-1920s-camp-price-1",
+      "claim": "High Season rates for Cottar's 1920s Safari Camp are approximately $2,000 per person sharing per night, occurring from June 15 - October 31 and December 20 - January 10.",
+      "sources": [
+        {
+          "name": "Go2Africa",
+          "url": "https://www.go2africa.com/accommodation/cottars-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "High Season: Approximately $2,000 per person sharing per night (e.g., June 15 - October 31, December 20 - January 10)."
+        },
+        {
+          "name": "Scott Dunn",
+          "url": "https://www.scottdunn.com/us/kenya/hotels/cottars-1920-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "High Season: Approximately $2,000 per person sharing per night (e.g., June 15 - October 31, December 20 - January 10)."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "cottars-1920s-camp-price-2",
+      "claim": "The Game Package rates include accommodation, all meals, local brand alcoholic and non-alcoholic drinks, specified safari activities (day/night game drives, bush walks, local school/cultural visits, sustainability tours), return airstrip transfers from Cottar's private airstrip, and laundry service.",
+      "sources": [
+        {
+          "name": "Cottar's 1920s Safari Camp Official Site",
+          "url": "https://cottars.com/availability-cottars-safaris-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The rates generally include accommodation, all meals, local brand alcoholic and non-alcoholic drinks, specified safari activities, and return airstrip transfers from Cottar's private airstrip. Safari activities typically encompass day and night game drives, bush walks, local school visits, sustainability tours, and Maasai cultural visits. Laundry service is also included."
+        },
+        {
+          "name": "Go2Africa",
+          "url": "https://www.go2africa.com/accommodation/cottars-1920s-camp",
+          "tier": null,
+          "accessed": "2026-07-01",
+          "quote": "The rates generally include accommodation, all meals, local brand alcoholic and non-alcoholic drinks, specified safari activities, and return airstrip transfers from Cottar's private airstrip. Safari activities typically encompass day and night game drives, bush walks, local school visits, sustainability tours, and Maasai cultural visits. Laundry service is also included."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "masai-mara",
+      "added": "2026-07-01",
+      "promotedOn": "2026-07-01",
+      "reviewedBy": "Tim Hennig"
     }
   ],
-  "updated": "2026-06-30"
+  "updated": "2026-07-01"
 }
