@@ -1,0 +1,73 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: 'About Beyond Paradise',
+  url: 'https://beyondparadise.com/about/',
+};
+---
+<Base
+  title="About Beyond Paradise · Tim Hennig & Kim"
+  description="Beyond Paradise is written by Tim Hennig (East Africa) and Kim (Southeast Asia) — independent luxury travel editorial, no press trips, no hosted stays."
+  permalink="/about/"
+>
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} slot="head" />
+
+  <div class="ab-page">
+    <div class="ab-hero section--dark">
+      <div class="container">
+        <p class="label reveal">ABOUT BEYOND PARADISE</p>
+        <h1 class="display-l reveal" style="margin-top:16px;max-width:700px;">Written by People Who Live There</h1>
+        <p class="body-l reveal" style="max-width:600px;margin-top:20px;color:var(--cream-65);">Independent luxury travel editorial for East Africa and Southeast Asia. €6,000+ trips only. No press trips, no hosted stays, no advertiser influence.</p>
+      </div>
+    </div>
+
+    <div class="container ab-body">
+      <section class="ab-authors">
+        <div class="ab-author glass">
+          <h2 class="display-s" style="margin-bottom:8px;">Tim Hennig</h2>
+          <p class="meta" style="color:var(--gold);margin-bottom:16px;">East Africa · Zanzibar, Serengeti, Masai Mara, Rwanda, Mafia Island</p>
+          <p class="body-l" style="color:var(--cream-65);">Tim has lived in East Africa for 5+ years and is General Manager of Boutique Hotel Matlai in Michamvi Pingwe, Zanzibar. He has personally reviewed 80+ luxury properties across the region. Beyond Paradise never reviews Matlai — see our <a href="/about/editorial-policy/">editorial policy</a> for why.</p>
+        </div>
+        <div class="ab-author glass">
+          <h2 class="display-s" style="margin-bottom:8px;">Kim</h2>
+          <p class="meta" style="color:var(--gold);margin-bottom:16px;">Southeast Asia · Hoi An, Hanoi, Ha Long Bay, Hue</p>
+          <p class="body-l" style="color:var(--cream-65);">Kim is Vietnamese and lives in Zanzibar. She brings first-hand knowledge of Vietnam's luxury travel scene to Beyond Paradise's Southeast Asia coverage — her first reviews are in progress.</p>
+        </div>
+      </section>
+
+      <section class="ab-links reveal" style="margin-top:56px;display:flex;gap:16px;flex-wrap:wrap;">
+        <a href="/about/tim-score/" class="btn btn-glass">The Tim Score Methodology</a>
+        <a href="/about/editorial-policy/" class="btn btn-glass">Editorial Policy</a>
+      </section>
+    </div>
+  </div>
+</Base>
+
+<style>
+.ab-hero {
+  padding: 140px 0 80px;
+  background: var(--base);
+  border-bottom: 1px solid var(--glass-b);
+}
+.ab-body {
+  padding: 72px 0 120px;
+  max-width: 900px;
+}
+.ab-authors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.ab-author {
+  padding: 32px;
+  border-radius: 16px;
+}
+.ab-author a { color: var(--gold); text-decoration: underline; text-decoration-color: rgba(201,169,110,0.4); }
+
+@media (max-width: 700px) {
+  .ab-authors { grid-template-columns: 1fr; }
+}
+</style>

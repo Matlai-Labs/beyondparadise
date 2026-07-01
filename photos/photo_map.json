@@ -14,6 +14,12 @@
     "/wildlife/whale-sharks-mafia-island/": {
       "hero": { "file": null, "placeholder": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=1440&q=80", "alt": "Whale shark in open ocean water", "credit": "Unsplash placeholder", "note": "Replace when Tim visits Mafia Island Oct-Feb" }
     },
+    "/wildlife/green-sea-turtle-zanzibar/": {
+      "hero": { "file": null, "placeholder": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1440&q=80", "alt": "Turquoise water over the reef at Mnemba Atoll, Zanzibar", "credit": "Unsplash placeholder", "note": "Replace with Tim's photo — pending Mnemba visit" }
+    },
+    "/wildlife/great-migration-serengeti-masai-mara/": {
+      "hero": { "file": null, "placeholder": "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1440&q=80", "alt": "Wildebeest herds crossing the open plains of the Serengeti", "credit": "Unsplash placeholder", "note": "Replace with Tim's own migration photos (Ndutu calving, Grumeti or Mara crossing)" }
+    },
     "/east-africa/zanzibar/": {
       "hero": { "file": null, "placeholder": null, "alt": "Zanzibar east coast beach, Indian Ocean, blue water", "note": "Tim to shoot from Matlai beach or Michamvi Pingwe" }
     }
@@ -24,6 +30,7 @@
     { "priority": 3, "subject": "Whale sharks Mafia Island", "for_pages": ["/wildlife/whale-sharks-mafia-island/"], "tim_has_shots": false, "note": "Shoot Oct-Feb" },
     { "priority": 4, "subject": "Mnemba Atoll — snorkelling, turtle, reef", "for_pages": ["/reviews/mnemba-island-lodge/", "/wildlife/green-sea-turtle-zanzibar/"], "tim_has_shots": false, "note": "Pending Mnemba visit" },
     { "priority": 5, "subject": "Zanzibar east coast — beach, sunsets, Michamvi", "for_pages": ["/east-africa/zanzibar/"], "tim_has_shots": true, "note": "Tim can shoot from Matlai any day" },
-    { "priority": 6, "subject": "Vietnam — Hoi An Old Town, Ha Long Bay (Kim)", "for_pages": ["/southeast-asia/vietnam/"], "tim_has_shots": false, "lead": "kim" }
+    { "priority": 6, "subject": "Vietnam — Hoi An Old Town, Ha Long Bay (Kim)", "for_pages": ["/southeast-asia/vietnam/"], "tim_has_shots": false, "lead": "kim" },
+    { "priority": 7, "subject": "Wildebeest migration — Ndutu calving, Grumeti or Mara river crossing", "for_pages": ["/wildlife/great-migration-serengeti-masai-mara/"], "tim_has_shots": false, "note": "Shoot Jan-Mar (calving) or Jun-Oct (crossings)" }
   ]
 }

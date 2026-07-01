@@ -107,7 +107,9 @@ If you are making the journey to Mafia, plan at least one reef dive day in addit
 
 Mafia Island is not a beach resort destination. The accommodation ranges from basic guesthouses to modest eco-lodges — nothing in the Beyond Paradise ultra-luxury tier exists on Mafia Island at time of writing. This is a wildlife pilgrimage, not a luxury beach holiday.
 
-If you want both whale sharks and high-end accommodation, the trip sequence is: fly Zanzibar → Dar → Mafia (2–3 nights, whale sharks), return to Dar → Zanzibar (3–4 nights, Mnemba, Menai Bay dolphins, east coast beaches). Mnemba Island Lodge handles the luxury tier.
+If you want both whale sharks and high-end accommodation, the trip sequence is: fly Zanzibar → Dar → Mafia (2–3 nights, whale sharks), return to Dar → Zanzibar (3–4 nights for [Mnemba Atoll's resident sea turtles](/wildlife/green-sea-turtle-zanzibar/), Menai Bay dolphins, and east coast beaches).
+
+If your itinerary also includes a Tanzania safari, note that whale shark season (October–February) and the [Great Migration's river-crossing phase](/wildlife/great-migration-serengeti-masai-mara/) (July–October) only briefly overlap in October — plan the sequencing deliberately rather than assuming both fit easily into one trip.
 
 ## The conservation context
 
