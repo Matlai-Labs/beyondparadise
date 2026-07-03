@@ -95,7 +95,7 @@ None of this eliminates the impact — it manages it. The single biggest lever y
 
 **Malaria note:** most of Kenya's safari zones, including the Masai Mara, are moderate-risk, year-round malaria transmission areas (Nairobi's city center and highlands above 2,500m are exceptions). Prophylaxis is recommended for all safari travel in both countries.
 
-If your trip has room for it, pairing Mara River crossing season with a stop for [Mafia Island's whale shark aggregation](/wildlife/whale-sharks-mafia-island/) (October–February) works well logistically for travelers routing through Tanzania, since the two peak windows only briefly overlap in October.
+If your trip has room for it, pairing Mara River crossing season with a stop for [Mafia Island's whale shark aggregation](/wildlife/whale-sharks-mafia-island/) (October–February) works well logistically for travelers routing through Tanzania, since the two peak windows only briefly overlap in October. Travelers extending their Tanzania safari southward, rather than routing through Kenya, should also consider [Nyerere National Park's African wild dogs](/wildlife/african-wild-dog-selous/) — a fundamentally different ecosystem holding roughly a third of the species' entire world population, and a genuine complement to a Serengeti-focused itinerary rather than a competing claim on the same travel window.
 
 ## What this means for planning your trip
 

@@ -158,6 +158,20 @@ declare module 'astro:content' {
 } & { render(): Render[".md"] };
 };
 "wildlife": {
+"african-wild-dog-selous.md": {
+	id: "african-wild-dog-selous.md";
+  slug: "african-wild-dog-selous";
+  body: string;
+  collection: "wildlife";
+  data: InferEntrySchema<"wildlife">
+} & { render(): Render[".md"] };
+"dolphins-menai-bay.md": {
+	id: "dolphins-menai-bay.md";
+  slug: "dolphins-menai-bay";
+  body: string;
+  collection: "wildlife";
+  data: InferEntrySchema<"wildlife">
+} & { render(): Render[".md"] };
 "great-migration-serengeti-masai-mara.md": {
 	id: "great-migration-serengeti-masai-mara.md";
   slug: "great-migration-serengeti-masai-mara";

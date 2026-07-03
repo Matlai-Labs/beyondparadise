@@ -20,6 +20,12 @@
     "/wildlife/great-migration-serengeti-masai-mara/": {
       "hero": { "file": null, "placeholder": "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1440&q=80", "alt": "Wildebeest herds crossing the open plains of the Serengeti", "credit": "Unsplash placeholder", "note": "Replace with Tim's own migration photos (Ndutu calving, Grumeti or Mara crossing)" }
     },
+    "/wildlife/dolphins-menai-bay/": {
+      "hero": { "file": null, "placeholder": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1440&q=80", "alt": "Calm turquoise water in Menai Bay, Zanzibar", "credit": "Unsplash placeholder", "note": "Replace with Tim's own Menai Bay dolphin trip photos" }
+    },
+    "/wildlife/african-wild-dog-selous/": {
+      "hero": { "file": null, "placeholder": "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1440&q=80", "alt": "Savanna woodland in Nyerere National Park, Tanzania", "credit": "Unsplash placeholder", "note": "Replace with Tim's own Nyerere wild dog photos, ideally denning season (Jul-Aug)" }
+    },
     "/east-africa/zanzibar/": {
       "hero": { "file": null, "placeholder": null, "alt": "Zanzibar east coast beach, Indian Ocean, blue water", "note": "Tim to shoot from Matlai beach or Michamvi Pingwe" }
     }
@@ -31,6 +37,7 @@
     { "priority": 4, "subject": "Mnemba Atoll — snorkelling, turtle, reef", "for_pages": ["/reviews/mnemba-island-lodge/", "/wildlife/green-sea-turtle-zanzibar/"], "tim_has_shots": false, "note": "Pending Mnemba visit" },
     { "priority": 5, "subject": "Zanzibar east coast — beach, sunsets, Michamvi", "for_pages": ["/east-africa/zanzibar/"], "tim_has_shots": true, "note": "Tim can shoot from Matlai any day" },
     { "priority": 6, "subject": "Vietnam — Hoi An Old Town, Ha Long Bay (Kim)", "for_pages": ["/southeast-asia/vietnam/"], "tim_has_shots": false, "lead": "kim" },
-    { "priority": 7, "subject": "Wildebeest migration — Ndutu calving, Grumeti or Mara river crossing", "for_pages": ["/wildlife/great-migration-serengeti-masai-mara/"], "tim_has_shots": false, "note": "Shoot Jan-Mar (calving) or Jun-Oct (crossings)" }
+    { "priority": 7, "subject": "Wildebeest migration — Ndutu calving, Grumeti or Mara river crossing", "for_pages": ["/wildlife/great-migration-serengeti-masai-mara/"], "tim_has_shots": false, "note": "Shoot Jan-Mar (calving) or Jun-Oct (crossings)" },
+    { "priority": 8, "subject": "African wild dog pack — Nyerere National Park, ideally denning season", "for_pages": ["/wildlife/african-wild-dog-selous/"], "tim_has_shots": false, "note": "Shoot Jul-Aug (denning) for best odds" }
   ]
 }
