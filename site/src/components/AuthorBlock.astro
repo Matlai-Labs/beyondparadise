@@ -10,15 +10,15 @@ const authors = {
   tim: {
     name: 'Tim Hennig',
     role: 'East Africa Lead · GM, Hotel Matlai, Zanzibar',
-    bio: 'I have lived on Zanzibar\'s east coast for over five years, managing Boutique Hotel Matlai. Every Beyond Paradise review is based on a paid, first-hand stay — I disclose all conflicts of interest, including the fact that I never review my own hotel.',
+    bio: 'I have lived on Zanzibar\'s east coast for over five years, managing Boutique Hotel Matlai. Every Beyond Paradise Adventures review is based on a paid, first-hand stay — I disclose all conflicts of interest, including the fact that I never review my own hotel.',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&q=80&auto=format',
     link: '/about/',
     accent: 'var(--gold)',
   },
   kim: {
     name: 'Kim',
-    role: 'Southeast Asia Lead · Beyond Paradise Asia',
-    bio: 'I am Vietnamese and have lived in Zanzibar. My knowledge of Vietnam is first-hand — I grew up in the country, not from a guidebook. Beyond Paradise Asia covers the luxury tier that deserves an honest local perspective.',
+    role: 'Southeast Asia Lead · Beyond Paradise Adventures Asia',
+    bio: 'I am Vietnamese and have lived in Zanzibar. My knowledge of Vietnam is first-hand — I grew up in the country, not from a guidebook. Beyond Paradise Adventures Asia covers the luxury tier that deserves an honest local perspective.',
     avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&q=80&auto=format',
     link: '/about/kim/',
     accent: 'var(--teal)',
@@ -28,7 +28,7 @@ const authors = {
 const a = authors[author];
 ---
 <aside class="author-block glass reveal" aria-label={`About the author: ${a.name}`}>
-  <img src={a.avatar} alt={`${a.name} — Beyond Paradise author`} class="author-block__avatar" width="64" height="64" loading="lazy" />
+  <img src={a.avatar} alt={`${a.name} — Beyond Paradise Adventures author`} class="author-block__avatar" width="64" height="64" loading="lazy" />
   <div class="author-block__body">
     <p class="author-block__name" style={`color:${a.accent}`}>{a.name}</p>
     <p class="author-block__role">{a.role}</p>

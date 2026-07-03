@@ -27,7 +27,7 @@ const schema = {
 };
 ---
 <Base
-  title="The Tim Score — Luxury Lodge Rating Methodology · Beyond Paradise"
+  title="The Tim Score — Luxury Lodge Rating Methodology · Beyond Paradise Adventures"
   description="The Tim Score rates luxury safari lodges 0–100 across 12 weighted criteria. Assigned only after a paid, first-hand stay. No press trips. No hosted experiences."
   permalink="/about/tim-score/"
 >
@@ -45,13 +45,13 @@ const schema = {
 
     <div class="container ts-body">
 
-      <AnswerBox answer="The Tim Score is a 0–100 rating assigned to luxury lodges after Tim Hennig's personal, paid stay. It weights 12 criteria including wilderness position (15%), wildlife access (12%), conservation impact (8%), and value for money (8%). Scores of 90+ are exceptional. Below 80 means Beyond Paradise does not recommend the lodge." />
+      <AnswerBox answer="The Tim Score is a 0–100 rating assigned to luxury lodges after Tim Hennig's personal, paid stay. It weights 12 criteria including wilderness position (15%), wildlife access (12%), conservation impact (8%), and value for money (8%). Scores of 90+ are exceptional. Below 80 means Beyond Paradise Adventures does not recommend the lodge." />
 
       <!-- Score bands -->
       <section class="ts-examples reveal">
         <h2 class="display-s" style="margin-bottom:32px;">What the numbers mean</h2>
         <div class="ts-bands">
-          {[{range:'90–100',label:'Exceptional',desc:'Genuinely world-class. The best I have stayed at anywhere.'},{range:'85–89',label:'Excellent',desc:'Outstanding. One or two areas below perfection.'},{range:'80–84',label:'Very Good',desc:'Strong lodge. A legitimate choice — with caveats.'},{range:'<80',label:'Not Recommended',desc:'Does not meet the Beyond Paradise standard at this price point.'}].map(b => (
+          {[{range:'90–100',label:'Exceptional',desc:'Genuinely world-class. The best I have stayed at anywhere.'},{range:'85–89',label:'Excellent',desc:'Outstanding. One or two areas below perfection.'},{range:'80–84',label:'Very Good',desc:'Strong lodge. A legitimate choice — with caveats.'},{range:'<80',label:'Not Recommended',desc:'Does not meet the Beyond Paradise Adventures standard at this price point.'}].map(b => (
             <div class="ts-band">
               <span class="ts-band__range">{b.range}</span>
               <span class="ts-band__label">{b.label}</span>
@@ -89,10 +89,10 @@ const schema = {
         <h2 class="display-s" style="margin-bottom:32px;">The non-negotiables</h2>
         <div class="ts-rules__grid">
           {[
-            { icon: '✦', title: 'Paid stays only', text: 'I pay for every lodge I review. No complimentary stays, no hosted press trips, no invited visits. I have stayed in every lodge at Beyond Paradise standard rates.' },
+            { icon: '✦', title: 'Paid stays only', text: 'I pay for every lodge I review. No complimentary stays, no hosted press trips, no invited visits. I have stayed in every lodge at Beyond Paradise Adventures standard rates.' },
             { icon: '✦', title: 'First-hand experience required', text: 'No Tim Score is assigned from secondary research, online reviews, or someone else\'s account. Every score is based on what I observed personally.' },
-            { icon: '✦', title: 'Matlai is never reviewed', text: 'I own Hotel Matlai, Zanzibar. An undisclosable conflict of interest. Matlai will never appear in Beyond Paradise — positive or negative.' },
-            { icon: '✦', title: 'Sub-80 scores are not published with names', text: 'If a lodge scores below 80, Beyond Paradise does not recommend it. We may reference the threshold without naming the lodge, to avoid harm to staff and operators from a public verdict.' },
+            { icon: '✦', title: 'Matlai is never reviewed', text: 'I own Hotel Matlai, Zanzibar. An undisclosable conflict of interest. Matlai will never appear in Beyond Paradise Adventures — positive or negative.' },
+            { icon: '✦', title: 'Sub-80 scores are not published with names', text: 'If a lodge scores below 80, Beyond Paradise Adventures does not recommend it. We may reference the threshold without naming the lodge, to avoid harm to staff and operators from a public verdict.' },
           ].map(r => (
             <div class="ts-rule glass">
               <span class="ts-rule__icon">{r.icon}</span>

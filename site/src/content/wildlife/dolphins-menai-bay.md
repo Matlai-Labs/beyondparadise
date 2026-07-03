@@ -13,7 +13,7 @@ hero_alt: "Calm turquoise water in Menai Bay, Zanzibar — Indo-Pacific bottleno
 author: "tim"
 last_updated: "2026-07-03"
 draft: false
-answer: "Indo-Pacific bottlenose and spinner dolphins are resident year-round in Menai Bay, Zanzibar, with researchers encountering dolphins on 94% of days at sea. But this is the one Beyond Paradise wildlife guide where we recommend caution rather than enthusiasm: an official 20-meter distance guideline exists, published research documents it being widely ignored in practice, and peer-reviewed studies show measurable behavioral harm to the resident pod as a result."
+answer: "Indo-Pacific bottlenose and spinner dolphins are resident year-round in Menai Bay, Zanzibar, with researchers encountering dolphins on 94% of days at sea. But this is the one Beyond Paradise Adventures wildlife guide where we recommend caution rather than enthusiasm: an official 20-meter distance guideline exists, published research documents it being widely ignored in practice, and peer-reviewed studies show measurable behavioral harm to the resident pod as a result."
 faq:
   - q: "What's the best time to see dolphins in Menai Bay?"
     a: "Dolphins are resident year-round, but October through March is cited as the peak window, likely coinciding with calmer seas and better boat access rather than the dolphins actually being more present. Morning tours are specifically recommended — dolphins are more active and fewer boats are on the water."
@@ -88,7 +88,7 @@ If your Zanzibar itinerary also includes [Mnemba Atoll's resident sea turtles](/
 
 ## Why we're covering this so directly
 
-Beyond Paradise exists to answer "is this ethical" honestly, not to sell the experience regardless of the answer — see our [editorial policy](/about/editorial-policy/) for the full standard we hold ourselves to. Dolphin tourism in Menai Bay is a genuinely useful test case for that standard: the experience is popular, widely marketed, and easy to book, and the gap between the official rule and documented practice is exactly the kind of thing a decision-support guide should surface rather than smooth over.
+Beyond Paradise Adventures exists to answer "is this ethical" honestly, not to sell the experience regardless of the answer — see our [editorial policy](/about/editorial-policy/) for the full standard we hold ourselves to. Dolphin tourism in Menai Bay is a genuinely useful test case for that standard: the experience is popular, widely marketed, and easy to book, and the gap between the official rule and documented practice is exactly the kind of thing a decision-support guide should surface rather than smooth over.
 
 None of this means the underlying experience is inherently harmful when done well. A single boat, morning timing, a briefed and disciplined driver, and immediate withdrawal at the first sign of avoidance behavior is a materially different encounter — for the dolphins and for you — than the high-speed, multi-boat pattern the research documents. The responsibility for making that distinction currently sits almost entirely with the operator you choose, which is precisely why we're spending this much of the guide on operator selection rather than on describing what the water looks like.
 

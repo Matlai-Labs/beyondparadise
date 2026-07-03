@@ -81,11 +81,11 @@ This is the most important decision you make for a whale shark trip. Not all ope
 - Guide not in the water during the encounter
 - Multiple boats converging on a single animal
 
-Beyond Paradise will publish a verified operator directory when Tim has personally assessed Mafia Island operators. Until then: ask for the MPRU registration number, ask how many swimmers per shark, and ask whether the guide enters the water. The answers will tell you what you need to know.
+Beyond Paradise Adventures will publish a verified operator directory when Tim has personally assessed Mafia Island operators. Until then: ask for the MPRU registration number, ask how many swimmers per shark, and ask whether the guide enters the water. The answers will tell you what you need to know.
 
 ## Getting to Mafia Island
 
-**From Zanzibar (ZNZ):** The most common route for Beyond Paradise readers. Connect through Dar es Salaam (20-minute flight from ZNZ to DAR), then onward to Mafia (MFA) — total approximately 1.5 hours. Coastal Aviation and Auric Air offer scheduled service. Direct charters from Zanzibar are possible.
+**From Zanzibar (ZNZ):** The most common route for Beyond Paradise Adventures readers. Connect through Dar es Salaam (20-minute flight from ZNZ to DAR), then onward to Mafia (MFA) — total approximately 1.5 hours. Coastal Aviation and Auric Air offer scheduled service. Direct charters from Zanzibar are possible.
 
 **From Dar es Salaam:** 40-minute flight. Most convenient for visitors starting in mainland Tanzania.
 
@@ -101,7 +101,7 @@ If you are making the journey to Mafia, plan at least one reef dive day in addit
 
 ## What Mafia is not
 
-Mafia Island is not a beach resort destination. The accommodation ranges from basic guesthouses to modest eco-lodges — nothing in the Beyond Paradise ultra-luxury tier exists on Mafia Island at time of writing. This is a wildlife pilgrimage, not a luxury beach holiday.
+Mafia Island is not a beach resort destination. The accommodation ranges from basic guesthouses to modest eco-lodges — nothing in the Beyond Paradise Adventures ultra-luxury tier exists on Mafia Island at time of writing. This is a wildlife pilgrimage, not a luxury beach holiday.
 
 If you want both whale sharks and high-end accommodation, the trip sequence is: fly Zanzibar → Dar → Mafia (2–3 nights, whale sharks), return to Dar → Zanzibar (3–4 nights for [Mnemba Atoll's resident sea turtles](/wildlife/green-sea-turtle-zanzibar/), [Menai Bay's dolphins](/wildlife/dolphins-menai-bay/), and east coast beaches).
 
