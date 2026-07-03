@@ -141,9 +141,30 @@ declare module 'astro:content' {
 
 	type ContentEntryMap = {
 		"destinations": {
+"masai-mara.md": {
+	id: "masai-mara.md";
+  slug: "masai-mara";
+  body: string;
+  collection: "destinations";
+  data: InferEntrySchema<"destinations">
+} & { render(): Render[".md"] };
+"ngorongoro.md": {
+	id: "ngorongoro.md";
+  slug: "ngorongoro";
+  body: string;
+  collection: "destinations";
+  data: InferEntrySchema<"destinations">
+} & { render(): Render[".md"] };
 "serengeti.md": {
 	id: "serengeti.md";
   slug: "serengeti";
+  body: string;
+  collection: "destinations";
+  data: InferEntrySchema<"destinations">
+} & { render(): Render[".md"] };
+"zanzibar.md": {
+	id: "zanzibar.md";
+  slug: "zanzibar";
   body: string;
   collection: "destinations";
   data: InferEntrySchema<"destinations">
