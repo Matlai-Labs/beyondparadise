@@ -6,7 +6,7 @@
 ## Brand Identity
 
 **Brand**: Beyond Paradise  
-**Domain**: beyondparadise.com  
+**Domain**: beyondparadiseadventures.com  
 **Positioning**: Luxury travel editorial — East Africa + Southeast Asia — €6,000+ trips only  
 **Tone**: "Not a travel blog. A media brand." Confident, editorial, first-hand authority.  
 **Aesthetic**: Cinematic dark luxury. Condé Nast editorial meets Silicon Valley product. Liquid glass panels over void-black backgrounds.

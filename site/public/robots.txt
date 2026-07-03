@@ -17,4 +17,4 @@ Allow: /
 User-agent: Googlebot
 Allow: /
 
-Sitemap: https://beyondparadise.com/sitemap.xml
+Sitemap: https://beyondparadiseadventures.com/sitemap.xml

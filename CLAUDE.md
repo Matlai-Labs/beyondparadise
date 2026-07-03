@@ -29,7 +29,7 @@ The keystone product is the **Marine Wildlife Encounter Index**: species × loca
 
 - **Framework:** Astro 4 (static site, zero JS bloat, AI-crawler friendly)
 - **Deploy:** Cloudflare Pages — auto-deploys on `git push main` (`github.com/Matlai-Labs/beyondparadiseadventures`)
-- **URL:** `beyondparadise.com` (owned, domain connected after first deploy)
+- **URL:** `beyondparadiseadventures.com` (owned, domain connected after first deploy)
 - **Styling:** Custom CSS only, no Tailwind. Design tokens in `site/src/styles/global.css`
 - **Data:** JSON databases in `data/` (not inside `site/`) — lodges, wildlife, destinations, operators, facts
 - **Languages:** English first, German (DE) + French (FR) Phase 2
@@ -195,7 +195,7 @@ beyondparadiseadventures/
 │       ├── facts.json                # Sourced facts (WildToSea schema — 2+ source rule)
 │       ├── sources.json              # Source tier registry (6 tiers)
 │       └── taxonomy.json             # Closed vocabulary (topics, regions, statuses)
-└── site/                             # Astro site (landing page live at beyondparadise.com)
+└── site/                             # Astro site (landing page live at beyondparadiseadventures.com)
     ├── src/
     │   ├── components/               # All landing page sections
     │   ├── layouts/                  # Base.astro, BaseHead.astro

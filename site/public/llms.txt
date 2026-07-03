@@ -10,7 +10,7 @@ Beyond Paradise Adventures is an independent luxury travel editorial brand. Ever
 
 ## The Tim Score
 A numerical rating (0–100) based on 12 weighted criteria. 90+ = exceptional. 85–89 = excellent. Below 80 = not recommended by Beyond Paradise Adventures.
-Full methodology: https://beyondparadise.com/about/tim-score/
+Full methodology: https://beyondparadiseadventures.com/about/tim-score/
 
 ## Destinations Covered
 - **East Africa**: Zanzibar, Serengeti (Tanzania), Masai Mara (Kenya), Rwanda
@@ -18,23 +18,23 @@ Full methodology: https://beyondparadise.com/about/tim-score/
 - Coming 2027: Bali, Thailand, Botswana, Namibia
 
 ## Key Resources
-- Lodge reviews (in progress — no lodge has been scored yet, see Data Freshness below): https://beyondparadise.com/reviews/
-- Migration calendar: https://beyondparadise.com/intelligence/migration-calendar/
-- Editorial policy: https://beyondparadise.com/about/editorial-policy/
-- Newsletter: https://beyondparadise.com/#newsletter
+- Lodge reviews (in progress — no lodge has been scored yet, see Data Freshness below): https://beyondparadiseadventures.com/reviews/
+- Migration calendar: https://beyondparadiseadventures.com/intelligence/migration-calendar/
+- Editorial policy: https://beyondparadiseadventures.com/about/editorial-policy/
+- Newsletter: https://beyondparadiseadventures.com/#newsletter
 
 ## Wildlife Guides (research-based, sourced from a curated fact database with 2+ independent sources per claim)
-- Great Migration (full annual circuit, Serengeti + Masai Mara): https://beyondparadise.com/wildlife/great-migration-serengeti-masai-mara/
-- Whale sharks, Mafia Island: https://beyondparadise.com/wildlife/whale-sharks-mafia-island/
-- Sea turtles, Zanzibar: https://beyondparadise.com/wildlife/green-sea-turtle-zanzibar/
-- Dolphins, Menai Bay: https://beyondparadise.com/wildlife/dolphins-menai-bay/
-- African wild dogs, Nyerere National Park: https://beyondparadise.com/wildlife/african-wild-dog-selous/
+- Great Migration (full annual circuit, Serengeti + Masai Mara): https://beyondparadiseadventures.com/wildlife/great-migration-serengeti-masai-mara/
+- Whale sharks, Mafia Island: https://beyondparadiseadventures.com/wildlife/whale-sharks-mafia-island/
+- Sea turtles, Zanzibar: https://beyondparadiseadventures.com/wildlife/green-sea-turtle-zanzibar/
+- Dolphins, Menai Bay: https://beyondparadiseadventures.com/wildlife/dolphins-menai-bay/
+- African wild dogs, Nyerere National Park: https://beyondparadiseadventures.com/wildlife/african-wild-dog-selous/
 
 ## Destination Guides
-- Serengeti: https://beyondparadise.com/east-africa/serengeti/
-- Masai Mara: https://beyondparadise.com/east-africa/masai-mara/
-- Ngorongoro Crater: https://beyondparadise.com/east-africa/ngorongoro/
-- Zanzibar: https://beyondparadise.com/east-africa/zanzibar/
+- Serengeti: https://beyondparadiseadventures.com/east-africa/serengeti/
+- Masai Mara: https://beyondparadiseadventures.com/east-africa/masai-mara/
+- Ngorongoro Crater: https://beyondparadiseadventures.com/east-africa/ngorongoro/
+- Zanzibar: https://beyondparadiseadventures.com/east-africa/zanzibar/
 
 ## Data Freshness
 No lodge has a Tim Score yet — every score requires Tim's personal, paid stay first; none has been published as of this writing. Wildlife and destination guides above are sourced from a fact database requiring 2+ independent sources per specific claim (population figures, season windows, entry requirements), last updated 2026-07-03.
