@@ -25406,7 +25406,572 @@
       "added": "2026-07-01",
       "promotedOn": "2026-07-01",
       "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "ol-donyo-lodge-conservation-1",
+      "claim": "Ol Donyo Lodge, operated by Great Plains Conservation, is situated on the Maasai-owned Mbirikani Group Ranch, offering exclusive access to 275,000 acres of wilderness.",
+      "sources": [
+        {
+          "name": "Great Plains Conservation Official Site",
+          "url": "https://greatplainsconservation.com/ol-donyo-lodge-kenya-safari/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Ol Donyo Lodge, a luxury safari lodge in Kenya's Chyulu Hills, is operated by Great Plains Conservation and is situated on the Maasai-owned Mbirikani Group Ranch. It offers exclusive access to 275,000 acres of wilderness between Amboseli and Tsavo National Parks"
+        },
+        {
+          "name": "Classic Africa Travel",
+          "url": "https://www.classicafrica.com/LuxuryAfricanSafaris/Properties/Ol_Donyo_Lodge",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Ol Donyo Lodge, a luxury safari lodge in Kenya's Chyulu Hills, is operated by Great Plains Conservation and is situated on the Maasai-owned Mbirikani Group Ranch. It offers exclusive access to 275,000 acres of wilderness between Amboseli and Tsavo National Parks"
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "kenya",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "ol-donyo-lodge-price-1",
+      "claim": "High season rates for a Deluxe Pool Suite at Ol Donyo Lodge are approximately US $2,555 per person per night during June 15 - October 31 and December 20 - January 10.",
+      "sources": [
+        {
+          "name": "Great Plains Conservation Official Site",
+          "url": "https://greatplainsconservation.com/ol-donyo-lodge-kenya-safari/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "High Season (e.g., June 15 - October 31, 2026; December 20, 2026 - January 10, 2027): Approximately US $2,555 per person per night."
+        },
+        {
+          "name": "The Luxury Safari Company",
+          "url": "https://www.theluxurysafaricompany.com/kenya/amboseli/ol-donyo-wuas/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "High Season (e.g., June 15 - October 31, 2026; December 20, 2026 - January 10, 2027): Approximately US $2,555 per person per night."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "kenya",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "ol-donyo-lodge-capacity-1",
+      "claim": "Ol Donyo Lodge can accommodate a maximum of 20 guests across 10 suites, which include six pool suites, two standard suites, and one two-suite Sambu Family Villa.",
+      "sources": [
+        {
+          "name": "Great Plains Conservation Official Site",
+          "url": "https://greatplainsconservation.com/ol-donyo-lodge-kenya-safari/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Ol Donyo Lodge can accommodate a maximum of 20 guests. It features 10 suites, which include six pool suites with private plunge pools, two standard suites without private pools, and one two-suite villa (Sambu Family Villa) with two identical suites, a common pool, and lounge."
+        },
+        {
+          "name": "Iconic Africa",
+          "url": "https://www.iconicafrica.com/accommodation/ol-donyo/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Ol Donyo Lodge can accommodate a maximum of 20 guests. It features 10 suites, which include six pool suites with private plunge pools, two standard suites without private pools, and one two-suite villa (Sambu Family Villa) with two identical suites, a common pool, and lounge."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "kenya",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "ol-donyo-lodge-conservation-2",
+      "claim": "Ol Donyo Lodge holds a 'Silver' rating from EcoTourism Kenya, is Fair Trade Tourism Certified, and is recognized as a National Geographic Unique Lodge of the World and a Relais & Châteaux property.",
+      "sources": [
+        {
+          "name": "Great Plains Conservation Official Site",
+          "url": "https://greatplainsconservation.com/ol-donyo-lodge-kenya-safari/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Ol Donyo Lodge has achieved a 'Silver' rating from EcoTourism Kenya and is Fair Trade Tourism Certified. It is also recognized as a National Geographic Unique Lodge of the World and a Relais & Châteaux property."
+        },
+        {
+          "name": "TravellerMade Network",
+          "url": "https://travellermade.com/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Ol Donyo Lodge has achieved a 'Silver' rating from EcoTourism Kenya and is Fair Trade Tourism Certified. It is also recognized as a National Geographic Unique Lodge of the World and a Relais & Châteaux property."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "kenya",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "ol-donyo-lodge-conservation-3",
+      "claim": "The lodge partners with the Big Life Foundation and supports a pioneering predator compensation scheme that has stabilized lion, cheetah, and leopard populations.",
+      "sources": [
+        {
+          "name": "Great Plains Conservation Official Site",
+          "url": "https://greatplainsconservation.com/ol-donyo-lodge-kenya-safari/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "It also partners with the Big Life Foundation, a key conservation organization in the region, and guests' stays directly contribute to their efforts... including a pioneering predator compensation scheme that has stabilized lion, cheetah, and leopard populations."
+        },
+        {
+          "name": "Great Plains Foundation",
+          "url": "https://greatplainsfoundation.com/conservation-education-at-ol-donyo-lodge-2/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "It also partners with the Big Life Foundation, a key conservation organization in the region, and guests' stays directly contribute to their efforts... including a pioneering predator compensation scheme that has stabilized lion, cheetah, and leopard populations."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "kenya",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "ol-donyo-lodge-seasons-1",
+      "claim": "Ol Donyo Lodge is open year-round with no specified months of closure for wet season, migration gap, or maintenance.",
+      "sources": [
+        {
+          "name": "Great Plains Conservation Official Site",
+          "url": "https://greatplainsconservation.com/ol-donyo-lodge-kenya-safari/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Ol Donyo Lodge is open year-round. There are no specified months of closure for wet season, migration gap, or maintenance."
+        },
+        {
+          "name": "Go2Africa",
+          "url": "https://www.go2africa.com/accommodation/ol-donyo-lodge",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Ol Donyo Lodge is open year-round. There are no specified months of closure for wet season, migration gap, or maintenance."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "kenya",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "ol-donyo-lodge-access-1",
+      "claim": "Access to Ol Donyo Lodge typically involves a 45-60 minute light aircraft transfer from Nairobi's Wilson Airport (WIL) to Ol Donyo Airstrip, followed by a 20-30 minute road transfer.",
+      "sources": [
+        {
+          "name": "Great Plains Conservation Official Site",
+          "url": "https://greatplainsconservation.com/ol-donyo-lodge-kenya-safari/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Guests typically take a scheduled light aircraft transfer from Nairobi's Wilson Airport to Ol Donyo Airstrip, which is a flight of approximately 45-60 minutes. From the airstrip, it is a 20-30 minute road transfer to the lodge."
+        },
+        {
+          "name": "African Mecca Safaris",
+          "url": "https://www.africanmeccasafaris.com/travel-guide/kenya/accommodation/chyulu-hills/ol-donyo-lodge/room-rates",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Guests typically take a scheduled light aircraft transfer from Nairobi's Wilson Airport to Ol Donyo Airstrip, which is a flight of approximately 45-60 minutes. From the airstrip, it is a 20-30 minute road transfer to the lodge."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "lodge-review",
+      "region": "kenya",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "roho-ya-selous-price-1",
+      "claim": "For 2026, rates for Roho ya Selous are approximately US$900 from January 6 to March 14, US$950 in June, US$1210 from July 1 to August 31, and US$950 from September 1 to December 19.",
+      "sources": [
+        {
+          "name": "safari-consultants.com",
+          "url": "https://safari-consultants.com/destinations/tanzania/tanzania-accommodation/roho-ya-selous/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "For 2026, rates are approximately US$900 from January 6 to March 14, US$950 in June, US$1210 from July 1 to August 31, and US$950 from September 1 to December 19."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "selous-nyerere",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "roho-ya-selous-price-2",
+      "claim": "During the holiday season from December 20, 2026, to January 5, 2027, the rate for Roho ya Selous is around US$1210 per person per night.",
+      "sources": [
+        {
+          "name": "mahlatini.com",
+          "url": "https://www.mahlatini.com/us/tanzania/nyerere-national-park/asilia-roho-ya-selous",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "During the holiday season (December 20, 2026, to January 5, 2027), the rate is around US$1210."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "selous-nyerere",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "roho-ya-selous-capacity-1",
+      "claim": "Roho ya Selous features a total of eight tented rooms, comprising seven standard tents and one family tent.",
+      "sources": [
+        {
+          "name": "asiliaafrica.com",
+          "url": "https://www.asiliaafrica.com/camps-lodges/roho-ya-selous/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Roho ya Selous features a total of eight tented rooms. This includes seven standard tents and one family tent."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "selous-nyerere",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "roho-ya-selous-conservation-1",
+      "claim": "Asilia Africa, the operator of Roho ya Selous, is a B Corp Certified organization.",
+      "sources": [
+        {
+          "name": "asiliaafrica.com",
+          "url": "https://www.asiliaafrica.com/camps-lodges/roho-ya-selous/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Asilia Africa, the operator of Roho ya Selous, is a B Corp Certified organization."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "selous-nyerere",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "roho-ya-selous-conservation-2",
+      "claim": "Every guest stay at Roho ya Selous includes a US$20 levy that contributes to Asilia's positive impact fund.",
+      "sources": [
+        {
+          "name": "asiliaafrica.com",
+          "url": "https://www.asiliaafrica.com/camps-lodges/roho-ya-selous/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Every guest stay includes a US$20 levy that contributes to Asilia's positive impact fund, supporting community and wildlife projects across East Africa."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "selous-nyerere",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "roho-ya-selous-seasons-1",
+      "claim": "Roho ya Selous is typically open from June until mid-March and is closed during the long rainy season, from mid-March to the end of May.",
+      "sources": [
+        {
+          "name": "trackssafaris.co.uk",
+          "url": "https://www.trackssafaris.co.uk/lodges/tanzania/asilia-roho-ya-selous-selous-game-reserve/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Roho ya Selous is open for most of the year, typically from June until mid-March. The camp is closed during the long rainy season, from mid-March to the end of May."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "selous-nyerere",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "roho-ya-selous-seasons-2",
+      "claim": "The dry season, from July to October, is recommended for optimal wildlife sightings at Roho ya Selous.",
+      "sources": [
+        {
+          "name": "yellowzebrasafaris.com",
+          "url": "https://yellowzebrasafaris.com/us/tanzania/accommodation/roho-ya-selous/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The dry season, from July to October, is recommended for optimal wildlife sightings."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "selous-nyerere",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "roho-ya-selous-access-1",
+      "claim": "Roho ya Selous is accessed via light aircraft flights to Mbuyu or Mtemere airstrips, with transfers from Mtemere taking 10-15 minutes.",
+      "sources": [
+        {
+          "name": "chaloafrica.com",
+          "url": "https://www.chaloafrica.com/accommodation/roho-ya-selous-selous-game-reserve-tanzania/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The closest airstrips are Mbuyu and Mtemere. Mtemere airstrip, the primary airstrip for safaris in Selous, is 10-15 minutes from most lodges."
+        }
+      ],
+      "status": "single-source",
+      "topic": "lodge-review",
+      "region": "selous-nyerere",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "pemba-flying-fox-iucn-status-1",
+      "claim": "The Pemba Flying Fox (Pteropus voeltzkowi) is a large fruit bat endemic to Pemba Island, part of the Zanzibar archipelago, and acts as a significant pollinator and seed disperser.",
+      "sources": [
+        {
+          "name": "wikipedia.org",
+          "url": "https://en.wikipedia.org/wiki/Pemba_flying_fox",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The Pemba Flying Fox (Pteropus voeltzkowi) is a large fruit bat endemic to Pemba Island, part of the Zanzibar archipelago off the coast of Tanzania. It is a crucial species for the island's ecosystem, acting as a significant pollinator and seed disperser for wild and cultivated fruit trees."
+        },
+        {
+          "name": "oneearth.org",
+          "url": "https://www.oneearth.org/species-of-the-week-pemba-flying-fox/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The Pemba Flying Fox (Pteropus voeltzkowi) is a large fruit bat endemic to Pemba Island, part of the Zanzibar archipelago off the coast of Tanzania. It is a crucial species for the island's ecosystem, acting as a significant pollinator and seed disperser for wild and cultivated fruit trees."
+        },
+        {
+          "name": "animalinfo.org",
+          "url": "https://animalinfo.org/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The Pemba Flying Fox (Pteropus voeltzkowi) is a large fruit bat endemic to Pemba Island, part of the Zanzibar archipelago off the coast of Tanzania. It is a crucial species for the island's ecosystem, acting as a significant pollinator and seed disperser for wild and cultivated fruit trees."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "pemba",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "pemba-flying-fox-population-1",
+      "claim": "The Pemba Flying Fox population was estimated at 4,600–5,500 individuals in 1995, but increased to 18,200–22,100 individuals by 2008, representing a roughly 400% increase from 1995 levels.",
+      "sources": [
+        {
+          "name": "wikipedia.org",
+          "url": "https://en.wikipedia.org/wiki/Pemba_flying_fox",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The population was critically endangered, estimated at just 4,600–5,500 individuals in the mid-1990s (specifically 1995) due to habitat loss and hunting. ... Surveys estimated 18,200–22,100 individuals across 44 roost sites. This represented a roughly 400% increase from 1995 levels."
+        },
+        {
+          "name": "researchgate.net",
+          "url": "https://www.researchgate.net/publication/231898026_Recovery_of_the_Vulnerable_Pemba_flying_fox_Pteropus_voeltzkowi_Population_and_conservation_status",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The population was critically endangered, estimated at just 4,600–5,500 individuals in the mid-1990s (specifically 1995) due to habitat loss and hunting. ... Surveys estimated 18,200–22,100 individuals across 44 roost sites. This represented a roughly 400% increase from 1995 levels."
+        },
+        {
+          "name": "cambridge.org",
+          "url": "https://www.cambridge.org/core/journals/oryx/article/pemba-flying-fox-pteropus-voeltzkowi-status-distribution-and-increasing-urbanization/D36EB0BAECD3CE8CBCFEA7E8BCF23CC7",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The population was critically endangered, estimated at just 4,600–5,500 individuals in the mid-1990s (specifically 1995) due to habitat loss and hunting. ... Surveys estimated 18,200–22,100 individuals across 44 roost sites. This represented a roughly 400% increase from 1995 levels."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "pemba",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "pemba-flying-fox-population-2",
+      "claim": "A 2024 survey reported a Pemba Flying Fox population size between 25,328 and 27,412 individuals across 81 roosting locations.",
+      "sources": [
+        {
+          "name": "oneearth.org",
+          "url": "https://www.oneearth.org/species-of-the-week-pemba-flying-fox/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "A recent survey reported a population size between 25,328 and 27,412 individuals across 81 roosting locations (29 occupied). This indicates the population size is comparable to the recovered population in 2008."
+        },
+        {
+          "name": "researchgate.net",
+          "url": "https://www.researchgate.net/publication/231898026_Recovery_of_the_Vulnerable_Pemba_flying_fox_Pteropus_voeltzkowi_Population_and_conservation_status",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "A recent survey reported a population size between 25,328 and 27,412 individuals across 81 roosting locations (29 occupied). This indicates the population size is comparable to the recovered population in 2008."
+        },
+        {
+          "name": "kent.ac.uk",
+          "url": "https://kent.ac.uk/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "A recent survey reported a population size between 25,328 and 27,412 individuals across 81 roosting locations (29 occupied). This indicates the population size is comparable to the recovered population in 2008."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "pemba",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "pemba-flying-fox-iucn-status-2",
+      "claim": "The Pemba Flying Fox's current IUCN Red List Status is Vulnerable (VU) with an increasing population trend, last assessed in 2014 and published in 2016, after being listed as Critically Endangered (CR) from 1996 to 2003.",
+      "sources": [
+        {
+          "name": "wikipedia.org",
+          "url": "https://en.wikipedia.org/wiki/Pemba_flying_fox",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Current IUCN Red List Status: Vulnerable (VU). Population Trend: Increasing. Last Assessment Year: The species was last assessed in 2014 and published in 2016 under criteria D2 by the IUCN Red List of Threatened Species. Historical Status: It was previously listed as Critically Endangered (CR) from 1996 to 2003, with a decreasing population trend. It was downgraded to Vulnerable in 2004."
+        },
+        {
+          "name": "oneearth.org",
+          "url": "https://www.oneearth.org/species-of-the-week-pemba-flying-fox/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Current IUCN Red List Status: Vulnerable (VU). Population Trend: Increasing. Last Assessment Year: The species was last assessed in 2014 and published in 2016 under criteria D2 by the IUCN Red List of Threatened Species. Historical Status: It was previously listed as Critically Endangered (CR) from 1996 to 2003, with a decreasing population trend. It was downgraded to Vulnerable in 2004."
+        },
+        {
+          "name": "animalinfo.org",
+          "url": "https://animalinfo.org/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Current IUCN Red List Status: Vulnerable (VU). Population Trend: Increasing. Last Assessment Year: The species was last assessed in 2014 and published in 2016 under criteria D2 by the IUCN Red List of Threatened Species. Historical Status: It was previously listed as Critically Endangered (CR) from 1996 to 2003, with a decreasing population trend. It was downgraded to Vulnerable in 2004."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "pemba",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "pemba-flying-fox-permit-1",
+      "claim": "The Pemba Flying Fox is protected under Tanzania's Wildlife Conservation Act (1974 Capture of Animals Regulations), and a nationwide ban on shotgun hunting was implemented in the 1990s.",
+      "sources": [
+        {
+          "name": "wikipedia.org",
+          "url": "https://en.wikipedia.org/wiki/Pemba_flying_fox",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The species is protected under Tanzania's Wildlife Conservation Act, specifically through the 1974 Capture of Animals Regulations, which regulate capture and include quotas to prevent overexploitation. The Department of Commercial Crops, Fruits and Forests (DCCFF) manages legally protected forest areas where bats roost. Local byelaws have also been adopted to protect the bats. ... A nationwide ban on shotgun hunting was implemented in the 1990s to address the species' drastic decline."
+        },
+        {
+          "name": "seacology.org",
+          "url": "https://seacology.org/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The species is protected under Tanzania's Wildlife Conservation Act, specifically through the 1974 Capture of Animals Regulations, which regulate capture and include quotas to prevent overexploitation. The Department of Commercial Crops, Fruits and Forests (DCCFF) manages legally protected forest areas where bats roost. Local byelaws have also been adopted to protect the bats. ... A nationwide ban on shotgun hunting was implemented in the 1990s to address the species' drastic decline."
+        },
+        {
+          "name": "researchgate.net",
+          "url": "https://www.researchgate.net/publication/231898026_Recovery_of_the_Vulnerable_Pemba_flying_fox_Pteropus_voeltzkowi_Population_and_conservation_status",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The species is protected under Tanzania's Wildlife Conservation Act, specifically through the 1974 Capture of Animals Regulations, which regulate capture and include quotas to prevent overexploitation. The Department of Commercial Crops, Fruits and Forests (DCCFF) manages legally protected forest areas where bats roost. Local byelaws have also been adopted to protect the bats. ... A nationwide ban on shotgun hunting was implemented in the 1990s to address the species' drastic decline."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "pemba",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "pemba-flying-fox-probability-1",
+      "claim": "The Pemba Flying Fox is a diurnal roosting species, making sighting probability at known roost sites, such as Kidike Sanctuary, generally high during the day, with morning visits often suggested for better viewing.",
+      "sources": [
+        {
+          "name": "rove.me",
+          "url": "https://rove.me/to/zanzibar/pemba-flying-fox",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The Pemba Flying Fox is a diurnal roosting species, meaning they are present at their roost sites during daylight hours and emerge at dusk to forage. ... Sighting probability at known roost sites, such as Kidike Sanctuary, is generally high during the day when the bats are roosting. Tour operators often suggest morning visits for a higher possibility of seeing the bats."
+        },
+        {
+          "name": "tanzania-experience.com",
+          "url": "https://tanzania-experience.com/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The Pemba Flying Fox is a diurnal roosting species, meaning they are present at their roost sites during daylight hours and emerge at dusk to forage. ... Sighting probability at known roost sites, such as Kidike Sanctuary, is generally high during the day when the bats are roosting. Tour operators often suggest morning visits for a higher possibility of seeing the bats."
+        },
+        {
+          "name": "africanmeccasafaris.com",
+          "url": "https://www.africanmeccasafaris.com/travel-guide/tanzania/towns-city/pemba-island/when-best-time-to-visit",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "The Pemba Flying Fox is a diurnal roosting species, meaning they are present at their roost sites during daylight hours and emerge at dusk to forage. ... Sighting probability at known roost sites, such as Kidike Sanctuary, is generally high during the day when the bats are roosting. Tour operators often suggest morning visits for a higher possibility of seeing the bats."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "pemba",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
+    },
+    {
+      "id": "pemba-flying-fox-season-1",
+      "claim": "Young Pemba Flying Foxes are typically born between June and August, with mating occurring between January and April.",
+      "sources": [
+        {
+          "name": "wikipedia.org",
+          "url": "https://en.wikipedia.org/wiki/Pemba_flying_fox",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Young bats are typically born between June and August. Mating occurs between January and April."
+        },
+        {
+          "name": "oneearth.org",
+          "url": "https://www.oneearth.org/species-of-the-week-pemba-flying-fox/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Young bats are typically born between June and August. Mating occurs between January and April."
+        },
+        {
+          "name": "animalinfo.org",
+          "url": "https://animalinfo.org/",
+          "tier": null,
+          "accessed": "2026-07-03",
+          "quote": "Young bats are typically born between June and August. Mating occurs between January and April."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "wildlife-ethics",
+      "region": "pemba",
+      "added": "2026-07-03",
+      "promotedOn": "2026-07-03",
+      "reviewedBy": "Tim Hennig"
     }
   ],
-  "updated": "2026-07-01"
+  "updated": "2026-07-03"
 }
