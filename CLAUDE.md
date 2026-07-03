@@ -1,6 +1,8 @@
-# Beyond Paradise — Agent Instructions
+# Beyond Paradise Adventures — Agent Instructions
 
-Beyond Paradise is an independent luxury travel editorial brand for East Africa + Southeast Asia. €6,000+ trips only. No press trips. No hosted stays. No advertiser influence. Every claim is first-hand or peer-reviewed.
+Beyond Paradise Adventures is an independent luxury travel editorial brand for East Africa + Southeast Asia. €6,000+ trips only. No press trips. No hosted stays. No advertiser influence. Every claim is first-hand or peer-reviewed.
+
+Note: the brand name is "Beyond Paradise Adventures" in full — never shorten to just "Beyond Paradise" in site copy or public-facing text (an unrelated 2015 film/TV show already holds that exact name on Wikidata, Q27959555).
 
 **Before doing anything, read the master checklist:**
 `/Users/tim/Desktop/AI_projects/shared_knowledge/docs/new-site-master-checklist.md`
