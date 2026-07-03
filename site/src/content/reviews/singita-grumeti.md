@@ -32,13 +32,9 @@ faq:
     a: "Fly to Kilimanjaro (JRO) or Arusha (ARK) then take a charter or scheduled flight to Grumeti Airstrip (approximately 90 minutes). The camp arranges all internal transfers. No road access — the concession is only reachable by air."
 ---
 
-import TimScoreBadge from '../../components/TimScoreBadge.astro';
-import AnswerBox from '../../components/AnswerBox.astro';
-
-<AnswerBox answer={frontmatter.answer} />
+<!-- NOTE: this page needs a full rewrite with Tim's real visit notes before it can leave draft (see editorial_integrity memory). The TimScoreBadge markup below also won't render as-is (.md content collections don't process component imports — same bug fixed everywhere else 2026-07-03) — restructure this block through ArticleLayout or convert to .mdx when this page is rewritten. -->
 
 <div style="display:flex;align-items:center;gap:24px;margin:40px 0;padding:28px 32px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;">
-  <TimScoreBadge score={94} size="lg" />
   <div>
     <p style="font-family:'Playfair Display',serif;font-size:22px;color:var(--cream);margin-bottom:4px;">Singita Grumeti</p>
     <p style="font-size:13px;color:var(--cream-65);">Western Corridor · Serengeti · Tanzania</p>

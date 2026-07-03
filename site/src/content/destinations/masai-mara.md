@@ -29,10 +29,6 @@ faq:
     a: "Contributing to vehicle congestion (50–150 cars has been documented at single sightings), off-road driving outside permitted conservancy zones, interfering with animal movement, allowing guests to disembark outside designated safe areas, night drives marketed inside the main reserve (they're banned there), or spotlights without red filters."
 ---
 
-import AnswerBox from '../../components/AnswerBox.astro';
-
-<AnswerBox answer={frontmatter.answer} />
-
 ## Two products, not one destination
 
 The single most consequential decision for a Masai Mara trip isn't the month — it's whether you stay in the public National Reserve or one of the private conservancies bordering it (Olare Motorogi, Mara North). These aren't two flavors of the same experience; they operate under different rules entirely. The reserve permits no off-road driving and no night drives. Conservancies allow both, cap vehicle numbers per sighting, and typically cost more per night as a direct result.

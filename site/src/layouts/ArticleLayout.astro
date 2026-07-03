@@ -1,5 +1,6 @@
 ---
 import Base from './Base.astro';
+import AnswerBox from '../components/AnswerBox.astro';
 import AuthorBlock from '../components/AuthorBlock.astro';
 import FAQ from '../components/FAQ.astro';
 
@@ -13,6 +14,7 @@ interface Props {
   lastUpdated: string;
   visitDate?: string;
   authorContext?: string;
+  answer?: string;
   faq?: { q: string; a: string }[];
   schemaType?: 'Article' | 'Review';
   schemaExtra?: Record<string, unknown>;
@@ -21,7 +23,7 @@ interface Props {
 const {
   title, description, permalink, heroImage, heroAlt,
   author, lastUpdated, visitDate, authorContext,
-  faq, schemaType = 'Article', schemaExtra = {},
+  answer, faq, schemaType = 'Article', schemaExtra = {},
 } = Astro.props;
 
 const schema = {
@@ -66,6 +68,7 @@ const schema = {
 
     <!-- Body -->
     <div class="article__body container">
+      {answer && <AnswerBox answer={answer} />}
       <div class="article__content prose">
         <slot />
       </div>

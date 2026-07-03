@@ -29,10 +29,6 @@ faq:
     a: "There are no direct flights from the UK or most of Europe — you'll connect through a Middle East hub (Doha, Dubai, Istanbul) or an East African hub (Nairobi, Addis Ababa, Dar es Salaam). Some European carriers do run direct or seasonal service (Condor, Turkish Airlines, KLM, Air France, Edelweiss). From Abeid Amani Karume International Airport (ZNZ), Stone Town is an 8–15 minute taxi ride ($5–15); east coast beaches (Paje, Jambiani) are roughly 1–1.5 hours by road."
 ---
 
-import AnswerBox from '../../components/AnswerBox.astro';
-
-<AnswerBox answer={frontmatter.answer} />
-
 ## Two dry seasons, one to avoid
 
 Zanzibar's climate splits into three windows, and knowing which one you're booking into changes what the trip actually delivers:

@@ -31,10 +31,6 @@ faq:
     a: "Tanzania and Kenya require separate visas — Tanzania's e-visa and Kenya's Electronic Travel Authorization (eTA), both obtained in advance; Kenya has no visa on arrival. A passport valid at least 6 months with 2+ blank pages is required for Kenya. Both countries require a yellow fever certificate if you are arriving from or transiting through a country with yellow fever risk."
 ---
 
-import AnswerBox from '../../components/AnswerBox.astro';
-
-<AnswerBox answer={frontmatter.answer} />
-
 ## The migration is a circuit, not an event
 
 Most people picture "the migration" as a single dramatic river crossing. It is actually a continuous, roughly clockwise movement of wildebeest, zebra, and gazelle through the Serengeti-Mara ecosystem, following rainfall and fresh grazing across a 25,000 km² area spanning northern Tanzania and southern Kenya. There is no start or finish — only a location that matters more or less depending on the month you visit.

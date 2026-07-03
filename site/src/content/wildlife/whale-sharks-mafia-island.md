@@ -31,10 +31,6 @@ faq:
     a: "Approximately 180–200 individual whale sharks have been photo-identified in Tanzania waters using the Wildbook for Whale Sharks (sharkbook.ai) citizen science database. The whale shark is classified as Endangered (EN) on the IUCN Red List — global population declining due to vessel strikes, bycatch, and plastic ingestion."
 ---
 
-import AnswerBox from '../../components/AnswerBox.astro';
-
-<AnswerBox answer={frontmatter.answer} />
-
 ## The Mafia Island whale shark aggregation
 
 Mafia Island is not on most people's East Africa radar. It sits 120km south of Zanzibar, 45 minutes by charter plane from Dar es Salaam, with a population of approximately 40,000 people and very limited tourism infrastructure.

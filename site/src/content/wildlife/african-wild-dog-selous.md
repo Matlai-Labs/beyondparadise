@@ -31,10 +31,6 @@ faq:
     a: "The Rufiji River system running through the park hosts Africa's densest hippo concentration (estimated at 5,000+ individuals) and the continent's largest Nile crocodile population, plus over 440 recorded bird species — making Nyerere a multi-species destination well beyond its wild dog population, if your itinerary has room for a boat safari alongside game drives."
 ---
 
-import AnswerBox from '../../components/AnswerBox.astro';
-
-<AnswerBox answer={frontmatter.answer} />
-
 ## Why Nyerere matters more than its size on a map suggests
 
 Nyerere National Park, in southern Tanzania, holds a population of African wild dogs estimated at roughly 1,300 individuals — a figure researchers describe as both the largest concentration in any single protected area in Africa and, more strikingly, about one-third of the entire world's population of this species. A broader estimate covering the full Nyerere-Selous ecosystem ranges from 800 to potentially 2,000 individuals, depending on survey boundaries and methodology.

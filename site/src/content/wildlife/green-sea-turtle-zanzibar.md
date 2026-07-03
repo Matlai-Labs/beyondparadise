@@ -31,10 +31,6 @@ faq:
     a: "Keep your distance, keep lights off (torches and phone flashlights disorient nesting turtles and hatchlings), and don't touch the nest or the animal. Several conservation programmes, including &Beyond Mnemba's, actively escort hatchlings to the sea to improve survival against predators — if you're offered the chance to observe this, follow your guide's instructions exactly."
 ---
 
-import AnswerBox from '../../components/AnswerBox.astro';
-
-<AnswerBox answer={frontmatter.answer} />
-
 ## Where to actually see them: Mnemba Atoll
 
 Zanzibar's most reliable sea turtle encounters happen at Mnemba Atoll, a marine reserve off the island's northeast coast where green sea turtles are resident year-round, feeding on seagrass beds close to the surface. Unlike a migratory species with a narrow seasonal window, these are turtles you can realistically encounter on most days of the year — the variable isn't whether turtles are present, but water clarity and calm conditions.

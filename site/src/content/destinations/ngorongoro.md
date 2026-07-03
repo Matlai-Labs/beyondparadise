@@ -25,10 +25,6 @@ faq:
     a: "andBeyond has partnered with the Ngorongoro Conservation Area Authority (NCAA) and Tanzania's Ministry of Natural Resources and Tourism on a southern white rhino translocation from South Africa, and separately runs a KopeLion partnership with a guest-donation model. These are single-sourced claims from the operator itself — treat them as a starting point for questions to your lodge, not independently confirmed facts."
 ---
 
-import AnswerBox from '../../components/AnswerBox.astro';
-
-<AnswerBox answer={frontmatter.answer} />
-
 ## When to go
 
 Ngorongoro's dry season, June through October, is the standard recommendation for wildlife viewing, with July and August marking peak tourism months. A second strong window falls in January and February, driven by the wildebeest calving season happening nearby in the southern Serengeti — animals concentrate and predator activity follows, similar to the dynamic covered in our [Great Migration guide](/wildlife/great-migration-serengeti-masai-mara/).

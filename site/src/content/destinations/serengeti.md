@@ -29,10 +29,6 @@ faq:
     a: "Off-road driving, getting closer than the mandated 25–100 meter distance from animals, using flash photography, making loud noises, feeding animals, or promising a guaranteed Big Five sighting — no ethical guide makes that promise, since wildlife behavior is inherently unpredictable. TANAPA officially caps speed at 50 km/h and bans off-track driving, drones, and smoking during game drives park-wide."
 ---
 
-import AnswerBox from '../../components/AnswerBox.astro';
-
-<AnswerBox answer={frontmatter.answer} />
-
 ## The Serengeti is four trips, not one
 
 Most first-time visitors picture a single "Serengeti safari," but the park's 15,000 km² split into zones with genuinely different peak windows and different reasons to choose them:

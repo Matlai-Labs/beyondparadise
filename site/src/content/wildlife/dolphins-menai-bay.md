@@ -31,10 +31,6 @@ faq:
     a: "Yes — they're frequently seen together in mixed groups, but spinner dolphins rest and travel more during the day and are more sensitive to boat approaches. The same 20-meter guideline and ethical operator standards apply to both, but guides should give spinner dolphin groups, especially resting ones, extra distance."
 ---
 
-import AnswerBox from '../../components/AnswerBox.astro';
-
-<AnswerBox answer={frontmatter.answer} />
-
 ## Where to see them, and how reliable it actually is
 
 Menai Bay Conservation Area, on Zanzibar's southwest coast, hosts a resident population of Indo-Pacific bottlenose dolphins (Tursiops aduncus) that mix with spinner dolphins (Stenella longirostris) year-round. This isn't a seasonal migration story — the dolphins are there every month.
