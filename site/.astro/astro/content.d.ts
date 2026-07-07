@@ -155,6 +155,13 @@ declare module 'astro:content' {
   collection: "destinations";
   data: InferEntrySchema<"destinations">
 } & { render(): Render[".md"] };
+"rwanda.md": {
+	id: "rwanda.md";
+  slug: "rwanda";
+  body: string;
+  collection: "destinations";
+  data: InferEntrySchema<"destinations">
+} & { render(): Render[".md"] };
 "serengeti.md": {
 	id: "serengeti.md";
   slug: "serengeti";
