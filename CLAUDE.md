@@ -28,8 +28,8 @@ The keystone product is the **Marine Wildlife Encounter Index**: species × loca
 ## Tech stack
 
 - **Framework:** Astro 4 (static site, zero JS bloat, AI-crawler friendly)
-- **Deploy:** Cloudflare Pages — auto-deploys on `git push main` (`github.com/Matlai-Labs/beyondparadiseadventures`)
-- **URL:** `beyondparadiseadventures.com` (owned, domain connected after first deploy)
+- **Deploy:** Cloudflare Pages — *should* auto-deploy on `git push main`, but this is **UNVERIFIED and probably broken as of 2026-08-02**: the local repo's actual git remote is `github.com/Matlai-Labs/beyondparadise` (not `beyondparadiseadventures` — a separate, near-duplicate-named repo that exists on GitHub but has been pushed to exactly once, on creation). `gh api repos/Matlai-Labs/beyondparadise/commits/<latest-sha>/check-runs` currently returns **no Cloudflare Pages check-run at all**, meaning nothing is watching this repo for deploys. Confirm which repo the Cloudflare Pages project is actually connected to before trusting `git push` does anything.
+- **URL:** `beyondparadiseadventures.com` — **NOT actually live as of 2026-08-02**, despite this file previously claiming otherwise. `dig NS beyondparadiseadventures.com` returns `ns1/ns2.dns-parking.com` (the registrar's parking nameservers, never switched to Cloudflare's). HTTP requests to `.com` redirect to `.net`, which also does not resolve to any real content. See `shared_knowledge/docs/search-visibility-collapse-prevention-playbook.md` for the full finding and what to check before re-claiming "live." Needs Tim to: (1) confirm/fix which GitHub repo Cloudflare Pages is connected to, (2) point the domain's nameservers at Cloudflare, (3) re-verify with a real `curl` before this line is changed back to "live."
 - **Styling:** Custom CSS only, no Tailwind. Design tokens in `site/src/styles/global.css`
 - **Data:** JSON databases in `data/` (not inside `site/`) — lodges, wildlife, destinations, operators, facts
 - **Languages:** English first, German (DE) + French (FR) Phase 2
@@ -344,7 +344,7 @@ beyondparadiseadventures/
 
 ## Phase roadmap
 
-**Phase 1 (Now — Q3 2026):** Landing page live ✅ → Tim Score methodology page → Editorial policy page → 3–5 first lodge reviews (East Africa) → First wildlife guide (whale sharks Mafia) → Beehiiv newsletter setup → Domain connect
+**Phase 1 (Now — Q3 2026):** Landing page built, ~~live ✅~~ **actually NOT reachable as of 2026-08-02 — domain still on parking nameservers, see Deploy/URL notes above** → Tim Score methodology page → Editorial policy page → 3–5 first lodge reviews (East Africa) → First wildlife guide (whale sharks Mafia) → Beehiiv newsletter setup → Domain connect (this step was apparently never actually completed despite being listed after "live")
 
 **Phase 2 (Q4 2026):** Kim's Vietnam hub (3–5 pages) → Ethical operator directory (beta) → GYG/Viator affiliate wired → Daily pipeline live → German language pilot → Wikidata entities created
 
