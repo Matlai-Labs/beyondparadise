@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 127.0.0.1:3028 — the `bpa` WhatsApp command family (bridge → POST /bpa/action {text} → {message}).
 import http from 'node:http';
-import { loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, brandGuard, voiceGate, log, CONFIG } from './lib.js';
+import { loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, brandGuard, voiceGate, log, CONFIG, igEnabled, igPostDraft } from './lib.js';
 const PORT = CONFIG.approvalPort;
 async function handle(text) {
   const c = parseCommand(text); const q = loadQueue(); const find = (id) => q.drafts.find((d) => d.id === id);
@@ -17,8 +17,14 @@ async function handle(text) {
     if (c.cmd === 'approve' || c.cmd === 'postnow') {
       if (d.status !== STATUS.PENDING) { out.push(`⚠️ ${id} is ${d.status}`); continue; }
       try {
-        if (c.cmd === 'postnow') { const r = await publishNow(d.text); d.status = STATUS.POSTED; d.postId = r.id; d.permalink = r.permalink_url; d.postedAt = new Date().toISOString(); out.push(`✅ ${id} posted now: ${r.permalink_url || r.id}`); }
-        else { const [at] = nextSlots(q, 1); const r = await schedulePost(d.text, at); d.status = STATUS.SCHEDULED; d.postId = r.id; d.scheduledFor = at; d.decidedAt = new Date().toISOString(); out.push(`📅 ${id} scheduled for ${at.slice(0, 16)} (${r.id})`); }
+        if (c.cmd === 'postnow') {
+          const r = await publishNow(d.text); d.status = STATUS.POSTED; d.postId = r.id; d.permalink = r.permalink_url; d.postedAt = new Date().toISOString(); out.push(`✅ ${id} posted now on the Page: ${r.permalink_url || r.id}`);
+          if (igEnabled()) { try { const ig = await igPostDraft(d); d.ig = { status: 'posted', ...ig, postedAt: new Date().toISOString() }; out.push(`📸 ${id} on Instagram: ${ig.permalink}`); } catch (e) { d.ig = { status: 'failed', error: e.message }; out.push(`❌ ${id} Instagram failed: ${e.message.slice(0, 140)}`); } }
+        } else {
+          const [at] = nextSlots(q, 1); const r = await schedulePost(d.text, at); d.status = STATUS.SCHEDULED; d.postId = r.id; d.scheduledFor = at; d.decidedAt = new Date().toISOString();
+          if (igEnabled()) d.ig = { status: 'queued', at };
+          out.push(`📅 ${id} scheduled for ${at.slice(0, 16)} on the Page${igEnabled() ? ' + Instagram' : ''} (${r.id})`);
+        }
       } catch (e) { d.lastError = e.message; log(`${c.cmd} ${id} failed: ${e.message}`); out.push(`❌ ${id}: ${e.message.slice(0, 160)}`); }
     }
   }

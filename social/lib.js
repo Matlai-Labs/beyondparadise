@@ -152,3 +152,42 @@ export function renderList(q) {
   lines.push('\nReply: *bpa approve B1 B2* · *bpa skip B3* · *bpa edit B1: new text* · *bpa post B1 now*');
   return lines.join('\n');
 }
+
+// ── Instagram: branded card → hosted image → container → publish ─────────────
+import { execFileSync } from 'node:child_process';
+export function igEnabled() {
+  if (!CONFIG.instagram?.enabled) return false;
+  try { const s = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.config/meta-pages/tokens.json'), 'utf8')); return (s.user?.scopes || []).includes('instagram_content_publish') || !!s.user?.igPublishOk; } catch { return false; }
+}
+export function cardSpec(d) {
+  const first = d.text.split('\n')[0]; const [headline, rest] = first.split(' — ');
+  const body = d.text.split('\n').slice(2).filter((l) => l && !l.startsWith('—') && !l.startsWith('#') && !/^Confidence /.test(l) && !/^This is what/.test(l)).map((l) => l.replace(/^(What changed|Why it matters|What I'd do): /, (m) => m)).slice(0, 3);
+  return { label: d.kind === 'outlook' ? 'Demand outlook · next 8 weeks' : 'What changed', headline: headline.trim(), tag: d.region === 'all' ? 'Zanzibar & Dar es Salaam' : (d.region === 'zanzibar' ? 'Zanzibar' : 'Dar es Salaam'), date: (rest || d.sourceDate || '').trim(), lines: body, brand: CONFIG.brand };
+}
+export function renderCard(d, outDir = path.join(HERE, 'cards')) {
+  fs.mkdirSync(outDir, { recursive: true }); const spec = path.join(outDir, `${d.id}.json`); const png = path.join(outDir, `${d.id}.png`);
+  fs.writeFileSync(spec, JSON.stringify(cardSpec(d))); execFileSync('python3', [path.join(HERE, 'card.py'), spec, png], { stdio: 'pipe' }); return png;
+}
+function wpCreds() {
+  const env = {}; for (const line of fs.readFileSync('/Users/tim/Desktop/AI_projects/Padel_Revive/.env', 'utf8').split('\n')) { const m = line.trim().match(/^(WP_[A-Z_]+)=(.*)$/); if (m) env[m[1]] = m[2].replace(/^['"]|['"]$/g, ''); }
+  return { base: env.WP_BASE_URL.replace(/\/$/, ''), auth: 'Basic ' + Buffer.from(`${env.WP_USERNAME}:${env.WP_APP_PASSWORD}`).toString('base64') };
+}
+export async function hostImage(pngPath, name) {
+  const { base, auth } = wpCreds(); const buf = fs.readFileSync(pngPath);
+  const r = await fetch(`${base}/wp-json/wp/v2/media`, { method: 'POST', headers: { Authorization: auth, 'Content-Type': 'image/png', 'Content-Disposition': `attachment; filename="${name}.png"` }, body: buf, signal: AbortSignal.timeout(60000) });
+  const j = await r.json(); if (!r.ok) throw new Error(`media upload ${r.status}: ${JSON.stringify(j).slice(0, 160)}`); return { id: j.id, url: j.source_url };
+}
+export async function igPublish(caption, imageUrl, { dryContainerOnly = false } = {}) {
+  const { findPage } = require(META_PUBLISH); const p = findPage(CONFIG.page); const ig = CONFIG.instagram.igUserId; const V = 'v21.0';
+  const call = async (pth, params) => { const r = await fetch(`https://graph.facebook.com/${V}/${pth}`, { method: 'POST', body: new URLSearchParams({ ...params, access_token: p.token }), signal: AbortSignal.timeout(60000) }); const j = await r.json(); if (j.error) throw new Error(`${pth}: ${j.error.message}`); return j; };
+  const c = await call(`${ig}/media`, { image_url: imageUrl, caption: caption.slice(0, 2200) });
+  for (let i = 0; i < 20; i++) { const s = await (await fetch(`https://graph.facebook.com/${V}/${c.id}?fields=status_code,status&access_token=${p.token}`)).json(); if (s.status_code === 'FINISHED') break; if (s.status_code === 'ERROR') throw new Error(`container error: ${s.status}`); await new Promise((r) => setTimeout(r, 3000)); }
+  if (dryContainerOnly) return { containerId: c.id, published: false };
+  const pub = await call(`${ig}/media_publish`, { creation_id: c.id });
+  const info = await (await fetch(`https://graph.facebook.com/${V}/${pub.id}?fields=id,permalink&access_token=${p.token}`)).json();
+  return { id: pub.id, permalink: info.permalink, published: true };
+}
+export async function igPostDraft(d) {
+  const png = renderCard(d); const hosted = await hostImage(png, `bpa-${d.id}-${d.sourceDate}`);
+  const r = await igPublish(d.text, hosted.url); return { ...r, imageUrl: hosted.url, mediaId: hosted.id };
+}

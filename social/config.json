@@ -9,6 +9,27 @@
   "timezone": "Africa/Dar_es_Salaam",
   "draftTtlDays": 7,
   "approvalPort": 3028,
-  "hashtags": { "always": ["#BeyondParadiseAdventures"], "byRegion": { "zanzibar": ["#Zanzibar", "#Tanzania"], "dar-es-salaam": ["#DarEsSalaam", "#Tanzania"] }, "max": 4 },
-  "includeLinks": false
+  "hashtags": {
+    "always": [
+      "#BeyondParadiseAdventures"
+    ],
+    "byRegion": {
+      "zanzibar": [
+        "#Zanzibar",
+        "#Tanzania"
+      ],
+      "dar-es-salaam": [
+        "#DarEsSalaam",
+        "#Tanzania"
+      ]
+    },
+    "max": 4
+  },
+  "includeLinks": false,
+  "instagram": {
+    "enabled": false,
+    "igUserId": "17841472337623518",
+    "cardHost": "wordpress-padelrevive",
+    "note": "enable after instagram_content_publish scope is granted (connect.js --inventory shows scopes)"
+  }
 }

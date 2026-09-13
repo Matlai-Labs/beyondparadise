@@ -7,3 +7,4 @@ site/dist/
 .tmp/
 social/queue.json
 social/queue.json.tmp
+social/cards/

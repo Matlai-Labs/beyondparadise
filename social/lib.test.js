@@ -28,3 +28,8 @@ test('nextSlots skips days already scheduled and is one per day', () => {
   const s = nextSlots(q, 2, now); assert.deepEqual(s, ['2026-09-15T09:00:00+03:00', '2026-09-16T09:00:00+03:00']);
 });
 test('renderList shows commands', () => { assert.match(renderList({ drafts: [{ id: 'B1', status: STATUS.PENDING, kind: 'outlook', sourceDate: '2026-09-13', text: 'x' }] }), /bpa approve B1 B2/); });
+import { cardSpec } from './lib.js';
+test('cardSpec derives label/headline/tag/lines from a draft', () => {
+  const d = { id: 'B1', kind: 'outlook', region: 'all', sourceDate: '2026-09-13', text: 'Demand outlook, next 8 weeks — 13 September 2026\n\nZanzibar: rising (82% confidence) — Peak dry season\nDar es Salaam: rising (82% confidence)\n\nThis is what my intelligence engine reads.\n— Tim, Beyond Paradise Adventures\n\n#BeyondParadiseAdventures' };
+  const s = cardSpec(d); assert.equal(s.headline, 'Demand outlook, next 8 weeks'); assert.equal(s.date, '13 September 2026'); assert.match(s.tag, /Zanzibar & Dar/); assert.equal(s.lines.length, 2); assert.equal(s.label, 'Demand outlook · next 8 weeks');
+});

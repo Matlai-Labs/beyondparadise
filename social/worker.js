@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Every 15 min: reconcile scheduled posts with Meta, expire stale drafts, alert on failures; Monday 08:00 heartbeat.
-import { loadQueue, saveQueue, STATUS, postStatus, whatsapp, log, CONFIG } from './lib.js';
+import { loadQueue, saveQueue, STATUS, postStatus, whatsapp, log, CONFIG, igEnabled, igPostDraft } from './lib.js';
 const q = loadQueue(); const now = new Date(); let changed = false; const problems = [];
 for (const d of q.drafts) {
   if (d.status === STATUS.SCHEDULED && d.postId) {
@@ -8,6 +8,11 @@ for (const d of q.drafts) {
     catch (e) { if (new Date(d.scheduledFor).getTime() + 3600e3 < now.getTime()) { problems.push(`${d.id}: ${e.message.slice(0, 100)}`); } }
   }
   if (d.status === STATUS.PENDING && now.getTime() - new Date(d.createdAt).getTime() > CONFIG.draftTtlDays * 86400e3) { d.status = STATUS.EXPIRED; changed = true; log(`${d.id} expired`); }
+  // Instagram has no reliable API scheduling: publish queued IG items when their time comes.
+  if (d.ig?.status === 'queued' && new Date(d.ig.at).getTime() <= now.getTime() && igEnabled()) {
+    try { const r = await igPostDraft(d); d.ig = { status: 'posted', ...r, postedAt: now.toISOString() }; changed = true; log(`${d.id} instagram ${r.permalink}`); }
+    catch (e) { d.ig = { ...d.ig, status: 'failed', error: e.message }; changed = true; problems.push(`${d.id} Instagram: ${e.message.slice(0, 100)}`); }
+  }
 }
 // health of the approval server (silence = alarm)
 try { const h = await fetch(`http://127.0.0.1:${CONFIG.approvalPort}/health`, { signal: AbortSignal.timeout(3000) }); if (!(await h.json()).ok) throw new Error('unhealthy'); } catch (e) { problems.push(`approval server down (${e.message})`); }
