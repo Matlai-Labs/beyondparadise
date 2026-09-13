@@ -23,9 +23,19 @@ f_label = font(SANS_B, 30); d.text((M, 96), spec.get("label", "").upper(), font=
 f_date = font(SANS, 30); dt = spec.get("date", ""); dw = d.textlength(dt, font=f_date); d.text((W - M - dw, 96), dt, font=f_date, fill=MUTED)
 d.line((M, 150, W - M, 150), fill=GOLD, width=2)
 # headline (serif italic), wrapped
+def wrap_measured(text, f, max_w):
+    lines, cur = [], ""
+    for w in text.split():
+        cand = (cur + " " + w).strip()
+        if d.textlength(cand, font=f) <= max_w: cur = cand
+        else:
+            if cur: lines.append(cur)
+            cur = w
+    if cur: lines.append(cur)
+    return lines
 head = spec.get("headline", ""); size = 84
 while size > 48:
-    f_head = font(SERIF_I, size); lines = textwrap.wrap(head, width=max(12, int((W - 2 * M) / (size * 0.48))))
+    f_head = font(SERIF_I, size); lines = wrap_measured(head, f_head, W - 2 * M)
     if len(lines) <= 4: break
     size -= 6
 y = 200
@@ -39,7 +49,7 @@ if tag:
 # body lines
 f_body = font(SANS, 38)
 for item in spec.get("lines", [])[:4]:
-    for ln in textwrap.wrap(item, width=44):
+    for ln in wrap_measured(item, f_body, W - 2 * M):
         if y > H - 260: break
         d.text((M, y), ln, font=f_body, fill=CREAM); y += 54
     y += 18
