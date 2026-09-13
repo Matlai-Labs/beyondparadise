@@ -5,3 +5,5 @@ site/dist/
 .env.local
 *.log
 .tmp/
+social/queue.json
+social/queue.json.tmp

@@ -1,0 +1,14 @@
+{
+  "bpiOutDir": "/Users/tim/Desktop/AI_projects/Beyond_Paradise_Intelligence_(BPI)/out",
+  "page": "Beyond Paradise Adventures",
+  "brand": "Beyond Paradise Adventures",
+  "author": "Tim",
+  "lookbackDays": 7,
+  "maxDraftsPerWeek": 3,
+  "postHourLocal": 9,
+  "timezone": "Africa/Dar_es_Salaam",
+  "draftTtlDays": 7,
+  "approvalPort": 3028,
+  "hashtags": { "always": ["#BeyondParadiseAdventures"], "byRegion": { "zanzibar": ["#Zanzibar", "#Tanzania"], "dar-es-salaam": ["#DarEsSalaam", "#Tanzania"] }, "max": 4 },
+  "includeLinks": false
+}
