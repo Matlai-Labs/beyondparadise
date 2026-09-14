@@ -10,8 +10,11 @@ test('draftFromItem writes first person, full brand, date, no links', () => {
   assert.match(d.text, /Sauti za Busara — Zanzibar, 11 September 2026/); assert.match(d.text, /What I'd do:/);
   assert.match(d.text, /— Tim, Beyond Paradise Adventures/); assert.doesNotMatch(d.text, /https?:/); assert.equal(brandGuard(d.text), null);
 });
-test('brandGuard rejects the short brand name and links', () => {
-  assert.match(brandGuard('Hello from Beyond Paradise today'), /in full/); assert.match(brandGuard('see https://x.y'), /links are disabled/); assert.equal(brandGuard('Beyond Paradise Adventures'), null);
+test('brandGuard rejects the short brand name and links', async () => {
+  assert.match(brandGuard('Hello from Beyond Paradise today'), /in full/); assert.equal(brandGuard('Beyond Paradise Adventures'), null);
+  // links are gated by config.includeLinks (false until the site went live on 2026-09-14)
+  const { CONFIG } = await import('./lib.js');
+  if (CONFIG.includeLinks) assert.equal(brandGuard('see https://beyondparadiseadventures.com/x'), null); else assert.match(brandGuard('see https://x.y'), /links are disabled/);
 });
 test('draftFromForecast renders both regions', () => {
   const d = draftFromForecast({ date: '2026-09-13', forecasts: [{ region: 'zanzibar', direction: 'rising', confidence: 0.82, drivers: ['Peak dry season'] }, { region: 'dar-es-salaam', direction: 'rising', confidence: 0.82, drivers: [] }] });

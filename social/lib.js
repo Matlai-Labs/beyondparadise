@@ -173,7 +173,14 @@ export function igEnabled() {
 export function cardSpec(d) {
   const first = d.text.split('\n')[0]; const [headline, rest] = first.split(' — ');
   const body = d.text.split('\n').slice(2).filter((l) => l && !l.startsWith('—') && !l.startsWith('#') && !/^Confidence /.test(l) && !/^This is what/.test(l)).map((l) => l.replace(/^(What changed|Why it matters|What I'd do): /, (m) => m)).slice(0, 3);
-  return { label: d.kind === 'outlook' ? 'Demand outlook · next 8 weeks' : 'What changed', headline: headline.trim(), tag: d.region === 'all' ? 'Zanzibar & Dar es Salaam' : (d.region === 'zanzibar' ? 'Zanzibar' : 'Dar es Salaam'), date: (rest || d.sourceDate || '').trim(), lines: body, brand: CONFIG.brand };
+  // Signal posts: the "What changed:" line IS the headline (the number is the hero);
+  // the card body then carries why/what-to-do without repeating it.
+  let head = headline.trim(); let lines = body;
+  if (d.kind === 'signal') {
+    const wc = body.find((l) => l.startsWith('What changed: '));
+    if (wc) { head = wc.replace('What changed: ', ''); lines = body.filter((l) => l !== wc); }
+  }
+  return { label: d.kind === 'outlook' ? 'Demand outlook · next 8 weeks' : (d.kind === 'signal' ? head === headline.trim() ? 'What changed' : headline.trim() : 'What changed'), headline: head, tag: d.region === 'all' ? 'Zanzibar & Dar es Salaam' : (d.region === 'zanzibar' ? 'Zanzibar' : 'Dar es Salaam'), date: (rest || d.sourceDate || '').trim(), lines, brand: CONFIG.brand };
 }
 export function renderCard(d, outDir = path.join(HERE, 'cards')) {
   fs.mkdirSync(outDir, { recursive: true }); const spec = path.join(outDir, `${d.id}.json`); const png = path.join(outDir, `${d.id}.png`);
