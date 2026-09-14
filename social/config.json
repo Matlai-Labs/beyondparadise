@@ -27,9 +27,10 @@
   },
   "includeLinks": false,
   "instagram": {
-    "enabled": false,
+    "enabled": true,
     "igUserId": "17841472337623518",
     "cardHost": "wordpress-padelrevive",
-    "note": "enable after instagram_content_publish scope is granted (connect.js --inventory shows scopes)"
+    "note": "enable after instagram_content_publish scope is granted (connect.js --inventory shows scopes)",
+    "enabledAt": "2026-09-14"
   }
 }
