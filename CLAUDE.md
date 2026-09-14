@@ -28,8 +28,8 @@ The keystone product is the **Marine Wildlife Encounter Index**: species × loca
 ## Tech stack
 
 - **Framework:** Astro 4 (static site, zero JS bloat, AI-crawler friendly)
-- **Deploy:** Cloudflare Pages — *should* auto-deploy on `git push main`, but this is **UNVERIFIED and probably broken as of 2026-08-02**: the local repo's actual git remote is `github.com/Matlai-Labs/beyondparadise` (not `beyondparadiseadventures` — a separate, near-duplicate-named repo that exists on GitHub but has been pushed to exactly once, on creation). `gh api repos/Matlai-Labs/beyondparadise/commits/<latest-sha>/check-runs` currently returns **no Cloudflare Pages check-run at all**, meaning nothing is watching this repo for deploys. Confirm which repo the Cloudflare Pages project is actually connected to before trusting `git push` does anything.
-- **URL:** `beyondparadiseadventures.com` — **NOT actually live as of 2026-08-02**, despite this file previously claiming otherwise. `dig NS beyondparadiseadventures.com` returns `ns1/ns2.dns-parking.com` (the registrar's parking nameservers, never switched to Cloudflare's). HTTP requests to `.com` redirect to `.net`, which also does not resolve to any real content. See `shared_knowledge/docs/search-visibility-collapse-prevention-playbook.md` for the full finding and what to check before re-claiming "live." Needs Tim to: (1) confirm/fix which GitHub repo Cloudflare Pages is connected to, (2) point the domain's nameservers at Cloudflare, (3) re-verify with a real `curl` before this line is changed back to "live."
+- **Deploy:** **GitHub Pages** since 2026-09-14 — `site/deploy.sh` builds and force-pushes `dist/` to branch `gh-pages` of `Matlai-Labs/beyondparadise`; the Pages site has custom domain `beyondparadiseadventures.com` (verified pre-DNS via a Host-header request to GitHub's edge). Cloudflare Pages was never connected and is abandoned. `git push main` deploys NOTHING — run `site/deploy.sh`.
+- **URL:** `beyondparadiseadventures.com` — site deployed to GitHub Pages 2026-09-14, **waiting only on DNS**: at Hostinger set A records 185.199.108.153 / 185.199.109.153 / 185.199.110.153 / 185.199.111.153 and CNAME `www` → `matlai-labs.github.io`, then enable HTTPS on the Pages site (`gh api -X PUT repos/Matlai-Labs/beyondparadise/pages -F https_enforced=true`) and re-verify with a real `curl` before calling it live.
 - **Styling:** Custom CSS only, no Tailwind. Design tokens in `site/src/styles/global.css`
 - **Data:** JSON databases in `data/` (not inside `site/`) — lodges, wildlife, destinations, operators, facts
 - **Languages:** English first, German (DE) + French (FR) Phase 2
@@ -165,7 +165,7 @@ Published slugs are append-only. If a slug must change: 301 redirect, update int
 ```bash
 cd site && npm run build
 ```
-Fix all errors before pushing. `git push` triggers Cloudflare Pages rebuild.
+Fix all errors before deploying. Deploy = `site/deploy.sh` (GitHub Pages); `git push` alone changes nothing on the live site.
 
 ### 10. Internal linking rules
 - Every new page needs ≥2 inbound links from existing pages wired on the same commit
@@ -359,3 +359,15 @@ beyondparadiseadventures/
 **Kim** — Southeast Asia lead. Vietnamese, lives in Zanzibar. First-hand knowledge of Vietnam luxury travel: Hoi An, Hanoi, Ha Long Bay, Hue.
 
 Wikidata: Tim Hennig = Q140307013 (see `shared_knowledge/scripts/wikidata_configs/matlai.json`)
+
+
+## SEO & AI visibility — cross-project standing rule (added 2026-08-03)
+
+Before ANY SEO/content/visibility work on this project, read
+`/Users/tim/Desktop/AI_projects/shared_knowledge/docs/seo-ai-visibility-2030-playbook.md`
+— especially **§13 (August-2026 verified update)**: Cloudflare AI-crawler defaults can
+silently kill AI visibility (zone checklist; defaults tighten Sept 15, 2026), robots.txt
+AI-bot allow-list, brand-mentions ≫ backlinks (~3×, YouTube transcripts strongest),
+listicle layer = commercial-query citations, original-data pages as citation bait,
+OSM/Wikivoyage entity layer, agent-bookable conversion checklist, GA4 AI-referral regex,
+and the evidence-based skip list. Case study: `matlai_wix/docs/seo-ai-2030-deep-dive-2026-08.md`.
