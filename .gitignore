@@ -10,3 +10,4 @@ social/queue.json.tmp
 social/cards/
 social/reels/
 social/node_modules/
+site/.astro/
