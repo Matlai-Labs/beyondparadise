@@ -25,7 +25,7 @@
     },
     "max": 4
   },
-  "includeLinks": false,
+  "includeLinks": true,
   "instagram": {
     "enabled": true,
     "igUserId": "17841472337623518",

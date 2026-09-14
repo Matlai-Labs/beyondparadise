@@ -29,7 +29,7 @@ The keystone product is the **Marine Wildlife Encounter Index**: species × loca
 
 - **Framework:** Astro 4 (static site, zero JS bloat, AI-crawler friendly)
 - **Deploy:** **GitHub Pages** since 2026-09-14 — `site/deploy.sh` builds and force-pushes `dist/` to branch `gh-pages` of `Matlai-Labs/beyondparadise`; the Pages site has custom domain `beyondparadiseadventures.com` (verified pre-DNS via a Host-header request to GitHub's edge). Cloudflare Pages was never connected and is abandoned. `git push main` deploys NOTHING — run `site/deploy.sh`.
-- **URL:** `beyondparadiseadventures.com` — site deployed to GitHub Pages 2026-09-14, **waiting only on DNS**: at Hostinger set A records 185.199.108.153 / 185.199.109.153 / 185.199.110.153 / 185.199.111.153 and CNAME `www` → `matlai-labs.github.io`, then enable HTTPS on the Pages site (`gh api -X PUT repos/Matlai-Labs/beyondparadise/pages -F https_enforced=true`) and re-verify with a real `curl` before calling it live.
+- **URL:** `https://beyondparadiseadventures.com` — **LIVE since 2026-09-14** (GitHub Pages, custom domain, HTTPS enforced, http→https 301, www works). Verified with real curl. DNS at Hostinger: 4 A records → GitHub Pages IPs + CNAME www → matlai-labs.github.io. Note: GitHub's cert provisioning stalled for 2 h until the custom domain was removed and re-added via the API — if HTTPS ever breaks, try that first.
 - **Styling:** Custom CSS only, no Tailwind. Design tokens in `site/src/styles/global.css`
 - **Data:** JSON databases in `data/` (not inside `site/`) — lodges, wildlife, destinations, operators, facts
 - **Languages:** English first, German (DE) + French (FR) Phase 2
