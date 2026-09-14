@@ -209,3 +209,30 @@ export async function igPostDraft(d) {
   const png = renderCard(d); const hosted = await hostImage(png, `bpa-${d.id}-${d.sourceDate}`);
   const r = await igPublish(d.text, hosted.url); return { ...r, imageUrl: hosted.url, mediaId: hosted.id };
 }
+
+// ── Instagram REELS (video) publish: container(REELS, video_url) → poll → publish ─────────
+export async function igPublishReel(caption, videoUrl, { dryContainerOnly = false } = {}) {
+  const { findPage } = require(META_PUBLISH); const p = findPage(CONFIG.page); const ig = CONFIG.instagram.igUserId; const V = 'v21.0';
+  const call = async (pth, params) => { const r = await fetch(`https://graph.facebook.com/${V}/${pth}`, { method: 'POST', body: new URLSearchParams({ ...params, access_token: p.token }), signal: AbortSignal.timeout(60000) }); const j = await r.json(); if (j.error) throw new Error(`${pth}: ${j.error.message}`); return j; };
+  const c = await call(`${ig}/media`, { media_type: 'REELS', video_url: videoUrl, caption: caption.slice(0, 2200), share_to_feed: 'true' });
+  // video containers transcode server-side: poll up to ~3 min
+  for (let i = 0; i < 60; i++) { const s = await (await fetch(`https://graph.facebook.com/${V}/${c.id}?fields=status_code,status&access_token=${p.token}`)).json(); if (s.status_code === 'FINISHED') break; if (s.status_code === 'ERROR') throw new Error(`reel container error: ${s.status}`); await new Promise((r) => setTimeout(r, 3000)); }
+  if (dryContainerOnly) return { containerId: c.id, published: false };
+  const pub = await call(`${ig}/media_publish`, { creation_id: c.id });
+  const info = await (await fetch(`https://graph.facebook.com/${V}/${pub.id}?fields=id,permalink&access_token=${p.token}`)).json();
+  return { id: pub.id, permalink: info.permalink, published: true };
+}
+export async function hostVideo(mp4Path, name) {
+  const { base, auth } = wpCreds(); const buf = fs.readFileSync(mp4Path);
+  const r = await fetch(`${base}/wp-json/wp/v2/media`, { method: 'POST', headers: { Authorization: auth, 'Content-Type': 'video/mp4', 'Content-Disposition': `attachment; filename="${name}.mp4"` }, body: buf, signal: AbortSignal.timeout(180000) });
+  const j = await r.json(); if (!r.ok) throw new Error(`video upload ${r.status}: ${JSON.stringify(j).slice(0, 160)}`); return { id: j.id, url: j.source_url };
+}
+/** Post a draft to Instagram: Reel (video) when configured, else image card. */
+export async function igPostDraftAny(d) {
+  if (CONFIG.instagram?.format === 'reel') {
+    const { renderReel } = await import('./video.js');
+    const mp4 = renderReel(d.id, cardSpec(d)); const hosted = await hostVideo(mp4, `bpa-${d.id}-${d.sourceDate}`);
+    const r = await igPublishReel(d.text, hosted.url); return { ...r, videoUrl: hosted.url, mediaId: hosted.id, format: 'reel' };
+  }
+  return { ...(await igPostDraft(d)), format: 'image' };
+}

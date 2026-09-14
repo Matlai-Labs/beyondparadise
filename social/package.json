@@ -3,5 +3,13 @@
   "private": true,
   "type": "module",
   "description": "Beyond Paradise Adventures — weekly BPI findings → drafted posts → WhatsApp approval → scheduled Facebook Page posts",
-  "scripts": { "test": "node --test lib.test.js", "draft": "node draft.js", "server": "node approval-server.js", "worker": "node worker.js" }
+  "scripts": {
+    "test": "node --test lib.test.js",
+    "draft": "node draft.js",
+    "server": "node approval-server.js",
+    "worker": "node worker.js"
+  },
+  "dependencies": {
+    "hyperframes": "^0.8.38"
+  }
 }

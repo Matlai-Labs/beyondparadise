@@ -31,6 +31,8 @@
     "igUserId": "17841472337623518",
     "cardHost": "wordpress-padelrevive",
     "note": "enable after instagram_content_publish scope is granted (connect.js --inventory shows scopes)",
-    "enabledAt": "2026-09-14"
+    "enabledAt": "2026-09-14",
+    "format": "reel",
+    "reelNote": "HyperFrames (CPU) 1080x1920 8s; 'image' falls back to the Pillow card"
   }
 }

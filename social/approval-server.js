@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 127.0.0.1:3028 — the `bpa` WhatsApp command family (bridge → POST /bpa/action {text} → {message}).
 import http from 'node:http';
-import { loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, brandGuard, voiceGate, log, CONFIG, igEnabled, igPostDraft } from './lib.js';
+import { loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, brandGuard, voiceGate, log, CONFIG, igEnabled, igPostDraftAny } from './lib.js';
 const PORT = CONFIG.approvalPort;
 async function handle(text) {
   const c = parseCommand(text); const q = loadQueue(); const find = (id) => q.drafts.find((d) => d.id === id);
@@ -19,7 +19,7 @@ async function handle(text) {
       try {
         if (c.cmd === 'postnow') {
           const r = await publishNow(d.text); d.status = STATUS.POSTED; d.postId = r.id; d.permalink = r.permalink_url; d.postedAt = new Date().toISOString(); out.push(`✅ ${id} posted now on the Page: ${r.permalink_url || r.id}`);
-          if (igEnabled()) { try { const ig = await igPostDraft(d); d.ig = { status: 'posted', ...ig, postedAt: new Date().toISOString() }; out.push(`📸 ${id} on Instagram: ${ig.permalink}`); } catch (e) { d.ig = { status: 'failed', error: e.message }; out.push(`❌ ${id} Instagram failed: ${e.message.slice(0, 140)}`); } }
+          if (igEnabled()) { try { const ig = await igPostDraftAny(d); d.ig = { status: 'posted', ...ig, postedAt: new Date().toISOString() }; out.push(`📸 ${id} on Instagram: ${ig.permalink}`); } catch (e) { d.ig = { status: 'failed', error: e.message }; out.push(`❌ ${id} Instagram failed: ${e.message.slice(0, 140)}`); } }
         } else {
           const [at] = nextSlots(q, 1); const r = await schedulePost(d.text, at); d.status = STATUS.SCHEDULED; d.postId = r.id; d.scheduledFor = at; d.decidedAt = new Date().toISOString();
           if (igEnabled()) d.ig = { status: 'queued', at };
