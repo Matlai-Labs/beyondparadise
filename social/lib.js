@@ -180,7 +180,7 @@ export function cardSpec(d) {
     const wc = body.find((l) => l.startsWith('What changed: '));
     if (wc) { head = wc.replace('What changed: ', ''); lines = body.filter((l) => l !== wc); }
   }
-  return { label: d.kind === 'outlook' ? 'Demand outlook · next 8 weeks' : (d.kind === 'signal' ? head === headline.trim() ? 'What changed' : headline.trim() : 'What changed'), headline: head, tag: d.region === 'all' ? 'Zanzibar & Dar es Salaam' : (d.region === 'zanzibar' ? 'Zanzibar' : 'Dar es Salaam'), date: (rest || d.sourceDate || '').trim(), lines, brand: CONFIG.brand };
+  return { label: d.kind === 'outlook' ? 'Demand outlook · next 8 weeks' : 'What changed', headline: head, tag: d.region === 'all' ? 'Zanzibar & Dar es Salaam' : (d.region === 'zanzibar' ? 'Zanzibar' : 'Dar es Salaam'), date: (rest || d.sourceDate || '').trim(), lines, brand: CONFIG.brand };
 }
 export function renderCard(d, outDir = path.join(HERE, 'cards')) {
   fs.mkdirSync(outDir, { recursive: true }); const spec = path.join(outDir, `${d.id}.json`); const png = path.join(outDir, `${d.id}.png`);
