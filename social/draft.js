@@ -3,8 +3,8 @@
 import { readBriefs, buildDrafts, loadQueue, saveQueue, nextId, STATUS, whatsapp, renderList, log, CONFIG } from './lib.js';
 const DRY = process.argv.includes('--dry-run');
 const briefs = readBriefs();
-const drafts = await buildDrafts({ briefs });
 const q = loadQueue();
+const drafts = await buildDrafts({ briefs, existingDrafts: q.drafts });
 const already = new Set(q.drafts.map((d) => d.sourceId));
 let added = 0, rejected = 0;
 for (const d of drafts) {

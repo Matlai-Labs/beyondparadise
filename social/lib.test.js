@@ -33,3 +33,12 @@ test('cardSpec derives label/headline/tag/lines from a draft', () => {
   const d = { id: 'B1', kind: 'outlook', region: 'all', sourceDate: '2026-09-13', text: 'Demand outlook, next 8 weeks — 13 September 2026\n\nZanzibar: rising (82% confidence) — Peak dry season\nDar es Salaam: rising (82% confidence)\n\nThis is what my intelligence engine reads.\n— Tim, Beyond Paradise Adventures\n\n#BeyondParadiseAdventures' };
   const s = cardSpec(d); assert.equal(s.headline, 'Demand outlook, next 8 weeks'); assert.equal(s.date, '13 September 2026'); assert.match(s.tag, /Zanzibar & Dar/); assert.equal(s.lines.length, 2); assert.equal(s.label, 'Demand outlook · next 8 weeks');
 });
+import { outlookIsFresh, outlookSignature } from './lib.js';
+test('outlook is drafted only when content changes or 14 days passed', () => {
+  const fc = { date: '2026-09-14', forecasts: [{ region: 'zanzibar', direction: 'rising', drivers: ['Peak dry season'] }] };
+  const sig = outlookSignature(fc); const now = new Date('2026-09-14T04:00:00Z');
+  assert.equal(outlookIsFresh(fc, [], now), true);
+  assert.equal(outlookIsFresh(fc, [{ kind: 'outlook', signature: sig, createdAt: '2026-09-13T13:55:00Z' }], now), false, 'same content → no');
+  assert.equal(outlookIsFresh(fc, [{ kind: 'outlook', signature: 'other', createdAt: '2026-09-13T13:55:00Z' }], now), false, 'different content but <14 days → no');
+  assert.equal(outlookIsFresh(fc, [{ kind: 'outlook', signature: 'other', createdAt: '2026-08-20T13:55:00Z' }], now), true, 'different content and 14+ days → yes');
+});

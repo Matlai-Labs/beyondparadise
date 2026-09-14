@@ -94,9 +94,20 @@ export async function voiceGate(text) {
   if (!mod?.lint) return { ok: false, reason: 'voice-lint unavailable (fail closed)' };
   const res = mod.lint(text); return { ok: !!res.ok, reason: res.ok ? null : JSON.stringify(res).slice(0, 300) };
 }
-export async function buildDrafts({ briefs, now = new Date() }) {
+export function outlookSignature(fc) {
+  if (!fc) return null;
+  return (fc.forecasts || []).map((f) => `${f.region}:${f.direction || f.outlook}:${(f.drivers || []).map((x) => clean(x).toLowerCase()).join('|')}`).sort().join(';');
+}
+export function outlookIsFresh(fc, existingDrafts, now = new Date(), minDays = 14) {
+  const sig = outlookSignature(fc); if (!sig) return false;
+  const prev = existingDrafts.filter((d) => d.kind === 'outlook');
+  if (prev.some((d) => d.signature === sig)) return false; // same content already drafted (any status)
+  const last = prev.map((d) => new Date(d.createdAt || 0).getTime()).sort().pop() || 0;
+  return now.getTime() - last >= minDays * 86400e3;
+}
+export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [] }) {
   const items = pickItems(briefs); const drafts = items.map(draftFromItem);
-  if (drafts.length < CONFIG.maxDraftsPerWeek) { const fc = draftFromForecast(latestForecasts(briefs)); if (fc) drafts.push(fc); }
+  if (drafts.length < CONFIG.maxDraftsPerWeek) { const lf = latestForecasts(briefs); const fc = draftFromForecast(lf); if (fc && outlookIsFresh(lf, existingDrafts, now)) drafts.push({ ...fc, signature: outlookSignature(lf) }); }
   const out = [];
   for (const d of drafts) {
     const bad = brandGuard(d.text); if (bad) { out.push({ ...d, rejected: bad }); continue; }
