@@ -371,3 +371,13 @@ AI-bot allow-list, brand-mentions ≫ backlinks (~3×, YouTube transcripts stron
 listicle layer = commercial-query citations, original-data pages as citation bait,
 OSM/Wikivoyage entity layer, agent-bookable conversion checklist, GA4 AI-referral regex,
 and the evidence-based skip list. Case study: `matlai_wix/docs/seo-ai-2030-deep-dive-2026-08.md`.
+
+## Fleet wiring (Agent OS, 2026-09-20)
+
+This repo is one of Tim's fleet projects (id `beyondparadiseadventures`). Its operating brief — verification command, backlog, deploy
+method, never-do rules and the agents to use — is printed automatically at session start from Agent OS
+`registries/project-profiles.json`; full version: `cd ../MATLAI_VS_CODE_Agent_OS && npm run brief -- beyondparadiseadventures`.
+Use the roster agents the brief names (implementer, code-reviewer, security-reviewer, build-error-resolver, explorer, tdd-guide, delegate-runner, known-setup-reviewer, product-boundary-reviewer, gan-planner): subagents run as `matlai-shared:<id>` via the Agent tool,
+skills via the Skill tool, large files/summaries via `npm run delegate` in Agent OS — do not do their job in the
+main thread. Before building any integration: `npm run known-setups -- --for beyondparadiseadventures` there. Wrong brief? Fix the
+profile in Agent OS, not this file.
