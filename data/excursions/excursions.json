@@ -58,6 +58,16 @@
           "character_fact_ids": ["zanzibar-kitesurfing-paje-population-1", "green-turtle-nesting-zanzibar-season-1"],
           "character_text": "Jambiani sits just south of Paje, near the Menai Bay Conservation Area (which includes Kizimkazi and Jambiani), and is one of the beaches where Green Sea Turtle nesting is recorded, generally February to July. It's a quieter alternative to Paje with a similar east-coast transfer profile.",
           "extra_note": "No direct Jambiani-to-Stone-Town drive time is recorded in our facts database — only the airport-transfer figures above."
+        },
+        {
+          "area_id": "kendwa",
+          "area_name": "Kendwa",
+          "transfer_short": "~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town",
+          "transfer_fact_ids": ["zanzibar-beaches-guide-transfers-1", "zanzibar-health-malaria-transfers-1"],
+          "transfer_text": "Kendwa is one of the north-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg, with the airport a further 5-6km (about 8-15 minutes) from Stone Town — two logged legs rather than one direct figure.",
+          "character_fact_ids": ["kendwa-tide-swimmable-1", "kendwa-nungwi-distance-1", "kendwa-character-1"],
+          "character_text": "Kendwa is about 3-4km down the coast from Nungwi — roughly a 9-minute drive, or a 15-20 minute walk along the beach at low tide — but the two behave differently underfoot: Kendwa stays swimmable through the tide cycle thanks to a deep-water shelf close offshore, while the Nungwi tip next door can lose its water tens to hundreds of metres out at low tide. Kendwa is also the quieter of the two beaches, known more for sunset views, Full Moon Party nights and kitesurfing than for Nungwi's busier resort strip.",
+          "extra_note": "No direct Kendwa-to-Stone-Town drive time is recorded in our facts database — only the airport-transfer figures above."
         }
       ]
     },
@@ -84,6 +94,16 @@
           "character_fact_ids": ["zanzibar-seasons-overview"],
           "character_text": "Best paired with the October-March window, when the Indian Ocean is calmest and visibility is highest according to our Zanzibar seasonal data — the same window that's best for marine activity generally on this coast.",
           "extra_note": null
+        },
+        {
+          "area_id": "kendwa",
+          "area_name": "Kendwa",
+          "transfer_short": "~45min boat ride from a Kendwa beach pickup to the atoll",
+          "transfer_fact_ids": ["kendwa-mnemba-transfer-1"],
+          "transfer_text": "Full-day Mnemba Atoll trips sold as departing from Kendwa typically start with a beach pickup around 8:50am, followed by roughly a 45-minute boat ride out to the atoll, as part of a 9:30am-3:30pm day that also includes dolphin snorkelling and a seafood lunch.",
+          "character_fact_ids": ["kendwa-tide-swimmable-1"],
+          "character_text": "Kendwa is one of the few spots on this coast where the beach itself stays swimmable through the tide cycle, thanks to a deep-water shelf close offshore — part of why boat trips can launch reliably from here rather than working around a tidal window the way some other north-coast operators have to.",
+          "extra_note": "This is a packaged day-trip time (beach pickup to boat departure to atoll), not a lodge-to-lodge transfer figure — treat it as an estimate specific to that trip type, sourced from one operator listing."
         }
       ]
     },
@@ -97,7 +117,8 @@
       "intro_fact_ids": ["whale-shark-mafia-season", "whale-shark-swim-rules-mafia", "whale-sharks-mafia-operators-probability-1"],
       "intro_text": "Whale sharks aggregate around Mafia Island from October to February, with peak sightings November to January — one of the largest documented aggregations in the Indian Ocean. Operators report an 80-90% sighting success rate during peak season. Swimming is regulated: maximum 6 swimmers per shark, minimum 3m distance from the body (4m from the tail), no touching, no underwater flash photography, and vessels must cut engines within 50m of the animal — a permit from Tanzania's Marine Parks and Reserves Unit is required.",
       "related_links": [
-        { "href": "/wildlife/whale-sharks-mafia-island/", "label": "Full whale shark guide — season, ethics, choosing an operator" }
+        { "href": "/wildlife/whale-sharks-mafia-island/", "label": "Full whale shark guide — season, ethics, choosing an operator" },
+        { "href": "/east-africa/mafia-island/", "label": "Mafia Island travel guide — season, fees, entry requirements" }
       ],
       "pickup_areas": [
         {
@@ -122,7 +143,8 @@
       "intro_fact_ids": ["mafia-island-diving-population-3", "mafia-island-diving-permit-1", "mafia-island-diving-permit-2", "mafia-island-seasons-seasons-2"],
       "intro_text": "Mafia Island Marine Park (MIMP), gazetted in April 1995 and governed by Tanzania's Marine Parks and Reserves Unit (MPRU), holds over 50 genera of coral and 460 recorded fish species. The park follows a Code of Conduct banning touching, riding, blocking movement, flash photography, overcrowding and aggressive boat chasing around marine life. The prime diving and snorkelling season is October through March, with calm seas, 15-25m visibility, and water around 29°C from November to March — October is considered the strongest all-round month.",
       "related_links": [
-        { "href": "/wildlife/whale-sharks-mafia-island/", "label": "Whale sharks at Mafia Island (the same marine park, different season focus)" }
+        { "href": "/wildlife/whale-sharks-mafia-island/", "label": "Whale sharks at Mafia Island (the same marine park, different season focus)" },
+        { "href": "/east-africa/mafia-island/", "label": "Mafia Island travel guide — season, fees, entry requirements" }
       ],
       "pickup_areas": [
         {
@@ -136,16 +158,38 @@
           "extra_note": null
         }
       ]
+    },
+    {
+      "id": "safari-blue-menai-bay",
+      "name": "Safari Blue Dhow Day Trip, Menai Bay",
+      "destination_id": "zanzibar",
+      "region": "Zanzibar, Tanzania",
+      "key_experience_slugs": ["safari-blue-menai-bay-dhow"],
+      "hero_image": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1440&q=80&auto=format",
+      "intro_fact_ids": ["safari-blue-fumba-departure-1", "safari-blue-itinerary-1", "menai-bay-conservation-area-established-1"],
+      "intro_text": "Safari Blue is a full-day traditional dhow trip through the Menai Bay Conservation Area, a 470 km2 marine protected area off Zanzibar's south-west coast that has been gazetted since August 1997. The dhow departs from Fumba village, about a 20-minute drive from Stone Town, and the day typically includes a sandbank stop, reef snorkelling inside the conservation area, a lookout for Indo-Pacific bottlenose and humpback dolphins, and a Swahili seafood lunch on Kwale Island.",
+      "related_links": [
+        { "href": "/east-africa/zanzibar/", "label": "Zanzibar travel guide (seasons, entry requirements, getting around)" },
+        { "href": "/wildlife/dolphins-menai-bay/", "label": "Dolphins in Menai Bay — season, ethics, choosing an operator" }
+      ],
+      "pickup_areas": [
+        {
+          "area_id": "stone-town-airport",
+          "area_name": "Stone Town / Zanzibar Airport",
+          "transfer_short": "~20min drive from Stone Town direct to Fumba",
+          "transfer_fact_ids": ["safari-blue-fumba-departure-1"],
+          "transfer_text": "Safari Blue's own pickup point is Fumba village, roughly a 20-minute drive south-west of Stone Town. Our source data treats Stone Town and Zanzibar Airport as a single starting point for this transfer (they're only 5-6km apart), so budget roughly half an hour door-to-dhow from either.",
+          "character_fact_ids": ["kwale-island-menai-bay-1", "safari-blue-dolphin-sighting-rate-1", "safari-blue-price-2026-1"],
+          "character_text": "Lunch is served on Kwale Island, a small protected island inside the Menai Bay Conservation Area reached from Fumba Beach by dhow — the same waters where the operator reports dolphin sightings on roughly 85% of trips (never guaranteed on any single day). As of September 2026, the operator's own site priced its 'Original Experience' package at $85 per adult and $42 per child (6-14yrs), with transport to/from Fumba booked separately — treat this as time-sensitive and confirm current pricing directly with the operator before booking.",
+          "extra_note": "We don't have a fact-checked direct transfer time from other beach areas (Paje, Nungwi, Michamvi, Jambiani, Kendwa) to Fumba specifically — only this Stone Town/airport figure. Ask your lodge to confirm road time from further afield."
+        }
+      ]
     }
   ],
   "skipped_combinations": [
     {
-      "tour_or_area": "Safari Blue (from Paje or any pickup area)",
-      "reason": "Safari Blue appears in data/facts/facts.json only as a cited SOURCE website (safariblue.net) for two unrelated general claims about vessel types and tourism environmental impact. No fact records its departure point, duration, itinerary or price. Cannot build without inventing details. TODO for Tim: add sourced facts about Safari Blue specifically (or drop the example)."
-    },
-    {
-      "tour_or_area": "Stone Town & Spice Farm Day Trip from Kendwa",
-      "reason": "Kendwa only appears in the shared Kendwa/Nungwi/Paje/Jambiani airport-transfer fact (zanzibar-beaches-guide-transfers-1) — no Kendwa-specific fact exists (unlike Nungwi's turtle-pond fact or Paje's kitesurf-season facts), so a Kendwa page would be near-duplicate of the Nungwi page and fail the uniqueness check. TODO for Tim: add at least one Kendwa-specific fact (e.g. a first-hand note, a distinguishing feature vs Nungwi) before generating this page."
+      "tour_or_area": "Safari Blue from Paje, Nungwi, Michamvi, Jambiani or Kendwa",
+      "reason": "Now partially backed: Safari Blue from Stone Town/Zanzibar Airport IS generated (see safari-blue-menai-bay, using safari-blue-fumba-departure-1, safari-blue-itinerary-1, safari-blue-dolphin-sighting-rate-1, safari-blue-price-2026-1, kwale-island-menai-bay-1, menai-bay-conservation-area-established-1 — researched and added 2026-09-23). The other beach areas still lack a specific area-to-Fumba transfer fact (only the general area-to-airport figures exist), so those pickup pages remain skipped rather than inventing a Fumba-specific number. TODO for Tim: source a direct beach-to-Fumba transfer time for one of these areas to expand this tour."
     },
     {
       "tour_or_area": "Kitesurfing Paje (as its own tour, picked up from elsewhere)",
@@ -153,15 +197,15 @@
     },
     {
       "tour_or_area": "Dolphin encounter, Menai Bay, from any Zanzibar beach area",
-      "reason": "The existing wildlife guide (/wildlife/dolphins-menai-bay/) states tours are 'most commonly accessed from Fumba or Kizimkazi village' — no fact ties this experience to a specific guest-accommodation pickup area (e.g. Paje) with a real transfer figure. Also: this is the one experience the brand explicitly flags for ethics caution; a short logistics page risks oversimplifying a nuanced position already handled carefully in the dedicated guide. Skipped rather than duplicated or thinned out."
+      "reason": "The existing wildlife guide (/wildlife/dolphins-menai-bay/) states tours are 'most commonly accessed from Fumba or Kizimkazi village' — no fact ties this experience to a specific guest-accommodation pickup area (e.g. Paje) with a real transfer figure. Also: this is the one experience the brand explicitly flags for ethics caution; a short logistics page risks oversimplifying a nuanced position already handled carefully in the dedicated guide. Skipped rather than duplicated or thinned out. (Note: Safari Blue's own dolphin-sighting rate is now covered as a supporting detail on the safari-blue-menai-bay excursion page, not as a substitute for the dedicated ethics-first dolphin guide.)"
     },
     {
       "tour_or_area": "Fishing village visit (Mafia Island) from Kilindoni",
       "reason": "No fact in facts.json describes this experience beyond the general Utende/Chole Bay transfer already used for the whale-shark and diving pages — generating it would duplicate that transfer paragraph with no other unique material, failing the uniqueness bar."
     },
     {
-      "tour_or_area": "Any tour page with a listed price for the excursion itself",
-      "reason": "No price data exists in data/ for booking any of these excursions (Stone Town tour cost, Mnemba snorkeling cost, Mafia whale-shark trip cost). Only real, sourced costs used are unrelated entry/transfer costs (airport taxi $5-20, marine park entry fees) which ARE cited. Schema.org Offer is deliberately not used anywhere in this dataset for this reason."
+      "tour_or_area": "Any tour page with a schema.org Offer (bookable price) for the excursion itself",
+      "reason": "Safari Blue's own listed price ($85 adult / $42 child, Sept 2026) is now recorded as a fact and mentioned as informational, dated, time-sensitive text on its excursion page — but it is deliberately NOT surfaced as a schema.org Offer anywhere in this dataset, since Beyond Paradise does not sell or resell bookings and has no live inventory/availability data to back an Offer. Stone Town tour and Mnemba/Mafia diving pages still have no price data of any kind, sourced or otherwise, beyond real entry/transfer costs (airport taxi $5-20, marine park entry fees) which ARE cited."
     }
   ]
 }

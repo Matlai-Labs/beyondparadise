@@ -58,3 +58,4 @@ Mafia Marine Park charges a daily entry fee — recorded in our sources as eithe
 ## Plan the rest of your trip
 
 - [Full whale shark guide — season, ethics, choosing an operator](/wildlife/whale-sharks-mafia-island/)
+- [Mafia Island travel guide — season, fees, entry requirements](/east-africa/mafia-island/)

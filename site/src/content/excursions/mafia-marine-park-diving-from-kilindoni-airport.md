@@ -58,3 +58,4 @@ The same daily marine park fee that covers whale shark encounters (recorded as U
 ## Plan the rest of your trip
 
 - [Whale sharks at Mafia Island (the same marine park, different season focus)](/wildlife/whale-sharks-mafia-island/)
+- [Mafia Island travel guide — season, fees, entry requirements](/east-africa/mafia-island/)

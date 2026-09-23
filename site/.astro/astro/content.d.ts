@@ -141,6 +141,13 @@ declare module 'astro:content' {
 
 	type ContentEntryMap = {
 		"destinations": {
+"mafia-island.md": {
+	id: "mafia-island.md";
+  slug: "mafia-island";
+  body: string;
+  collection: "destinations";
+  data: InferEntrySchema<"destinations">
+} & { render(): Render[".md"] };
 "masai-mara.md": {
 	id: "masai-mara.md";
   slug: "masai-mara";
@@ -192,6 +199,13 @@ declare module 'astro:content' {
   collection: "excursions";
   data: InferEntrySchema<"excursions">
 } & { render(): Render[".md"] };
+"mnemba-atoll-snorkeling-from-kendwa.md": {
+	id: "mnemba-atoll-snorkeling-from-kendwa.md";
+  slug: "mnemba-atoll-snorkeling-from-kendwa";
+  body: string;
+  collection: "excursions";
+  data: InferEntrySchema<"excursions">
+} & { render(): Render[".md"] };
 "mnemba-atoll-snorkeling-from-stone-town-airport.md": {
 	id: "mnemba-atoll-snorkeling-from-stone-town-airport.md";
   slug: "mnemba-atoll-snorkeling-from-stone-town-airport";
@@ -199,9 +213,23 @@ declare module 'astro:content' {
   collection: "excursions";
   data: InferEntrySchema<"excursions">
 } & { render(): Render[".md"] };
+"safari-blue-menai-bay-from-stone-town-airport.md": {
+	id: "safari-blue-menai-bay-from-stone-town-airport.md";
+  slug: "safari-blue-menai-bay-from-stone-town-airport";
+  body: string;
+  collection: "excursions";
+  data: InferEntrySchema<"excursions">
+} & { render(): Render[".md"] };
 "stone-town-spice-tour-from-jambiani.md": {
 	id: "stone-town-spice-tour-from-jambiani.md";
   slug: "stone-town-spice-tour-from-jambiani";
+  body: string;
+  collection: "excursions";
+  data: InferEntrySchema<"excursions">
+} & { render(): Render[".md"] };
+"stone-town-spice-tour-from-kendwa.md": {
+	id: "stone-town-spice-tour-from-kendwa.md";
+  slug: "stone-town-spice-tour-from-kendwa";
   body: string;
   collection: "excursions";
   data: InferEntrySchema<"excursions">
