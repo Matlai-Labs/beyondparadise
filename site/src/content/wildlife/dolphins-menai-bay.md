@@ -86,6 +86,8 @@ Menai Bay is on Zanzibar's southwest coast, most commonly accessed from Fumba or
 
 If your Zanzibar itinerary also includes [Mnemba Atoll's resident sea turtles](/wildlife/green-sea-turtle-zanzibar/), that's a separate, better-regulated marine encounter on the island's northeast coast — worth considering as an alternative or addition if the Menai Bay ethics situation gives you pause.
 
+If you're based in Paje or Jambiani for the trip, both are within the general Menai Bay area and also work as a base for a [Stone Town day trip](/excursions/stone-town-spice-tour-from-paje/) — see our [Paje](/excursions/stone-town-spice-tour-from-paje/) and [Jambiani](/excursions/stone-town-spice-tour-from-jambiani/) transfer logistics if you're combining the two.
+
 ## Why we're covering this so directly
 
 Beyond Paradise Adventures exists to answer "is this ethical" honestly, not to sell the experience regardless of the answer — see our [editorial policy](/about/editorial-policy/) for the full standard we hold ourselves to. Dolphin tourism in Menai Bay is a genuinely useful test case for that standard: the experience is popular, widely marketed, and easy to book, and the gap between the official rule and documented practice is exactly the kind of thing a decision-support guide should surface rather than smooth over.

@@ -177,6 +177,57 @@ declare module 'astro:content' {
   data: InferEntrySchema<"destinations">
 } & { render(): Render[".md"] };
 };
+"excursions": {
+"mafia-marine-park-diving-from-kilindoni-airport.md": {
+	id: "mafia-marine-park-diving-from-kilindoni-airport.md";
+  slug: "mafia-marine-park-diving-from-kilindoni-airport";
+  body: string;
+  collection: "excursions";
+  data: InferEntrySchema<"excursions">
+} & { render(): Render[".md"] };
+"mafia-whale-shark-snorkelling-from-kilindoni-airport.md": {
+	id: "mafia-whale-shark-snorkelling-from-kilindoni-airport.md";
+  slug: "mafia-whale-shark-snorkelling-from-kilindoni-airport";
+  body: string;
+  collection: "excursions";
+  data: InferEntrySchema<"excursions">
+} & { render(): Render[".md"] };
+"mnemba-atoll-snorkeling-from-stone-town-airport.md": {
+	id: "mnemba-atoll-snorkeling-from-stone-town-airport.md";
+  slug: "mnemba-atoll-snorkeling-from-stone-town-airport";
+  body: string;
+  collection: "excursions";
+  data: InferEntrySchema<"excursions">
+} & { render(): Render[".md"] };
+"stone-town-spice-tour-from-jambiani.md": {
+	id: "stone-town-spice-tour-from-jambiani.md";
+  slug: "stone-town-spice-tour-from-jambiani";
+  body: string;
+  collection: "excursions";
+  data: InferEntrySchema<"excursions">
+} & { render(): Render[".md"] };
+"stone-town-spice-tour-from-michamvi.md": {
+	id: "stone-town-spice-tour-from-michamvi.md";
+  slug: "stone-town-spice-tour-from-michamvi";
+  body: string;
+  collection: "excursions";
+  data: InferEntrySchema<"excursions">
+} & { render(): Render[".md"] };
+"stone-town-spice-tour-from-nungwi.md": {
+	id: "stone-town-spice-tour-from-nungwi.md";
+  slug: "stone-town-spice-tour-from-nungwi";
+  body: string;
+  collection: "excursions";
+  data: InferEntrySchema<"excursions">
+} & { render(): Render[".md"] };
+"stone-town-spice-tour-from-paje.md": {
+	id: "stone-town-spice-tour-from-paje.md";
+  slug: "stone-town-spice-tour-from-paje";
+  body: string;
+  collection: "excursions";
+  data: InferEntrySchema<"excursions">
+} & { render(): Render[".md"] };
+};
 "reviews": {
 "singita-grumeti.md": {
 	id: "singita-grumeti.md";

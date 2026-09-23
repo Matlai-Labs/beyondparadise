@@ -91,6 +91,8 @@ Beyond Paradise Adventures will publish a verified operator directory when Tim h
 
 **Planning note:** Mafia is a small island with limited accommodation. Book flights and lodge together — availability is constrained in peak season (November–January). I recommend 2 nights minimum (for two whale shark sessions) and 3 nights for a better chance of good conditions on at least one day.
 
+**Once you land:** the airport sits near Kilindoni, but most lodges and the dive/whale-shark base are in Utende on Chole Bay, about 15km away (roughly half an hour by road). We've broken that specific local transfer down separately for [whale shark snorkelling from Kilindoni](/excursions/mafia-whale-shark-snorkelling-from-kilindoni-airport/) and for [scuba diving Mafia Marine Park from Kilindoni](/excursions/mafia-marine-park-diving-from-kilindoni-airport/), including current park-fee figures.
+
 ## Mafia as a diving destination (beyond whale sharks)
 
 Mafia Marine Park is also one of the best reef scuba diving destinations in East Africa — a fact that gets little attention because the whale sharks dominate the marketing.

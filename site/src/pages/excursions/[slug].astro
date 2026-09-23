@@ -1,0 +1,72 @@
+---
+import { getCollection } from 'astro:content';
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+
+export async function getStaticPaths() {
+  const pages = await getCollection('excursions', ({ data }) => !data.draft);
+  return pages.map(p => ({ params: { slug: p.slug }, props: { page: p, all: pages } }));
+}
+
+const { page, all } = Astro.props;
+const { Content } = await page.render();
+const d = page.data;
+
+// Sibling pickup-area pages for the same tour, for the "Other departure points" cross-link block.
+const siblings = all
+  .filter(p => p.data.tour_id === d.tour_id && p.slug !== page.slug)
+  .map(p => ({ permalink: p.data.permalink, pickup_area_name: p.data.pickup_area_name }));
+---
+<ArticleLayout
+  title={d.title}
+  description={d.description}
+  permalink={d.permalink}
+  heroImage={d.hero_image}
+  heroAlt={d.hero_alt}
+  author={d.author}
+  lastUpdated={d.last_updated}
+  answer={d.answer}
+  faq={d.faq}
+  schemaType="TouristTrip"
+  schemaExtra={{
+    name: d.title,
+    departureLocation: { '@type': 'Place', name: d.pickup_area_name },
+    arrivalLocation: { '@type': 'Place', name: d.region },
+    provider: {
+      '@type': 'Organization',
+      name: 'Beyond Paradise Adventures',
+      url: 'https://beyondparadiseadventures.com',
+    },
+  }}
+>
+  <Content />
+
+  {siblings.length > 0 && (
+    <section class="other-departures">
+      <h2>Other departure points for {d.tour_name}</h2>
+      <ul>
+        {siblings.map(s => (
+          <li><a href={s.permalink}>{d.tour_name} from {s.pickup_area_name}</a></li>
+        ))}
+      </ul>
+    </section>
+  )}
+</ArticleLayout>
+
+<style>
+.other-departures {
+  margin: 48px 0;
+  padding-top: 32px;
+  border-top: 1px solid var(--glass-b);
+}
+.other-departures h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(20px, 3vw, 24px);
+  font-weight: 400;
+  color: var(--cream);
+  margin-bottom: 16px;
+}
+.other-departures ul { padding-left: 20px; }
+.other-departures li { margin-bottom: 8px; color: var(--cream-65); }
+.other-departures a { color: var(--gold); text-decoration: underline; text-decoration-color: rgba(201,169,110,0.4); }
+.other-departures a:hover { text-decoration-color: var(--gold); }
+</style>

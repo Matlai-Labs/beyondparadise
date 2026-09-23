@@ -1,0 +1,61 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+const pages = await getCollection('excursions', ({ data }) => !data.draft);
+
+// Group by tour_id, preserving first-seen order.
+const tourOrder: string[] = [];
+const byTour: Record<string, { tour_name: string; items: typeof pages }> = {};
+for (const p of pages) {
+  const id = p.data.tour_id;
+  if (!byTour[id]) {
+    byTour[id] = { tour_name: p.data.tour_name, items: [] };
+    tourOrder.push(id);
+  }
+  byTour[id].items.push(p);
+}
+---
+<Base
+  title="Excursions & Day Trips — Beyond Paradise Adventures"
+  description="Practical, fact-checked logistics for real excursions across East Africa, organized by where you're staying: transfer times, seasons, and what to expect — built only from our verified facts database."
+>
+  <div class="container excursions-hub">
+    <h1 class="display-l">Excursions & Day Trips</h1>
+    <p class="excursions-hub__intro">
+      Practical planning pages for specific excursions, organized by pickup area. Every transfer
+      time, season and regulation on these pages is sourced from our verified facts database — if
+      we don't have a real number for your specific starting point, we say so rather than guess.
+    </p>
+
+    {tourOrder.map(tourId => (
+      <section class="excursions-hub__tour">
+        <h2>{byTour[tourId].tour_name}</h2>
+        <ul>
+          {byTour[tourId].items.map(item => (
+            <li><a href={item.data.permalink}>From {item.data.pickup_area_name}</a></li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</Base>
+
+<style>
+.excursions-hub { padding: 96px 0 96px; max-width: 800px; }
+.excursions-hub__intro { color: var(--cream-65); line-height: 1.8; font-size: 16px; margin: 20px 0 48px; }
+.excursions-hub__tour { margin-bottom: 40px; }
+.excursions-hub__tour h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(20px, 3vw, 26px);
+  font-weight: 400;
+  color: var(--cream);
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-b);
+}
+.excursions-hub__tour ul { padding-left: 20px; }
+.excursions-hub__tour li { margin-bottom: 8px; }
+.excursions-hub__tour a { color: var(--gold); text-decoration: underline; text-decoration-color: rgba(201,169,110,0.4); }
+.excursions-hub__tour a:hover { text-decoration-color: var(--gold); }
+</style>

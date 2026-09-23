@@ -1,0 +1,167 @@
+{
+  "_meta": {
+    "purpose": "Structured source data for the programmatic local-SEO excursion pages (tour x pickup-area). Every field that appears on a generated page must trace to a fact_id in data/facts/facts.json or to destinations.json. Never add a value here without a real source. Generator: pipeline/seo/generate-excursion-pages.js.",
+    "created": "2026-09-23",
+    "rule": "Never write specifics without the database (CLAUDE.md #2). If a fact_id list is empty for a claim, the claim must not be written.",
+    "hard_scope_note": "This dataset is intentionally small. Beyond Paradise Adventures does not operate or resell day tours (it is a decision-support editorial brand, not a package-tourism directory), and data/ has no bookable-tour product records (no departure times, itineraries, or prices for Safari Blue, spice tours, etc.). Every combination below is built ONLY from real facts.json entries about transfer logistics, seasons, regulations and named places. Combinations that would require inventing a fact (e.g. Safari Blue's actual departure point/price, a Nungwi-to-Stone-Town direct drive time, any Kendwa-specific detail) are listed in skipped_combinations instead of being generated."
+  },
+  "tours": [
+    {
+      "id": "stone-town-spice-tour",
+      "name": "Stone Town & Spice Farm Day Trip",
+      "destination_id": "zanzibar",
+      "region": "Zanzibar, Tanzania",
+      "key_experience_slugs": ["stone-town-history", "zanzibar-spice-tour"],
+      "hero_image": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1440&q=80&auto=format",
+      "intro_fact_ids": ["stone-town-unesco", "zanzibar-spice-history"],
+      "intro_text": "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town and take approximately 3 hours, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\"",
+      "related_links": [
+        { "href": "/east-africa/zanzibar/", "label": "Zanzibar travel guide (seasons, entry requirements, getting around)" }
+      ],
+      "pickup_areas": [
+        {
+          "area_id": "michamvi",
+          "area_name": "Michamvi (Michamvi Pingwe)",
+          "transfer_short": "~1 hour by road (45km) direct to Stone Town",
+          "transfer_fact_ids": ["matlai-location-context"],
+          "transfer_text": "Michamvi Pingwe is a small fishing village on Zanzibar's southeast coast, approximately 45km from Stone Town — about a 1-hour drive by road.",
+          "character_fact_ids": [],
+          "character_text": "This is Zanzibar's quiet east-coast peninsula: calm lagoon waters on the west side, open Indian Ocean on the east. It's also where Hotel Matlai (Tim's own base of operations) is located — one of the reasons Tim has driven this specific road to Stone Town many times.",
+          "extra_note": null
+        },
+        {
+          "area_id": "nungwi",
+          "area_name": "Nungwi",
+          "transfer_short": "~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town",
+          "transfer_fact_ids": ["zanzibar-beaches-guide-transfers-1", "zanzibar-health-malaria-transfers-1"],
+          "transfer_text": "Nungwi is one of the north-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg. The airport itself sits only 5-6km (roughly 8-15 minutes by taxi) from Stone Town, so budget the trip as two short-to-moderate legs rather than a single long transfer — we don't have a recorded direct Nungwi-to-Stone-Town drive time in our database (see note below).",
+          "character_fact_ids": ["green-turtle-nesting-zanzibar-population-2"],
+          "character_text": "Nungwi is Zanzibar's built-up north-coast tip — livelier and more resort-dense than the quieter east coast (Michamvi, Bwejuu, Matemwe), per Tim's own notes on the island. It's also home to the Mnarani Marine Turtles Conservation Pond, a rehabilitation pond that held 13 green turtles and 4 hawksbills as of a September 2005 count.",
+          "extra_note": "We don't have a direct Nungwi-to-Stone-Town drive time recorded in our facts database — only the airport-transfer figures above. If you need an exact number for planning, ask your lodge to confirm the current road time; we'll add it here once we have a sourced figure."
+        },
+        {
+          "area_id": "paje",
+          "area_name": "Paje",
+          "transfer_short": "~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town",
+          "transfer_fact_ids": ["zanzibar-beaches-guide-transfers-1", "zanzibar-health-malaria-transfers-1"],
+          "transfer_text": "Paje is one of the east-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg. The airport is a further 5-6km (about 8-15 minutes) from Stone Town — again, two logged legs rather than one direct figure.",
+          "character_fact_ids": ["zanzibar-kitesurf-season", "zanzibar-kitesurfing-paje-season-1", "zanzibar-kitesurfing-paje-season-2"],
+          "character_text": "Paje is Zanzibar's kitesurfing hub, with two distinct wind seasons: Kaskazi (mid-December to February/March, north winds averaging 15-18 knots) and Kuzi (roughly May to September/October, stronger south-to-southeast winds averaging 15-25 knots). March, April, May, October and November are the kitesurf off-season. If you're basing yourself in Paje for the wind, a Stone Town day trip is a natural rest-day pairing on a low-wind day.",
+          "extra_note": "No direct Paje-to-Stone-Town drive time is recorded in our facts database — only the airport-transfer figures above."
+        },
+        {
+          "area_id": "jambiani",
+          "area_name": "Jambiani",
+          "transfer_short": "~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town",
+          "transfer_fact_ids": ["zanzibar-beaches-guide-transfers-1", "zanzibar-health-malaria-transfers-1"],
+          "transfer_text": "Jambiani is one of the east-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg, with the airport a further 5-6km (about 8-15 minutes) from Stone Town.",
+          "character_fact_ids": ["zanzibar-kitesurfing-paje-population-1", "green-turtle-nesting-zanzibar-season-1"],
+          "character_text": "Jambiani sits just south of Paje, near the Menai Bay Conservation Area (which includes Kizimkazi and Jambiani), and is one of the beaches where Green Sea Turtle nesting is recorded, generally February to July. It's a quieter alternative to Paje with a similar east-coast transfer profile.",
+          "extra_note": "No direct Jambiani-to-Stone-Town drive time is recorded in our facts database — only the airport-transfer figures above."
+        }
+      ]
+    },
+    {
+      "id": "mnemba-atoll-snorkeling",
+      "name": "Mnemba Atoll Snorkeling",
+      "destination_id": "zanzibar",
+      "region": "Zanzibar, Tanzania",
+      "key_experience_slugs": ["snorkelling-mnemba-atoll"],
+      "hero_image": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1440&q=80&auto=format",
+      "intro_fact_ids": ["mnemba-island-lodge-access-1"],
+      "intro_text": "Mnemba Atoll sits off Zanzibar's northeast coast, reached via the Matemwe coast. Access typically involves a 45-90 minute road transfer from Zanzibar Airport or Stone Town to Matemwe, followed by a 10-20 minute boat transfer — guests wade through shallow water at the end since there are no jetties.",
+      "related_links": [
+        { "href": "/east-africa/zanzibar/", "label": "Zanzibar travel guide" },
+        { "href": "/wildlife/green-sea-turtle-zanzibar/", "label": "Green sea turtles in Zanzibar" }
+      ],
+      "pickup_areas": [
+        {
+          "area_id": "stone-town-airport",
+          "area_name": "Stone Town / Zanzibar Airport",
+          "transfer_short": "45-90min road transfer to Matemwe + 10-20min boat crossing",
+          "transfer_fact_ids": ["mnemba-island-lodge-access-1"],
+          "transfer_text": "Our source data treats Stone Town and Zanzibar Airport (they're roughly 5-6km apart) as a single starting point for this transfer: a 45-90 minute road transfer to the Matemwe coast, then a 10-20 minute boat crossing to the atoll, wading through shallow water at the end since there is no jetty.",
+          "character_fact_ids": ["zanzibar-seasons-overview"],
+          "character_text": "Best paired with the October-March window, when the Indian Ocean is calmest and visibility is highest according to our Zanzibar seasonal data — the same window that's best for marine activity generally on this coast.",
+          "extra_note": null
+        }
+      ]
+    },
+    {
+      "id": "mafia-whale-shark-snorkelling",
+      "name": "Whale Shark Snorkelling in Chole Bay",
+      "destination_id": "mafia-island",
+      "region": "Mafia Island, Tanzania",
+      "key_experience_slugs": ["whale-shark-snorkelling"],
+      "hero_image": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=1440&q=80&auto=format",
+      "intro_fact_ids": ["whale-shark-mafia-season", "whale-shark-swim-rules-mafia", "whale-sharks-mafia-operators-probability-1"],
+      "intro_text": "Whale sharks aggregate around Mafia Island from October to February, with peak sightings November to January — one of the largest documented aggregations in the Indian Ocean. Operators report an 80-90% sighting success rate during peak season. Swimming is regulated: maximum 6 swimmers per shark, minimum 3m distance from the body (4m from the tail), no touching, no underwater flash photography, and vessels must cut engines within 50m of the animal — a permit from Tanzania's Marine Parks and Reserves Unit is required.",
+      "related_links": [
+        { "href": "/wildlife/whale-sharks-mafia-island/", "label": "Full whale shark guide — season, ethics, choosing an operator" }
+      ],
+      "pickup_areas": [
+        {
+          "area_id": "kilindoni-airport",
+          "area_name": "Kilindoni (Mafia Island Airport)",
+          "transfer_short": "~30min by road (15km) from Kilindoni to Utende, Chole Bay",
+          "transfer_fact_ids": ["mafia-island-getting-there-transfers-2"],
+          "transfer_text": "Mafia Island's airport is near Kilindoni, but most luxury lodges and the primary diving base sit in Utende on Chole Bay, about 15 kilometres away — transfers are usually arranged by the lodge or by taxi and take roughly half an hour.",
+          "character_fact_ids": ["mafia-marine-park-fee", "marine-park-fees-tanzania-transfers-2", "marine-park-fees-tanzania-transfers-3"],
+          "character_text": "Mafia Marine Park charges a daily entry fee — recorded in our sources as either USD 20/person/day (whale shark interaction permit included with MPRU-registered operators) or USD 23.60/person/day plus VAT depending on the source, with no separate \"dive permit\" fee beyond that daily charge. Confirm the current rate with your operator before booking, since park fees change.",
+          "extra_note": null
+        }
+      ]
+    },
+    {
+      "id": "mafia-marine-park-diving",
+      "name": "Scuba Diving Mafia Island Marine Park",
+      "destination_id": "mafia-island",
+      "region": "Mafia Island, Tanzania",
+      "key_experience_slugs": ["scuba-diving-mafia-marine-park"],
+      "hero_image": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=1440&q=80&auto=format",
+      "intro_fact_ids": ["mafia-island-diving-population-3", "mafia-island-diving-permit-1", "mafia-island-diving-permit-2", "mafia-island-seasons-seasons-2"],
+      "intro_text": "Mafia Island Marine Park (MIMP), gazetted in April 1995 and governed by Tanzania's Marine Parks and Reserves Unit (MPRU), holds over 50 genera of coral and 460 recorded fish species. The park follows a Code of Conduct banning touching, riding, blocking movement, flash photography, overcrowding and aggressive boat chasing around marine life. The prime diving and snorkelling season is October through March, with calm seas, 15-25m visibility, and water around 29°C from November to March — October is considered the strongest all-round month.",
+      "related_links": [
+        { "href": "/wildlife/whale-sharks-mafia-island/", "label": "Whale sharks at Mafia Island (the same marine park, different season focus)" }
+      ],
+      "pickup_areas": [
+        {
+          "area_id": "kilindoni-airport",
+          "area_name": "Kilindoni (Mafia Island Airport)",
+          "transfer_short": "~30min by road (15km) from Kilindoni to Utende, Chole Bay",
+          "transfer_fact_ids": ["mafia-island-getting-there-transfers-2"],
+          "transfer_text": "Mafia Island's airport is near Kilindoni, but the primary diving base is in Utende on Chole Bay, about 15 kilometres away — transfers are usually arranged by the lodge or by taxi and take roughly half an hour.",
+          "character_fact_ids": ["marine-park-fees-tanzania-transfers-2", "marine-park-fees-tanzania-transfers-3"],
+          "character_text": "The same daily marine park fee that covers whale shark encounters (recorded as USD 20-23.60/person/day depending on source, plus VAT) also covers diving and snorkelling access — there is no separate dive-permit fee on top of it, only the dive operator's own service fees. Confirm current rates before booking.",
+          "extra_note": null
+        }
+      ]
+    }
+  ],
+  "skipped_combinations": [
+    {
+      "tour_or_area": "Safari Blue (from Paje or any pickup area)",
+      "reason": "Safari Blue appears in data/facts/facts.json only as a cited SOURCE website (safariblue.net) for two unrelated general claims about vessel types and tourism environmental impact. No fact records its departure point, duration, itinerary or price. Cannot build without inventing details. TODO for Tim: add sourced facts about Safari Blue specifically (or drop the example)."
+    },
+    {
+      "tour_or_area": "Stone Town & Spice Farm Day Trip from Kendwa",
+      "reason": "Kendwa only appears in the shared Kendwa/Nungwi/Paje/Jambiani airport-transfer fact (zanzibar-beaches-guide-transfers-1) — no Kendwa-specific fact exists (unlike Nungwi's turtle-pond fact or Paje's kitesurf-season facts), so a Kendwa page would be near-duplicate of the Nungwi page and fail the uniqueness check. TODO for Tim: add at least one Kendwa-specific fact (e.g. a first-hand note, a distinguishing feature vs Nungwi) before generating this page."
+    },
+    {
+      "tour_or_area": "Kitesurfing Paje (as its own tour, picked up from elsewhere)",
+      "reason": "Paje is the destination for this activity, not something guests are transferred to from another named pickup area with a recorded fact. Covered instead as a character note on the Stone Town tour's Paje page."
+    },
+    {
+      "tour_or_area": "Dolphin encounter, Menai Bay, from any Zanzibar beach area",
+      "reason": "The existing wildlife guide (/wildlife/dolphins-menai-bay/) states tours are 'most commonly accessed from Fumba or Kizimkazi village' — no fact ties this experience to a specific guest-accommodation pickup area (e.g. Paje) with a real transfer figure. Also: this is the one experience the brand explicitly flags for ethics caution; a short logistics page risks oversimplifying a nuanced position already handled carefully in the dedicated guide. Skipped rather than duplicated or thinned out."
+    },
+    {
+      "tour_or_area": "Fishing village visit (Mafia Island) from Kilindoni",
+      "reason": "No fact in facts.json describes this experience beyond the general Utende/Chole Bay transfer already used for the whale-shark and diving pages — generating it would duplicate that transfer paragraph with no other unique material, failing the uniqueness bar."
+    },
+    {
+      "tour_or_area": "Any tour page with a listed price for the excursion itself",
+      "reason": "No price data exists in data/ for booking any of these excursions (Stone Town tour cost, Mnemba snorkeling cost, Mafia whale-shark trip cost). Only real, sourced costs used are unrelated entry/transfer costs (airport taxi $5-20, marine park entry fees) which ARE cited. Schema.org Offer is deliberately not used anywhere in this dataset for this reason."
+    }
+  ]
+}

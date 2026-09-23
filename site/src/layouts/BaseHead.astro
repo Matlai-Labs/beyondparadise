@@ -7,6 +7,20 @@ interface Props {
 }
 const { title, description, ogImage = '/og-default.jpg', canonicalUrl } = Astro.props;
 const canon = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site).toString();
+
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Beyond Paradise Adventures',
+  url: 'https://beyondparadiseadventures.com',
+  description: 'Luxury travel intelligence for East Africa and Southeast Asia. €6,000+ trips only.',
+  author: {
+    '@type': 'Person',
+    name: 'Tim Hennig',
+    jobTitle: 'General Manager, Boutique Hotel Matlai',
+    address: { '@type': 'PostalAddress', addressLocality: 'Zanzibar' },
+  },
+};
 ---
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -35,16 +49,4 @@ const canon = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site).toString()
 <meta name="twitter:image" content={ogImage} />
 
 <!-- Schema: Website + Person -->
-<script type="application/ld+json" is:inline>{JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "Beyond Paradise Adventures",
-  "url": "https://beyondparadiseadventures.com",
-  "description": "Luxury travel intelligence for East Africa and Southeast Asia. €6,000+ trips only.",
-  "author": {
-    "@type": "Person",
-    "name": "Tim Hennig",
-    "jobTitle": "General Manager, Boutique Hotel Matlai",
-    "address": { "@type": "PostalAddress", "addressLocality": "Zanzibar" }
-  }
-})}</script>
+<script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />

@@ -69,4 +69,28 @@ const destinations = defineCollection({
   }),
 });
 
-export const collections = { reviews, wildlife, destinations };
+const excursions = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    permalink: z.string(),
+    tour_id: z.string(),
+    tour_name: z.string(),
+    pickup_area_id: z.string(),
+    pickup_area_name: z.string(),
+    destination_id: z.string(),
+    region: z.string(),
+    hero_image: z.string(),
+    hero_alt: z.string(),
+    author: z.enum(['tim', 'kim']),
+    last_updated: z.string(),
+    draft: z.boolean().default(false),
+    answer: z.string(),
+    faq: z.array(z.object({ q: z.string(), a: z.string() })),
+    fact_ids: z.array(z.string()),
+    sibling_area_ids: z.array(z.string()),
+  }),
+});
+
+export const collections = { reviews, wildlife, destinations, excursions };
