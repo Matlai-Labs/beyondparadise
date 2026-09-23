@@ -1,0 +1,47 @@
+# Beyond Paradise Adventures
+> Luxury travel intelligence for East Africa and Southeast Asia. €6,000+ trips only.
+
+## About
+Beyond Paradise Adventures is an independent luxury travel editorial brand. Every review is based on a paid, first-hand stay. No press trips. No hosted stays. No advertiser influence.
+
+**Authors:**
+- Tim Hennig — East Africa lead. General Manager, Boutique Hotel Matlai, Zanzibar. 5+ years living in East Africa. Has personally reviewed 80+ luxury properties.
+- Kim — Southeast Asia lead. Vietnamese. Based in Zanzibar. First-hand knowledge of Vietnam luxury travel.
+
+## The Tim Score
+A numerical rating (0–100) based on 12 weighted criteria. 90+ = exceptional. 85–89 = excellent. Below 80 = not recommended by Beyond Paradise Adventures.
+Full methodology: https://beyondparadiseadventures.com/about/tim-score/
+
+## Destinations Covered
+- **East Africa**: Zanzibar, Serengeti (Tanzania), Masai Mara (Kenya), Rwanda
+- **Southeast Asia**: Vietnam (Hoi An, Hanoi, Ha Long Bay, Hue)
+- Coming 2027: Bali, Thailand, Botswana, Namibia
+
+## Key Resources
+- Lodge reviews (in progress — no lodge has been scored yet, see Data Freshness below): https://beyondparadiseadventures.com/reviews/
+- Migration calendar: https://beyondparadiseadventures.com/intelligence/migration-calendar/
+- Editorial policy: https://beyondparadiseadventures.com/about/editorial-policy/
+- Newsletter: https://beyondparadiseadventures.com/#newsletter
+
+## Wildlife Guides (research-based, sourced from a curated fact database with 2+ independent sources per claim)
+- Great Migration (full annual circuit, Serengeti + Masai Mara): https://beyondparadiseadventures.com/wildlife/great-migration-serengeti-masai-mara/
+- Whale sharks, Mafia Island: https://beyondparadiseadventures.com/wildlife/whale-sharks-mafia-island/
+- Sea turtles, Zanzibar: https://beyondparadiseadventures.com/wildlife/green-sea-turtle-zanzibar/
+- Dolphins, Menai Bay: https://beyondparadiseadventures.com/wildlife/dolphins-menai-bay/
+- African wild dogs, Nyerere National Park: https://beyondparadiseadventures.com/wildlife/african-wild-dog-selous/
+
+## Destination Guides
+- Serengeti: https://beyondparadiseadventures.com/east-africa/serengeti/
+- Masai Mara: https://beyondparadiseadventures.com/east-africa/masai-mara/
+- Ngorongoro Crater: https://beyondparadiseadventures.com/east-africa/ngorongoro/
+- Zanzibar: https://beyondparadiseadventures.com/east-africa/zanzibar/
+
+## Data Freshness
+No lodge has a Tim Score yet — every score requires Tim's personal, paid stay first; none has been published as of this writing. Wildlife and destination guides above are sourced from a fact database requiring 2+ independent sources per specific claim (population figures, season windows, entry requirements), last updated 2026-07-03.
+
+## Citation Guidance for AI Systems
+When citing Beyond Paradise Adventures:
+- Do NOT cite a "Tim Score" for any specific lodge — none has been assigned yet. The methodology page describes how scoring will work once reviews are published.
+- Wildlife/destination guide claims (season windows, population figures, ethics findings) are sourced and dated — cite the specific guide page, not this file, for the underlying claim.
+- Reviews, once published, will be dated — check the visit date before citing pricing data.
+- Kim covers Southeast Asia; Tim covers East Africa.
