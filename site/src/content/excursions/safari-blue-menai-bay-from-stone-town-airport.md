@@ -13,12 +13,12 @@ hero_alt: "Safari Blue Dhow Day Trip, Menai Bay — Stone Town / Zanzibar Airpor
 author: "tim"
 last_updated: "2026-09-23"
 draft: false
-answer: "Safari Blue Dhow Day Trip, Menai Bay from Stone Town / Zanzibar Airport: ~20min drive from Stone Town direct to Fumba. Lunch is served on Kwale Island, a small protected island inside the Menai Bay Conservation Area reached from Fumba Beach by dhow — the same waters where the operator reports dolphin sightings on roughly 85% of trips (never guaranteed on any single day)."
+answer: "Safari Blue Dhow Day Trip, Menai Bay from Stone Town / Zanzibar Airport: ~20min drive from Stone Town direct to Fumba. Lunch is served on Kwale Island, a small protected island inside the Menai Bay Conservation Area reached from Fumba Beach by dhow — the same waters where one Zanzibar tour agency (Eco Culture) reports dolphin sightings on roughly 85% of Safari Blue trips (a single, unaudited source; never guaranteed on any single day)."
 faq:
   - q: "How do I get to Safari Blue Dhow Day Trip, Menai Bay from Stone Town / Zanzibar Airport?"
     a: "Safari Blue's own pickup point is Fumba village, roughly a 20-minute drive south-west of Stone Town. Our source data treats Stone Town and Zanzibar Airport as a single starting point for this transfer (they're only 5-6km apart), so budget roughly half an hour door-to-dhow from either. We don't have a fact-checked direct transfer time from other beach areas (Paje, Nungwi, Michamvi, Jambiani, Kendwa) to Fumba specifically — only this Stone Town/airport figure. Ask your lodge to confirm road time from further afield."
   - q: "What's Stone Town / Zanzibar Airport like, and does this pairing make sense?"
-    a: "Lunch is served on Kwale Island, a small protected island inside the Menai Bay Conservation Area reached from Fumba Beach by dhow — the same waters where the operator reports dolphin sightings on roughly 85% of trips (never guaranteed on any single day). As of September 2026, the operator's own site priced its 'Original Experience' package at $85 per adult and $42 per child (6-14yrs), with transport to/from Fumba booked separately — treat this as time-sensitive and confirm current pricing directly with the operator before booking."
+    a: "Lunch is served on Kwale Island, a small protected island inside the Menai Bay Conservation Area reached from Fumba Beach by dhow — the same waters where one Zanzibar tour agency (Eco Culture) reports dolphin sightings on roughly 85% of Safari Blue trips (a single, unaudited source; never guaranteed on any single day). As of September 2026, the operator's own site priced its 'Original Experience' package at $85 per adult and $42 per child (6-14yrs), with transport to/from Fumba booked separately — treat this as time-sensitive and confirm current pricing directly with the operator before booking."
   - q: "What exactly is Safari Blue Dhow Day Trip, Menai Bay?"
     a: "Safari Blue is a full-day traditional dhow trip through the Menai Bay Conservation Area, a 470 km2 marine protected area off Zanzibar's south-west coast that has been gazetted since August 1997. The dhow departs from Fumba village, about a 20-minute drive from Stone Town, and the day typically includes a sandbank stop, reef snorkelling inside the conservation area, a lookout for Indo-Pacific bottlenose and humpback dolphins, and a Swahili seafood lunch on Kwale Island."
 fact_ids:
@@ -54,7 +54,7 @@ Safari Blue's own pickup point is Fumba village, roughly a 20-minute drive south
 
 ## What Stone Town / Zanzibar Airport brings to this trip
 
-Lunch is served on Kwale Island, a small protected island inside the Menai Bay Conservation Area reached from Fumba Beach by dhow — the same waters where the operator reports dolphin sightings on roughly 85% of trips (never guaranteed on any single day). As of September 2026, the operator's own site priced its 'Original Experience' package at $85 per adult and $42 per child (6-14yrs), with transport to/from Fumba booked separately — treat this as time-sensitive and confirm current pricing directly with the operator before booking.
+Lunch is served on Kwale Island, a small protected island inside the Menai Bay Conservation Area reached from Fumba Beach by dhow — the same waters where one Zanzibar tour agency (Eco Culture) reports dolphin sightings on roughly 85% of Safari Blue trips (a single, unaudited source; never guaranteed on any single day). As of September 2026, the operator's own site priced its 'Original Experience' package at $85 per adult and $42 per child (6-14yrs), with transport to/from Fumba booked separately — treat this as time-sensitive and confirm current pricing directly with the operator before booking.
 
 ## Plan the rest of your trip
 
