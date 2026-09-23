@@ -381,3 +381,10 @@ Use the roster agents the brief names (implementer, code-reviewer, security-revi
 skills via the Skill tool, large files/summaries via `npm run delegate` in Agent OS — do not do their job in the
 main thread. Before building any integration: `npm run known-setups -- --for beyondparadiseadventures` there. Wrong brief? Fix the
 profile in Agent OS, not this file.
+
+## Knowledge graph (graphify) — built 2026-09-23, site scope
+
+`graphify-out/graph.json` exists (79 nodes, 11 labelled communities, `site` only). For any question
+about how the code fits together, run `graphify query "<question>"` / `graphify explain "<symbol>"`
+BEFORE grepping — a scoped subgraph for a fraction of the tokens. After code changes: `graphify update site`
+(AST only, free). Output is gitignored; a rebuild is a few seconds and a fraction of a cent on the fleet's Gemini key.
