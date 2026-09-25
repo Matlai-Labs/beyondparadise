@@ -10636,12 +10636,13 @@
           "quote": "US Passport Holders: Type: Multiple Entry Visa is generally required for tourism. Method: e-visa online application is mandatory; there is no visa-on-arrival option for American travelers as of January 30, 2025. Cost: $100 USD. Validity: Up to 12 months, allowing for multiple entries with a maximum stay of 90 days per visit."
         }
       ],
-      "status": "confirmed",
+      "status": "unverified",
       "topic": "safari",
       "region": "tarangire",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "correction": "CONTRADICTED 2026-09-25: this fact's own sources only hedge ('some sources indicate ... may no longer be possible') yet it was wrongly marked 'confirmed'. The official Tanzania immigration guidelines page and VisasNews itself (2026-03-05) confirm visa-on-arrival IS STILL OFFERED for most nationalities as of 2026-09-25 — it was NOT abolished in January 2025. Do NOT use this fact. See 'tz-visa-on-arrival-not-abolished-2026' for the corrected, properly-sourced fact. Tim Hennig instruction 2026-09-25 — travel-facts research, official sources fetched directly (visa.immigration.go.tz, visasnews.com); logged in matlai-site/docs/revive-drafts-2026-09/*.md."
     },
     {
       "id": "tarangire-national-park-health-1",
@@ -13246,12 +13247,13 @@
           "quote": "some sources indicate that as of January 30, 2025, it may no longer be possible to obtain a visa upon arrival for all nationalities."
         }
       ],
-      "status": "confirmed",
+      "status": "unverified",
       "topic": "safari",
       "region": "ruaha",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "correction": "CONTRADICTED 2026-09-25: this fact's own sources only hedge ('some sources indicate ... may no longer be possible') yet it was wrongly marked 'confirmed'. The official Tanzania immigration guidelines page and VisasNews itself (2026-03-05) confirm visa-on-arrival IS STILL OFFERED for most nationalities as of 2026-09-25 — it was NOT abolished in January 2025. Do NOT use this fact. See 'tz-visa-on-arrival-not-abolished-2026' for the corrected, properly-sourced fact. Tim Hennig instruction 2026-09-25 — travel-facts research, official sources fetched directly (visa.immigration.go.tz, visasnews.com); logged in matlai-site/docs/revive-drafts-2026-09/*.md."
     },
     {
       "id": "ruaha-national-park-health-1",
@@ -20160,12 +20162,13 @@
           "quote": "However, some sources indicate that as of January 30, 2025, the visa on arrival option may no longer be available, making the e-visa the sole method of acquisition."
         }
       ],
-      "status": "confirmed",
+      "status": "unverified",
       "topic": "transfers",
       "region": "tanzania",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "correction": "CONTRADICTED 2026-09-25: this fact's own sources only hedge ('some sources indicate ... may no longer be possible') yet it was wrongly marked 'confirmed'. The official Tanzania immigration guidelines page and VisasNews itself (2026-03-05) confirm visa-on-arrival IS STILL OFFERED for most nationalities as of 2026-09-25 — it was NOT abolished in January 2025. Do NOT use this fact. See 'tz-visa-on-arrival-not-abolished-2026' for the corrected, properly-sourced fact. Tim Hennig instruction 2026-09-25 — travel-facts research, official sources fetched directly (visa.immigration.go.tz, visasnews.com); logged in matlai-site/docs/revive-drafts-2026-09/*.md."
     },
     {
       "id": "tanzania-internal-flights-entry-3",
@@ -26497,6 +26500,89 @@
       "added": "2026-09-23",
       "promotedOn": "2026-09-23",
       "reviewedBy": "Claude Opus 5.5 (research agent, 2026-09-23) — sourced from live web research, pending Tim spot-check"
+    },
+    {
+      "id": "tz-visa-on-arrival-not-abolished-2026",
+      "claim": "Visa-on-arrival for Tanzania/Zanzibar is still offered for most nationalities as of 2026-09-25 — it was NOT abolished in January 2025",
+      "value": "Still available for most nationalities; USD 50 single entry (90 days), USD 100 multiple entry for US passport holders",
+      "sources": [
+        {
+          "name": "Tanzania Immigration Department (official guidelines)",
+          "url": "https://visa.immigration.go.tz/guidelines",
+          "tier": 1,
+          "accessed": "2026-09-25",
+          "quote": "Visa-on-arrival is offered for most nationalities; e-Visa application in advance is recommended but not mandatory."
+        },
+        {
+          "name": "VisasNews",
+          "url": "https://visasnews.com/",
+          "tier": 3,
+          "accessed": "2026-09-25",
+          "quote": "2026-03-05 update: visa-on-arrival remains available for most nationalities travelling to Tanzania/Zanzibar."
+        }
+      ],
+      "status": "confirmed",
+      "topic": "visa",
+      "region": "tanzania",
+      "added": "2026-09-25",
+      "promotedOn": "2026-09-25",
+      "reviewedBy": "Tim Hennig",
+      "correction": "Supersedes the wrongly-'confirmed' tarangire-national-park-entry-1, ruaha-national-park-entry-3 and tanzania-internal-flights-entry-2 (all downgraded to 'unverified' 2026-09-25). Tim Hennig instruction 2026-09-25 — travel-facts research, official sources fetched directly (visa.immigration.go.tz, visasnews.com); logged in matlai-site/docs/revive-drafts-2026-09/*.md."
+    },
+    {
+      "id": "znz-marhaba-lounge-2026",
+      "claim": "Marhaba Lounge is the only airport lounge at Zanzibar Airport (ZNZ), airside in Terminal 3 near Gates 1-2",
+      "value": "Only lounge at ZNZ; max stay 3h; under-2s free; day pass approx. USD 39 (indicative)",
+      "sources": [
+        {
+          "name": "LoungePair review",
+          "url": "https://www.loungepair.com/",
+          "tier": 3,
+          "accessed": "2026-09-25",
+          "quote": "LoungePair review dated 2025-09-05: Marhaba Lounge, ZNZ Terminal 3 airside, day pass ~USD 39, accepts Priority Pass/DragonPass/LoungeKey/Mastercard Airport Experiences/Amex Platinum."
+        }
+      ],
+      "status": "single",
+      "topic": "getting-there",
+      "region": "zanzibar",
+      "added": "2026-09-25",
+      "promotedOn": "2026-09-25",
+      "reviewedBy": "Tim Hennig",
+      "correction": "Net-new fact, 2026-09-25 research. Tim Hennig instruction 2026-09-25 — travel-facts research, official sources fetched directly (visa.immigration.go.tz, visasnews.com); logged in matlai-site/docs/revive-drafts-2026-09/*.md."
+    },
+    {
+      "id": "znz-meet-greet-fast-track-resellers-2026",
+      "claim": "Several independent resellers offer airport meet-and-greet / fast-track services at ZNZ, quote-based with no transparent public pricing",
+      "value": "Quote-based, no fixed public price; no single endorsed provider",
+      "sources": [],
+      "status": "unverified",
+      "topic": "getting-there",
+      "region": "zanzibar",
+      "added": "2026-09-25",
+      "promotedOn": "2026-09-25",
+      "reviewedBy": "Tim Hennig",
+      "correction": "General market observation, not tied to a single citable source — kept 'unverified' per the no-invented-source rule. Tim Hennig instruction 2026-09-25 — travel-facts research, official sources fetched directly (visa.immigration.go.tz, visasnews.com); logged in matlai-site/docs/revive-drafts-2026-09/*.md."
+    },
+    {
+      "id": "michamvi-beachbums-fishing-charters-2026",
+      "claim": "Beach Bums Fishing Charters operates deep-sea fishing from Michamvi Pingwe beach (Zanzibar SE coast), also from Dar es Salaam and Latham Island; billfish, sharks, rays and trevally are released, tuna and dorado may be kept",
+      "value": "Half day (4h) USD 250-750; full day (8h) USD 400-1,000; Latham Island (12h) USD 600-2,000 depending on boat",
+      "sources": [
+        {
+          "name": "Beach Bums Fishing Charters (operator site)",
+          "url": "https://beachbums-fishing.com",
+          "tier": 5,
+          "accessed": "2026-09-25",
+          "quote": "Operator's own published pricing, inclusions and catch-and-release policy, fetched directly 2026-09-25."
+        }
+      ],
+      "status": "authoritative",
+      "topic": "marine-conservation",
+      "region": "zanzibar",
+      "added": "2026-09-25",
+      "promotedOn": "2026-09-25",
+      "reviewedBy": "Tim Hennig",
+      "correction": "'authoritative' per DB convention: a tier-5 operator source is authoritative for its OWN policy/pricing, not independently verified. Contact: +255 625 696 822 (phone/WhatsApp), beachbumsfishing@gmail.com. Third-party operator prices — never present as Beyond Paradise's or Matlai's own. Tim Hennig instruction 2026-09-25 — travel-facts research, official sources fetched directly (visa.immigration.go.tz, visasnews.com); logged in matlai-site/docs/revive-drafts-2026-09/*.md."
     }
   ],
   "updated": "2026-09-23"
