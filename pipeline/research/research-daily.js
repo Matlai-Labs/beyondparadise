@@ -138,6 +138,16 @@ function main() {
       promoteLine = 'promote step failed: ' + (e.message || '').split('\n')[0];
     }
 
+    // Refresh the cross-project exports (BP -> WildToSea supplement + Matlai bridges). Pure local
+    // filtering, no API cost; never fatal. Importing the supplement into WildToSea stays a manual,
+    // documented step (shared_knowledge/docs/shared-facts-single-source-playbook.md).
+    try {
+      const cs = execSync(`"${NODE}" "${path.join(__dirname, 'cross-share.js')}"`, { cwd: ROOT, encoding: 'utf8', timeout: 60000 });
+      log('cross-share: ' + ((cs.match(/WildToSea supplement:.*/) || ['ok'])[0]));
+    } catch (e) {
+      log('cross-share failed (non-fatal): ' + (e.message || '').split('\n')[0]);
+    }
+
     const factsCount = (readJson(path.join(DATA_FACTS, 'facts.json'))?.facts || []).length;
     const pending = (readJson(path.join(DATA_FACTS, 'facts.candidates.json'))?.candidates || []).length;
     log(`Daily research done: ok=${ok} fail=${fail} | ${promoteLine} | KB: ${factsCount} facts, ${pending} candidates pending review`);

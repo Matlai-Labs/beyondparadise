@@ -73,8 +73,28 @@ const WILDTOSEA_GAP_TOPICS = new Set([
 // Topics/statuses that shift over time and shouldn't be treated as permanent
 const VOLATILE_TOPICS = new Set(['prices', 'value', 'entry', 'entry-requirements', 'visa', 'health', 'seasons']);
 
+// BP region -> WildToSea master region vocabulary (derived from the distinct `region`
+// values in wildtosea facts.json, 2026-10-06). Regions already identical in both need no
+// entry. Regions in NON_TANZANIA_REGIONS are dropped: the master is Tanzania/Zanzibar only.
+const REGION_MAP = {
+  'mafia-island': 'mafia',
+  'selous-nyerere': 'nyerere',
+  'menai-bay': 'zanzibar',
+  'mnemba-atoll': 'zanzibar',
+  'serengeti-western-corridor': 'serengeti',
+};
+const NON_TANZANIA_REGIONS = new Set(['kenya', 'rwanda', 'masai-mara', 'maasai-mara', 'uganda', 'global', 'nairobi', 'kibale']);
+// Master regions that exist (anything outside this set after mapping is dropped, fail-closed).
+const MASTER_REGIONS = new Set(['zanzibar', 'serengeti', 'nyerere', 'mafia', 'tanzania', 'lake-manyara', 'ngorongoro', 'tarangire', 'ruaha', 'mikumi', 'katavi', 'mahale', 'gombe', 'pemba', 'pemba-island', 'stone-town', 'arusha', 'kilimanjaro', 'saadani', 'rubondo', 'mkomazi', 'jozani', 'dar-es-salaam', 'north-coast', 'east-coast', 'michamvi', 'lake-natron', 'lake-victoria', 'kilwa', 'bagamoyo', 'tanga', 'usambara']);
+
+function mapRegion(r) {
+  if (!r || NON_TANZANIA_REGIONS.has(r)) return null;
+  const m = REGION_MAP[r] || r;
+  return MASTER_REGIONS.has(m) ? m : null;
+}
+
 function buildWildToSeaSupplement() {
-  const eligible = allFacts.filter(f => WILDTOSEA_GAP_TOPICS.has(f.topic) && f.status !== 'unverified');
+  const eligible = allFacts.filter(f => WILDTOSEA_GAP_TOPICS.has(f.topic) && f.status !== 'unverified' && mapRegion(f.region));
 
   const candidates = eligible.map(f => {
     const srcs = normalizeSources(f);
@@ -84,7 +104,7 @@ function buildWildToSeaSupplement() {
     return {
       id: `beyondparadise-${f.id}`,
       topic: f.topic,
-      region: f.region,
+      region: mapRegion(f.region),
       claim: f.claim,
       value: f.value || f.claim,
       sources: srcs.map(s => s.id),
@@ -92,7 +112,7 @@ function buildWildToSeaSupplement() {
       confidence,
       volatile,
       lastChecked: f.added || f.lastChecked || today(),
-      notes: `Source: Beyond Paradise research database (beyondparadiseadventures/data/facts/facts.json). Cross-shared ${today()}. Original id: ${f.id}.`,
+      notes: `Source: Beyond Paradise research database (beyondparadiseadventures/data/facts/facts.json). Cross-shared ${today()}. Original id: ${f.id}.${f.region !== mapRegion(f.region) ? ` Original region: ${f.region}.` : ''}`,
     };
   });
 
