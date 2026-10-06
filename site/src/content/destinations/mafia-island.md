@@ -64,7 +64,7 @@ It's easy to let the whale sharks eclipse everything else Mafia offers, but Mafi
 
 ## Marine park fees, in practice
 
-Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies to a whale shark trip or a dive. Fees change, so confirm before booking rather than budgeting from an old blog post — ours included.
+Mafia Island Marine Park charges non-resident adults USD 23.60 per person per day (USD 20 plus 18% VAT), with children about half (USD 11.80, ages 3–15), as quoted by Mafia lodges such as Butiama and Pole Pole; it is paid by credit card at the park gate, and the Marine Parks and Reserves Unit's own tariff page was not reachable when we checked, so confirm the current rate with your operator. Check with your operator whether any separate permit applies to a whale shark trip or a dive. Fees change, so confirm before booking rather than budgeting from an old blog post — ours included.
 
 ## Entry requirements and health
 
