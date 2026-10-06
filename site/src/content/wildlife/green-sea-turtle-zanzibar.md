@@ -13,12 +13,12 @@ hero_alt: "Turquoise water over the reef at Mnemba Atoll, Zanzibar — green sea
 author: "tim"
 last_updated: "2026-07-01"
 draft: false
-answer: "Green sea turtles are resident year-round at Mnemba Atoll, Zanzibar, feeding on seagrass beds most reliably spotted in the calm, clear water of December–March. Nesting is reported on Mnemba from about February to September, peaking April–August; other beaches are reported with different windows, and sources disagree. The Green Sea Turtle was reclassified from Endangered to Least Concern by the IUCN in 2025."
+answer: "Green sea turtles are resident year-round at Mnemba Atoll, Zanzibar, feeding on seagrass beds most reliably spotted in the calm, clear water of December–March. Green turtles in Tanzania nest mainly from February to July, during the southeast monsoon, with the peak in April–May at the monitored sites; we found no verified peak for Mnemba alone. The Green Sea Turtle was reclassified from Endangered to Least Concern by the IUCN in 2025."
 faq:
   - q: "When is the best time to see sea turtles in Zanzibar?"
     a: "For in-water snorkelling encounters at Mnemba Atoll, December through March offers the calmest, clearest water and the highest sighting probability — turtles are resident year-round, but visibility conditions make this window most reliable. Nesting season is a separate question with genuinely conflicting source data (see below)."
   - q: "When do sea turtles nest in Zanzibar?"
-    a: "Nesting is reported on Mnemba from about February to September, peaking April–August. Other sources cite different windows for other beaches (Nungwi and Matemwe are cited separately), so the underlying sources don't fully agree — ask your lodge for current local observations."
+    a: "Green turtles in Tanzania nest mainly from February to July, during the southeast monsoon. Sea Sense monitoring at Juani and Kigamboni puts the peak in April–May, and few nests are laid from September to December. We found no published peak for Mnemba specifically, so we don't give one — ask your lodge for current local observations."
   - q: "Is it safe and legal to swim with sea turtles in Zanzibar?"
     a: "Yes, swimming near turtles is legal and commonly offered at Mnemba Atoll and other reef sites, but touching, chasing, or collecting turtles or turtle products is illegal under both Tanzanian national law and international regulation. Ethical viewing means maintaining distance, letting the turtle approach on its own terms, never blocking its path to the surface to breathe, and avoiding flash photography."
   - q: "Are Zanzibar's sea turtles endangered?"
@@ -37,18 +37,13 @@ Zanzibar's most reliable sea turtle encounters happen at Mnemba Atoll, a marine 
 
 December through March is consistently cited as the best window for snorkelling visibility — the dry season brings calmer seas and clearer water, with January–March specifically flagged as the peak for both conditions and turtle sightings. Outside this window, the encounters still happen, but sea conditions make snorkelling less pleasant and less productive.
 
-## The nesting season nobody can agree on
+## When green turtles nest
 
-This is worth stating plainly rather than papering over: reliable sources give genuinely different nesting windows for Zanzibar's green sea turtles, and we haven't found a way to reconcile them into one confident answer.
+The best-documented answer comes from Tanzania's own monitoring rather than from tour-operator copy. Green turtles in Tanzania nest mainly from February to July, during the southeast monsoon. Sea Sense, the Tanzanian conservation NGO that runs community nest monitoring with the government, records the peak in April–May at Juani and Kigamboni. Few nests are laid in the later months of the year.
 
-| Source | Claimed nesting window | Location specificity |
-|---|---|---|
-| Mnemba Island (reported) | About February–September, peak April–August | Mnemba Island specifically |
-| Zanzibar Ecotourism / regional guides | March–July, June–September, or Nov–Feb | Varies by beach (Nungwi, Matemwe cited separately) |
-| TA Safaris / Oceanic Society | Peak Jan–March on quiet beaches; overall peak Jun–Sep | General Zanzibar |
-| Hatchling emergence (multiple sources) | May–September, or specifically Sept–Oct at Mnemba | Varies by beach and source |
+What we could not verify is a Mnemba-specific peak. Nest monitoring has run on Mnemba Island for years, but we found no published month-by-month figures for it, so we won't invent one. Zanzibar tourism pages quote a range of other windows for individual beaches, and we haven't been able to trace them to primary data.
 
-Our honest read: nesting activity on Zanzibar's beaches is genuinely spread across most of the year, with real variation by beach and possibly by year, rather than one clean island-wide season. If you're planning a trip specifically to see nesting or hatchlings, ask your specific lodge or conservation contact for their most recent local data rather than relying on a single generic date range — including ours.
+If you're planning a trip specifically to see nesting or hatchlings, aim for the February–July window and ask your lodge or conservation contact for their most recent local observations rather than relying on any single generic date range, including ours.
 
 ## The ethics of watching a wild turtle
 
