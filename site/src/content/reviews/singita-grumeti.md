@@ -27,7 +27,7 @@ faq:
   - q: "Is Singita Grumeti worth €3,200/night?"
     a: "At full migration season (June–August), yes — if you are comparing against other €2,000+/night options. The private concession and off-road driving access justify the premium. In shoulder season (November), I paid a lower rack rate and found the value extraordinary. The full-board, all-drinks, all-activities model means no surprise bills."
   - q: "What is the Grumeti Fund?"
-    a: "The Grumeti Fund is Singita's conservation arm, managing the 350,000-acre concession. It runs an anti-poaching ranger and canine unit, a community programme serving 50+ villages in the buffer zone (schools, clinics, income-generation), and wildlife population monitoring. Conservation reports are public — one of the few operators where you can independently verify their claims."
+    a: "The Grumeti Fund is Singita's conservation arm, managing the 350,000-acre concession. It runs an anti-poaching ranger and canine unit, a community programme serving 21 bordering villages (schools, clinics, income-generation), and wildlife population monitoring. Conservation reports are public — one of the few operators where you can independently verify their claims."
   - q: "How do I get to Singita Grumeti?"
     a: "Fly to Kilimanjaro (JRO) or Arusha (ARK) then take a charter or scheduled flight to Grumeti Airstrip (approximately 90 minutes). The camp arranges all internal transfers. No road access — the concession is only reachable by air."
 ---
@@ -97,7 +97,7 @@ Singita's guide training programme is the reason their properties consistently p
 
 The Grumeti Fund's work is independently verifiable — annual reports are public. The canine anti-poaching unit (rangers + tracking dogs) patrols the concession continuously. The ranger numbers and patrol coverage have expanded year-on-year.
 
-The community programme covering 50+ villages in the wildlife corridor is meaningful — not tokenistic. The model incentivises local communities to view the wildlife as an economic asset rather than a competition for land.
+The community programme covering 21 bordering villages is meaningful — not tokenistic. The model incentivises local communities to view the wildlife as an economic asset rather than a competition for land.
 
 I visited the community boma as part of the experience. The income-generation projects (women's cooperative, school programme) are active. I would have been more skeptical if the conservancy let me anywhere near them without prior notice.
 

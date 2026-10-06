@@ -20,7 +20,7 @@ faq:
   - q: "What's Nungwi like, and does this pairing make sense?"
     a: "Nungwi is Zanzibar's built-up north-coast tip — livelier and more resort-dense than the quieter east coast (Michamvi, Bwejuu, Matemwe), per Tim's own notes on the island. It's also home to the Mnarani Marine Turtles Conservation Pond, a rehabilitation pond that held 13 green turtles and 4 hawksbills as of a September 2005 count."
   - q: "What exactly is Stone Town & Spice Farm Day Trip?"
-    a: "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town and take approximately 3 hours, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\""
+    a: "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\""
 fact_ids:
   - "stone-town-unesco"
   - "zanzibar-spice-history"
@@ -47,7 +47,7 @@ sibling_area_ids:
 
 ## What Stone Town & Spice Farm Day Trip actually is
 
-Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town and take approximately 3 hours, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name "Spice Island."
+Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name "Spice Island."
 
 ## Getting there from Nungwi
 

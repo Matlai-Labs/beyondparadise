@@ -17,7 +17,7 @@
       "highlights": [
         { "animal": "whale-shark", "location": "mafia-island", "probability": "high", "note": "Peak month alongside December–February" },
         { "animal": "wildebeest-calving", "location": "serengeti-south-ndutu", "probability": "very-high", "note": "Calving season begins. Highest predator density in Africa" },
-        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Nesting season, feeding on seagrass" },
+        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Feeding on seagrass" },
         { "animal": "indo-pacific-bottlenose-dolphin", "location": "zanzibar-menai-bay", "probability": "high", "note": "Calm seas, best water clarity" }
       ],
       "avoid": [],
@@ -162,13 +162,13 @@
       "label": "October",
       "season": {
         "zanzibar": "Short rains (vuli) beginning. Indian Ocean calming rapidly. Excellent snorkelling returns",
-        "serengeti": "Short rains. Herds in south. Calving season approaching",
-        "masai-mara": "Herds returning south. Short rains beginning in Kenya",
+        "serengeti": "Herds in northern Serengeti/Lobo/Loliondo moving south; they reach the southern short-grass plains around late Nov–Dec",
+        "masai-mara": "Most herds have left the Mara and are moving south through the northern Serengeti. Short rains beginning in Kenya",
         "vietnam": "North: cool and dry (best for Hanoi). Central: occasional rain. South: dry"
       },
       "highlights": [
         { "animal": "whale-shark", "location": "mafia-island", "probability": "moderate-high", "note": "Season opens. Numbers building from October" },
-        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Nesting season begins" },
+        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Feeding on seagrass" },
         { "animal": "indo-pacific-bottlenose-dolphin", "location": "zanzibar-menai-bay", "probability": "high", "note": "Indian Ocean calming — ideal dolphin encounter conditions returning" }
       ],
       "avoid": [],
@@ -184,7 +184,7 @@
       },
       "highlights": [
         { "animal": "whale-shark", "location": "mafia-island", "probability": "very-high", "note": "Season peak building — best month alongside December" },
-        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Nesting + hatchlings" },
+        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Feeding on seagrass" },
         { "animal": "indo-pacific-bottlenose-dolphin", "location": "zanzibar-menai-bay", "probability": "high" },
         { "animal": "wildebeest-calving", "location": "serengeti-south-ndutu", "probability": "moderate", "note": "First calves beginning late November in good rain years" }
       ],
@@ -195,13 +195,13 @@
       "label": "December",
       "season": {
         "zanzibar": "NE monsoon (Kasikazi) begins. Warm (30°C). Indian Ocean generally calm east coast",
-        "serengeti": "Short dry period before calving. Herds on southern plains",
+        "serengeti": "Herds on the southern plains ahead of the calving season",
         "masai-mara": "Dry, warm. Christmas/New Year peak — book 12+ months ahead",
         "vietnam": "North: cold (Hanoi 15°C). Central: best weather (Hoi An, Da Nang). South: ideal"
       },
       "highlights": [
         { "animal": "whale-shark", "location": "mafia-island", "probability": "very-high", "note": "PEAK season — December–January highest probability" },
-        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Active nesting" },
+        { "animal": "green-sea-turtle", "location": "zanzibar-mnemba", "probability": "high", "note": "Feeding on seagrass" },
         { "animal": "wildebeest-calving", "location": "serengeti-south-ndutu", "probability": "moderate-high", "note": "Early calves arriving on the southern plains" }
       ],
       "avoid": [
@@ -216,7 +216,7 @@
     "wildebeest_migration_mara": "Jul–Oct (peak: Aug–Sep)",
     "wildebeest_calving_ndutu": "Dec–Mar (peak: Jan–Feb)",
     "dolphins_zanzibar": "Year-round (best: Oct–Mar, calm Indian Ocean)",
-    "green_turtle_zanzibar": "Year-round (nesting: Oct–Mar)",
+    "green_turtle_zanzibar": "Year-round (nesting reported on Mnemba from about Feb to Sep, peaking Apr–Aug)",
     "humpback_whales_tanzania": "Jul–Sep (passing migration)",
     "best_kitesurf_zanzibar": "Jun–Sep (SE trade winds)",
     "best_snorkel_zanzibar": "Oct–Mar (calm, clear water)",

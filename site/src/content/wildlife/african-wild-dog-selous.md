@@ -1,6 +1,6 @@
 ---
 title: "African Wild Dogs in Nyerere National Park — Season, Population, and Why This Is Africa's Stronghold"
-description: "Nyerere National Park (Selous), Tanzania, holds roughly one-third of the entire world's African wild dog population — the largest concentration in any single protected area on the continent. Best season, denning behavior, and an honest gap in the ethics research."
+description: "Nyerere National Park (Selous), Tanzania, is one of the most important strongholds for African wild dogs, a species listed Endangered on the IUCN Red List. Best season, denning behavior, and an honest gap in the ethics research."
 permalink: "/wildlife/african-wild-dog-selous/"
 species_id: "african-wild-dog"
 common_name: "African Wild Dog"
@@ -13,12 +13,12 @@ hero_alt: "Savanna woodland in Nyerere National Park, Tanzania — African wild 
 author: "tim"
 last_updated: "2026-07-03"
 draft: false
-answer: "Nyerere National Park (formerly part of the Selous Game Reserve), Tanzania, is home to roughly 1,300 African wild dogs — the largest concentration in any single protected area in Africa and about one-third of the entire world's population. Best sighting window is the dry season (June–October), with July–August denning season offering the highest reliability as packs stay close to den sites. The species is IUCN Endangered, with only about 1,400 mature individuals left globally."
+answer: "Nyerere National Park (formerly part of the Selous Game Reserve), Tanzania, is one of the most important strongholds for African wild dogs, a species listed Endangered on the IUCN Red List. Best sighting window is the dry season (June–October), with July–August denning season offering the highest reliability as packs stay close to den sites."
 faq:
   - q: "When is the best time to see African wild dogs in Nyerere National Park?"
     a: "The dry season, June through October, is best overall. Within that window, the denning season — typically July and August, sometimes cited as June–July — offers the highest sighting reliability, because packs stay close to a fixed den site rather than ranging widely, which is their normal, much harder-to-track behavior."
   - q: "How many African wild dogs actually live in Nyerere National Park?"
-    a: "Roughly 1,300, according to research cited for the park — representing about one-third of the entire world's wild dog population in a single protected area. A broader estimate for the whole Nyerere-Selous ecosystem ranges from 800 to potentially 2,000 individuals. Either figure makes this the single largest wild dog stronghold on the continent."
+    a: "No reliable single count exists for the park. Nyerere is one of the most important strongholds for African wild dogs, and a broader estimate for the whole Nyerere-Selous ecosystem ranges from 800 to potentially 2,000 individuals, depending on survey boundaries and methodology."
   - q: "Are African wild dogs endangered?"
     a: "Yes — IUCN Endangered, with a decreasing population trend as of the 2020 assessment. Globally there are an estimated 6,600 adults across 39 fragmented subpopulations, but only around 1,400 are classified as mature individuals. Nyerere's population is disproportionately important to the species' overall survival for exactly this reason."
   - q: "Who manages Nyerere National Park and the wider Selous ecosystem?"
@@ -26,24 +26,24 @@ faq:
   - q: "Is there research on how tourism affects wild dogs here?"
     a: "Honestly, not much that's specific to this species at this site — we looked, and didn't find published tourism-impact studies focused solely on African wild dogs in Nyerere or the wider Selous ecosystem. That's a real gap in the evidence base, not a claim that there's no impact. Until better data exists, standard wildlife-viewing best practices (distance, no chasing, no crowding a den site) are the right default."
   - q: "Can I do a walking safari to see wild dogs?"
-    a: "Walking safaris are permitted in Nyerere with a TANAPA-qualified armed ranger and a maximum group size of six guests, and the dry season (July–October) is cited as the best window, with October offering the highest overall game density. A guided walk runs roughly $50–80 per person, on top of the park's $70/day non-resident entrance fee — separate from any wild-dog-specific tracking."
+    a: "Walking safaris are permitted in Nyerere with a TANAPA-qualified armed ranger and a maximum group size of six guests, and the dry season (July–October) is cited as the best window, with October offering the highest overall game density. The park entrance fee is USD 82.60 per adult per day including VAT — separate from any wild-dog-specific tracking."
   - q: "What else is Nyerere National Park known for?"
     a: "The Rufiji River system running through the park hosts Africa's densest hippo concentration (estimated at 5,000+ individuals) and the continent's largest Nile crocodile population, plus over 440 recorded bird species — making Nyerere a multi-species destination well beyond its wild dog population, if your itinerary has room for a boat safari alongside game drives."
 ---
 
 ## Why Nyerere matters more than its size on a map suggests
 
-Nyerere National Park, in southern Tanzania, holds a population of African wild dogs estimated at roughly 1,300 individuals — a figure researchers describe as both the largest concentration in any single protected area in Africa and, more strikingly, about one-third of the entire world's population of this species. A broader estimate covering the full Nyerere-Selous ecosystem ranges from 800 to potentially 2,000 individuals, depending on survey boundaries and methodology.
+Nyerere National Park, in southern Tanzania, is one of the most important strongholds for African wild dogs, a species listed Endangered on the IUCN Red List. A broader estimate covering the full Nyerere-Selous ecosystem ranges from 800 to potentially 2,000 individuals, depending on survey boundaries and methodology.
 
-Put plainly: this one park is disproportionately important to whether African wild dogs survive as a species over the coming decades. That's a different kind of significance than "good place to see an endangered animal" — it's closer to "this specific place is load-bearing for the species globally."
+Put plainly: this park matters to whether African wild dogs survive as a species over the coming decades. That's a different kind of significance than "good place to see an endangered animal" — it's closer to "this specific place is load-bearing for the species."
 
-Most travelers researching an East Africa safari encounter wild dogs, if at all, as a rare bonus sighting somewhere else — a pack glimpsed once on a multi-week trip through the Serengeti or Masai Mara. Nyerere inverts that framing entirely: this is the one place on the continent where planning a trip specifically around this species, rather than hoping to get lucky elsewhere, is a genuinely rational decision, not wishful thinking dressed up as a strategy.
+Most travelers researching an East Africa safari encounter wild dogs, if at all, as a rare bonus sighting somewhere else — a pack glimpsed once on a multi-week trip through the Serengeti or Masai Mara. Nyerere inverts that framing entirely: this is one of the places on the continent where planning a trip specifically around this species, rather than hoping to get lucky elsewhere, is a genuinely rational decision, not wishful thinking dressed up as a strategy.
 
 ## The population math that makes this urgent
 
 Globally, the IUCN's most recent assessment (2020) puts the African wild dog at approximately 6,600 adults spread across 39 fragmented subpopulations — but only about 1,400 of those are classified as mature individuals capable of breeding. The species is listed as Endangered, with a decreasing population trend.
 
-Set Nyerere's roughly 1,300 individuals against a global mature-individual count of around 1,400, and the scale of this single population's importance becomes obvious, even accounting for the fact that "individuals" and "mature individuals" aren't identical counting categories and shouldn't be read as a precise ratio. However you frame the comparison, fragmentation is the core threat here: 39 separate subpopulations, most far smaller than Nyerere's, means the species has very few large, viable strongholds left. This is one of them.
+Fragmentation is the core threat here: 39 separate subpopulations means the species has very few large, viable strongholds left. Nyerere is one of them.
 
 ## When to go: the dry season, and especially denning season
 
@@ -71,7 +71,7 @@ For African wild dogs specifically in Nyerere or the wider Selous ecosystem, we 
 
 Access to Nyerere is by light aircraft from Dar es Salaam to one of the park's airstrips (Mbuyu and Mtemere serve much of the southern circuit), with road transfers of 10–30 minutes to most camps from there.
 
-If you want a dedicated wild-dog tracking experience beyond standard game drives, walking safaris are permitted with a TANAPA-qualified armed ranger and a hard cap of six guests per walk — a guided walk runs roughly $50–80 per person, in addition to the park's non-resident entrance fee of $70 per adult per day (2025 pricing). The same dry-season window (July–October) that favors wild dog sightings also produces the highest overall game density for walking safaris generally, with October cited as the peak month.
+If you want a dedicated wild-dog tracking experience beyond standard game drives, walking safaris are permitted with a TANAPA-qualified armed ranger and a hard cap of six guests per walk — on top of the park's entrance fee of USD 82.60 per adult per day including VAT. The same dry-season window (July–October) that favors wild dog sightings also produces the highest overall game density for walking safaris generally, with October cited as the peak month.
 
 Nyerere is also a legitimate multi-species destination beyond wild dogs: the Rufiji River system running through the park holds an estimated 5,000+ hippos — reputedly Africa's densest concentration — the continent's largest Nile crocodile population, and over 440 recorded bird species, making a boat safari a natural complement to wild-dog-focused game drives if your schedule allows both.
 

@@ -36,7 +36,7 @@
       "country": "tz",
       "region": "east-africa",
       "lead": "Tim",
-      "description": "The world's most iconic safari destination. 15,000 km² of open savannah, the Great Migration of 2+ million animals, and year-round big cat viewing.",
+      "description": "The world's most iconic safari destination. 15,000 km² of open savannah, the Great Migration, and year-round big cat viewing.",
       "min_budget_per_night_eur": 1500,
       "best_months": [6, 7, 8, 9],
       "secondary_best_months": [1, 2, 12],
@@ -80,7 +80,7 @@
         "mara-north-conservancy": { "best_for": "Walking safaris, off-road, community benefit", "best_months": [7, 8, 9] }
       },
       "entry_requirements": {
-        "visa": "Kenya e-Visa required. USD 50–100.",
+        "visa": "Kenya eTA required (visas abolished Jan 2024); about USD 30.",
         "health": "Malaria prophylaxis required. Yellow fever if from endemic country."
       },
       "airports": [
@@ -107,12 +107,12 @@
       "entry_requirements": {
         "visa": "Tanzania visa required. Same as mainland.",
         "health": "Malaria prophylaxis. Yellow fever if from endemic country.",
-        "park_fee": "USD 20/person/day for Mafia Marine Park. Whale shark interaction requires permit (included with reputable operators)."
+        "park_fee": "Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies."
       },
       "airports": [
         { "code": "MFA", "name": "Mafia Airport", "connections": "Charter or scheduled from Dar es Salaam (DAR). 30–45 min." }
       ],
-      "tim_notes": "Mafia is the whale shark destination in East Africa — not the Maldives, not Donsol, not Cancun. 180–200 individual sharks catalogued in Tanzania waters. The island itself is basic — this is not a beach resort destination. It's a diving/snorkelling pilgrimage.",
+      "tim_notes": "Mafia is the whale shark destination in East Africa — not the Maldives, not Donsol, not Cancun. The Marine Megafauna Foundation has photo-identified about 208 individual whale sharks off Tanzania over eight years of monitoring. The island itself is basic — this is not a beach resort destination. It's a diving/snorkelling pilgrimage.",
       "website_hub": "/east-africa/mafia-island/"
     },
     {

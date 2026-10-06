@@ -1,6 +1,6 @@
 ---
 title: "Stone Town & Spice Farm Day Trip from Kendwa: What to Know Before You Go"
-description: "Kendwa is about 3-4km down the coast from Nungwi — roughly a 9-minute drive… Transfer: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town."
+description: "Kendwa is just down the coast from Nungwi, and the two beaches behave differently underfoot… Transfer: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town."
 permalink: "/excursions/stone-town-spice-tour-from-kendwa/"
 tour_id: "stone-town-spice-tour"
 tour_name: "Stone Town & Spice Farm Day Trip"
@@ -13,14 +13,14 @@ hero_alt: "Stone Town & Spice Farm Day Trip — Kendwa, Zanzibar, Tanzania"
 author: "tim"
 last_updated: "2026-09-23"
 draft: false
-answer: "Stone Town & Spice Farm Day Trip from Kendwa: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town. Kendwa is about 3-4km down the coast from Nungwi — roughly a 9-minute drive, or a 15-20 minute walk along the beach at low tide — but the two behave differently underfoot: Kendwa stays swimmable through the tide cycle thanks to a deep-water shelf close offshore, while the Nungwi tip next door can lose its water tens to hundreds of metres out at low tide."
+answer: "Stone Town & Spice Farm Day Trip from Kendwa: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town. Kendwa is just down the coast from Nungwi, but the two behave differently underfoot: Kendwa stays swimmable through the tide cycle thanks to a deep-water shelf close offshore, while the Nungwi tip next door can lose its water tens to hundreds of metres out at low tide."
 faq:
   - q: "How do I get to Stone Town & Spice Farm Day Trip from Kendwa?"
     a: "Kendwa is one of the north-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg, with the airport a further 5-6km (about 8-15 minutes) from Stone Town — two logged legs rather than one direct figure. No direct Kendwa-to-Stone-Town drive time is recorded in our facts database — only the airport-transfer figures above."
   - q: "What's Kendwa like, and does this pairing make sense?"
-    a: "Kendwa is about 3-4km down the coast from Nungwi — roughly a 9-minute drive, or a 15-20 minute walk along the beach at low tide — but the two behave differently underfoot: Kendwa stays swimmable through the tide cycle thanks to a deep-water shelf close offshore, while the Nungwi tip next door can lose its water tens to hundreds of metres out at low tide. Kendwa is also the quieter of the two beaches, known more for sunset views, Full Moon Party nights and kitesurfing than for Nungwi's busier resort strip."
+    a: "Kendwa is just down the coast from Nungwi, but the two behave differently underfoot: Kendwa stays swimmable through the tide cycle thanks to a deep-water shelf close offshore, while the Nungwi tip next door can lose its water tens to hundreds of metres out at low tide. Kendwa is also the quieter of the two beaches, known more for sunset views, Full Moon Party nights and kitesurfing than for Nungwi's busier resort strip."
   - q: "What exactly is Stone Town & Spice Farm Day Trip?"
-    a: "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town and take approximately 3 hours, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\""
+    a: "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\""
 fact_ids:
   - "stone-town-unesco"
   - "zanzibar-spice-history"
@@ -49,7 +49,7 @@ sibling_area_ids:
 
 ## What Stone Town & Spice Farm Day Trip actually is
 
-Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town and take approximately 3 hours, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name "Spice Island."
+Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name "Spice Island."
 
 ## Getting there from Kendwa
 
@@ -59,7 +59,7 @@ Kendwa is one of the north-coast beach areas roughly 50-60km from the airport, a
 
 ## What Kendwa brings to this trip
 
-Kendwa is about 3-4km down the coast from Nungwi — roughly a 9-minute drive, or a 15-20 minute walk along the beach at low tide — but the two behave differently underfoot: Kendwa stays swimmable through the tide cycle thanks to a deep-water shelf close offshore, while the Nungwi tip next door can lose its water tens to hundreds of metres out at low tide. Kendwa is also the quieter of the two beaches, known more for sunset views, Full Moon Party nights and kitesurfing than for Nungwi's busier resort strip.
+Kendwa is just down the coast from Nungwi, but the two behave differently underfoot: Kendwa stays swimmable through the tide cycle thanks to a deep-water shelf close offshore, while the Nungwi tip next door can lose its water tens to hundreds of metres out at low tide. Kendwa is also the quieter of the two beaches, known more for sunset views, Full Moon Party nights and kitesurfing than for Nungwi's busier resort strip.
 
 ## Plan the rest of your trip
 

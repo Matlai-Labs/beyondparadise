@@ -11,12 +11,12 @@ hero_alt: "Open savannah plains of the Serengeti at golden hour"
 author: "tim"
 last_updated: "2026-07-03"
 draft: false
-answer: "The Serengeti isn't one trip — it's four distinct zones with different peak windows: the Western Corridor for Grumeti River migration crossings (June–July), Seronera for year-round big cats (the ecosystem holds 3,000–4,000 lions and roughly 1,000 leopards), Northern Lobo for the Mara-bound migration with fewer vehicles (October–November), and Southern Ndutu for calving season (December–February) — arguably the most underrated month-for-month wildlife experience in East Africa."
+answer: "The Serengeti isn't one trip — it's four distinct zones with different peak windows: the Western Corridor for Grumeti River migration crossings (June–July), Seronera for year-round big cats (the ecosystem holds one of Africa's largest lion populations), Northern Lobo for the Mara-bound migration with fewer vehicles (October–November), and Southern Ndutu for calving season (December–February) — arguably the most underrated month-for-month wildlife experience in East Africa."
 faq:
   - q: "What is the best month to visit the Serengeti?"
     a: "It depends which zone. June–October is the dry season and the best overall window for game viewing across the whole park, with Western Corridor river crossings peaking June–July and Northern/Mara crossings July–October. If your priority is cheetahs, lion cubs, and predator density instead, December–March in the Southern Ndutu area rivals or beats the dry season — it's just less marketed."
   - q: "How many lions and leopards live in the Serengeti?"
-    a: "The ecosystem supports an estimated 3,000–4,000 lions — a 2025 census recorded roughly 3,000, a 15% increase on the 2020 count, with the population stable at around 3,000 for decades. Leopards are estimated at approximately 1,000 individuals, with a documented 85% sighting success rate during the June–October dry season, best around Seronera's riverine woodland."
+    a: "The Serengeti ecosystem holds one of Africa's largest lion populations. Leopards are estimated at approximately 1,000 individuals and are most often seen during the June–October dry season, best around Seronera's riverine woodland."
   - q: "Which part of the Serengeti should I choose: Western Corridor, Seronera, Northern Lobo, or Ndutu?"
     a: "Western Corridor (June–July) for migration river crossings with fewer vehicles than the Mara side, largely thanks to Singita's private concession model. Seronera for the single most reliable big-cat viewing year-round. Northern Lobo (October–November) for migration season with noticeably lower vehicle density than peak-season Mara crossings. Southern Ndutu (December–February) for calving season and the highest predator concentration we've tracked anywhere in Africa — genuinely underrated relative to how it's marketed."
   - q: "What has conservation work in the Serengeti actually achieved?"
@@ -26,7 +26,7 @@ faq:
   - q: "How do I get to the Serengeti, and how long does it take?"
     a: "Fly into Kilimanjaro (JRO), Dar es Salaam (DAR), or Zanzibar (ZNZ), then take a domestic charter to an airstrip inside the park (Seronera, Kogatende, Grumeti, Kusini, or Ndutu depending on your zone) — typically 1 hour 10 minutes to 2 hours 40 minutes from Arusha. Road transfer is not a realistic alternative for most lodges: it can take over 7 hours to reach some camps by car."
   - q: "What should I watch for from an unethical safari operator?"
-    a: "Off-road driving, getting closer than the mandated 25–100 meter distance from animals, using flash photography, making loud noises, feeding animals, or promising a guaranteed Big Five sighting — no ethical guide makes that promise, since wildlife behavior is inherently unpredictable. TANAPA officially caps speed at 50 km/h and bans off-track driving, drones, and smoking during game drives park-wide."
+    a: "Off-road driving, getting closer to animals than your guide or the park rules allow, using flash photography, making loud noises, feeding animals, or promising a guaranteed Big Five sighting — no ethical guide makes that promise, since wildlife behavior is inherently unpredictable. TANAPA officially caps speed at 50 km/h and bans off-track driving, drones, and smoking during game drives park-wide."
 ---
 
 ## The Serengeti is four trips, not one
@@ -44,9 +44,9 @@ Which zone you choose should follow directly from what you actually want to see,
 
 ## Big cats: what's actually there
 
-The Serengeti ecosystem supports an estimated 3,000–4,000 lions — a 2025 census recorded roughly 3,000, a 15% increase on 2020's count, with the population holding stable around 3,000 for decades. Seronera's Central Serengeti offers the most consistent lion sightings year-round, thanks to its rich prey base and resident prides.
+The Serengeti ecosystem holds one of Africa's largest lion populations. Seronera's Central Serengeti offers the most consistent lion sightings year-round, thanks to its rich prey base and resident prides.
 
-Leopards number approximately 1,000 in the ecosystem, at a density of roughly 5.4–5.7 individuals per 100 km² depending on season. The June–October dry season produces an 85% sighting success rate — leopards concentrate near dwindling water sources as vegetation thins and visibility improves, with early morning and dusk drives producing the majority of sightings.
+Leopards number approximately 1,000 in the ecosystem, at a density of roughly 5.4–5.7 individuals per 100 km² depending on season. The June–October dry season is the best time to look — leopards concentrate near dwindling water sources as vegetation thins and visibility improves, with early morning and dusk drives producing the majority of sightings.
 
 Cheetahs are more concentrated: the Serengeti Cheetah Project tracks roughly 50 adult females and 20 adult males on the plains. Sightings are best January–March in the Southern Serengeti and Ndutu specifically, coinciding with calving season, with a second good window June–October in the central and eastern park.
 
@@ -70,7 +70,7 @@ Road transfer is not a realistic alternative for most lodges: some camps are a 7
 
 ## Park rules and what marks an unethical operator
 
-TANAPA enforces a park-wide 50 km/h speed limit, a minimum distance of 25–100 meters from animals depending on species, and bans off-track driving, drone use, feeding animals, and smoking during game drives. Recreational drones are not allowed at all; commercial drone permits require sign-off from four separate authorities and are rarely granted.
+TANAPA enforces a park-wide 50 km/h speed limit and bans off-track driving, drone use, feeding animals, and smoking during game drives. TANAPA rules require visitors to keep a respectful distance from wildlife and stay in the vehicle; ask your guide for the current rules. Recreational drones are not allowed at all; commercial drone permits require sign-off from four separate authorities and are rarely granted.
 
 The clearest red flag for an unethical operator: any guide promising a guaranteed Big Five sighting. Wildlife behavior is inherently unpredictable, and no responsible operator makes that promise. Off-road driving for a better photo angle, flash photography at night, and loud engine noise to keep pace with animals are the same pattern of corner-cutting we flag across every wildlife guide on this site.
 

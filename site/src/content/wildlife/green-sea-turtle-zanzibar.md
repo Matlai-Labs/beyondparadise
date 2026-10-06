@@ -1,6 +1,6 @@
 ---
 title: "Sea Turtles in Zanzibar — Where to See Them, Nesting Season, and Ethical Viewing Rules"
-description: "Green and hawksbill sea turtles in Zanzibar: where to snorkel with them (Mnemba Atoll), when nesting happens, and why sources disagree on the exact season. Legal protections, ethical viewing rules, and one honest population warning sign."
+description: "Green and hawksbill sea turtles in Zanzibar: where to snorkel with them (Mnemba Atoll), when nesting is reported, and why sources differ. Legal protections and ethical viewing rules."
 permalink: "/wildlife/green-sea-turtle-zanzibar/"
 species_id: "green-sea-turtle"
 common_name: "Green Sea Turtle"
@@ -13,18 +13,18 @@ hero_alt: "Turquoise water over the reef at Mnemba Atoll, Zanzibar — green sea
 author: "tim"
 last_updated: "2026-07-01"
 draft: false
-answer: "Green sea turtles are resident year-round at Mnemba Atoll, Zanzibar, feeding on seagrass beds most reliably spotted in the calm, clear water of December–March. Nesting happens on Zanzibar's beaches, but sources disagree sharply on exact timing — reported windows span February–July, June–September, and even November–February depending on the beach and source. The Green Sea Turtle was reclassified from Endangered to Least Concern by the IUCN in 2025, though one local Zanzibar NGO has reported a sharp decline in daily sightings on the island's northeast coast."
+answer: "Green sea turtles are resident year-round at Mnemba Atoll, Zanzibar, feeding on seagrass beds most reliably spotted in the calm, clear water of December–March. Nesting is reported on Mnemba from about February to September, peaking April–August; other beaches are reported with different windows, and sources disagree. The Green Sea Turtle was reclassified from Endangered to Least Concern by the IUCN in 2025."
 faq:
   - q: "When is the best time to see sea turtles in Zanzibar?"
     a: "For in-water snorkelling encounters at Mnemba Atoll, December through March offers the calmest, clearest water and the highest sighting probability — turtles are resident year-round, but visibility conditions make this window most reliable. Nesting season is a separate question with genuinely conflicting source data (see below)."
   - q: "When do sea turtles nest in Zanzibar?"
-    a: "Sources disagree. &Beyond's own Mnemba Island data cites green turtle nesting from February–July (peak April–July). Other sources cite March–July, June–September, or even November–February depending on the specific beach (Nungwi and Matemwe are cited separately). Hawksbill nesting is more consistently reported as October–March. We're presenting the range honestly rather than picking one figure, because the underlying sources don't agree."
+    a: "Nesting is reported on Mnemba from about February to September, peaking April–August. Other sources cite different windows for other beaches (Nungwi and Matemwe are cited separately), so the underlying sources don't fully agree — ask your lodge for current local observations."
   - q: "Is it safe and legal to swim with sea turtles in Zanzibar?"
     a: "Yes, swimming near turtles is legal and commonly offered at Mnemba Atoll and other reef sites, but touching, chasing, or collecting turtles or turtle products is illegal under both Tanzanian national law and international regulation. Ethical viewing means maintaining distance, letting the turtle approach on its own terms, never blocking its path to the surface to breathe, and avoiding flash photography."
   - q: "Are Zanzibar's sea turtles endangered?"
-    a: "The Green Sea Turtle's global status was downgraded from Endangered to Least Concern by the IUCN in 2025, reflecting roughly 28% population growth since the 1970s from decades of international conservation work. The Southwest Indian Ocean subpopulation, which includes Zanzibar, is separately listed as Least Concern. That said, a Zanzibar-based NGO reported in 2021 that daily sightings on the island's northeast coast have dropped sharply compared to prior years — global recovery and local, site-specific decline can both be true at once."
+    a: "The Green Sea Turtle's global status was downgraded from Endangered to Least Concern by the IUCN in 2025, reflecting roughly 28% population growth since the 1970s from decades of international conservation work. The Southwest Indian Ocean subpopulation, which includes Zanzibar, is separately listed as Least Concern."
   - q: "What is the Mnarani Marine Turtles Conservation Pond?"
-    a: "It's a rescue and rehabilitation pond in Nungwi, Zanzibar, holding a small resident population (13 green and 4 hawksbill turtles as of a 2005 report, with a target static population of 17). It functions differently from a wild-encounter site — it's a conservation and education facility, not a place to judge natural sighting probability."
+    a: "It's a rescue and rehabilitation pond in Nungwi, Zanzibar. It functions differently from a wild-encounter site — it's a conservation and education facility, not a place to judge natural sighting probability."
   - q: "Does reef sunscreen actually damage the coral turtles feed on?"
     a: "Conservation groups working at Mnemba specifically advise against chemical sunscreens, citing reef damage from a combination of human interference and sunscreen chemical runoff, and recommend sun-protective clothing instead. This is a live, actionable choice every visitor makes, not a distant policy question."
   - q: "What should I do if I find a nesting turtle or hatchlings?"
@@ -37,15 +37,13 @@ Zanzibar's most reliable sea turtle encounters happen at Mnemba Atoll, a marine 
 
 December through March is consistently cited as the best window for snorkelling visibility — the dry season brings calmer seas and clearer water, with January–March specifically flagged as the peak for both conditions and turtle sightings. Outside this window, the encounters still happen, but sea conditions make snorkelling less pleasant and less productive.
 
-Thanda Island, a private island reserve elsewhere in Tanzanian waters, runs a separate, actively documented turtle conservation programme — nest protection since 2017, with 2023 records showing 4 nests and over 100 hatchlings, alongside five IUCN-listed marine species in the surrounding waters. Access requires staying on the island itself.
-
 ## The nesting season nobody can agree on
 
 This is worth stating plainly rather than papering over: reliable sources give genuinely different nesting windows for Zanzibar's green sea turtles, and we haven't found a way to reconcile them into one confident answer.
 
 | Source | Claimed nesting window | Location specificity |
 |---|---|---|
-| &Beyond Mnemba Island (operator data) | February–July, peak April–July | Mnemba Island specifically |
+| Mnemba Island (reported) | About February–September, peak April–August | Mnemba Island specifically |
 | Zanzibar Ecotourism / regional guides | March–July, June–September, or Nov–Feb | Varies by beach (Nungwi, Matemwe cited separately) |
 | TA Safaris / Oceanic Society | Peak Jan–March on quiet beaches; overall peak Jun–Sep | General Zanzibar |
 | Hatchling emergence (multiple sources) | May–September, or specifically Sept–Oct at Mnemba | Varies by beach and source |
@@ -68,17 +66,17 @@ That last point is more than a courtesy suggestion. Conservation groups working 
 
 For nesting beaches specifically: no lights at night near a nesting or hatching event, no approaching a nest, and no directing torch or phone light at hatchlings, which navigate to the sea using light cues and can be fatally disoriented by artificial light. Several operators, including &Beyond's Mnemba programme, run active hatchling-escort protocols — guests are sometimes invited to observe under strict guide supervision, which is the correct way to witness this rather than seeking it out independently.
 
-## A conservation status that's actually good news — with an asterisk
+## A conservation status that's actually good news
 
 In 2025, the IUCN reclassified the Green Sea Turtle globally from Endangered to Least Concern, reflecting roughly 28% population growth since the 1970s — a genuine conservation success story attributable to decades of international protection efforts. The Southwest Indian Ocean subpopulation, which includes Zanzibar's waters, carries the same Least Concern listing.
 
-That is a real, verified improvement, and we're not going to hedge it into something less positive than it is. But it sits alongside a specific, local counter-signal worth reporting honestly: a Zanzibar-based NGO, Under The Wave, reported in October 2021 that daily turtle sightings on the island's northeast coast had dropped sharply compared to prior years — from "dozens... every day" to "only a few." Global recovery of a species and localized decline at a specific site are not contradictory; they can both be true, and a single global IUCN status doesn't tell you what's happening on one particular reef.
+That is a real, verified improvement, and we're not going to hedge it into something less positive than it is. A single global IUCN status doesn't tell you what's happening on one particular reef, so ask your operator what they are seeing locally.
 
-The Mnarani Marine Turtles Conservation Pond in Nungwi is a related but distinct story — it's a rescue and rehabilitation facility, not a wild encounter site. As of a 2005 report it held 13 green and 4 hawksbill turtles, with a stated target of maintaining a static population of 17. If you visit, understand it as a conservation and education facility rather than a benchmark for wild turtle abundance.
+The Mnarani Marine Turtles Conservation Pond in Nungwi is a related but distinct story — it's a rescue and rehabilitation facility, not a wild encounter site. If you visit, understand it as a conservation and education facility rather than a benchmark for wild turtle abundance.
 
 ## Hawksbill turtles: the less-discussed second species
 
-Green sea turtles get most of the attention in Zanzibar, but hawksbill turtles are also present, with nesting more consistently reported from October through March — a comparatively tighter, more agreed-upon window than the scattered green turtle data above. The same ethical viewing rules apply to both species; the practical difference for visitors is mainly which beach and season you're likely to encounter hatchlings versus adults feeding on the reef.
+Green sea turtles get most of the attention in Zanzibar, but hawksbill turtles are also present, though we have no verified nesting window for them. The same ethical viewing rules apply to both species; the practical difference for visitors is mainly which beach and season you're likely to encounter hatchlings versus adults feeding on the reef.
 
 ## Getting there
 

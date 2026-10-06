@@ -1,6 +1,6 @@
 ---
 title: "Stone Town & Spice Farm Day Trip from Jambiani: What to Know Before You Go"
-description: "Jambiani sits just south of Paje, near the Menai Bay Conservation Area (which… Transfer: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town."
+description: "Jambiani sits just south of Paje on Zanzibar's east coast… Transfer: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town."
 permalink: "/excursions/stone-town-spice-tour-from-jambiani/"
 tour_id: "stone-town-spice-tour"
 tour_name: "Stone Town & Spice Farm Day Trip"
@@ -13,14 +13,14 @@ hero_alt: "Stone Town & Spice Farm Day Trip — Jambiani, Zanzibar, Tanzania"
 author: "tim"
 last_updated: "2026-09-23"
 draft: false
-answer: "Stone Town & Spice Farm Day Trip from Jambiani: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town. Jambiani sits just south of Paje, near the Menai Bay Conservation Area (which includes Kizimkazi and Jambiani), and is one of the beaches where Green Sea Turtle nesting is recorded, generally February to July."
+answer: "Stone Town & Spice Farm Day Trip from Jambiani: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town. Jambiani sits just south of Paje and is one of the beaches where Green Sea Turtle nesting is recorded, generally February to July."
 faq:
   - q: "How do I get to Stone Town & Spice Farm Day Trip from Jambiani?"
     a: "Jambiani is one of the east-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg, with the airport a further 5-6km (about 8-15 minutes) from Stone Town. No direct Jambiani-to-Stone-Town drive time is recorded in our facts database — only the airport-transfer figures above."
   - q: "What's Jambiani like, and does this pairing make sense?"
-    a: "Jambiani sits just south of Paje, near the Menai Bay Conservation Area (which includes Kizimkazi and Jambiani), and is one of the beaches where Green Sea Turtle nesting is recorded, generally February to July. It's a quieter alternative to Paje with a similar east-coast transfer profile."
+    a: "Jambiani sits just south of Paje and is one of the beaches where Green Sea Turtle nesting is recorded, generally February to July. It's a quieter alternative to Paje with a similar east-coast transfer profile."
   - q: "What exactly is Stone Town & Spice Farm Day Trip?"
-    a: "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town and take approximately 3 hours, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\""
+    a: "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\""
 fact_ids:
   - "stone-town-unesco"
   - "zanzibar-spice-history"
@@ -48,7 +48,7 @@ sibling_area_ids:
 
 ## What Stone Town & Spice Farm Day Trip actually is
 
-Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town and take approximately 3 hours, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name "Spice Island."
+Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name "Spice Island."
 
 ## Getting there from Jambiani
 
@@ -58,7 +58,7 @@ Jambiani is one of the east-coast beach areas roughly 50-60km from the airport, 
 
 ## What Jambiani brings to this trip
 
-Jambiani sits just south of Paje, near the Menai Bay Conservation Area (which includes Kizimkazi and Jambiani), and is one of the beaches where Green Sea Turtle nesting is recorded, generally February to July. It's a quieter alternative to Paje with a similar east-coast transfer profile.
+Jambiani sits just south of Paje and is one of the beaches where Green Sea Turtle nesting is recorded, generally February to July. It's a quieter alternative to Paje with a similar east-coast transfer profile.
 
 ## Plan the rest of your trip
 

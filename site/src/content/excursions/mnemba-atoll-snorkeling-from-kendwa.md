@@ -1,6 +1,6 @@
 ---
 title: "Mnemba Atoll Snorkeling from Kendwa: What to Know Before You Go"
-description: "Kendwa is one of the few spots on this coast where the beach itself stays swimmable… Transfer: ~45min boat ride from a Kendwa beach pickup to the atoll."
+description: "Kendwa is one of the few spots on this coast where the beach itself stays swimmable… Transfer: boat ride from a Kendwa beach pickup to the atoll."
 permalink: "/excursions/mnemba-atoll-snorkeling-from-kendwa/"
 tour_id: "mnemba-atoll-snorkeling"
 tour_name: "Mnemba Atoll Snorkeling"
@@ -13,14 +13,14 @@ hero_alt: "Mnemba Atoll Snorkeling — Kendwa, Zanzibar, Tanzania"
 author: "tim"
 last_updated: "2026-09-23"
 draft: false
-answer: "Mnemba Atoll Snorkeling from Kendwa: ~45min boat ride from a Kendwa beach pickup to the atoll. Kendwa is one of the few spots on this coast where the beach itself stays swimmable through the tide cycle, thanks to a deep-water shelf close offshore — part of why boat trips can launch reliably from here rather than working around a tidal window the way some other north-coast operators have to."
+answer: "Mnemba Atoll Snorkeling from Kendwa: boat ride from a Kendwa beach pickup to the atoll. Kendwa is one of the few spots on this coast where the beach itself stays swimmable through the tide cycle, thanks to a deep-water shelf close offshore — part of why boat trips can launch reliably from here rather than working around a tidal window the way some other north-coast operators have to."
 faq:
   - q: "How do I get to Mnemba Atoll Snorkeling from Kendwa?"
-    a: "Full-day Mnemba Atoll trips sold as departing from Kendwa typically start with a beach pickup around 8:50am, followed by roughly a 45-minute boat ride out to the atoll, as part of a 9:30am-3:30pm day that also includes dolphin snorkelling and a seafood lunch. This is a packaged day-trip time (beach pickup to boat departure to atoll), not a lodge-to-lodge transfer figure — treat it as an estimate specific to that trip type, sourced from one operator listing."
+    a: "Full-day Mnemba Atoll trips sold as departing from Kendwa typically start with a beach pickup followed by a boat ride out to the atoll, as part of a day that also includes dolphin snorkelling and a seafood lunch. Ask your operator for exact timings."
   - q: "What's Kendwa like, and does this pairing make sense?"
     a: "Kendwa is one of the few spots on this coast where the beach itself stays swimmable through the tide cycle, thanks to a deep-water shelf close offshore — part of why boat trips can launch reliably from here rather than working around a tidal window the way some other north-coast operators have to."
   - q: "What exactly is Mnemba Atoll Snorkeling?"
-    a: "Mnemba Atoll sits off Zanzibar's northeast coast, reached via the Matemwe coast. Access typically involves a 45-90 minute road transfer from Zanzibar Airport or Stone Town to Matemwe, followed by a 10-20 minute boat transfer — guests wade through shallow water at the end since there are no jetties."
+    a: "Mnemba Atoll sits off Zanzibar's northeast coast, reached via the Matemwe coast. Access typically involves a road transfer from Zanzibar Airport or Stone Town to Matemwe, followed by a short boat transfer — guests wade through shallow water at the end since there are no jetties."
 fact_ids:
   - "mnemba-island-lodge-access-1"
   - "kendwa-mnemba-transfer-1"
@@ -38,15 +38,15 @@ sibling_area_ids:
 | Pickup area | Kendwa |
 | Experience | Mnemba Atoll Snorkeling |
 | Region | Zanzibar, Tanzania |
-| Transfer | ~45min boat ride from a Kendwa beach pickup to the atoll |
+| Transfer | boat ride from a Kendwa beach pickup to the atoll |
 
 ## What Mnemba Atoll Snorkeling actually is
 
-Mnemba Atoll sits off Zanzibar's northeast coast, reached via the Matemwe coast. Access typically involves a 45-90 minute road transfer from Zanzibar Airport or Stone Town to Matemwe, followed by a 10-20 minute boat transfer — guests wade through shallow water at the end since there are no jetties.
+Mnemba Atoll sits off Zanzibar's northeast coast, reached via the Matemwe coast. Access typically involves a road transfer from Zanzibar Airport or Stone Town to Matemwe, followed by a short boat transfer — guests wade through shallow water at the end since there are no jetties.
 
 ## Getting there from Kendwa
 
-Full-day Mnemba Atoll trips sold as departing from Kendwa typically start with a beach pickup around 8:50am, followed by roughly a 45-minute boat ride out to the atoll, as part of a 9:30am-3:30pm day that also includes dolphin snorkelling and a seafood lunch.
+Full-day Mnemba Atoll trips sold as departing from Kendwa typically start with a beach pickup followed by a boat ride out to the atoll, as part of a day that also includes dolphin snorkelling and a seafood lunch. Ask your operator for exact timings.
 
 **A note on this figure:** This is a packaged day-trip time (beach pickup to boat departure to atoll), not a lodge-to-lodge transfer figure — treat it as an estimate specific to that trip type, sourced from one operator listing.
 

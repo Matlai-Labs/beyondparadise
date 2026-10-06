@@ -19,7 +19,7 @@
       "ethics_criteria": {
         "conservation_land": "350,000-acre private concession — prevents agricultural encroachment on critical wildlife corridor",
         "anti_poaching": "Grumeti Fund anti-poaching unit (canine + ranger programme), documented annual reports",
-        "community": "Grumeti Fund community programme (schools, clinics, income for 50+ villages in buffer zone)",
+        "community": "Grumeti Fund community programme (schools, clinics, income for 21 bordering villages)",
         "wildlife_impact": "Zero vehicle caps enforced. Off-road driving in private concession — no wildlife habituation harm from crowding",
         "environment": "Solar power, water recycling documented in sustainability reports"
       },
@@ -38,7 +38,7 @@
       "tim_score_context": 91,
       "ethics_grade": "A-",
       "ethics_criteria": {
-        "conservation_land": "Private island — limits tourist volume to 12 guests max, protects turtle nesting beaches",
+        "conservation_land": "Private island — limits tourist volume to 12 bandas, up to 24 guests, protects turtle nesting beaches",
         "marine_conservation": "Partnership with School for Field Studies, sea turtle monitoring, reef restoration",
         "anti_poaching": "Not applicable (island setting)",
         "community": "Documented Zanzibar community employment and training programme",
@@ -59,7 +59,7 @@
       "status": "pending-verification",
       "ethics_grade": "B",
       "ethics_notes": "MBCA registers operators and sets guidelines but enforcement is inconsistent. Some operators comply; others allow crowding. Tim to document specific operator names and compliance on next Menai Bay observation.",
-      "verification_sources": ["MBCA official guidelines", "Amir et al. 2016 PLOS ONE — documents operator variation"],
+      "verification_sources": ["MBCA official guidelines", "Temple et al. 2016 PLOS ONE — acoustic study found dolphins avoid high-tourism sites by day"],
       "website": "https://www.menlbayconservation.org",
       "verified_date": null,
       "next_verification": "2026-10-01"

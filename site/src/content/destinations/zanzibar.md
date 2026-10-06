@@ -1,6 +1,6 @@
 ---
 title: "Zanzibar Travel Guide — Seasons, Entry Requirements, and When to Do What"
-description: "Zanzibar has two dry seasons (June–October and December–February) and one to actively avoid (March–May). Entry requirements, mandatory travel insurance since October 2024, kitesurfing windows, and diving visibility by month — the practical planning layer beneath the marine wildlife guides."
+description: "Zanzibar has two dry seasons (June–October and December–February) and one to actively avoid (March–May). Entry requirements, mandatory inbound travel insurance, kitesurfing windows, and diving visibility by month — the practical planning layer beneath the marine wildlife guides."
 permalink: "/east-africa/zanzibar/"
 destination_id: "zanzibar"
 region: "Zanzibar, Tanzania"
@@ -11,12 +11,12 @@ hero_alt: "Turquoise Indian Ocean water off Zanzibar's coast"
 author: "tim"
 last_updated: "2026-07-03"
 draft: false
-answer: "Zanzibar has two distinct dry seasons — the long dry (Kaskazi, June–October) and short dry (December–February) — separated by long rains (March–May) worth actively avoiding. Since October 2024, all non-resident visitors must carry mandatory Inbound Travel Insurance from the Zanzibar Insurance Corporation, a requirement many pre-2024 guides don't mention. Diving visibility peaks September–March at up to 30 meters, and Paje's kitesurfing runs two separate wind seasons that don't overlap with each other or with the rains."
+answer: "Zanzibar has two distinct dry seasons — the long dry (Kaskazi, June–October) and short dry (December–February) — separated by long rains (March–May) worth actively avoiding. Inbound Travel Insurance from the Zanzibar Insurance Corporation (ZIC) is mandatory for visitors. Diving visibility peaks September–March at up to 30 meters, and Paje's kitesurfing runs two separate wind seasons that don't overlap with each other or with the rains."
 faq:
   - q: "What's the best time to visit Zanzibar?"
     a: "June through October (long dry season, Kaskazi) is the most commonly recommended window — clear skies, 26–30°C, low humidity, and it coincides with mainland Tanzania's Great Migration if you're combining both. December through February (short dry season) is the secondary window, also good for beaches and diving. March through May (long rains) is worth avoiding — rough seas and reduced marine visibility."
   - q: "Do I need travel insurance to visit Zanzibar?"
-    a: "Yes, and this is a recent change worth knowing: since October 1, 2024, all non-resident visitors must carry mandatory Inbound Travel Insurance from the Zanzibar Insurance Corporation (ZIC), costing USD 44 for stays up to 92 days. Other international travel insurance policies are not accepted as substitutes — you must purchase the ZIC policy specifically."
+    a: "Yes. Inbound Travel Insurance from the Zanzibar Insurance Corporation (ZIC) is mandatory, costing USD 44 for stays up to 92 days (children aged 3–17 pay USD 22; under 3 free). Mainland Tanzania also requires insurance since 1 October 2026, and one valid policy covers both."
   - q: "What visa do I need for Zanzibar?"
     a: "Zanzibar is part of Tanzania, so Tanzania's visa rules apply. EU and UK citizens can typically get a single-entry e-visa or visa on arrival for around $50 (90 days). US citizens must apply for a $100 multiple-entry visa valid 12 months (no single-entry option), and the U.S. Embassy strongly recommends securing it before arrival rather than on landing."
   - q: "When is the best diving visibility in Zanzibar?"
@@ -26,7 +26,7 @@ faq:
   - q: "What health precautions does Zanzibar require?"
     a: "A yellow fever certificate is mandatory if arriving from or transiting over 12 hours through a risk country. Malaria is present island-wide and prophylaxis is recommended — chloroquine is not effective here due to resistance; atovaquone-proguanil, doxycycline, mefloquine, or tafenoquine are the recommended alternatives. Hepatitis A/B, typhoid, and routine vaccinations are also commonly recommended for Tanzania travel generally."
   - q: "How do I get to Zanzibar, and how do I get around once there?"
-    a: "There are no direct flights from the UK or most of Europe — you'll connect through a Middle East hub (Doha, Dubai, Istanbul) or an East African hub (Nairobi, Addis Ababa, Dar es Salaam). Some European carriers do run direct or seasonal service (Condor, Turkish Airlines, KLM, Air France, Edelweiss). From Abeid Amani Karume International Airport (ZNZ), Stone Town is an 8–15 minute taxi ride ($5–15); east coast beaches (Paje, Jambiani) are roughly 1–1.5 hours by road."
+    a: "There are no direct flights from the UK or most of Europe — you'll connect through a Middle East hub (Doha, Dubai, Istanbul) or an East African hub (Nairobi, Addis Ababa, Dar es Salaam). Some European carriers do run direct or seasonal service (Condor, Turkish Airlines, KLM, Air France, Edelweiss). From Abeid Amani Karume International Airport (ZNZ), Stone Town is a short taxi ride; east coast beaches (Paje, Jambiani) are roughly 1–1.5 hours by road."
 ---
 
 ## Two dry seasons, one to avoid
@@ -41,9 +41,9 @@ Zanzibar's climate splits into three windows, and knowing which one you're booki
 
 If your itinerary is flexible, June–October is the safer default; if you're specifically chasing marine wildlife, check the relevant species guide, since whale sharks, humpbacks, and turtle nesting each run their own separate calendar (see the [migration calendar](/intelligence/migration-calendar/) for the full cross-species picture).
 
-## The travel insurance requirement most guides miss
+## The mandatory travel insurance requirement
 
-Since October 1, 2024, every non-resident visitor to Zanzibar must carry mandatory Inbound Travel Insurance from the Zanzibar Insurance Corporation (ZIC), covering stays up to 92 days at a cost of USD 44. This is a genuinely recent rule change, and plenty of older travel content simply doesn't mention it. Other international travel insurance policies — even comprehensive ones — are not accepted as a substitute. If you already have travel insurance from home, budget for the ZIC policy as an additional, non-optional cost, not a redundant one.
+Inbound Travel Insurance from the Zanzibar Insurance Corporation (ZIC) is mandatory for visitors: USD 44 for stays up to 92 days, USD 22 for children aged 3–17, and free for children under 3. Mainland Tanzania also requires insurance since 1 October 2026, and one valid policy covers both.
 
 ## Diving and kitesurfing: two different calendars
 
@@ -59,7 +59,7 @@ A yellow fever certificate is mandatory if you're arriving from or transiting mo
 
 ## Getting there and around
 
-There are no direct flights from the UK or most of continental Europe. Expect a connection through a Middle East hub (Doha, Dubai, Istanbul) or an East African hub (Nairobi, Addis Ababa, Dar es Salaam) — though some European carriers (Condor, Turkish Airlines, KLM, Air France, Edelweiss) run direct or seasonal routes depending on your departure city. From Abeid Amani Karume International Airport (ZNZ), Stone Town is a short 8–15 minute taxi ride costing $5–15; the east coast beach areas (Paje, Jambiani) run roughly 1–1.5 hours by road.
+There are no direct flights from the UK or most of continental Europe. Expect a connection through a Middle East hub (Doha, Dubai, Istanbul) or an East African hub (Nairobi, Addis Ababa, Dar es Salaam) — though some European carriers (Condor, Turkish Airlines, KLM, Air France, Edelweiss) run direct or seasonal routes depending on your departure city. From Abeid Amani Karume International Airport (ZNZ), Stone Town is a short taxi ride; the east coast beach areas (Paje, Jambiani) run roughly 1–1.5 hours by road.
 
 If you're planning a Stone Town or spice farm day trip once you've landed, we've broken the transfer logistics down by where you're actually staying: [from Michamvi](/excursions/stone-town-spice-tour-from-michamvi/), [from Nungwi](/excursions/stone-town-spice-tour-from-nungwi/), [from Paje](/excursions/stone-town-spice-tour-from-paje/), [from Jambiani](/excursions/stone-town-spice-tour-from-jambiani/), and [from Kendwa](/excursions/stone-town-spice-tour-from-kendwa/). Heading to Mnemba Atoll for snorkelling instead, here's the transfer [from Stone Town or the airport](/excursions/mnemba-atoll-snorkeling-from-stone-town-airport/) or [from Kendwa](/excursions/mnemba-atoll-snorkeling-from-kendwa/). Doing the classic Menai Bay dhow trip, [here's the Safari Blue transfer from Stone Town or the airport](/excursions/safari-blue-menai-bay-from-stone-town-airport/).
 

@@ -142,62 +142,103 @@
       ],
       "status": "single-source",
       "volatile": false,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Conflicting; need MPRU/MMF code text.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "dolphin-menai-bay-species",
       "topic": "dolphins",
       "region": "zanzibar",
       "claim": "Dolphin species in Menai Bay Conservation Area",
-      "value": "Two resident species: Indo-Pacific bottlenose dolphin (Tursiops aduncus) and spinner dolphin (Stenella longirostris), typically encountered in mixed groups of 200–400 individuals.",
+      "value": "Two resident species are bottlenose and Indian Ocean humpback dolphin (Sousa plumbea); spinner dolphins also occur (IMMA).",
       "sources": [
         "amir-2016-plos-one",
         "mbca"
       ],
       "status": "confirmed",
       "volatile": false,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "wrong",
+        "old": null,
+        "urls": [
+          "https://www.marinemammalhabitat.org/factsheets/menai-bay/",
+          "https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0148995"
+        ]
+      }
     },
     {
       "id": "dolphin-menai-bay-tourism-impact",
       "topic": "dolphins",
       "region": "zanzibar",
       "claim": "Tourism impact on Menai Bay dolphins",
-      "value": "A 2016 PLOS ONE peer-reviewed study (Amir et al.) documented significant behavioural disruption to Menai Bay dolphins from boat-based tourism. Dolphins showed avoidance behaviour when multiple boats were present. MBCA guidelines (boat limits, engine-off rules) exist but enforcement is inconsistent.",
+      "value": "Temple et al. 2016 (PLOS ONE): dolphins shift away from high-tourism sites by day.",
       "sources": [
         "amir-2016-plos-one"
       ],
-      "status": "single-source",
+      "status": "confirmed",
       "volatile": false,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "wrong",
+        "old": null,
+        "urls": [
+          "https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0148995"
+        ]
+      }
     },
     {
       "id": "turtle-species-zanzibar",
       "topic": "sea-turtles",
       "region": "zanzibar",
       "claim": "Sea turtle species found in Zanzibar waters",
-      "value": "Five IUCN-listed sea turtle species are found in Tanzanian coastal waters: green turtle (Chelonia mydas, EN), hawksbill turtle (Eretmochelys imbricata, CR), loggerhead turtle (Caretta caretta, VU), leatherback turtle (Dermochelys coriacea, VU), and olive ridley turtle (Lepidochelys olivacea, VU). Green and hawksbill are most commonly encountered at Zanzibar.",
+      "value": "Green turtle = Least Concern (2025), not EN.",
       "sources": [
         "iucn-redlist",
         "wwf-tanzania"
       ],
       "status": "confirmed",
       "volatile": false,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "outdated",
+        "old": null,
+        "urls": [
+          "https://www.iucn-mtsg.org/statuses",
+          "https://www.oceanicsociety.org/news-and-announcements/green-sea-turtle-status-improvement-2025/"
+        ]
+      }
     },
     {
       "id": "turtle-mnemba-nesting",
       "topic": "sea-turtles",
       "region": "zanzibar",
       "claim": "Sea turtle nesting season Mnemba Island",
-      "value": "Sea turtles nest on Mnemba Island beaches October to February. andBeyond Mnemba Island partners with the School for Field Studies on sea turtle monitoring.",
+      "value": "Mnemba green turtle nesting roughly Feb-Sept, peak Apr-Aug.",
       "sources": [
         "andbeyond",
         "wwf-tanzania"
       ],
       "status": "confirmed",
       "volatile": false,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "wrong",
+        "old": null,
+        "urls": [
+          "https://oceanfamilyfoundation.org/turtle-nesting-on-mnemba-island/",
+          "https://www.staybeyondgreen.com/hotels/andbeyond-mnemba-island"
+        ]
+      }
     },
     {
       "id": "thanda-island-turtles",
@@ -210,7 +251,13 @@
       ],
       "status": "single-source",
       "volatile": true,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "2017 start + May 2017 hatchlings + five species supported by operator's own site (operator, not independent). 2023 figures not found. Also: 'five IUCN-listed species documented in surrounding waters' ",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "pemba-coral-health",
@@ -249,9 +296,15 @@
         "frankfurt-zoological-society",
         "tanapa"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "volatile": false,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "weak-outdated",
+        "note": "Not clearly 'wrong': 1.3-1.5 M remains the widely published figure; flag as contested rather than current fact.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "serengeti-calving-stats",
@@ -625,14 +678,24 @@
       "topic": "humpback-whales",
       "region": "tanzania",
       "claim": "Humpback whale passage timing off Tanzania coast",
-      "value": "Southern Ocean humpback whales (Megaptera novaeangliae) migrate north along the East African coast between July and September annually. Sightings are possible from boats along the southern Tanzania coast (Kilwa Masoko to Mtwara region). Whale watching is not commercially established in Tanzania — encounters are opportunistic.",
+      "value": "Humpbacks Jul-Oct (peak Jul-Sep) confirmed; commercial whale watching exists in Zanzibar (Unguja/Pemba) although not established on the southern coast Kilwa-Mtwara",
       "sources": [
         "iucn-redlist",
         "wwf-tanzania"
       ],
       "status": "confirmed",
       "volatile": false,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "wrong",
+        "old": null,
+        "urls": [
+          "https://chumbeisland.com/whale-watching-zanzibar/",
+          "https://www.nativeafricatours.com/humpback-whale-migration-in-zanzibar/",
+          "https://bcssmz.org/wp-content/uploads/2023/07/Towards-the-definition-of-the-Humpback-Whale-population-units-in-Tanzania-finalfinal.pdf"
+        ]
+      }
     },
     {
       "id": "humpback-whale-swim-rules",
@@ -988,12 +1051,18 @@
           "quote": "Scientists encountered dolphins on 254 out of 270 days at sea, or 94% of the time (data from 2005)."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "dolphins",
       "region": "menai-bay",
       "added": "2026-06-28",
       "promotedOn": "2026-06-28",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Possibly in Amir et al. 2005 PDF (arabianseawhalenetwork.org) - not opened. Do not publish as fact.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "dolphins-menai-bay-permit-1",
@@ -1014,12 +1083,18 @@
           "quote": "The guidelines instruct boats to stay 20m away from the pods at all times."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "dolphins",
       "region": "menai-bay",
       "added": "2026-06-28",
       "promotedOn": "2026-06-28",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Conflicting figures 20 m vs 50 m; get the official leaflet PDF before using.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "dolphins-menai-bay-permit-2",
@@ -1090,7 +1165,13 @@
       "region": "menai-bay",
       "added": "2026-06-28",
       "promotedOn": "2026-06-28",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Not found; only source is a travel blog URL unrelated to topic.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "dolphins-menai-bay-iucn-status-1",
@@ -1211,7 +1292,13 @@
       "region": "mnemba-atoll",
       "added": "2026-06-28",
       "promotedOn": "2026-06-28",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Reef-safe sunscreen advice itself is standard; attribution not verified.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "sea-turtles-zanzibar-ethics-2",
@@ -2039,12 +2126,18 @@
           "quote": "In Mozambique, sightings are described as 'virtually guaranteed' during mid-July to mid-September."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "humpback-whales",
       "region": "zanzibar",
       "added": "2026-06-28",
       "promotedOn": "2026-06-28",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Only operator marketing found; no independent source.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "humpback-whales-mozambique-permit-1",
@@ -2065,12 +2158,18 @@
           "quote": "In Mozambique, Permitted vessels are required to maintain a 300-meter distance from whales."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "humpback-whales",
       "region": "zanzibar",
       "added": "2026-06-28",
       "promotedOn": "2026-06-28",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Operator pages cite 300 m; another gives 50 m / 20 min; no Mozambique regulation text opened.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "humpback-whales-mozambique-permit-2",
@@ -2098,12 +2197,18 @@
           "quote": "Limit viewing time to a maximum of 30 minutes to minimize cumulative impact."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "humpback-whales",
       "region": "zanzibar",
       "added": "2026-06-28",
       "promotedOn": "2026-06-28",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "No 30-minute rule found in Mozambique/Zanzibar sources (an operator mentions 20 min). Cited sources are Menai Bay dolphin pages.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "humpback-whales-mozambique-ethics-1",
@@ -3574,7 +3679,13 @@
       "region": "mafia-island",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Likely misreads cumulative ID count as population growth.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "whale-shark-regulations-tz-population-2",
@@ -3638,7 +3749,13 @@
       "region": "mafia-island",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "MMF project page does not state 72% / 4.8; not reached in paper.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "whale-shark-regulations-tz-permit-1",
@@ -3657,7 +3774,13 @@
       "region": "mafia-island",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "not reached / no authoritative source found in this pass",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "whale-shark-regulations-tz-ethics-1",
@@ -3695,7 +3818,13 @@
       "region": "mafia-island",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "not reached / no authoritative source found in this pass",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "whale-shark-regulations-tz-iucn-status-1",
@@ -4595,7 +4724,17 @@
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "value": "VU, assessed 2023 (published 2024)",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "wrong",
+        "old": null,
+        "urls": [
+          "https://www.catsg.org/living-species-lions",
+          "https://www.researchgate.net/publication/382292688_IUCN_Panthera_leo_status"
+        ]
+      }
     },
     {
       "id": "serengeti-big-cats-iucn-status-2",
@@ -4668,7 +4807,17 @@
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "value": "VU, assessed 2021 (published 2022)",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "wrong",
+        "old": null,
+        "urls": [
+          "https://www.cms.int/species/acinonyx-jubatus",
+          "https://cheetah.org/learn/iucn-and-reverse-the-red/"
+        ]
+      }
     },
     {
       "id": "serengeti-wildebeest-calving-season-1",
@@ -4795,12 +4944,18 @@
           "quote": "Driving off marked tracks is generally not allowed without special permission, and fines are issued for violations. Feeding animals is strictly forbidden. Leaving the vehicle is not allowed unless the guide permits it, typically only in designated picnic or lodge areas."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "wildebeest-calving",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Same 100 m issue as cheetah-permit-1.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "serengeti-wildebeest-calving-ethics-1",
@@ -4821,12 +4976,18 @@
           "quote": "Elevated cortisol levels in wildebeest have been linked to human infrastructure and tourism footprint, indicating increased stress."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "wildebeest-calving",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Cited sources are researchgate.com / university-of-oxford.com homepages.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "serengeti-wildebeest-calving-iucn-status-1",
@@ -7762,12 +7923,18 @@
           "quote": "The 2024 bleaching event has again caused significant stress, with preliminary observations indicating extensive coral mortality and algal dominance across twelve reef sites."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "coral-reefs",
       "region": "zanzibar",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "1998 \"up to 80%\" likely overstated for Zanzibar; treat percentages as unverified.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "zanzibar-reef-diving-detail-permit-1",
@@ -10903,12 +11070,18 @@
           "quote": "The denning season, typically July and August, is highlighted as a prime time for sightings, as packs remain closer to their den sites."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-wild-dog",
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Denning timing varies by source; plausible.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-wild-dog-selous-population-1",
@@ -10936,12 +11109,18 @@
           "quote": "The Nyerere-Selous ecosystem is home to one of Africa's largest remaining populations of African Wild Dogs, with estimates ranging from 800 to 1,300 individuals, potentially up to 2,000 individuals."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-wild-dog",
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "\"Largest in any protected area\" repeated by tourism sites only.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-wild-dog-selous-population-2",
@@ -10995,12 +11174,18 @@
           "quote": "During the dry season (June-October), especially the denning months of July and August, the probability of sighting African Wild Dogs in Nyerere National Park is considered high."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-wild-dog",
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "not reached / no authoritative source found in this pass",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-wild-dog-selous-permit-1",
@@ -11045,7 +11230,13 @@
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Recommend dropping: not a fact.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-wild-dog-selous-ethics-1",
@@ -11064,7 +11255,13 @@
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Not a checkable fact.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-wild-dog-selous-iucn-status-1",
@@ -11170,12 +11367,18 @@
           "quote": "For an elephant bull in musth, a minimum distance of 100 meters is recommended."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-elephant",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "25 m partially supported; 100 m / musth detail unsupported.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-elephant-serengeti-permit-2",
@@ -11222,12 +11425,18 @@
           "quote": "Studies show that higher tourist pressure can increase stress levels and aggression in elephants and alter their movement patterns, activity budgets, and social interactions."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-elephant",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Plausible and general in literature; no Serengeti-specific quantified source verified.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-elephant-serengeti-iucn-status-1",
@@ -11467,12 +11676,18 @@
           "quote": "Serengeti National Park is cited as offering an 85% leopard sighting rate."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-leopard",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Do not present 85% as a documented success rate; BPA content states it as 'documented'.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-leopard-serengeti-probability-2",
@@ -11510,7 +11725,13 @@
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Source URL is a Tarangire tree-climbing-lion page; stat appears invented. Do not import the 80%.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-leopard-serengeti-ethics-1",
@@ -11529,7 +11750,13 @@
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Opinion; keep as advice not fact.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-leopard-serengeti-iucn-status-1",
@@ -11557,12 +11784,18 @@
           "quote": "Current IUCN Red List Status: Vulnerable (for the species Panthera pardus). The African leopard subspecies (Panthera pardus pardus) is also classified as Vulnerable. Population Trend: Decreasing."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-leopard",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Species-level VU confirmed. Subspecies-level VU claim not verified; West African regional population is Endangered. Safer wording: 'leopard (species) Vulnerable'.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-leopard-serengeti-iucn-status-2",
@@ -11675,12 +11908,18 @@
           "quote": "The Tanzania National Parks Authority (TANAPA) is the government authority responsible for designing and enforcing the rules and regulations within Serengeti National Park. All drivers within the park must adhere to a speed limit of 50 kilometers per hour to protect animals from over-speeding vehicles. Visitors are required to maintain a safe distance of 100 meters from animals at all times."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-cheetah",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Speed limit OK; '100 m safe distance' not found in any park rules page; no TANAPA primary document found. Treat 100 m as unverified.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-cheetah-serengeti-permit-2",
@@ -11727,12 +11966,18 @@
           "quote": "The Serengeti Cheetah Project (SCP) has documented two cheetah cub deaths directly resulting from tourism activities. PhD research, supported by the SCP and Wildlife Conservation Society (WCS), is actively exploring the impacts of tourism and livestock grazing on cheetah hunting behavior and ranging patterns. This research aims to provide insights for managing tourist pressure to support cheetah survival."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-cheetah",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Xinhua 2019 reports 8 adult cheetahs hit by tourist cars 2016-18. The 'two cub deaths' number not found.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-cheetah-serengeti-iucn-status-1",
@@ -11994,7 +12239,18 @@
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "value": "Near Threatened (IUCN 2019); trend decreasing",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "outdated",
+        "old": null,
+        "urls": [
+          "https://en.wikipedia.org/wiki/African_buffalo",
+          "https://www.mammaldiversity.org/taxon/1006274/",
+          "https://www.iucnredlist.org/species/21251/50195031"
+        ]
+      }
     },
     {
       "id": "black-rhino-east-africa-iucn-status-1",
@@ -12442,12 +12698,18 @@
           "quote": "Elevated cortisol levels indicate higher stress in wildebeest where a tourism footprint exists."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "great-migration",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "General effect (hesitation, aborted crossings from vehicle crowding) is documented anecdotally; the 20%/cortisol statistic not verified. Likely a duplicate of serengeti-wildebeest-calving-ethics-1.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "great-migration-annual-circuit-iucn-status-1",
@@ -12931,12 +13193,18 @@
           "quote": "August and September are noted as the most reliable window for big cats and the park's large wild dog population."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "walking-safari",
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "not reached / no authoritative source found in this pass",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "walking-safari-regulations-permit-1",
@@ -13016,12 +13284,18 @@
           "quote": "This species is one of the world's most endangered mammals."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "walking-safari",
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "The cited FZS page contains no wild dog number (fetched).",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "walking-safari-regulations-population-2",
@@ -13080,7 +13354,14 @@
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "value": "USD 82.60 per adult per day incl VAT (70 base)",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "outdated",
+        "old": null,
+        "urls": []
+      }
     },
     {
       "id": "walking-safari-regulations-iucn-status-1",
@@ -13961,7 +14242,13 @@
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Qualitative opinion; low value.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "anti-poaching-grumeti-tusk-permit-2",
@@ -14077,7 +14364,13 @@
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Use 'at least 60% over ~50 years' instead of 65%. Status+2021 part correct.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "anti-poaching-grumeti-tusk-iucn-status-2",
@@ -14240,12 +14533,18 @@
           "quote": "During these months, elevated water levels provide optimal feeding and breeding conditions, with increased algae growth and abundant food sources."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "birds",
       "region": "lake-manyara",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Popular claim, weak evidence; flamingo numbers are erratic.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "lake-manyara-birds-flamingo-season-2",
@@ -14403,12 +14702,18 @@
           "quote": "Another source states a recommended distance of 100 meters."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "birds",
       "region": "lake-manyara",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "weak-wrong",
+        "note": "Not confirmed from official TANAPA text; treat as 'unreliable'.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "lake-manyara-birds-flamingo-iucn-status-1",
@@ -14434,7 +14739,17 @@
       "region": "lake-manyara",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "value": "NT, last assessed 2018",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "outdated",
+        "old": null,
+        "urls": [
+          "https://en.wikipedia.org/wiki/Lesser_flamingo",
+          "https://focusingonwildlife.com/news/threatened-bird-species/nt-near-threatened/lesser-flamingo-phoeniconaias-minor-nt/"
+        ]
+      }
     },
     {
       "id": "lake-manyara-birds-flamingo-iucn-status-2",
@@ -14947,12 +15262,18 @@
           "quote": "Blacktip reef shark sightings, including adults and juveniles, have increased and are regularly spotted since 2011, indicating recovery within the protected area... and SUZA in 2025."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "marine-conservation",
       "region": "zanzibar",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Official page mentions sharks; no source for blacktips \"since 2011\" found.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "chumbe-island-marine-park-permit-2",
@@ -15169,12 +15490,18 @@
           "quote": "The Mnarani Marine Turtles Conservation Pond in Nungwi, a community-based NGO, reported having 13 Green turtles and 4 Hawksbills in September 2005, aiming for a static population of 17 turtles (with one baby released and one added)."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "sea-turtles",
       "region": "zanzibar",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Dated 2005 observation; 20-year-old figure should not be presented as current.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "green-turtle-nesting-zanzibar-probability-1",
@@ -15379,12 +15706,18 @@
           "quote": "Sighting probability is high, particularly during the wet season (November to April) when migratory birds are present and resident birds are breeding."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "boat-safari",
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "not reached / no authoritative source found in this pass",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "boat-safari-rufiji-river-population-1",
@@ -15405,12 +15738,18 @@
           "quote": "The highest concentration of hippos in the Nyerere-Selous-Mikumi ecosystem was observed in Nyerere National Park, particularly along the Rufiji, Kilombero, Luwegu, and Lung'onya rivers, according to a 2022 Systematic Reconnaissance Flight (SRF) Census Report by the Tanzania Wildlife Research Institute (TAWIRI)."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "boat-safari",
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "FZS says only \"globally significant concentrations of hippos\".",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "boat-safari-rufiji-river-population-2",
@@ -15431,12 +15770,18 @@
           "quote": "Similar to hippos, the 2022 TAWIRI SRF Census Report indicated high concentrations of crocodiles in Nyerere National Park along the Rufiji and its tributaries..."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "boat-safari",
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "weak-wrong",
+        "note": "Overstated superlative; soften.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "boat-safari-rufiji-river-population-3",
@@ -15535,12 +15880,18 @@
           "quote": "Drivers are discouraged from approaching animals too closely (e.g., lions, cheetahs, leopards) to avoid hindering their hunting or causing them to abandon a meal."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "boat-safari",
       "region": "selous-nyerere",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "25 m / 200 m rule not found in TANAPA text.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "boat-safari-rufiji-river-iucn-status-1",
@@ -15910,12 +16261,18 @@
           "quote": "Probability: High during peak season, with whale sharks easily seen nearshore. Up to 8 sightings can be recorded in a day by viewing or swimming. Concentration: 5 to 30 individuals can be simultaneously visible at the peak of the October and November season, exceeding most other Indian Ocean sites."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "marine-conservation",
       "region": "tanzania",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Half confirmed by one operator blog only; second half not found. Cited source 'wwf.com' is a generic domain.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "marine-conservation-indian-ocean-permit-1",
@@ -17838,12 +18195,18 @@
           "quote": "The Serengeti lion population has remained stable at approximately 3,000 for decades, unlike most African populations which have declined by 40% since the 1990s."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-lion",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Internally contradictory: '15% increase, highest in decades' vs 'stable at ~3,000 for decades'. National 2024/25 TAWIRI census (17,000 lions nationally; northern circuit 5,844) is separate. Don't quot",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-lion-deep-dive-probability-1",
@@ -17932,12 +18295,18 @@
           "quote": "Visitors must maintain a safe distance from animals. Some sources recommend at least 25 meters, while others state 100 meters, especially for safari cars, away from animals."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-lion",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "TANAPA managing authority confirmed; distance figure muddled.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-lion-deep-dive-permit-2",
@@ -18162,12 +18531,18 @@
           "quote": "Any operator promoting or allowing behaviors like feeding animals or interfering with their natural actions for a better photo opportunity is unethical."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-lion",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Opinion-type list; not independently verifiable.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "tanzania-park-fees-entry-1",
@@ -23440,7 +23815,18 @@
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "value": "Estimates ~210-600 for Serengeti NP/ecosystem; >1,000 only for Serengeti-Mara ecosystem (2016)",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "wrong",
+        "old": null,
+        "urls": [
+          "https://africadreamsafaris.com/community/conservation/serengeti-cheetah-project/",
+          "https://www.serengeti.com/serengeti-animals.php",
+          "https://www.pnas.org/doi/pdf/10.1073/pnas.1611122114"
+        ]
+      }
     },
     {
       "id": "african-cheetah-facts-deep-probability-1",
@@ -23534,12 +23920,18 @@
           "quote": "Research conducted in the Serengeti between 2022 and 2024, utilizing GPS collar data, indicated that tourism can cause considerable disruptions to cheetah hunting behavior. Cheetahs were observed to avoid areas near tourist lodges and roads during the wet season due to increased human activity."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "african-cheetah",
       "region": "serengeti",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "weak-wrong",
+        "note": "Numbers 0.2 and 2.3 not found; study region mislabelled 'Mara-Serengeti'. Serengeti NP cub survival to independence <5%. Medium confidence on exact figures (I saw summaries, not the paper).",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "african-cheetah-facts-deep-iucn-status-1",
@@ -26054,7 +26446,17 @@
       "region": "tanzania",
       "added": "2026-07-05",
       "promotedOn": "2026-07-05",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "value": "Tanzania (East Usambara) 30-200 mature individuals; Mozambique 50-249",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "wrong",
+        "old": null,
+        "urls": [
+          "https://en.wikipedia.org/wiki/Long-billed_forest_warbler",
+          "https://www.cepf.net/resources/other/article-new-hope-survival-long-billed-forest-warbler"
+        ]
+      }
     },
     {
       "id": "tanzania-usambara-birding-population-2",
@@ -26082,12 +26484,18 @@
           "quote": "For example, the Usambara Hyliota is 'considerably more elusive', and endemic races like *Hyliota australis usambarae* and *Spermophaga ruficapilla cana* occur at low densities in only a few localities."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "birds",
       "region": "tanzania",
       "added": "2026-07-05",
       "promotedOn": "2026-07-05",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Not a checkable figure.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "tanzania-usambara-birding-probability-1",
@@ -26122,12 +26530,18 @@
           "quote": "Banded Sunbird (*Anthreptes rubritorques*) and Uluguru Violet-backed Sunbird (*Anthreptes neglectus*): Were 'relatively easy to see along the edges of the forest' in the Eastern Usambara Mountains (Amani Nature Reserve) in a 2012 observation."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "birds",
       "region": "tanzania",
       "added": "2026-07-05",
       "promotedOn": "2026-07-05",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Subjective/operator copy.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "tanzania-usambara-birding-permit-1",
@@ -26195,12 +26609,18 @@
           "quote": "The Usambara Mountains Environmental Conservation Program (UMEP) works with local communities to promote sustainable land management."
         }
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "birds",
       "region": "tanzania",
       "added": "2026-07-05",
       "promotedOn": "2026-07-05",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "unverified",
+        "note": "Generic ethics statement; not a checkable fact.",
+        "rule": "unverified - do not publish as fact"
+      }
     },
     {
       "id": "tanzania-usambara-birding-iucn-status-1",
@@ -26233,7 +26653,17 @@
       "region": "tanzania",
       "added": "2026-07-05",
       "promotedOn": "2026-07-05",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "value": "Warbler CR; Amani Sunbird EN (2020)",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "wrong",
+        "old": null,
+        "urls": [
+          "https://en.wikipedia.org/wiki/Amani_sunbird",
+          "https://en.wikipedia.org/wiki/Long-billed_forest_warbler"
+        ]
+      }
     },
     {
       "id": "tanzania-usambara-birding-iucn-status-2",
@@ -26266,7 +26696,18 @@
       "region": "tanzania",
       "added": "2026-07-05",
       "promotedOn": "2026-07-05",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "value": "Eagle-owl: not separately listed (lumped, LC); Usambara Weaver: Near Threatened (2021); Banded Green Sunbird: Vulnerable",
+      "factCheck": {
+        "date": "2026-10-06",
+        "verdict": "outdated",
+        "old": null,
+        "urls": [
+          "https://en.wikipedia.org/wiki/Usambara_eagle-owl",
+          "https://en.wikipedia.org/wiki/Usambara_weaver",
+          "https://en.wikipedia.org/wiki/Banded_green_sunbird"
+        ]
+      }
     },
     {
       "id": "safari-blue-fumba-departure-1",

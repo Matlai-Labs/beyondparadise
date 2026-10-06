@@ -1,6 +1,6 @@
 ---
 title: "The Great Wildebeest Migration — Complete Month-by-Month Guide (Serengeti to Masai Mara)"
-description: "The full annual wildebeest migration circuit: Ndutu calving (Dec–Mar), Grumeti River crossings (May–Aug), Mara River crossings (Jul–Oct). Population estimates range from under 600,000 to 1.5 million depending on survey method — here's why, and where to be each month."
+description: "The full annual wildebeest migration circuit: Ndutu calving (Dec–Mar), Grumeti River crossings (May–Aug), Mara River crossings (Jul–Oct). The population is traditionally cited at about 1.3 million, but a 2025 satellite study suggests far fewer — the number is disputed. Here is where to be each month."
 permalink: "/wildlife/great-migration-serengeti-masai-mara/"
 species_id: "wildebeest-migration"
 common_name: "Great Wildebeest Migration"
@@ -13,16 +13,16 @@ hero_alt: "Wildebeest herds crossing the open plains of the Serengeti at golden 
 author: "tim"
 last_updated: "2026-07-01"
 draft: false
-answer: "The Great Migration is not one event but a year-round circuit: calving in the Southern Serengeti's Ndutu plains (December–March, peak February), Grumeti River crossings in the Western Corridor (May–August, peak June–July), and Mara River crossings into Kenya (July–October, peak August–September). Traditional aerial surveys estimate 1.3–1.5 million wildebeest; a 2025 AI satellite study counted fewer than 600,000 — the two methods disagree sharply, and neither claim should be repeated as settled fact."
+answer: "The Great Migration is not one event but a year-round circuit: calving in the Southern Serengeti's Ndutu plains (December–March, peak February), Grumeti River crossings in the Western Corridor (May–August, peak June–July), and Mara River crossings into Kenya (July–October, peak August–September). The wildebeest population is traditionally cited at about 1.3 million (the 2023 TAWIRI aerial census counted 1,366,109 ± 231,741); a 2025 satellite study suggests the real figure may be well under 600,000 — the number is disputed."
 faq:
   - q: "What is the best month to see the Great Migration?"
     a: "It depends what you want to see. February is peak calving season in Ndutu, Southern Serengeti — up to 8,000 calves born daily, with the highest predator concentration in Africa. August and September are peak Mara River crossing months in both the Northern Serengeti and Masai Mara. There is no single 'best' month — there is a best month for each specific phase of the circuit."
   - q: "How many wildebeest are actually in the migration?"
-    a: "This is genuinely unresolved. Traditional aerial surveys have estimated 1.3–1.5 million animals for decades, a figure still affirmed by Tanzania's own wildlife research institute (TAWIRI) in 2023. A 2025 Oxford University study using AI-analysed satellite imagery counted far fewer — 324,000–338,000 in August 2022 and 503,000–533,000 in August 2023. We report both because neither has been reconciled yet, and any site claiming a single precise number is oversimplifying an active scientific disagreement."
+    a: "This is genuinely unresolved. The population is traditionally cited at about 1.3 million, and the 2023 TAWIRI aerial census counted 1,366,109 ± 231,741. A 2025 Oxford University study using AI-analysed satellite imagery counted far fewer — 324,000–338,000 in August 2022 and 503,000–533,000 in August 2023 — and suggests the real figure may be well under 600,000. We report both because neither has been reconciled yet, and any site claiming a single precise number is oversimplifying an active scientific disagreement."
   - q: "Are the Mara River crossings guaranteed if I visit in August?"
     a: "No. August and September are the peak months, but crossing timing is unpredictable — herds can wait hours or days at the riverbank before committing, and a crossing you're positioned for may happen at a different point on the river the next morning. Multi-night stays (3+ nights) at a Mara River camp meaningfully improve your odds over a single-night stop."
   - q: "Does tourism harm the migration?"
-    a: "There is documented evidence of measurable impact: research has linked tourist vehicle presence to hesitation, diversion, or abandonment of river crossings in roughly 20% of observed cases, and elevated cortisol (stress hormone) levels have been associated with human infrastructure and tourism footprint. Both the Serengeti and Masai Mara enforce vehicle limits (maximum 5 vehicles per sighting, 10-minute viewing windows when crowded) specifically because of this evidence — but enforcement varies by operator and park zone."
+    a: "Research links vehicle crowding to hesitation at river crossings, and elevated cortisol (stress hormone) levels have been associated with human infrastructure and tourism footprint. Both the Serengeti and Masai Mara enforce vehicle limits (maximum 5 vehicles per sighting, 10-minute viewing windows when crowded) specifically because of this evidence — but enforcement varies by operator and park zone."
   - q: "Serengeti or Masai Mara — which should I choose?"
     a: "For calving season (Jan–Mar), it must be Southern Serengeti — the Masai Mara has no equivalent event. For river crossings, the Masai Mara's public zones see far more vehicle congestion (50–150 cars has been documented at single crossings) than Serengeti's Western Corridor Grumeti crossings in June–July, which offer comparable drama with meaningfully fewer vehicles. Private conservancies bordering the Mara (not the public reserve) close this gap significantly."
   - q: "What is the wildebeest's IUCN conservation status?"
@@ -67,17 +67,17 @@ This is also where the migration's tourism-pressure problem is most visible. Doc
 
 ## The population number nobody agrees on
 
-For decades, the wildebeest population in the Serengeti-Mara ecosystem has been cited as approximately 1.3–1.5 million animals, based on traditional aerial survey methodology. This figure has been reaffirmed as recently as March 2023 by Tanzania's own wildlife research institute (TAWIRI).
+For decades, the wildebeest population in the Serengeti-Mara ecosystem has been cited as about 1.3 million animals, based on traditional aerial survey methodology. The 2023 TAWIRI aerial census, Tanzania's own wildlife research institute, counted 1,366,109 ± 231,741.
 
-In September 2025, a University of Oxford study using AI-powered analysis of satellite imagery — published in PNAS Nexus — produced a radically different count: fewer than 600,000 individual wildebeest, specifically 324,202–337,926 counted in August 2022 imagery and 502,917–533,137 in August 2023 imagery.
+In September 2025, a University of Oxford study using AI-powered analysis of satellite imagery — published in PNAS Nexus — produced a radically different count, suggesting the real figure may be well under 600,000 individual wildebeest, specifically 324,202–337,926 counted in August 2022 imagery and 502,917–533,137 in August 2023 imagery.
 
 The two methodologies have not been reconciled. We are reporting both because that is the honest state of the evidence — a single confident number here would be misleading, whichever number you pick. What both methods agree on: the wildebeest is not at conservation risk. The IUCN lists the blue wildebeest as Least Concern with a stable population trend, regardless of which count is closer to reality.
 
 ## The ethics of watching a migration
 
-The tourism-pressure evidence here is more concrete than the population count debate. Research has linked tourist vehicle presence to wildebeest hesitating, diverting, or abandoning a river crossing attempt in roughly 20% of observed cases, and elevated cortisol levels — a physiological stress marker — have been associated with proximity to human infrastructure and tourism footprint across the ecosystem.
+The tourism-pressure evidence here is more concrete than the population count debate. Research links vehicle crowding to hesitation at river crossings, and elevated cortisol levels — a physiological stress marker — have been associated with proximity to human infrastructure and tourism footprint across the ecosystem.
 
-Both Tanzania and Kenya have responded with formal rules: a 100-meter minimum distance from animals in Serengeti National Park (some sources cite 20–25 meters as an alternate figure depending on the situation), a 50 km/h speed limit in both countries' parks, a ban on off-road driving except at designated lodge access points, and the 5-vehicle/10-minute cap at crowded sightings. The Tanzania Association of Tour Operators also launched a formal Safari Guide Code of Conduct in 2024 covering vehicle behavior specifically around migration sightings.
+Both Tanzania and Kenya have responded with formal rules: rules requiring visitors to keep a respectful distance from wildlife and stay in the vehicle (ask your guide for the current rules), a 50 km/h speed limit in both countries' parks, a ban on off-road driving except at designated lodge access points, and the 5-vehicle/10-minute cap at crowded sightings. The Tanzania Association of Tour Operators also launched a formal Safari Guide Code of Conduct in 2024 covering vehicle behavior specifically around migration sightings.
 
 None of this eliminates the impact — it manages it. The single biggest lever you have as a traveler is operator choice: an operator that respects the 5-vehicle rule and doesn't chase a crossing for a better camera angle causes measurably less disturbance than one that doesn't.
 
@@ -91,7 +91,7 @@ None of this eliminates the impact — it manages it. The single biggest lever y
 
 **Malaria note:** most of Kenya's safari zones, including the Masai Mara, are moderate-risk, year-round malaria transmission areas (Nairobi's city center and highlands above 2,500m are exceptions). Prophylaxis is recommended for all safari travel in both countries.
 
-If your trip has room for it, pairing Mara River crossing season with a stop for [Mafia Island's whale shark aggregation](/wildlife/whale-sharks-mafia-island/) (October–February) works well logistically for travelers routing through Tanzania, since the two peak windows only briefly overlap in October. Travelers extending their Tanzania safari southward, rather than routing through Kenya, should also consider [Nyerere National Park's African wild dogs](/wildlife/african-wild-dog-selous/) — a fundamentally different ecosystem holding roughly a third of the species' entire world population, and a genuine complement to a Serengeti-focused itinerary rather than a competing claim on the same travel window.
+If your trip has room for it, pairing Mara River crossing season with a stop for [Mafia Island's whale shark aggregation](/wildlife/whale-sharks-mafia-island/) (October–February) works well logistically for travelers routing through Tanzania, since the two peak windows only briefly overlap in October. Travelers extending their Tanzania safari southward, rather than routing through Kenya, should also consider [Nyerere National Park's African wild dogs](/wildlife/african-wild-dog-selous/) — a fundamentally different ecosystem and one of the most important strongholds for the species, and a genuine complement to a Serengeti-focused itinerary rather than a competing claim on the same travel window.
 
 ## What this means for planning your trip
 

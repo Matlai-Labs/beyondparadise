@@ -1,6 +1,6 @@
 ---
 title: "Scuba Diving Mafia Island Marine Park from Kilindoni (Mafia Island Airport): What to Know Before You Go"
-description: "The same daily marine park fee that covers whale shark encounters (recorded as USD… Transfer: ~30min by road (15km) from Kilindoni to Utende, Chole Bay."
+description: "Mafia Island Marine Park charges a daily per-person conservation fee; confirm the current rate. Transfer: ~30min by road (15km) from Kilindoni to Utende, Chole Bay."
 permalink: "/excursions/mafia-marine-park-diving-from-kilindoni-airport/"
 tour_id: "mafia-marine-park-diving"
 tour_name: "Scuba Diving Mafia Island Marine Park"
@@ -13,14 +13,14 @@ hero_alt: "Scuba Diving Mafia Island Marine Park — Kilindoni (Mafia Island Air
 author: "tim"
 last_updated: "2026-09-23"
 draft: false
-answer: "Scuba Diving Mafia Island Marine Park from Kilindoni (Mafia Island Airport): ~30min by road (15km) from Kilindoni to Utende, Chole Bay. The same daily marine park fee that covers whale shark encounters (recorded as USD 20-23.60/person/day depending on source, plus VAT) also covers diving and snorkelling access — there is no separate dive-permit fee on top of it, only the dive operator's own service fees."
+answer: "Scuba Diving Mafia Island Marine Park from Kilindoni (Mafia Island Airport): ~30min by road (15km) from Kilindoni to Utende, Chole Bay. Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies to your dive."
 faq:
   - q: "How do I get to Scuba Diving Mafia Island Marine Park from Kilindoni (Mafia Island Airport)?"
     a: "Mafia Island's airport is near Kilindoni, but the primary diving base is in Utende on Chole Bay, about 15 kilometres away — transfers are usually arranged by the lodge or by taxi and take roughly half an hour."
   - q: "What's Kilindoni (Mafia Island Airport) like, and does this pairing make sense?"
-    a: "The same daily marine park fee that covers whale shark encounters (recorded as USD 20-23.60/person/day depending on source, plus VAT) also covers diving and snorkelling access — there is no separate dive-permit fee on top of it, only the dive operator's own service fees. Confirm current rates before booking."
+    a: "Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies to your dive. Confirm current rates before booking."
   - q: "What exactly is Scuba Diving Mafia Island Marine Park?"
-    a: "Mafia Island Marine Park (MIMP), gazetted in April 1995 and governed by Tanzania's Marine Parks and Reserves Unit (MPRU), holds over 50 genera of coral and 460 recorded fish species. The park follows a Code of Conduct banning touching, riding, blocking movement, flash photography, overcrowding and aggressive boat chasing around marine life. The prime diving and snorkelling season is October through March, with calm seas, 15-25m visibility, and water around 29°C from November to March — October is considered the strongest all-round month."
+    a: "Mafia Island Marine Park (MIMP), gazetted in April 1995 and governed by Tanzania's Marine Parks and Reserves Unit (MPRU), has a rich fish and coral fauna. The park follows a Code of Conduct banning touching, riding, blocking movement, flash photography, overcrowding and aggressive boat chasing around marine life. The prime diving and snorkelling season is October through March, with calm seas, 15-25m visibility, and water around 29°C from November to March — October is considered the strongest all-round month."
 fact_ids:
   - "mafia-island-diving-population-3"
   - "mafia-island-diving-permit-1"
@@ -45,7 +45,7 @@ sibling_area_ids: []
 
 ## What Scuba Diving Mafia Island Marine Park actually is
 
-Mafia Island Marine Park (MIMP), gazetted in April 1995 and governed by Tanzania's Marine Parks and Reserves Unit (MPRU), holds over 50 genera of coral and 460 recorded fish species. The park follows a Code of Conduct banning touching, riding, blocking movement, flash photography, overcrowding and aggressive boat chasing around marine life. The prime diving and snorkelling season is October through March, with calm seas, 15-25m visibility, and water around 29°C from November to March — October is considered the strongest all-round month.
+Mafia Island Marine Park (MIMP), gazetted in April 1995 and governed by Tanzania's Marine Parks and Reserves Unit (MPRU), has a rich fish and coral fauna. The park follows a Code of Conduct banning touching, riding, blocking movement, flash photography, overcrowding and aggressive boat chasing around marine life. The prime diving and snorkelling season is October through March, with calm seas, 15-25m visibility, and water around 29°C from November to March — October is considered the strongest all-round month.
 
 ## Getting there from Kilindoni (Mafia Island Airport)
 
@@ -53,7 +53,7 @@ Mafia Island's airport is near Kilindoni, but the primary diving base is in Uten
 
 ## What Kilindoni (Mafia Island Airport) brings to this trip
 
-The same daily marine park fee that covers whale shark encounters (recorded as USD 20-23.60/person/day depending on source, plus VAT) also covers diving and snorkelling access — there is no separate dive-permit fee on top of it, only the dive operator's own service fees. Confirm current rates before booking.
+Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies to your dive. Confirm current rates before booking.
 
 ## Plan the rest of your trip
 

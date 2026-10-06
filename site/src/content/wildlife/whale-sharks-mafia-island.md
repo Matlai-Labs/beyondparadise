@@ -13,7 +13,7 @@ hero_alt: "Whale shark swimming in blue water — Mafia Island Marine Park, Tanz
 author: "tim"
 last_updated: "2026-06-27"
 draft: false
-answer: "Whale sharks aggregate around Mafia Island, Tanzania from October to February, with peak sightings in November and January. Approximately 180–200 individually identified sharks in Tanzania waters. Swimming is permitted under strict regulations: maximum 6 swimmers per shark, 3m minimum distance, no touching. Mafia Island is the single best whale shark destination in East Africa."
+answer: "Whale sharks aggregate around Mafia Island, Tanzania from October to February, with peak sightings in November through January. The Marine Megafauna Foundation has photo-identified about 208 individual whale sharks off Tanzania over eight years of monitoring, with the population trend described as stable. Swimming is permitted under regulation: no touching, no flash photography, and swimming rules (group size, boat approach distance) are set by the marine park and your registered operator; ask them for the current code of conduct. Mafia Island is the single best whale shark destination in East Africa."
 faq:
   - q: "When is whale shark season at Mafia Island?"
     a: "October to February, with peak in November–January. The aggregation coincides with seasonal upwellings and plankton blooms in the Mafia Channel. Outside this window, whale shark sightings drop significantly — do not visit Mafia specifically for whale sharks outside October–February."
@@ -22,28 +22,28 @@ faq:
   - q: "Can you scuba dive with whale sharks at Mafia Island?"
     a: "Whale shark encounters at Mafia are conducted by snorkelling only, not scuba. The sharks feed near the surface and the encounters are typically with animals actively feeding — snorkelling allows you to stay near the surface with them. Mafia also has excellent reef scuba diving (separate from whale shark trips)."
   - q: "What are the ethics rules for swimming with whale sharks?"
-    a: "Maximum 6 swimmers per individual shark. Minimum 3m distance from body, 4m from tail. No touching. No flash photography. Vessels must cut engines within 50m of the animal. These rules are set by Tanzania's Marine Parks and Reserves Unit (MPRU). Not all operators enforce them equally — this is the most important factor in choosing an operator."
+    a: "No touching and no flash photography; swimming rules (group size, boat approach distance) are set by the marine park and your registered operator; ask them for the current code of conduct. These rules are set by Tanzania's Marine Parks and Reserves Unit (MPRU). Not all operators enforce them equally — this is the most important factor in choosing an operator."
   - q: "How do I get to Mafia Island from Zanzibar?"
     a: "Fly from Zanzibar (ZNZ) to Mafia (MFA) via Dar es Salaam with Coastal Aviation or Auric Air — approximately 1–1.5 hours including the Dar connection. Direct charter from Zanzibar is possible (~45 min). No regular ferry service from Zanzibar. Budget 1 full day for travel in each direction."
   - q: "Is Mafia Island suitable for non-swimmers?"
     a: "Whale shark snorkelling requires swimming comfort in open water with surface swells. Strong snorkellers benefit. Non-swimmers can sometimes participate with a flotation aid, depending on conditions and operator. Confirm with your specific operator before booking."
   - q: "What is Tanzania's whale shark population?"
-    a: "Approximately 180–200 individual whale sharks have been photo-identified in Tanzania waters using the Wildbook for Whale Sharks (sharkbook.ai) citizen science database. The whale shark is classified as Endangered (EN) on the IUCN Red List — global population declining due to vessel strikes, bycatch, and plastic ingestion."
+    a: "The Marine Megafauna Foundation has photo-identified about 208 individual whale sharks off Tanzania over eight years of monitoring, with the population trend described as stable. The whale shark is classified as Endangered (EN) on the IUCN Red List — global population declining due to vessel strikes, bycatch, and plastic ingestion."
 ---
 
 ## The Mafia Island whale shark aggregation
 
-Mafia Island is not on most people's East Africa radar. It sits 120km south of Zanzibar, 45 minutes by charter plane from Dar es Salaam, with a population of approximately 40,000 people and very limited tourism infrastructure.
+Mafia Island is not on most people's East Africa radar. It sits roughly 200 km south of Zanzibar, 45 minutes by charter plane from Dar es Salaam, with a population of 66,180 (2022 census) and very limited tourism infrastructure.
 
 This is precisely why it is worth going.
 
-From October to February, whale sharks (Rhincodon typus) aggregate in the Mafia Channel in numbers that make this one of the most significant aggregation sites in the Indian Ocean. The Marine Megafauna Foundation has documented approximately 180–200 individually identified sharks in Tanzanian waters — a number that has grown through citizen science data collected via Sharkbook.ai, the global whale shark photo-identification database.
+From October to February, whale sharks (Rhincodon typus) aggregate in the Mafia Channel in numbers that make this one of the most significant aggregation sites in the Indian Ocean. The Marine Megafauna Foundation has photo-identified about 208 individual sharks off Tanzania over eight years of monitoring, using Sharkbook.ai, the global whale shark photo-identification database; the population trend is described as stable.
 
 The reason for the aggregation is ecological: seasonal upwellings bring nutrient-rich water to the surface, triggering plankton blooms that filter-feeding whale sharks follow. The peak concentrations in November–January align with the warmest, calmest Indian Ocean conditions on the Tanzanian coast.
 
 ## What to expect in the water
 
-A whale shark encounter begins with your boat captain and spotter scanning the surface for the characteristic dorsal fin — the first dorsal fin of a whale shark can reach 1.5 metres in height. When spotted, the captain positions the boat ahead of the animal's path. You enter the water as a group of maximum 6.
+A whale shark encounter begins with your boat captain and spotter scanning the surface for the characteristic dorsal fin — the first dorsal fin of a whale shark can reach 1.5 metres in height. When spotted, the captain positions the boat ahead of the animal's path. You enter the water as a group, sized according to your operator's rules.
 
 The shark is typically feeding at or near the surface, its enormous mouth open, filtering thousands of litres of water per hour. The first time you see the animal approach you underwater — 12 metres long, wider than a car — your instinct is to move. The correct response is to hold still. Whale sharks are filter feeders and wholly indifferent to human presence. They will pass within arms' reach if you do not panic and thrash.
 
@@ -68,20 +68,20 @@ This is the most important decision you make for a whale shark trip. Not all ope
 
 **Signs of a compliant operator:**
 - MPRU registration confirmed before you book (ask for the permit number)
-- Groups of maximum 6 swimmers per shark — not 10, not 12
+- Group sizes that follow the marine park rules — ask what the limit is and whether it is kept
 - Guide enters water first and positions the group before the shark arrives
-- Engine cut when within 50m of the animal
-- Briefing before the water that includes the 3m distance rule and no-touch policy
+- Engine cut when close to the animal
+- Briefing before the water that includes the distance rules and no-touch policy
 - Guide in the water actively managing distance during the encounter
 
 **Red flags:**
-- More than 6 swimmers per shark
+- More swimmers per shark than the park's group-size rule allows
 - Boats revving engines to keep pace alongside a swimming shark
 - No pre-water briefing on ethics rules
 - Guide not in the water during the encounter
 - Multiple boats converging on a single animal
 
-Beyond Paradise Adventures will publish a verified operator directory when Tim has personally assessed Mafia Island operators. Until then: ask for the MPRU registration number, ask how many swimmers per shark, and ask whether the guide enters the water. The answers will tell you what you need to know.
+Beyond Paradise Adventures will publish a verified operator directory when Tim has personally assessed Mafia Island operators. Until then: ask for the MPRU registration number, ask how many swimmers per shark they allow, and ask whether the guide enters the water. The answers will tell you what you need to know.
 
 ## Getting to Mafia Island
 
@@ -97,7 +97,7 @@ Beyond Paradise Adventures will publish a verified operator directory when Tim h
 
 Mafia Marine Park is also one of the best reef scuba diving destinations in East Africa — a fact that gets little attention because the whale sharks dominate the marketing.
 
-The park's coral reef system is substantially healthier than Zanzibar's Mnemba Atoll (which suffered significant bleaching in 2016). Wall dives on the park's outer reefs offer visibility to 30+ metres with large pelagic fish, reef sharks, and intact coral gardens. Mafia receives a fraction of Zanzibar's dive traffic.
+Wall dives on the park's outer reefs offer large pelagic fish, reef sharks, and coral gardens.
 
 If you are making the journey to Mafia, plan at least one reef dive day in addition to your whale shark sessions.
 

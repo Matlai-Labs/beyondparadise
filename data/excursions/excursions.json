@@ -14,7 +14,7 @@
       "key_experience_slugs": ["stone-town-history", "zanzibar-spice-tour"],
       "hero_image": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1440&q=80&auto=format",
       "intro_fact_ids": ["stone-town-unesco", "zanzibar-spice-history"],
-      "intro_text": "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town and take approximately 3 hours, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\"",
+      "intro_text": "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\"",
       "related_links": [
         { "href": "/east-africa/zanzibar/", "label": "Zanzibar travel guide (seasons, entry requirements, getting around)" }
       ],
@@ -22,9 +22,9 @@
         {
           "area_id": "michamvi",
           "area_name": "Michamvi (Michamvi Pingwe)",
-          "transfer_short": "~1 hour by road (45km) direct to Stone Town",
+          "transfer_short": "~1 hour 15 minutes by road direct to Stone Town",
           "transfer_fact_ids": ["matlai-location-context"],
-          "transfer_text": "Michamvi Pingwe is a small fishing village on Zanzibar's southeast coast, approximately 45km from Stone Town — about a 1-hour drive by road.",
+          "transfer_text": "Michamvi Pingwe is a small fishing village on Zanzibar's southeast coast, about a 1 hour 15 minute drive by road from Stone Town.",
           "character_fact_ids": [],
           "character_text": "This is Zanzibar's quiet east-coast peninsula: calm lagoon waters on the west side, open Indian Ocean on the east. It's also where Hotel Matlai (Tim's own base of operations) is located — one of the reasons Tim has driven this specific road to Stone Town many times.",
           "extra_note": null
@@ -34,7 +34,7 @@
           "area_name": "Nungwi",
           "transfer_short": "~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town",
           "transfer_fact_ids": ["zanzibar-beaches-guide-transfers-1", "zanzibar-health-malaria-transfers-1"],
-          "transfer_text": "Nungwi is one of the north-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg. The airport itself sits only 5-6km (roughly 8-15 minutes by taxi) from Stone Town, so budget the trip as two short-to-moderate legs rather than a single long transfer — we don't have a recorded direct Nungwi-to-Stone-Town drive time in our database (see note below).",
+          "transfer_text": "Nungwi is one of the north-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg. The airport itself sits only 5-6km (a short taxi ride) from Stone Town, so budget the trip as two short-to-moderate legs rather than a single long transfer — we don't have a recorded direct Nungwi-to-Stone-Town drive time in our database (see note below).",
           "character_fact_ids": ["green-turtle-nesting-zanzibar-population-2"],
           "character_text": "Nungwi is Zanzibar's built-up north-coast tip — livelier and more resort-dense than the quieter east coast (Michamvi, Bwejuu, Matemwe), per Tim's own notes on the island. It's also home to the Mnarani Marine Turtles Conservation Pond, a rehabilitation pond that held 13 green turtles and 4 hawksbills as of a September 2005 count.",
           "extra_note": "We don't have a direct Nungwi-to-Stone-Town drive time recorded in our facts database — only the airport-transfer figures above. If you need an exact number for planning, ask your lodge to confirm the current road time; we'll add it here once we have a sourced figure."
@@ -56,7 +56,7 @@
           "transfer_fact_ids": ["zanzibar-beaches-guide-transfers-1", "zanzibar-health-malaria-transfers-1"],
           "transfer_text": "Jambiani is one of the east-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg, with the airport a further 5-6km (about 8-15 minutes) from Stone Town.",
           "character_fact_ids": ["zanzibar-kitesurfing-paje-population-1", "green-turtle-nesting-zanzibar-season-1"],
-          "character_text": "Jambiani sits just south of Paje, near the Menai Bay Conservation Area (which includes Kizimkazi and Jambiani), and is one of the beaches where Green Sea Turtle nesting is recorded, generally February to July. It's a quieter alternative to Paje with a similar east-coast transfer profile.",
+          "character_text": "Jambiani sits just south of Paje and is one of the beaches where Green Sea Turtle nesting is recorded, generally February to July. It's a quieter alternative to Paje with a similar east-coast transfer profile.",
           "extra_note": "No direct Jambiani-to-Stone-Town drive time is recorded in our facts database — only the airport-transfer figures above."
         },
         {
@@ -66,7 +66,7 @@
           "transfer_fact_ids": ["zanzibar-beaches-guide-transfers-1", "zanzibar-health-malaria-transfers-1"],
           "transfer_text": "Kendwa is one of the north-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg, with the airport a further 5-6km (about 8-15 minutes) from Stone Town — two logged legs rather than one direct figure.",
           "character_fact_ids": ["kendwa-tide-swimmable-1", "kendwa-nungwi-distance-1", "kendwa-character-1"],
-          "character_text": "Kendwa is about 3-4km down the coast from Nungwi — roughly a 9-minute drive, or a 15-20 minute walk along the beach at low tide — but the two behave differently underfoot: Kendwa stays swimmable through the tide cycle thanks to a deep-water shelf close offshore, while the Nungwi tip next door can lose its water tens to hundreds of metres out at low tide. Kendwa is also the quieter of the two beaches, known more for sunset views, Full Moon Party nights and kitesurfing than for Nungwi's busier resort strip.",
+          "character_text": "Kendwa is just down the coast from Nungwi, but the two behave differently underfoot: Kendwa stays swimmable through the tide cycle thanks to a deep-water shelf close offshore, while the Nungwi tip next door can lose its water tens to hundreds of metres out at low tide. Kendwa is also the quieter of the two beaches, known more for sunset views, Full Moon Party nights and kitesurfing than for Nungwi's busier resort strip.",
           "extra_note": "No direct Kendwa-to-Stone-Town drive time is recorded in our facts database — only the airport-transfer figures above."
         }
       ]
@@ -79,7 +79,7 @@
       "key_experience_slugs": ["snorkelling-mnemba-atoll"],
       "hero_image": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1440&q=80&auto=format",
       "intro_fact_ids": ["mnemba-island-lodge-access-1"],
-      "intro_text": "Mnemba Atoll sits off Zanzibar's northeast coast, reached via the Matemwe coast. Access typically involves a 45-90 minute road transfer from Zanzibar Airport or Stone Town to Matemwe, followed by a 10-20 minute boat transfer — guests wade through shallow water at the end since there are no jetties.",
+      "intro_text": "Mnemba Atoll sits off Zanzibar's northeast coast, reached via the Matemwe coast. Access typically involves a road transfer from Zanzibar Airport or Stone Town to Matemwe, followed by a short boat transfer — guests wade through shallow water at the end since there are no jetties.",
       "related_links": [
         { "href": "/east-africa/zanzibar/", "label": "Zanzibar travel guide" },
         { "href": "/wildlife/green-sea-turtle-zanzibar/", "label": "Green sea turtles in Zanzibar" }
@@ -88,9 +88,9 @@
         {
           "area_id": "stone-town-airport",
           "area_name": "Stone Town / Zanzibar Airport",
-          "transfer_short": "45-90min road transfer to Matemwe + 10-20min boat crossing",
+          "transfer_short": "road transfer to Matemwe, then a short boat crossing",
           "transfer_fact_ids": ["mnemba-island-lodge-access-1"],
-          "transfer_text": "Our source data treats Stone Town and Zanzibar Airport (they're roughly 5-6km apart) as a single starting point for this transfer: a 45-90 minute road transfer to the Matemwe coast, then a 10-20 minute boat crossing to the atoll, wading through shallow water at the end since there is no jetty.",
+          "transfer_text": "Our source data treats Stone Town and Zanzibar Airport as a single starting point for this transfer: a road transfer to the Matemwe coast, then a short boat crossing to the atoll, wading through shallow water at the end since there is no jetty.",
           "character_fact_ids": ["zanzibar-seasons-overview"],
           "character_text": "Best paired with the October-March window, when the Indian Ocean is calmest and visibility is highest according to our Zanzibar seasonal data — the same window that's best for marine activity generally on this coast.",
           "extra_note": null
@@ -100,7 +100,7 @@
           "area_name": "Kendwa",
           "transfer_short": "~45min boat ride from a Kendwa beach pickup to the atoll",
           "transfer_fact_ids": ["kendwa-mnemba-transfer-1"],
-          "transfer_text": "Full-day Mnemba Atoll trips sold as departing from Kendwa typically start with a beach pickup around 8:50am, followed by roughly a 45-minute boat ride out to the atoll, as part of a 9:30am-3:30pm day that also includes dolphin snorkelling and a seafood lunch.",
+          "transfer_text": "Full-day Mnemba Atoll trips sold as departing from Kendwa typically start with a beach pickup followed by a boat ride out to the atoll, as part of a day that also includes dolphin snorkelling and a seafood lunch. Ask your operator for exact timings.",
           "character_fact_ids": ["kendwa-tide-swimmable-1"],
           "character_text": "Kendwa is one of the few spots on this coast where the beach itself stays swimmable through the tide cycle, thanks to a deep-water shelf close offshore — part of why boat trips can launch reliably from here rather than working around a tidal window the way some other north-coast operators have to.",
           "extra_note": "This is a packaged day-trip time (beach pickup to boat departure to atoll), not a lodge-to-lodge transfer figure — treat it as an estimate specific to that trip type, sourced from one operator listing."
@@ -115,7 +115,7 @@
       "key_experience_slugs": ["whale-shark-snorkelling"],
       "hero_image": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=1440&q=80&auto=format",
       "intro_fact_ids": ["whale-shark-mafia-season", "whale-shark-swim-rules-mafia", "whale-sharks-mafia-operators-probability-1"],
-      "intro_text": "Whale sharks aggregate around Mafia Island from October to February, with peak sightings November to January — one of the largest documented aggregations in the Indian Ocean. Operators report an 80-90% sighting success rate during peak season. Swimming is regulated: maximum 6 swimmers per shark, minimum 3m distance from the body (4m from the tail), no touching, no underwater flash photography, and vessels must cut engines within 50m of the animal — a permit from Tanzania's Marine Parks and Reserves Unit is required.",
+      "intro_text": "Whale sharks aggregate around Mafia Island from October to February, with peak sightings November to January — one of the largest documented aggregations in the Indian Ocean. Operators report an 80-90% sighting success rate during peak season. Swimming is regulated: no touching and no underwater flash photography, and swimming rules (group size, boat approach distance) are set by the marine park and your registered operator — ask them for the current code of conduct.",
       "related_links": [
         { "href": "/wildlife/whale-sharks-mafia-island/", "label": "Full whale shark guide — season, ethics, choosing an operator" },
         { "href": "/east-africa/mafia-island/", "label": "Mafia Island travel guide — season, fees, entry requirements" }
@@ -128,7 +128,7 @@
           "transfer_fact_ids": ["mafia-island-getting-there-transfers-2"],
           "transfer_text": "Mafia Island's airport is near Kilindoni, but most luxury lodges and the primary diving base sit in Utende on Chole Bay, about 15 kilometres away — transfers are usually arranged by the lodge or by taxi and take roughly half an hour.",
           "character_fact_ids": ["mafia-marine-park-fee", "marine-park-fees-tanzania-transfers-2", "marine-park-fees-tanzania-transfers-3"],
-          "character_text": "Mafia Marine Park charges a daily entry fee — recorded in our sources as either USD 20/person/day (whale shark interaction permit included with MPRU-registered operators) or USD 23.60/person/day plus VAT depending on the source, with no separate \"dive permit\" fee beyond that daily charge. Confirm the current rate with your operator before booking, since park fees change.",
+          "character_text": "Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies. Confirm the current rate before booking, since park fees change.",
           "extra_note": null
         }
       ]
@@ -141,7 +141,7 @@
       "key_experience_slugs": ["scuba-diving-mafia-marine-park"],
       "hero_image": "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=1440&q=80&auto=format",
       "intro_fact_ids": ["mafia-island-diving-population-3", "mafia-island-diving-permit-1", "mafia-island-diving-permit-2", "mafia-island-seasons-seasons-2"],
-      "intro_text": "Mafia Island Marine Park (MIMP), gazetted in April 1995 and governed by Tanzania's Marine Parks and Reserves Unit (MPRU), holds over 50 genera of coral and 460 recorded fish species. The park follows a Code of Conduct banning touching, riding, blocking movement, flash photography, overcrowding and aggressive boat chasing around marine life. The prime diving and snorkelling season is October through March, with calm seas, 15-25m visibility, and water around 29°C from November to March — October is considered the strongest all-round month.",
+      "intro_text": "Mafia Island Marine Park (MIMP), gazetted in April 1995 and governed by Tanzania's Marine Parks and Reserves Unit (MPRU), has a rich fish and coral fauna. The park follows a Code of Conduct banning touching, riding, blocking movement, flash photography, overcrowding and aggressive boat chasing around marine life. The prime diving and snorkelling season is October through March, with calm seas, 15-25m visibility, and water around 29°C from November to March — October is considered the strongest all-round month.",
       "related_links": [
         { "href": "/wildlife/whale-sharks-mafia-island/", "label": "Whale sharks at Mafia Island (the same marine park, different season focus)" },
         { "href": "/east-africa/mafia-island/", "label": "Mafia Island travel guide — season, fees, entry requirements" }
@@ -154,7 +154,7 @@
           "transfer_fact_ids": ["mafia-island-getting-there-transfers-2"],
           "transfer_text": "Mafia Island's airport is near Kilindoni, but the primary diving base is in Utende on Chole Bay, about 15 kilometres away — transfers are usually arranged by the lodge or by taxi and take roughly half an hour.",
           "character_fact_ids": ["marine-park-fees-tanzania-transfers-2", "marine-park-fees-tanzania-transfers-3"],
-          "character_text": "The same daily marine park fee that covers whale shark encounters (recorded as USD 20-23.60/person/day depending on source, plus VAT) also covers diving and snorkelling access — there is no separate dive-permit fee on top of it, only the dive operator's own service fees. Confirm current rates before booking.",
+          "character_text": "Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies to your dive. Confirm current rates before booking.",
           "extra_note": null
         }
       ]

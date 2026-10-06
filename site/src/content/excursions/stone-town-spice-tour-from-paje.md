@@ -20,7 +20,7 @@ faq:
   - q: "What's Paje like, and does this pairing make sense?"
     a: "Paje is Zanzibar's kitesurfing hub, with two distinct wind seasons: Kaskazi (mid-December to February/March, north winds averaging 15-18 knots) and Kuzi (roughly May to September/October, stronger south-to-southeast winds averaging 15-25 knots). March, April, May, October and November are the kitesurf off-season. If you're basing yourself in Paje for the wind, a Stone Town day trip is a natural rest-day pairing on a low-wind day."
   - q: "What exactly is Stone Town & Spice Farm Day Trip?"
-    a: "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town and take approximately 3 hours, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\""
+    a: "Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name \"Spice Island.\""
 fact_ids:
   - "stone-town-unesco"
   - "zanzibar-spice-history"
@@ -49,7 +49,7 @@ sibling_area_ids:
 
 ## What Stone Town & Spice Farm Day Trip actually is
 
-Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town and take approximately 3 hours, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name "Spice Island."
+Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000, recognised for its Swahili, Arab and Indian merchant architecture, carved wooden doors and multicultural history as a former Omani Sultanate capital and Indian Ocean trade hub. Spice farm tours are typically run from Stone Town, covering the cloves, nutmeg, cinnamon, pepper and vanilla that earned 19th-century Zanzibar the name "Spice Island."
 
 ## Getting there from Paje
 
