@@ -86,7 +86,7 @@ function buildWildToSeaSupplement() {
       topic: f.topic,
       region: f.region,
       claim: f.claim,
-      value: f.claim,
+      value: f.value || f.claim,
       sources: srcs.map(s => s.id),
       status,
       confidence,
@@ -96,6 +96,19 @@ function buildWildToSeaSupplement() {
     };
   });
 
+  // sources the candidates cite, in merge_runs.py's `new_sources_formatted` shape (id -> record).
+  // Tier is never null (promote.py's min() would crash on it): unknown -> 4, same as promote's default.
+  const new_sources_formatted = {};
+  for (const f of eligible) {
+    for (const s of f.sources || []) {
+      const id = typeof s === 'string' ? s : slugify(s.name || s.url || 'unknown-source');
+      if (new_sources_formatted[id]) continue;
+      const reg = typeof s === 'string' ? sourcesMap[s] : null;
+      const tier = Number.isInteger(reg?.tier) ? reg.tier : (Number.isInteger(s?.tier) ? s.tier : 4);
+      new_sources_formatted[id] = { name: reg?.name || s?.name || id, url: reg?.url || s?.url || null, type: reg?.type || 'bp-import', tier, notes: 'Imported from Beyond Paradise research DB via cross-share.js' };
+    }
+  }
+
   const out = {
     _meta: {
       description: 'Beyond Paradise -> WildToSea candidate supplement. Regenerated in full on each run from the live BP facts.json — not a point-in-time snapshot. Scoped to BP\'s genuine specialist gap-fill topics (species x season x ethics wildlife research) rather than a mechanical topic-name diff, since many BP topic names (exclusivity, photography, guide-quality, etc.) are just differently-named versions of things WildToSea already covers under experience/activities.',
@@ -104,14 +117,15 @@ function buildWildToSeaSupplement() {
       count: candidates.length,
       topicsIncluded: [...new Set(candidates.map(c => c.topic))].sort(),
       howToImport: [
-        '1. Copy this file into wildtosea/site/src/data/research/ as the next available run{N}_output.json',
-        '2. cd wildtosea/site/src/data/research && python3 merge_runs.py {N}',
+        '1. Copy this file into wildtosea/site/src/data/research/ as run{N}_output.json (N = an unused integer; use 990001 for BP). merge_runs.py reads `facts_candidates` + `new_sources_formatted` (a file with a `candidates` key merges ZERO facts).',
+        '2. Nothing else needed: the daily auto_pipeline.sh runs `merge_runs.py --auto` then promote.py (confirmed -> tier A, near-duplicate + tier gates apply). Or by hand: cd wildtosea/site/src/data/research && python3 merge_runs.py {N}',
         '3. python3 second_source.py --max 300 --budget 3   (optional — corroborates single-source facts for free)',
         '4. python3 promote.py',
         "Unknown source IDs default to tier 4 in WildToSea's promote.py (safe, conservative) — tiers can be upgraded later by adding these sources to WildToSea's own sources.json.",
       ],
     },
-    candidates,
+    facts_candidates: candidates,
+    new_sources_formatted,
   };
 
   const outPath = path.join(SHARED, 'data', 'bp-wildtosea-supplement.json');

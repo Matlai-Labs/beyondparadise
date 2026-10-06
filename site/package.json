@@ -5,9 +5,11 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node ../tools/shared-facts-check.mjs && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "facts:shared-check": "node ../tools/shared-facts-check.mjs",
+    "test:shared-facts": "node ../tools/test-shared-facts-check.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.2.1",
