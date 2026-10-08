@@ -10,7 +10,7 @@ interface Props {
   permalink: string;
   heroImage: string;
   heroAlt: string;
-  author: 'tim' | 'kim';
+  author: 'tim';
   lastUpdated: string;
   visitDate?: string;
   authorContext?: string;
@@ -36,9 +36,10 @@ const schema = {
   dateModified: lastUpdated,
   author: {
     '@type': 'Person',
-    name: author === 'tim' ? 'Tim Hennig' : 'Kim',
-    url: author === 'tim' ? 'https://beyondparadiseadventures.com/about/' : 'https://beyondparadiseadventures.com/about/kim/',
-    sameAs: author === 'tim' ? ['https://www.wikidata.org/wiki/Q140307013'] : [],
+    name: 'Tim Hennig',
+    url: 'https://beyondparadiseadventures.com/about/',
+    jobTitle: 'General Manager, Boutique Hotel Matlai',
+    sameAs: ['https://www.wikidata.org/wiki/Q140307013'],
   },
   publisher: {
     '@type': 'Organization',
@@ -66,7 +67,7 @@ const schema = {
       <div class="article__hero-content container">
         <h1 class="article__title display-l">{title}</h1>
         <p class="article__meta">
-          By <span style="color:var(--gold)">{author === 'tim' ? 'Tim Hennig' : 'Kim'}</span>
+          By <span style="color:var(--gold)">Tim Hennig</span>
           {visitDate && <> &nbsp;·&nbsp; Visited {visitDate}</>}
           &nbsp;·&nbsp; Updated <time datetime={lastUpdated}>{lastUpdated}</time>
         </p>

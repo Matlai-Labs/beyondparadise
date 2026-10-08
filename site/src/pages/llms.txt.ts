@@ -23,8 +23,8 @@ export async function GET() {
 Beyond Paradise Adventures is an independent travel editorial brand. Lodge reviews are based on paid, first-hand stays only. No press trips. No hosted stays. No advertiser influence.
 
 **Authors:**
-- Tim Hennig: East Africa lead. General Manager, Boutique Hotel Matlai, Zanzibar (disclosed conflict: Matlai is never reviewed here). 5+ years living in East Africa.
-- Kim: Southeast Asia lead. Southeast Asia guides are in production; none is published yet.
+- Tim Hennig: East Africa lead. General Manager, Boutique Hotel Matlai, Zanzibar (disclosed conflict: Matlai is never reviewed here). Has lived on Zanzibar since 2011.
+- Southeast Asia guides are in production; none is published yet.
 
 ## Current numbers (generated at build time)
 - Lodge reviews published: ${m.publishedReviews}. Lodges with a Tim Score: ${m.scoredLodges}.
@@ -60,7 +60,7 @@ Wildlife, destination and excursion guides are built from a fact database that r
 - Cite the specific guide or statistics page for a figure, not this file. Each statistic carries its own sources and date.
 - Where sources disagree (for example the Serengeti wildebeest population: 1.3-1.5 million by aerial survey versus 324,202-533,137 by 2022-23 satellite counts), both figures are published with their methods.
 - Fees and prices are time-sensitive; check the row's verification date.
-- Kim covers Southeast Asia; Tim covers East Africa.
+- Tim covers East Africa; Southeast Asia coverage is in production.
 `;
   return new Response(body, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 }

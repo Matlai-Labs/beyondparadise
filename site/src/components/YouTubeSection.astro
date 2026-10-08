@@ -12,8 +12,7 @@ const channels = [
   },
   {
     name: 'Beyond Paradise Adventures Asia',
-    host: 'Kim',
-    desc: 'Vietnam, Bali, Thailand — reviewed by a Vietnamese local who knows where the luxury experience is genuine and where it’s staged.',
+    desc: 'Vietnam, Bali, Thailand — covering where the luxury experience is genuine and where it’s staged.',
     img: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80&auto=format',
     alt: 'Beyond Paradise Adventures Asia YouTube channel — Southeast Asia luxury travel',
     url: 'https://www.youtube.com/@beyondparadiseadventures',
@@ -43,7 +42,7 @@ const channels = [
           </div>
           <div class="yt-card__body">
             <h3 class="yt-card__name">{ch.name}</h3>
-            <p class="yt-card__host">Hosted by {ch.host}</p>
+            {ch.host && <p class="yt-card__host">Hosted by {ch.host}</p>}
             <p class="yt-card__desc">{ch.desc}</p>
             <span class="btn btn-glass" style="margin-top:20px;display:inline-flex;">Watch on YouTube ↗</span>
           </div>

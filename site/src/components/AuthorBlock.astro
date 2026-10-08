@@ -1,6 +1,10 @@
 ---
+// Single author. Kim was removed 2026-10-08: no evidence in the repo, memory or shared facts that she
+// is a credentialed author who agreed to be named, and her author page never existed (it returned 404).
+// The avatar was an Unsplash stock portrait. It is removed (monogram instead) until Tim supplies a
+// real portrait: set `avatar` to a local /images/... path then. tests/authors.test.mjs enforces this.
 interface Props {
-  author: 'tim' | 'kim';
+  author: 'tim';
   visitDate?: string;
   context?: string;
 }
@@ -9,28 +13,23 @@ const { author, visitDate, context } = Astro.props;
 const authors = {
   tim: {
     name: 'Tim Hennig',
-    role: 'East Africa Lead · GM, Hotel Matlai, Zanzibar',
-    bio: 'I have lived on Zanzibar\'s east coast for over five years, managing Boutique Hotel Matlai. Every Beyond Paradise Adventures review is based on a paid, first-hand stay — I disclose all conflicts of interest, including the fact that I never review my own hotel.',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&q=80&auto=format',
+    initials: 'TH',
+    role: 'East Africa · GM, Boutique Hotel Matlai, Zanzibar',
+    bio: 'I have lived on Zanzibar since 2011 and am General Manager of Boutique Hotel Matlai. Every Beyond Paradise Adventures review is based on a paid, first-hand stay. I disclose my conflict of interest: I never review Matlai.',
+    avatar: null as string | null,
     link: '/about/',
     accent: 'var(--gold)',
-  },
-  kim: {
-    name: 'Kim',
-    role: 'Southeast Asia Lead · Beyond Paradise Adventures Asia',
-    bio: 'I am Vietnamese and have lived in Zanzibar. My knowledge of Vietnam is first-hand — I grew up in the country, not from a guidebook. Beyond Paradise Adventures Asia covers the luxury tier that deserves an honest local perspective.',
-    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&q=80&auto=format',
-    link: '/about/kim/',
-    accent: 'var(--teal)',
   },
 };
 
 const a = authors[author];
 ---
 <aside class="author-block glass reveal" aria-label={`About the author: ${a.name}`}>
-  <img src={a.avatar} alt={`${a.name} — Beyond Paradise Adventures author`} class="author-block__avatar" width="64" height="64" loading="lazy" />
+  {a.avatar
+    ? <img src={a.avatar} alt={`${a.name}, Beyond Paradise Adventures author`} class="author-block__avatar" width="64" height="64" loading="lazy" />
+    : <div class="author-block__avatar author-block__avatar--monogram" aria-hidden="true">{a.initials}</div>}
   <div class="author-block__body">
-    <p class="author-block__name" style={`color:${a.accent}`}>{a.name}</p>
+    <p class="author-block__name" style={`color:${a.accent}`}><a href={a.link}>{a.name}</a></p>
     <p class="author-block__role">{a.role}</p>
     <p class="author-block__bio">{a.bio}</p>
     {visitDate && <p class="author-block__visit">Reviewed: <time>{visitDate}</time></p>}
@@ -55,6 +54,11 @@ const a = authors[author];
   flex-shrink: 0;
   border: 2px solid var(--glass-b);
 }
+.author-block__avatar--monogram {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', Georgia, serif; font-size: 20px; color: var(--gold);
+}
+.author-block__name a { color: inherit; text-decoration: none; }
 .author-block__name {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 18px;

@@ -6,11 +6,18 @@ const schema = {
   '@type': 'AboutPage',
   name: 'About Beyond Paradise Adventures',
   url: 'https://beyondparadiseadventures.com/about/',
+  mainEntity: {
+    '@type': 'Person',
+    name: 'Tim Hennig',
+    jobTitle: 'General Manager, Boutique Hotel Matlai',
+    url: 'https://beyondparadiseadventures.com/about/',
+    sameAs: ['https://www.wikidata.org/wiki/Q140307013'],
+  },
 };
 ---
 <Base
-  title="About Beyond Paradise Adventures · Tim Hennig & Kim"
-  description="Beyond Paradise Adventures is written by Tim Hennig (East Africa) and Kim (Southeast Asia): independent luxury travel editorial, no press trips."
+  title="About Beyond Paradise Adventures · Tim Hennig"
+  description="Beyond Paradise Adventures is written by Tim Hennig (East Africa): independent luxury travel editorial, no press trips."
   permalink="/about/"
 >
   <script type="application/ld+json" set:html={JSON.stringify(schema)} slot="head" />
@@ -20,7 +27,7 @@ const schema = {
       <div class="container">
         <p class="label reveal">ABOUT BEYOND PARADISE ADVENTURES</p>
         <h1 class="display-l reveal" style="margin-top:16px;max-width:700px;">Written by People Who Live There</h1>
-        <p class="body-l reveal" style="max-width:600px;margin-top:20px;color:var(--cream-65);">Independent luxury travel editorial for East Africa and Southeast Asia. €6,000+ trips only. No press trips, no hosted stays, no advertiser influence.</p>
+        <p class="body-l reveal" style="max-width:600px;margin-top:20px;color:var(--cream-65);">Independent luxury travel editorial, starting with East Africa. €6,000+ trips only. No press trips, no hosted stays, no advertiser influence.</p>
       </div>
     </div>
 
@@ -29,12 +36,7 @@ const schema = {
         <div class="ab-author glass">
           <h2 class="display-s" style="margin-bottom:8px;">Tim Hennig</h2>
           <p class="meta" style="color:var(--gold);margin-bottom:16px;">East Africa · Zanzibar, Serengeti, Masai Mara, Rwanda, Mafia Island</p>
-          <p class="body-l" style="color:var(--cream-65);">Tim has lived in East Africa for 5+ years and is General Manager of Boutique Hotel Matlai in Michamvi Pingwe, Zanzibar. Lodge reviews on this site are published only after a paid, first-hand stay. Beyond Paradise Adventures never reviews Matlai — see our <a href="/about/editorial-policy/">editorial policy</a> for why.</p>
-        </div>
-        <div class="ab-author glass">
-          <h2 class="display-s" style="margin-bottom:8px;">Kim</h2>
-          <p class="meta" style="color:var(--gold);margin-bottom:16px;">Southeast Asia · Hoi An, Hanoi, Ha Long Bay, Hue</p>
-          <p class="body-l" style="color:var(--cream-65);">Kim is Vietnamese and lives in Zanzibar. She brings first-hand knowledge of Vietnam's luxury travel scene to Beyond Paradise Adventures' Southeast Asia coverage — her first reviews are in progress.</p>
+          <p class="body-l" style="color:var(--cream-65);">Tim has lived on Zanzibar since 2011 and is General Manager of Boutique Hotel Matlai in Michamvi Pingwe, Zanzibar. Lodge reviews on this site are published only after a paid, first-hand stay. Beyond Paradise Adventures never reviews Matlai — see our <a href="/about/editorial-policy/">editorial policy</a> for why.</p>
         </div>
       </section>
 
@@ -58,7 +60,7 @@ const schema = {
 }
 .ab-authors {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 24px;
 }
 .ab-author {

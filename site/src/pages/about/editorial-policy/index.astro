@@ -21,11 +21,11 @@ import Base from '../../../layouts/Base.astro';
         <h2 class="display-s">The non-negotiables</h2>
         <div class="ep-rules">
           {[
-            { title: 'All stays are paid', body: 'Tim Hennig personally pays for every lodge stay reviewed on Beyond Paradise Adventures. Kim personally pays for every Vietnam property reviewed. We do not accept complimentary stays, hosted visits, or sponsored trips — from any operator, under any circumstances.' },
+            { title: 'All stays are paid', body: 'Tim Hennig personally pays for every lodge stay reviewed on Beyond Paradise Adventures. We do not accept complimentary stays, hosted visits, or sponsored trips — from any operator, under any circumstances.' },
             { title: 'No press trips, ever', body: 'Press trips exist to influence coverage. A lodge curates what you see on a press trip — the best room, the best food, the attentive manager who shadows you all week. Tim pays to stay as a regular guest, with no lodge knowing in advance that a review is coming.' },
-            { title: 'No sponsored content', body: 'Beyond Paradise Adventures does not publish sponsored content, native advertising, or paid placements. If you see a lodge reviewed here, it is because Tim or Kim stayed there and formed an honest opinion — not because the lodge paid for inclusion.' },
+            { title: 'No sponsored content', body: 'Beyond Paradise Adventures does not publish sponsored content, native advertising, or paid placements. If you see a lodge reviewed here, it is because Tim stayed there and formed an honest opinion — not because the lodge paid for inclusion.' },
             { title: 'No Tim Score without a stay', body: 'The Tim Score is never assigned from secondary research, other people\'s reviews, or online sources. The number exists only because Tim was there, paying, forming a direct opinion.' },
-            { title: 'Conflicts of interest are disclosed', body: 'Tim Hennig owns and manages Boutique Hotel Matlai in Zanzibar (Q140307008 on Wikidata). This is an undisclosable conflict of interest — Matlai will never appear in Beyond Paradise Adventures, positive or negative. If Tim has any other relationship with a property he reviews, that relationship is disclosed in the review.' },
+            { title: 'Conflicts of interest are disclosed', body: 'Tim Hennig is General Manager of Boutique Hotel Matlai in Zanzibar, which is owned by his family (Q140307008 on Wikidata). This is an undisclosable conflict of interest — Matlai will never appear in Beyond Paradise Adventures, positive or negative. If Tim has any other relationship with a property he reviews, that relationship is disclosed in the review.' },
           ].map(r => (
             <div class="ep-rule glass">
               <h3 class="ep-rule__title">{r.title}</h3>
@@ -42,7 +42,7 @@ import Base from '../../../layouts/Base.astro';
 
       <section class="ep-section reveal">
         <h2 class="display-s">Fact sourcing standards</h2>
-        <p class="body-l" style="color:var(--cream-65);max-width:680px;margin-bottom:24px;">Every specific claim on this site — prices, seasons, sighting probabilities, conservation statistics — must be traceable to at least two independent sources, stored in our internal fact database. We maintain a tiered source registry (IUCN, government authorities, peer-reviewed journals, NGO research, operator data, and Tim/Kim firsthand observation). We publish the source tier with every critical fact.</p>
+        <p class="body-l" style="color:var(--cream-65);max-width:680px;margin-bottom:24px;">Every specific claim on this site — prices, seasons, sighting probabilities, conservation statistics — must be traceable to at least two independent sources, stored in our internal fact database. We maintain a tiered source registry (IUCN, government authorities, peer-reviewed journals, NGO research, operator data, and Tim's firsthand observation). We publish the source tier with every critical fact.</p>
         <p class="body-l" style="color:var(--cream-65);max-width:680px;">Wildlife encounter probabilities and prices are volatile. We re-verify sighting data monthly during peak seasons and quarterly off-season. Prices are verified at time of writing and noted with a check date. Do not rely on price data more than 12 months old without checking the operator directly.</p>
       </section>
 
