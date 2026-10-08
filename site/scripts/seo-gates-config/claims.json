@@ -1,0 +1,267 @@
+{
+  "_readme": "CLAIM CLOCK registry: time-bound facts that must not be written in present tense before they are true (or after they stop being true). status = what we last verified (announced|operating|ended); the scanner trusts DATES over status: a claim is 'announced' until valid_from, 'operating' inside [valid_from, valid_until], 'ended' after valid_until (or when status=ended). kind=route uses operating-wording rules (ERROR); kind=period only flags ended periods (WARN). match.subject = ANY of these regexes must hit the sentence; match.object = ANY must hit (object_scope 'sentence' = same sentence only, 'window' = sentence plus the 3 lines above for list items, 'document' = anywhere in the same file - for carriers that are only wrong in lists/overviews of Zanzibar travel). Regexes are case-insensitive unicode. ADD A CLAIM whenever copy depends on a start/end date. Sources are what the date was checked against - re-verify before flipping status.",
+  "claims": [
+    {
+      "id": "ba-lgw-jro-znz",
+      "kind": "route",
+      "subject": "British Airways",
+      "predicate": "operates London Gatwick (LGW) - Kilimanjaro (JRO) - Zanzibar (ZNZ)",
+      "valid_from": "2027-05-29",
+      "valid_until": "2027-10-31",
+      "status": "announced",
+      "frequency": "3x weekly",
+      "aircraft": "Boeing 787",
+      "sources": [
+        {
+          "url": "file:matlai-site/docs/VISION-2027-PLUS.md",
+          "date": "2026-10-08",
+          "note": "BA first Tanzania service in 15 years; start date and 3x/wk B787 from the 2026-10-08 audit brief - re-check against BA/aeroroutes before flipping status"
+        }
+      ],
+      "match": {
+        "subject": [
+          "british airways"
+        ],
+        "object": [
+          "zanzibar",
+          "sansibar",
+          "zanzibár",
+          "zanzíbar",
+          "\\bZNZ\\b",
+          "gatwick",
+          "\\bLGW\\b",
+          "london",
+          "londres",
+          "londra",
+          "londyn",
+          "kilimanjaro"
+        ],
+        "object_scope": "document"
+      },
+      "safe_wording": "British Airways has announced London Gatwick - Kilimanjaro - Zanzibar from 29 May 2027 (3 flights a week, Boeing 787; summer season to 31 October 2027)."
+    },
+    {
+      "id": "at-lgw",
+      "kind": "route",
+      "subject": "Air Tanzania",
+      "predicate": "operates London Gatwick (LGW) - Dar es Salaam / Zanzibar",
+      "valid_from": "2027-07-01",
+      "valid_until": null,
+      "status": "announced",
+      "sources": [
+        {
+          "url": "file:shared_knowledge/docs/supabase-nextjs-railway-pwa-gotchas.md#63",
+          "date": "2026-09-11",
+          "note": "route begins 1 July 2027; second Wikipedia source (airport table + airline article). 3 live UK ads wrongly said 'flies non-stop from Gatwick'"
+        }
+      ],
+      "match": {
+        "subject": [
+          "air tanzania"
+        ],
+        "object": [
+          "gatwick",
+          "\\bLGW\\b",
+          "london",
+          "londres",
+          "londra",
+          "londyn",
+          "united kingdom",
+          "\\bUK\\b"
+        ],
+        "object_scope": "sentence"
+      },
+      "safe_wording": "Air Tanzania has announced London Gatwick flights from 1 July 2027."
+    },
+    {
+      "id": "tui-lgw-znz",
+      "kind": "route",
+      "subject": "TUI",
+      "predicate": "operates London Gatwick (LGW) - Zanzibar (ZNZ)",
+      "valid_from": "2027-11-03",
+      "valid_until": null,
+      "status": "announced",
+      "sources": [
+        {
+          "url": "file:matlai-site/docs/VISION-2027-PLUS.md",
+          "date": "2026-10-08",
+          "note": "TUI UK London-Zanzibar from November 2027; exact 3 Nov 2027 date from the audit brief - re-check"
+        }
+      ],
+      "match": {
+        "subject": [
+          "\\bTUI\\b"
+        ],
+        "object": [
+          "gatwick",
+          "\\bLGW\\b",
+          "london",
+          "londres",
+          "londra",
+          "londyn",
+          "\\bUK\\b",
+          "united kingdom"
+        ],
+        "object_scope": "sentence"
+      },
+      "safe_wording": "TUI has announced London Gatwick - Zanzibar from 3 November 2027."
+    },
+    {
+      "id": "brussels-bru-znz",
+      "kind": "route",
+      "subject": "Brussels Airlines",
+      "predicate": "unknown - audit asked to verify whether Brussels Airlines serves Zanzibar",
+      "valid_from": null,
+      "valid_until": null,
+      "verify": true,
+      "status": "announced",
+      "sources": [
+        {
+          "url": "none",
+          "date": "2026-10-08",
+          "note": "NOT VERIFIED. matlai-site/content-db/flight-connections.json (hand-verified) lists no Brussels Airlines row. Any sentence saying it flies to Zanzibar is flagged until verified against the airline timetable."
+        }
+      ],
+      "match": {
+        "subject": [
+          "brussels airlines"
+        ],
+        "object": [
+          "zanzibar",
+          "sansibar",
+          "\\bZNZ\\b"
+        ],
+        "object_scope": "window"
+      },
+      "safe_wording": "Remove the Brussels Airlines claim, or verify it against the airline's own timetable and add it to flight-connections.json first."
+    },
+    {
+      "id": "matlai-rates-2026",
+      "kind": "period",
+      "subject": "Matlai 2026 rate card",
+      "predicate": "2026 rack/STO rates apply to stays in 2026",
+      "valid_from": "2026-01-01",
+      "valid_until": "2026-12-31",
+      "status": "operating",
+      "sources": [
+        {
+          "url": "file:shared_knowledge/docs/matlai-rates-and-packages.md",
+          "date": "2026-10-08",
+          "note": "season dates differ between 2026 and 2027"
+        }
+      ],
+      "match": {
+        "subject": [
+          "\\b2026\\b"
+        ],
+        "object": [
+          "rates?",
+          "rate card",
+          "rack",
+          "prices?",
+          "tarif\\p{L}*",
+          "preise?",
+          "prix",
+          "prezzi",
+          "precios",
+          "ceny"
+        ],
+        "object_scope": "sentence"
+      },
+      "safe_wording": "Use the 2027 rate card (see matlai-rates-and-packages.md) - 2026 rates only apply to 2026 stays."
+    },
+    {
+      "id": "matlai-rates-2027",
+      "kind": "period",
+      "subject": "Matlai 2027 rate card",
+      "predicate": "2027 rack/STO rates apply to stays in 2027",
+      "valid_from": "2027-01-01",
+      "valid_until": "2027-12-31",
+      "status": "operating",
+      "sources": [
+        {
+          "url": "file:shared_knowledge/docs/matlai-rates-and-packages.md",
+          "date": "2026-10-08",
+          "note": "bookable in advance; applies to 2027 stays"
+        }
+      ],
+      "match": {
+        "subject": [
+          "\\b2027\\b"
+        ],
+        "object": [
+          "rates?",
+          "rate card",
+          "rack",
+          "prices?",
+          "tarif\\p{L}*",
+          "preise?",
+          "prix",
+          "prezzi",
+          "precios",
+          "ceny"
+        ],
+        "object_scope": "sentence"
+      },
+      "safe_wording": "Use the 2028 rate card once published."
+    },
+    {
+      "id": "bpa-tz-park-fees-2023-24",
+      "kind": "period",
+      "subject": "Tanzania park fees 2023/24 tariff",
+      "predicate": "2023/24 TANAPA/NCAA tariff period has ended (tariff years run July-June)",
+      "valid_from": "2023-07-01",
+      "valid_until": "2024-06-30",
+      "status": "ended",
+      "sources": [
+        {
+          "url": "file:site/src/lib/facts-stats.ts",
+          "date": "2026-10-08",
+          "note": "stats page fees are the 2023/24 tariff; page already says 'confirm the current tariff with TANAPA'. Warns until the fee facts are re-sourced from the current tariff."
+        }
+      ],
+      "match": {
+        "subject": [
+          "2023\\s*[/-]\\s*(?:20)?24"
+        ],
+        "object": [
+          "tariff",
+          "fees?",
+          "conservation",
+          "park"
+        ],
+        "object_scope": "sentence"
+      },
+      "safe_wording": "Re-source park/conservation fees from the current TANAPA/NCAA tariff and state the tariff year, or remove the figure."
+    },
+    {
+      "id": "bpa-stats-facts-june-2026",
+      "kind": "period",
+      "subject": "Stats page facts, access dates 27-30 June 2026",
+      "predicate": "quarterly refresh window closed 2026-09-30",
+      "valid_from": "2026-06-27",
+      "valid_until": "2026-09-30",
+      "status": "operating",
+      "sources": [
+        {
+          "url": "file:docs/site-ops-seo-ai.md",
+          "date": "2026-10-08",
+          "note": "facts last accessed 2026-06-28..30, already past the quarterly window; re-verify via the research pipeline, rebuild, deploy"
+        }
+      ],
+      "match": {
+        "subject": [
+          "\\b(?:27|28|29|30) June 2026\\b"
+        ],
+        "object": [
+          "verified",
+          "accessed",
+          "access dates",
+          "last updated"
+        ],
+        "object_scope": "sentence"
+      },
+      "safe_wording": "Refresh the facts through the research pipeline; the page date follows the facts automatically."
+    }
+  ]
+}

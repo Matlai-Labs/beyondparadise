@@ -1,0 +1,1 @@
+{ "default": { "max": 60, "min": 30, "warnAt": 55 } }

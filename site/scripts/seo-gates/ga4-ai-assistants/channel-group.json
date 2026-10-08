@@ -1,0 +1,23 @@
+{
+  "_comment": "GA4 custom channel group 'AI Assistants'. Created by hand in GA4 Admin (no API call needed) — see README.md. Put this channel ABOVE 'Referral' in the group so it wins the first-match ordering.",
+  "channelGroup": {
+    "name": "AI Assistants",
+    "description": "Sessions arriving from AI chat assistants (ChatGPT, Perplexity, Claude, Gemini, Copilot, ...)",
+    "channel": {
+      "name": "AI Assistants",
+      "condition": {
+        "dimension": "Session source",
+        "apiName": "sessionSource",
+        "match": "matches regex",
+        "regex": "chatgpt\\.com|chat\\.openai\\.com|perplexity\\.ai|claude\\.ai|gemini\\.google\\.com|copilot\\.microsoft\\.com|bing\\.com/chat|you\\.com|phind\\.com|poe\\.com|meta\\.ai|grok\\.com|deepseek\\.com|kagi\\.com|copilot\\.com"
+      }
+    },
+    "orderAboveChannel": "Referral"
+  },
+  "caveats": [
+    "sessionSource holds the HOST only (e.g. 'chatgpt.com'), never a path, so 'bing.com/chat' can never match on sessionSource. Bing Chat visits normally arrive as source 'copilot.com' or via utm_source — hence the added copilot\\.com alternative.",
+    "ChatGPT appends utm_source=chatgpt.com to outbound links, so its sessions are attributed even when the referrer header is stripped. Perplexity/Claude/Gemini rely on the referrer header and are under-counted when apps open links in an in-app browser.",
+    "copilot\\.com is an addition to the audit's list (Microsoft's current Copilot domain)."
+  ],
+  "ga4SecondaryRegexForReports": "chatgpt|openai|perplexity|gemini|copilot|claude|bard|you\\.com|phind|deepseek|meta\\.ai"
+}
