@@ -27038,7 +27038,55 @@
       "promotedOn": "2026-09-25",
       "reviewedBy": "Tim Hennig",
       "correction": "'authoritative' per DB convention: a tier-5 operator source is authoritative for its OWN policy/pricing, not independently verified. Contact: +255 625 696 822 (phone/WhatsApp), beachbumsfishing@gmail.com. Third-party operator prices — never present as Beyond Paradise's or Matlai's own. Tim Hennig instruction 2026-09-25 — travel-facts research, official sources fetched directly (visa.immigration.go.tz, visasnews.com); logged in matlai-site/docs/revive-drafts-2026-09/*.md."
+    },
+    {
+      "id": "tanzania-mainland-inbound-insurance",
+      "topic": "entry",
+      "region": "tanzania",
+      "claim": "From 1 October 2026 foreign visitors entering Mainland Tanzania (subject to exemptions) must hold inbound travel insurance from the National Insurance Corporation (NIC) or a partner insurer, under Government Notice No. 256 of 2026 dated 4 September 2026. Zanzibar has its own scheme (ZIC); a visitor whose first point of entry is the Mainland does not buy a second policy for Zanzibar, and vice versa.",
+      "sources": [
+        {
+          "name": "National Insurance Corporation of Tanzania (designated insurer), official notice",
+          "url": "https://www.nicinsurance.co.tz/news/d5c08eea-0f75-4a32-a809-56e24bd3cd0a",
+          "tier": 1,
+          "accessed": "2026-10-08",
+          "quote": "From 1 October 2026 ... foreign visitors entering Mainland Tanzania, subject to the applicable exemptions"
+        },
+        {
+          "name": "Clyde & Co, Tanzania Introduces Mandatory Inbound Travel Insurance",
+          "url": "https://www.clydeco.com/en/insights/2026/09/introduction-of-inbound-travel-insurance",
+          "tier": null,
+          "accessed": "2026-10-08",
+          "quote": "Regulation 4(1) requires every foreigner entering Mainland Tanzania through a land border, seaport or airport to hold a valid inbound travel insurance policy ... Government Notice No. 256 of 2026, published on 4 September 2026."
+        }
+      ],
+      "status": "confirmed",
+      "added": "2026-10-08",
+      "promotedOn": "2026-10-08",
+      "lastChecked": "2026-10-08",
+      "volatile": true,
+      "note": "TIRA site (tira.go.tz) carried no notice on 2026-10-08; NIC page is the official primary source. Premium and validity are NOT confirmed by an official page, see tanzania-mainland-inbound-insurance-premium."
+    },
+    {
+      "id": "tanzania-mainland-inbound-insurance-premium",
+      "topic": "entry",
+      "region": "tanzania",
+      "claim": "Reported: the mainland inbound insurance premium is USD 44 per person, valid up to 92 days with multiple entries, covering emergency medical treatment, evacuation, repatriation and baggage loss.",
+      "sources": [
+        {
+          "name": "Clyde & Co (law firm summary of GN 256 of 2026)",
+          "url": "https://www.clydeco.com/en/insights/2026/09/introduction-of-inbound-travel-insurance",
+          "tier": null,
+          "accessed": "2026-10-08"
+        }
+      ],
+      "status": "reported-unconfirmed",
+      "DO_NOT_PUBLISH": true,
+      "added": "2026-10-08",
+      "lastChecked": "2026-10-08",
+      "volatile": true,
+      "note": "Secondary sources only; the NIC page fetched did not state premium or validity. Do not publish as fact until the gazette text or an official NIC/TIRA page shows it."
     }
   ],
-  "updated": "2026-09-23"
+  "updated": "2026-10-08"
 }

@@ -80,7 +80,7 @@ function chart(g: (typeof groups)[number]) {
         <h1 class="display-l reveal" style="margin-top:16px;max-width:820px;">East Africa Tourism Statistics: Wildlife, Parks and Costs</h1>
         <p class="body-l reveal" style="color:var(--cream-65);margin-top:20px;max-width:680px;">
           Every number on this page is a confirmed fact from our database, backed by at least two independent sources.
-          Last verified <strong>{verifiedLong}</strong>. Free to cite with a link back.
+          Each row shows its own check date. Oldest figure checked <strong>{oldestLong}</strong>. Free to cite with a link back.
         </p>
         <div class="stats-hero__actions reveal">
           <a class="btn btn-gold" href="east-africa-tourism-stats.csv" download>Download CSV ({statCount} statistics)</a>
@@ -153,7 +153,7 @@ function chart(g: (typeof groups)[number]) {
         <h2 class="display-s">Methodology and refresh schedule</h2>
         <ul class="stats-method">
           <li><strong>Inclusion rule:</strong> a statistic appears only if its fact has status "confirmed" in our database, meaning two or more independent sources. Single-source figures are excluded.</li>
-          <li><strong>Last verified:</strong> source access dates run from {oldestLong} to {verifiedLong}. Each row shows its own date.</li>
+          <li><strong>Check dates:</strong> per-row dates run from {oldestLong} to {verifiedLong}. A row is only as fresh as its own check; we do not show a single page-wide date.</li>
           <li><strong>Refresh:</strong> reviewed quarterly. The page, the CSV and the dataset metadata are regenerated from the fact database at every site build, so a re-verified fact updates all three at once.</li>
           <li><strong>Disputed numbers:</strong> where sources disagree, as with the Serengeti wildebeest population, both figures are shown with their methods.</li>
           <li><strong>Citing:</strong> please cite as "Beyond Paradise Adventures, East Africa Tourism Statistics, {verifiedLong}" and link to this page. Data download: <a href="east-africa-tourism-stats.csv" download>CSV</a>.</li>

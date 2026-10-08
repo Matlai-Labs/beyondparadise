@@ -6,11 +6,12 @@
 //   - the fact must resolve to >= 1 source URL
 //   - the displayed number must literally appear in the fact text (`must`)
 // Refreshing: edit nothing here when facts are re-verified - rebuild and the page, CSV, Dataset
-// JSON-LD and "last verified" date all follow facts.json.
+// JSON-LD and per-fact "last verified" dates all follow facts.json.
 import factsJson from '@data/facts/facts.json';
 import sourcesJson from '@data/facts/sources.json';
+import { factVerifiedDate, oldestDate, newestDate } from './fact-dates.mjs';
 
-export interface ResolvedSource { name: string; url: string; accessed: string }
+export interface ResolvedSource { name: string; url: string; accessed: string; tier?: number | null }
 export interface ResolvedFact { id: string; text: string; sources: ResolvedSource[]; verified: string }
 
 const FACTS: any[] = (factsJson as any).facts;
@@ -28,13 +29,12 @@ export function resolveFact(id: string, must: string | string[]): ResolvedFact {
   const sources: ResolvedSource[] = (f.sources ?? []).map((s: any) => {
     if (typeof s === 'string') {
       const reg = SOURCES[s];
-      return reg?.url ? { name: reg.name, url: reg.url, accessed: fallbackDate } : null;
+      return reg?.url ? { name: reg.name, url: reg.url, accessed: fallbackDate, tier: reg.tier ?? null } : null;
     }
-    return s?.url ? { name: s.name, url: s.url, accessed: s.accessed || fallbackDate } : null;
+    return s?.url ? { name: s.name, url: s.url, accessed: s.accessed || fallbackDate, tier: s.tier ?? null } : null;
   }).filter(Boolean);
   if (sources.length === 0) throw new Error(`[facts-stats] fact "${id}" has no source URL`);
-  const verified = sources.map(s => s.accessed).filter(Boolean).sort().pop() || fallbackDate;
-  if (!verified) throw new Error(`[facts-stats] fact "${id}" has no verification date`);
+  const verified = factVerifiedDate(sources, fallbackDate);
   return { id, text, sources, verified };
 }
 
@@ -99,6 +99,7 @@ export const STAT_GROUPS: StatGroup[] = [
       { label: 'Tanzania tourist visa, EU and UK citizens', display: '$50', context: 'Single entry, up to 90 days', factId: 'tanzania-entry-entry-2', must: '$50 USD', chart: { from: 50, to: 50 } },
       { label: 'Tanzania tourist visa, US citizens', display: '$100', context: 'Multiple entry, valid one year', factId: 'tanzania-entry-entry-1', must: '$100 USD', chart: { from: 100, to: 100 } },
       { label: 'Zanzibar mandatory inbound insurance', display: '$44 adult / $22 child', context: 'Required since October 2024; free under 3', factId: 'znz-inbound-insurance', must: 'USD 44/adult, USD 22/child', chart: { from: 44, to: 44 } },
+      { label: 'Mainland Tanzania inbound travel insurance', display: 'Required from 1 October 2026', context: 'Foreign visitors entering the Mainland, subject to exemptions; NIC is the designated insurer (GN 256 of 2026). Premium not yet officially confirmed, so not shown', factId: 'tanzania-mainland-inbound-insurance', must: 'From 1 October 2026' },
       { label: 'Zanzibar Marine Conservation Area entry', display: '$10 adult / $5 child', context: 'Non-East African visitors, from 1 September 2025', factId: 'zanzibar-reef-diving-detail-permit-2', must: '$10 per adult and $5 per child', chart: { from: 10, to: 10 } },
       { label: 'Serengeti and Nyerere conservation fee', display: '$70 per day', context: 'Per non-East African adult, 2023/24 tariff', factId: 'tanzania-park-fees-transfers-2', must: 'US$70 per person per day', chart: { from: 70, to: 70 } },
       { label: 'Ngorongoro Conservation Area fee', display: '$70.80 per day', context: 'Per non-East African adult, 2023/24 tariff', factId: 'tanzania-park-fees-transfers-2', must: 'US$70.80', chart: { from: 70.8, to: 70.8 } },
@@ -116,14 +117,12 @@ export function resolvedGroups() {
   }));
 }
 
-export function lastVerified(): string {
-  const dates = resolvedGroups().flatMap(g => g.stats.map(s => s.fact.verified));
-  return dates.sort().pop()!;
-}
-export function firstVerified(): string {
-  const dates = resolvedGroups().flatMap(g => g.stats.map(s => s.fact.verified));
-  return dates.sort()[0];
-}
+const allVerified = () => resolvedGroups().flatMap(g => g.stats.map(s => s.fact.verified));
+// There is deliberately no single "last verified" label for the whole page: a global label hides stale rows.
+// firstVerified() = the OLDEST per-fact date (what the page headline and the freshness gate use);
+// lastVerified() = the newest, only for dateModified metadata.
+export function lastVerified(): string { return newestDate(allVerified()); }
+export function firstVerified(): string { return oldestDate(allVerified()); }
 
 export function csvEscape(v: unknown): string {
   const s = String(v ?? '');

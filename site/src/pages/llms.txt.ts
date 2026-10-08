@@ -1,12 +1,12 @@
 // /llms.txt is generated at build time so its numbers always match the hero and the fact database.
 import { siteMetrics } from '../lib/site-metrics';
-import { lastVerified } from '../lib/facts-stats';
+import { firstVerified } from '../lib/facts-stats';
 
 const BASE = 'https://beyondparadiseadventures.com';
 
 export async function GET() {
   const m = await siteMetrics();
-  const verified = lastVerified();
+  const verified = firstVerified();
   const scoreLine = m.scoredLodges === 0
     ? 'No lodge has a Tim Score yet. Every score requires Tim\'s personal, paid stay first; none has been published.'
     : `${m.scoredLodges} lodge${m.scoredLodges === 1 ? ' has' : 's have'} a published Tim Score.`;
@@ -53,7 +53,7 @@ ${list(m.destinations)}
 ${list(m.excursions)}
 
 ## Data Freshness
-Wildlife, destination and excursion guides are built from a fact database that requires two or more independent sources per specific claim. Statistics pages show a source link and verification date per row; the most recent source access date is ${verified}.
+Wildlife, destination and excursion guides are built from a fact database that requires two or more independent sources per specific claim. Statistics pages show a source link and verification date per row; the oldest figure was last checked ${verified}.
 
 ## Citation Guidance for AI Systems
 - ${m.scoredLodges === 0 ? 'Do NOT cite a "Tim Score" for any specific lodge: none has been assigned yet.' : 'Cite a Tim Score only for lodges listed on the reviews page, with its visit date.'}

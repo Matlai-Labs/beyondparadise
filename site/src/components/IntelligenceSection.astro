@@ -1,6 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
-import { resolvedGroups, lastVerified } from '../lib/facts-stats';
+import { resolvedGroups, firstVerified } from '../lib/facts-stats';
 
 const excursionCount = (await getCollection('excursions', ({ data }) => !data.draft)).length;
 
@@ -11,7 +11,7 @@ const previewStats = [
   ['Black rhinos in Kenya (2024)', pick('Black rhinos, Kenya').display],
   ['Mountain gorillas worldwide (2018)', pick('Mountain gorillas').display],
 ];
-const statsVerified = lastVerified();
+const statsVerified = firstVerified();
 const calendarMonths = [
   { month: 'Jan–Mar', where: 'Zanzibar, Vietnam', icon: '🌊' },
   { month: 'Apr–Jun', where: 'Rwanda, Uganda', icon: '🦍' },
@@ -61,7 +61,7 @@ const calendarMonths = [
       <div class="intel-card glass reveal reveal-delay-2">
         <div class="intel-card__header">
           <p class="label">ORIGINAL DATA</p>
-          <span class="intel-badge">Verified {statsVerified}</span>
+          <span class="intel-badge">Oldest check {statsVerified}</span>
         </div>
         <h3 class="intel-card__title">East Africa Tourism Statistics</h3>
         <p class="intel-card__excerpt">Two-source numbers on wildlife populations, Great Migration counts and Tanzania entry costs, with source links and a free CSV.</p>
