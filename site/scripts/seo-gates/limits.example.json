@@ -1,0 +1,9 @@
+{
+  "_comment": "Per-language title limits for title-gate. Omitted languages use the default (max 60, min 30, warnAt 55). Values below are EXAMPLES - agree real ones with the site owner; Google truncates by pixel width (~580px), not characters.",
+  "default": { "max": 60, "min": 30, "warnAt": 55 },
+  "de": { "max": 66, "warnAt": 62 },
+  "fr": { "max": 64, "warnAt": 60 },
+  "it": { "max": 64, "warnAt": 60 },
+  "es": { "max": 64, "warnAt": 60 },
+  "pl": { "max": 64, "warnAt": 60 }
+}

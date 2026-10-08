@@ -1,6 +1,6 @@
 ---
-title: "Whale Shark Snorkelling in Chole Bay from Kilindoni (Mafia Island Airport): What to Know Before You Go"
-description: "Mafia Island Marine Park charges a daily per-person conservation fee; confirm the current rate. Transfer: ~30min by road (15km) from Kilindoni to Utende, Chole Bay."
+title: "Whale Shark Snorkelling, Chole Bay, from Kilindoni Airport"
+description: "Whale shark snorkelling in Chole Bay: 30 minutes by road (15 km) from Kilindoni airport to Utende, plus how the marine park fee works."
 permalink: "/excursions/mafia-whale-shark-snorkelling-from-kilindoni-airport/"
 tour_id: "mafia-whale-shark-snorkelling"
 tour_name: "Whale Shark Snorkelling in Chole Bay"
@@ -13,12 +13,12 @@ hero_alt: "Whale Shark Snorkelling in Chole Bay — Kilindoni (Mafia Island Airp
 author: "tim"
 last_updated: "2026-09-23"
 draft: false
-answer: "Whale Shark Snorkelling in Chole Bay from Kilindoni (Mafia Island Airport): ~30min by road (15km) from Kilindoni to Utende, Chole Bay. Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies."
+answer: "Whale Shark Snorkelling in Chole Bay from Kilindoni (Mafia Island Airport): ~30min by road (15km) from Kilindoni to Utende, Chole Bay. Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator."
 faq:
   - q: "How do I get to Whale Shark Snorkelling in Chole Bay from Kilindoni (Mafia Island Airport)?"
     a: "Mafia Island's airport is near Kilindoni, but most luxury lodges and the primary diving base sit in Utende on Chole Bay, about 15 kilometres away — transfers are usually arranged by the lodge or by taxi and take roughly half an hour."
   - q: "What's Kilindoni (Mafia Island Airport) like, and does this pairing make sense?"
-    a: "Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies. Confirm the current rate with your operator before booking, since park fees change."
+    a: "Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies. Confirm the current rate before booking, since park fees change."
   - q: "What exactly is Whale Shark Snorkelling in Chole Bay?"
     a: "Whale sharks aggregate around Mafia Island from October to February, with peak sightings November to January — one of the largest documented aggregations in the Indian Ocean. Operators report an 80-90% sighting success rate during peak season. Swimming is regulated: no touching and no underwater flash photography, and swimming rules (group size, boat approach distance) are set by the marine park and your registered operator — ask them for the current code of conduct."
 fact_ids:

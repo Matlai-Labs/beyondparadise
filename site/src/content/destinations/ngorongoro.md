@@ -1,6 +1,6 @@
 ---
-title: "Ngorongoro Crater Safari Guide — Seasons, Entry, and a Lodge Situation Worth Knowing About"
-description: "Ngorongoro's dry season runs June–October and again January–February, with the wet season (November–May) trading crowds for birding and lower rates. One planning note most guides miss: the crater rim's flagship lodge is closed for a full rebuild until 2027."
+title: "Ngorongoro Crater Safari Guide: Seasons, Entry, Lodges"
+description: "Ngorongoro Crater has dry seasons in June-October and January-February. The crater rim flagship lodge is closed for a full rebuild until 2027."
 permalink: "/east-africa/ngorongoro/"
 destination_id: "ngorongoro"
 region: "Ngorongoro, Tanzania"

@@ -1,6 +1,6 @@
 ---
-title: "Serengeti Safari Guide — When to Go, Where, and What You'll See"
-description: "The Serengeti in four zones, not one trip: Western Corridor migration crossings (June–July), Seronera's year-round big cats, Northern Lobo's quieter October–November window, and Ndutu's underrated calving season (December–February)."
+title: "Serengeti Safari Guide: When to Go, Where, What You See"
+description: "The Serengeti in four zones: Western Corridor crossings (June-July), Seronera big cats, quiet Lobo (Oct-Nov) and Ndutu calving (Dec-Feb)."
 permalink: "/east-africa/serengeti/"
 destination_id: "serengeti"
 region: "Serengeti, Tanzania"

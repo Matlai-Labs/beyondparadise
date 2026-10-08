@@ -1,0 +1,8 @@
+{ "_comment": "Cluster rollup definitions for scripts/seo-gates/cluster-rollup.mjs (first match wins).",
+  "clusters": [
+    { "name": "excursions",   "match": ["/excursions", "/excursions/*"] },
+    { "name": "wildlife",     "match": ["/wildlife", "/wildlife/*"] },
+    { "name": "destinations", "match": ["/east-africa", "/east-africa/*", "/destinations", "/destinations/*"] },
+    { "name": "intelligence", "match": ["/intelligence", "/intelligence/*"] },
+    { "name": "reviews",      "match": ["/reviews", "/reviews/*"] }
+  ] }

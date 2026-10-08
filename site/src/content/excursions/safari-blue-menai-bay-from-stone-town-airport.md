@@ -1,6 +1,6 @@
 ---
-title: "Safari Blue Dhow Day Trip, Menai Bay from Stone Town / Zanzibar Airport: What to Know Before You Go"
-description: "Lunch is served on Kwale Island, a small protected island inside the Menai Bay Conservation Area… Transfer: ~20min drive from Stone Town direct to Fumba."
+title: "Safari Blue Dhow Trip, Menai Bay: Fumba from Stone Town"
+description: "Safari Blue dhow day trip in Menai Bay: about 20 minutes from Stone Town to Fumba, lunch on Kwale Island, and 2026 pricing to confirm."
 permalink: "/excursions/safari-blue-menai-bay-from-stone-town-airport/"
 tour_id: "safari-blue-menai-bay"
 tour_name: "Safari Blue Dhow Day Trip, Menai Bay"

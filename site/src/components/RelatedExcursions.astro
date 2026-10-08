@@ -1,0 +1,34 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  tourIds?: string[];     // limit to these tours (omit = no excursion list, only the planning links)
+  heading?: string;
+}
+const { tourIds = [], heading = 'Plan the day trips' } = Astro.props;
+const all = await getCollection('excursions', ({ data }) => !data.draft);
+const picks = all.filter(p => tourIds.includes(p.data.tour_id));
+---
+<aside class="related-ex" aria-label={heading}>
+  <h2>{heading}</h2>
+  {picks.length > 0 && (
+    <ul>
+      {picks.map(p => <li><a href={p.data.permalink}>{p.data.title}</a></li>)}
+    </ul>
+  )}
+  <p>
+    All pickup areas are listed on the <a href="/excursions/">Zanzibar and Mafia Island excursions</a> page.
+    For the numbers behind these guides, see the <a href="/intelligence/east-africa-tourism-stats/">East Africa tourism statistics</a>
+    and the <a href="/intelligence/migration-calendar/">migration calendar</a>.
+  </p>
+</aside>
+
+<style>
+.related-ex { margin: 48px 0; padding-top: 32px; border-top: 1px solid var(--glass-b); }
+.related-ex h2 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(20px, 3vw, 24px); font-weight: 400; color: var(--cream); margin-bottom: 16px; }
+.related-ex ul { padding-left: 20px; margin-bottom: 16px; }
+.related-ex li { margin-bottom: 8px; color: var(--cream-65); }
+.related-ex p { color: var(--cream-65); line-height: 1.7; font-size: 15px; }
+.related-ex a { color: var(--gold); text-decoration: underline; text-decoration-color: rgba(201,169,110,0.4); }
+.related-ex a:hover { text-decoration-color: var(--gold); }
+</style>

@@ -1,6 +1,6 @@
 ---
-title: "Sea Turtles in Zanzibar — Where to See Them, Nesting Season, and Ethical Viewing Rules"
-description: "Green and hawksbill sea turtles in Zanzibar: where to snorkel with them (Mnemba Atoll), when nesting is reported, and why sources differ. Legal protections and ethical viewing rules."
+title: "Sea Turtles in Zanzibar: Where to See Them, Nesting Season"
+description: "Green and hawksbill turtles in Zanzibar: where to snorkel with them at Mnemba, when nesting is reported, why sources differ, and ethical viewing rules."
 permalink: "/wildlife/green-sea-turtle-zanzibar/"
 species_id: "green-sea-turtle"
 common_name: "Green Sea Turtle"

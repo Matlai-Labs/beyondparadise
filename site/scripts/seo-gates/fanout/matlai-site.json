@@ -1,0 +1,89 @@
+{
+  "_readme": "Fan-out coverage map for hotelmatlai.com. An AI answer engine splits a query into sub-questions ('query fan-out') and cites pages that answer each. A question counts as answered only if a hub/spoke H2, H3, <summary> (FAQ) or FAQPage Question matches a keyword or synonym - body-text mentions don't count, because that is what an engine extracts. Paths are site paths of the BUILT dist. Seeded 2026-10-08 from the SEO/AI audit gaps (halal, dietary, cancellation, weather, money, Ramadan). Run: node fanout-coverage.mjs <distDir> fanout/matlai-site.json",
+  "hubs": [
+    {
+      "hub": "honeymoon", "pages": ["/zanzibar-honeymoon-guide", "/honeymoon-hotel-zanzibar", "/romantic-getaway-zanzibar"], "prefixes": ["/zanzibar-honeymoon-guide/"],
+      "questions": [
+        { "id": "cost", "q": "How much does a Zanzibar honeymoon cost?", "keywords": ["cost", "price", "how much"], "synonyms": ["rates", "budget", "per night", "package"] },
+        { "id": "best-month", "q": "When is the best time for a honeymoon in Zanzibar?", "keywords": ["best time", "when to"], "synonyms": ["which month", "season"] },
+        { "id": "private-dinner", "q": "Can we have a private romantic dinner?", "keywords": ["private dinner", "romantic dinner", "candlelit"], "synonyms": ["dinner on the beach", "floating breakfast", "romantic"] },
+        { "id": "cancellation", "q": "What is the cancellation policy?", "keywords": ["cancel"], "synonyms": ["refund", "change my booking", "flexible", "free cancellation"] },
+        { "id": "wedding-legal", "q": "Can we marry or renew vows in Zanzibar?", "keywords": ["wedding", "marry", "vow"], "synonyms": ["ceremony", "elope"] },
+        { "id": "spa-couples", "q": "Is there a couples spa treatment?", "keywords": ["couples massage", "spa"], "synonyms": ["massage", "treatment"] }
+      ]
+    },
+    {
+      "hub": "dining", "pages": ["/restaurant-michamvi-zanzibar", "/restaurant-reservation-zanzibar"], "prefixes": ["/restaurant-michamvi-zanzibar/"],
+      "questions": [
+        { "id": "halal", "q": "Is the food halal?", "keywords": ["halal"], "synonyms": ["muslim", "pork-free", "pork free", "no pork", "no alcohol"] },
+        { "id": "dietary", "q": "Do you cater for vegetarian, vegan, gluten-free and allergies?", "keywords": ["vegetarian", "vegan", "gluten", "allerg", "dietary"], "synonyms": ["special diet", "lactose", "dairy-free"] },
+        { "id": "outside-guests", "q": "Can non-guests book a table?", "keywords": ["non-guest", "walk-in", "book a table", "reserve"], "synonyms": ["reservation", "outside guests", "open to the public"] },
+        { "id": "menu-prices", "q": "What does dinner cost / see the menu", "keywords": ["menu"], "synonyms": ["prices", "a la carte", "à la carte", "set menu"] },
+        { "id": "ramadan-dining", "q": "Is the restaurant open during Ramadan?", "keywords": ["ramadan"], "synonyms": ["fasting", "iftar"] },
+        { "id": "kids-menu", "q": "Is there a children's menu?", "keywords": ["children", "kids"], "synonyms": ["family", "child-friendly"] }
+      ]
+    },
+    {
+      "hub": "best-time", "pages": ["/zanzibar-travel-guide/best-time-to-visit-zanzibar", "/zanzibar-travel-guide", "/zanzibar-travel-guide/ramadan-zanzibar-east-coast"], "prefixes": [],
+      "questions": [
+        { "id": "weather", "q": "What is the weather like month by month?", "keywords": ["weather", "temperature", "climate"], "synonyms": ["rainy season", "dry season", "monsoon", "rainfall", "hot"] },
+        { "id": "rains", "q": "When are the rains?", "keywords": ["rain", "masika", "wet season"], "synonyms": ["rainy season", "long rains", "short rains"] },
+        { "id": "ramadan", "q": "What changes during Ramadan?", "keywords": ["ramadan"], "synonyms": ["fasting", "eid", "iftar"] },
+        { "id": "crowds", "q": "When is it quietest / cheapest?", "keywords": ["quiet", "crowd", "low season", "cheap"], "synonyms": ["high season", "peak season", "off-season", "shoulder"] },
+        { "id": "seaweed-season", "q": "When is there seaweed on the beach?", "keywords": ["seaweed"], "synonyms": ["algae", "tide calendar"] },
+        { "id": "water-temp", "q": "How warm is the sea?", "keywords": ["water temperature", "sea temperature", "swim"], "synonyms": ["warm water", "swimming"] }
+      ]
+    },
+    {
+      "hub": "getting-there", "pages": ["/zanzibar-travel-guide/flights-to-zanzibar", "/plan-your-zanzibar-trip/zanzibar-entry-requirements", "/plan-your-zanzibar-trip/getting-around-zanzibar"], "prefixes": [],
+      "questions": [
+        { "id": "direct-flights", "q": "Are there direct flights from Europe/UK?", "keywords": ["direct flight", "non-stop", "nonstop"], "synonyms": ["from london", "from europe", "airlines", "which airlines"] },
+        { "id": "transfer-time", "q": "How long is the transfer from the airport to Michamvi?", "keywords": ["transfer", "airport"], "synonyms": ["how far", "drive from", "pickup", "pick-up", "taxi"] },
+        { "id": "visa", "q": "Do I need a visa?", "keywords": ["visa", "entry"], "synonyms": ["passport", "e-visa", "evisa", "yellow fever"] },
+        { "id": "money", "q": "Which currency, ATMs and cards?", "keywords": ["money", "currency", "atm", "cash"], "synonyms": ["credit card", "us dollar", "shilling", "tipping", "exchange"] },
+        { "id": "getting-around", "q": "How do I get around once there?", "keywords": ["getting around", "taxi", "dala", "rent"], "synonyms": ["scooter", "car hire", "bolt", "tuk"] },
+        { "id": "mainland-connections", "q": "How do I combine with a safari?", "keywords": ["safari"], "synonyms": ["arusha", "mainland", "dar es salaam"] }
+      ]
+    },
+    {
+      "hub": "safety", "pages": ["/plan-your-zanzibar-trip/is-zanzibar-safe", "/plan-your-zanzibar-trip/zanzibar-culture-etiquette"], "prefixes": [],
+      "questions": [
+        { "id": "crime", "q": "Is Zanzibar safe for tourists?", "keywords": ["safe", "safety", "crime"], "synonyms": ["scam", "petty theft", "security"] },
+        { "id": "women-solo", "q": "Is it safe for solo women?", "keywords": ["solo", "women"], "synonyms": ["female traveller", "alone"] },
+        { "id": "health", "q": "Vaccinations, malaria and water?", "keywords": ["malaria", "vaccin", "health"], "synonyms": ["tap water", "drinking water", "mosquito", "doctor", "hospital"] },
+        { "id": "dress", "q": "What should I wear / local etiquette?", "keywords": ["dress", "wear", "etiquette", "modest"], "synonyms": ["culture", "customs", "respect"] },
+        { "id": "lgbt", "q": "Is it OK for same-sex couples?", "keywords": ["lgbt", "same-sex", "gay"], "synonyms": ["couples", "law"] }
+      ]
+    },
+    {
+      "hub": "seaweed-tides", "pages": ["/zanzibar-travel-guide/zanzibar-seaweed-season-tide-calendar", "/zanzibar-travel-guide/zanzibar-east-coast-guide"], "prefixes": [],
+      "questions": [
+        { "id": "seaweed", "q": "Is there seaweed on the beach?", "keywords": ["seaweed"], "synonyms": ["algae", "weed"] },
+        { "id": "tides", "q": "How do tides affect swimming?", "keywords": ["tide", "low tide", "high tide"], "synonyms": ["swimming", "swimmable", "tide times"] },
+        { "id": "spring-tide", "q": "When are the spring tides?", "keywords": ["spring tide", "full moon", "new moon"], "synonyms": ["moon"] },
+        { "id": "seaweed-farms", "q": "What are the seaweed farms?", "keywords": ["seaweed farm", "farmers"], "synonyms": ["farming", "women"] },
+        { "id": "pool-alt", "q": "What if the sea is out?", "keywords": ["pool"], "synonyms": ["when the tide is out", "alternatives"] }
+      ]
+    },
+    {
+      "hub": "family", "pages": ["/boutique-hotel-zanzibar/family-luxury-zanzibar", "/private-villa-zanzibar/private-villa-zanzibar-for-groups"], "prefixes": [],
+      "questions": [
+        { "id": "kids-age", "q": "Are children welcome / any age limit?", "keywords": ["children", "kids", "age"], "synonyms": ["family", "babies", "toddler", "child"] },
+        { "id": "family-room", "q": "Where do a family of 4-5 sleep?", "keywords": ["family room", "villa", "bedroom"], "synonyms": ["extra bed", "interconnecting", "sleeps"] },
+        { "id": "babysitting", "q": "Is babysitting or a kids club available?", "keywords": ["babysit", "kids club"], "synonyms": ["nanny", "childcare"] },
+        { "id": "pool-safety", "q": "Are the pools safe for small children?", "keywords": ["pool"], "synonyms": ["fenced", "shallow", "lifeguard"] },
+        { "id": "family-meals", "q": "What do kids eat?", "keywords": ["kids menu", "children's menu"], "synonyms": ["family dining", "meals"] }
+      ]
+    },
+    {
+      "hub": "accessibility", "pages": ["/accessibility", "/private-villa-zanzibar/villa-kidosho-private-rental"], "prefixes": [],
+      "questions": [
+        { "id": "wheelchair", "q": "Is the hotel wheelchair accessible?", "keywords": ["wheelchair", "accessible", "accessibility"], "synonyms": ["step-free", "reduced mobility", "disabled"] },
+        { "id": "which-room", "q": "Which room suits guests with limited mobility?", "keywords": ["kidosho", "ground floor"], "synonyms": ["entrance", "no steps"] },
+        { "id": "bathroom", "q": "What is the bathroom like?", "keywords": ["bathroom", "shower"], "synonyms": ["grab rail", "walk-in"] },
+        { "id": "restaurant-access", "q": "Can I reach the restaurant and pool?", "keywords": ["restaurant", "pool"], "synonyms": ["terrace", "carried", "butler"] },
+        { "id": "tell-us", "q": "How do I request assistance?", "keywords": ["contact", "request", "tell us"], "synonyms": ["let us know", "flag"] }
+      ]
+    }
+  ]
+}

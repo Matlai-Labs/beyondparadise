@@ -1,6 +1,6 @@
 ---
-title: "Stone Town & Spice Farm Day Trip from Kendwa: What to Know Before You Go"
-description: "Kendwa is just down the coast from Nungwi, and the two beaches behave differently underfoot… Transfer: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town."
+title: "Stone Town Spice Tour from Kendwa: Swimmable at Low Tide"
+description: "Stone Town and spice farm day trip from Kendwa: 1-1.5 hours to the airport, and why Kendwa stays swimmable through the tide cycle while Nungwi does not."
 permalink: "/excursions/stone-town-spice-tour-from-kendwa/"
 tour_id: "stone-town-spice-tour"
 tour_name: "Stone Town & Spice Farm Day Trip"

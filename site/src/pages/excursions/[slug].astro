@@ -2,6 +2,12 @@
 import { getCollection } from 'astro:content';
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
 
+// Operator links are listed only where the operator's own site is already a cited source in
+// facts.json. Plain links, no affiliate tracking.
+const OPERATORS: Record<string, { name: string; url: string }> = {
+  'safari-blue-menai-bay': { name: 'Safari Blue (operator site, current packages and prices)', url: 'https://safariblue.net/tours/original-experience/' },
+};
+
 export async function getStaticPaths() {
   const pages = await getCollection('excursions', ({ data }) => !data.draft);
   return pages.map(p => ({ params: { slug: p.slug }, props: { page: p, all: pages } }));
@@ -10,6 +16,7 @@ export async function getStaticPaths() {
 const { page, all } = Astro.props;
 const { Content } = await page.render();
 const d = page.data;
+const operator = OPERATORS[d.tour_id];
 
 // Sibling pickup-area pages for the same tour, for the "Other departure points" cross-link block.
 const siblings = all
@@ -50,9 +57,24 @@ const siblings = all
       </ul>
     </section>
   )}
+  <section class="next-steps">
+    <h2>Book and keep planning</h2>
+    <ul>
+      {operator && <li><a href={operator.url} rel="noopener" target="_blank">{operator.name}</a>. This is a plain link, not an affiliate link; Beyond Paradise Adventures earns nothing from it.</li>}
+      {!operator && <li>Ask your lodge to confirm the current operator, price and pickup time for {d.tour_name} from {d.pickup_area_name}. We do not resell day tours.</li>}
+      <li><a href="/excursions/">All excursions by pickup area</a></li>
+      <li><a href="/intelligence/migration-calendar/">Migration and marine wildlife calendar</a> for the right month</li>
+      <li><a href="/intelligence/east-africa-tourism-stats/">East Africa tourism statistics</a> and park costs</li>
+    </ul>
+  </section>
 </ArticleLayout>
 
 <style>
+.next-steps { margin: 48px 0; padding-top: 32px; border-top: 1px solid var(--glass-b); }
+.next-steps h2 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(20px, 3vw, 24px); font-weight: 400; color: var(--cream); margin-bottom: 16px; }
+.next-steps ul { padding-left: 20px; }
+.next-steps li { margin-bottom: 8px; color: var(--cream-65); }
+.next-steps a { color: var(--gold); text-decoration: underline; text-decoration-color: rgba(201,169,110,0.4); }
 .other-departures {
   margin: 48px 0;
   padding-top: 32px;

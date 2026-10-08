@@ -1,0 +1,30 @@
+<!-- GTM "Custom HTML" tag: AI Assistant source tagging. Trigger: "Initialization - All Pages" (fires before GA4 config).
+     Pushes {ai_source:'chatgpt'|...} to dataLayer once per page view when the visit came from an AI assistant, and
+     stores it for the session so later pages in the same visit keep the label.
+     Pair with a GTM Data Layer Variable "dlv - ai_source" and add it as an Event parameter / User property (ai_source) on the GA4 config tag.
+     Mirror of ai-source.mjs — keep the table in sync (tests/ga4-ai.test.mjs checks the hosts). No cookies, sessionStorage only. -->
+<script>
+(function () {
+  var T = [
+    ['chatgpt', /(^|\.)(chatgpt\.com|chat\.openai\.com|openai\.com)$/],
+    ['perplexity', /(^|\.)perplexity\.ai$/],
+    ['claude', /(^|\.)claude\.ai$/],
+    ['gemini', /(^|\.)gemini\.google\.com$/],
+    ['copilot', /(^|\.)(copilot\.microsoft\.com|copilot\.com)$/],
+    ['you', /(^|\.)you\.com$/], ['phind', /(^|\.)phind\.com$/], ['poe', /(^|\.)poe\.com$/], ['meta_ai', /(^|\.)meta\.ai$/],
+    ['grok', /(^|\.)grok\.com$/], ['deepseek', /(^|\.)deepseek\.com$/], ['kagi', /(^|\.)kagi\.com$/]
+  ]; // hosts: chatgpt.com chat.openai.com perplexity.ai claude.ai gemini.google.com copilot.microsoft.com you.com phind.com poe.com meta.ai grok.com deepseek.com kagi.com
+  function classify() {
+    var utm = '', host = '', path = '';
+    try { utm = (new URLSearchParams(location.search).get('utm_source') || '').toLowerCase(); } catch (e) {}
+    try { var u = new URL(document.referrer); host = u.hostname.toLowerCase(); path = u.pathname; } catch (e) {}
+    var probes = [utm, host];
+    for (var p = 0; p < probes.length; p++) { if (!probes[p]) continue; for (var i = 0; i < T.length; i++) if (T[i][1].test(probes[p])) return T[i][0]; }
+    if (/(^|\.)bing\.com$/.test(host) && /^\/chat/.test(path)) return 'copilot';
+    return null;
+  }
+  var label = classify(), KEY = 'ai_source';
+  try { if (label) sessionStorage.setItem(KEY, label); else label = sessionStorage.getItem(KEY); } catch (e) {}
+  if (label) { window.dataLayer = window.dataLayer || []; window.dataLayer.push({ ai_source: label, event: 'ai_source_detected' }); }
+})();
+</script>

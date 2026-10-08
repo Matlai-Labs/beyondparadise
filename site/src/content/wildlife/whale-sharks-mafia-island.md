@@ -1,6 +1,6 @@
 ---
-title: "Whale Sharks at Mafia Island — Complete Guide (Season, Ethics, Operators)"
-description: "When to swim with whale sharks at Mafia Island, Tanzania. Season October–February, peak November–January. How to choose an ethical operator. What to expect in the water. First-hand guide from someone based in East Africa."
+title: "Whale Sharks at Mafia Island: Season, Ethics, Operators"
+description: "When to swim with whale sharks at Mafia Island, Tanzania: season October-February, peak November-January, and how to choose an ethical operator."
 permalink: "/wildlife/whale-sharks-mafia-island/"
 species_id: "whale-shark"
 common_name: "Whale Shark"

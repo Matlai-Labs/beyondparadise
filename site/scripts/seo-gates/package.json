@@ -1,0 +1,13 @@
+{
+  "name": "seo-gates",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dependency-free SEO/AI-visibility gates (Node >= 20): click-depth, title-gate, stale-page, claim-clock, cluster-rollup, fan-out coverage, GA4 AI channel.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "gates": "node claim-clock.mjs $DIST && node title-gate.mjs $DIST && node click-depth.mjs $DIST && node stale-page.mjs $DIST",
+    "flips": "node claim-clock.mjs --flips"
+  },
+  "engines": { "node": ">=20" }
+}

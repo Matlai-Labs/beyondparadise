@@ -1,6 +1,12 @@
 ---
 import { getCollection } from 'astro:content';
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import RelatedExcursions from '../../components/RelatedExcursions.astro';
+
+const DEST_TOURS: Record<string, string[]> = {
+  zanzibar: ['stone-town-spice-tour', 'mnemba-atoll-snorkeling', 'safari-blue-menai-bay'],
+  'mafia-island': ['mafia-whale-shark-snorkelling', 'mafia-marine-park-diving'],
+};
 
 export async function getStaticPaths() {
   const guides = await getCollection('destinations', ({ data }) => !data.draft);
@@ -27,4 +33,5 @@ const d = guide.data;
   }}
 >
   <Content />
+  <RelatedExcursions tourIds={DEST_TOURS[d.destination_id] ?? []} heading={DEST_TOURS[d.destination_id] ? `Day trips from ${d.destination_id === 'zanzibar' ? 'Zanzibar' : 'Mafia Island'}` : 'Keep planning'} />
 </ArticleLayout>

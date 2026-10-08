@@ -1,0 +1,5 @@
+{
+  "_comment": "Deliberate exceptions. key = site path glob (or file path for markdown), value = rule names or \"*\". Rules: too-long near-limit too-short missing ai-style no-keyword duplicate near-duplicate",
+  "/recognition": ["too-long"],
+  "/legal/*": "*"
+}

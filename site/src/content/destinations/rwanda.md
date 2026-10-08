@@ -1,6 +1,6 @@
 ---
-title: "Rwanda Gorilla Trekking Guide — Permits, Season, and Why the Sighting Odds Are So High"
-description: "Volcanoes National Park holds roughly a third of the world's remaining mountain gorillas, with a 98-99% trekking sighting rate. Permit cost, rules, conservation model, and when to go."
+title: "Rwanda Gorilla Trekking: Permits, Season, Sighting Odds"
+description: "Volcanoes National Park holds roughly a third of the world mountain gorillas, with a 98-99% trekking sighting rate. Permits, rules and when to go."
 permalink: "/east-africa/rwanda/"
 destination_id: "rwanda"
 region: "Rwanda"
