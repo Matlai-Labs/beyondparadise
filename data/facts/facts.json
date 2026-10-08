@@ -875,11 +875,11 @@
       "lastChecked": "2026-06-27"
     },
     {
-      "id": "matlai-location-context",
+      "id": "michamvi-location-context",
       "topic": "destinations",
       "region": "zanzibar",
       "claim": "Michamvi Pingwe location and character",
-      "value": "Michamvi Pingwe is a small fishing village on Zanzibar's southeast coast, approximately 45km from Stone Town (1 hour drive). The peninsula offers calm lagoon waters on the west and open Indian Ocean on the east. This is the location of Hotel Matlai — Tim's base of operations.",
+      "value": "Michamvi Pingwe is a small fishing village on Zanzibar's southeast coast, approximately 45km from Stone Town (1 hour drive). The peninsula offers calm lagoon waters on the west and open Indian Ocean on the east. Tim lives on this peninsula.",
       "sources": [
         "tim-firsthand"
       ],
@@ -1782,6 +1782,13 @@
       "claim": "US citizens require a visa for travel to Tanzania, costing $100 USD for a multiple-entry visa valid for one year, allowing stays of up to 90 days per visit; the U.S. Embassy recommends obtaining it in advance via the official e-visa system.",
       "sources": [
         {
+          "name": "Tanzania Immigration Department, Visa Fees",
+          "url": "https://www.immigration.go.tz/index.php/en/information/events/184",
+          "tier": 1,
+          "accessed": "2026-10-08",
+          "quote": "American citizens are required to apply for a Multiple entry Visa in which they are charged a fee of 100 USD for twelve months for holiday/tourism purpose."
+        },
+        {
           "name": "U.S. Embassy",
           "url": "https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/Tanzania.html",
           "tier": null,
@@ -1814,6 +1821,13 @@
       "id": "tanzania-entry-entry-2",
       "claim": "EU and UK citizens generally require a single-entry tourist visa for Tanzania, typically valid for up to 90 days and costing $50 USD, which can be obtained via e-visa online or on arrival.",
       "sources": [
+        {
+          "name": "Tanzania eVisa portal and Immigration Department guidance",
+          "url": "https://visa.immigration.go.tz/guidelines",
+          "tier": 1,
+          "accessed": "2026-10-08",
+          "quote": "Ordinary (single-entry) visa 50 USD, validity not exceeding three months for a single entry; an invoice above 50 USD for an Ordinary Visa means the applicant used a visa agent or unauthorised link."
+        },
         {
           "name": "Tanzania Immigration Department",
           "url": "https://immigration.go.tz/",

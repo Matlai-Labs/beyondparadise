@@ -17,8 +17,10 @@ const gscToken = (import.meta.env.PUBLIC_GSC_VERIFICATION as string | undefined)
 
 const ORG_ID = 'https://beyondparadiseadventures.com/#organization';
 // sameAs holds only identifiers verified to exist: the Wikidata item for the brand (Q140420385,
-// label "Beyond Paradise Adventures", checked against wikidata.org 2026-10-08). No social profile
-// URLs are listed until Tim confirms the real ones (the previously linked YouTube handles 404).
+// label "Beyond Paradise Adventures") plus the social profiles, each fetched with HTTP 200 and the
+// right title on 2026-10-08: Facebook Page 546924778515067 and Instagram @beyondparadiseadventures
+// (from social/config.json + Meta Graph), YouTube @BPA-Africa and @beyondparadiseadventures (the
+// latter is titled "BPA - Asia"). The old @BeyondParadiseAfrica/@BeyondParadiseAsia handles 404.
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
@@ -31,7 +33,13 @@ const organizationSchema = {
     name: 'Tim Hennig',
     sameAs: ['https://www.wikidata.org/wiki/Q140307013'],
   },
-  sameAs: ['https://www.wikidata.org/wiki/Q140420385'],
+  sameAs: [
+  'https://www.wikidata.org/wiki/Q140420385',
+  'https://www.facebook.com/beyondparadiseadventures',
+  'https://www.instagram.com/beyondparadiseadventures/',
+  'https://www.youtube.com/@BPA-Africa',
+  'https://www.youtube.com/@beyondparadiseadventures',
+],
 };
 const websiteSchema = {
   '@context': 'https://schema.org',

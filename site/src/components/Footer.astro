@@ -17,6 +17,12 @@ const intelligence = [
   { label: 'Newsletter', href: '/#newsletter' },
   { label: 'Editorial Policy', href: '/about/editorial-policy/' },
 ];
+const social = [
+  { label: 'Facebook', href: 'https://www.facebook.com/beyondparadiseadventures' },
+  { label: 'Instagram', href: 'https://www.instagram.com/beyondparadiseadventures/' },
+  { label: 'YouTube (Africa)', href: 'https://www.youtube.com/@BPA-Africa' },
+  { label: 'YouTube (Asia)', href: 'https://www.youtube.com/@beyondparadiseadventures' },
+];
 ---
 <footer class="footer" role="contentinfo">
   <div class="footer__top">
@@ -26,6 +32,7 @@ const intelligence = [
           <span class="footer__wordmark">Beyond Paradise Adventures</span>
           <p class="footer__desc">Luxury travel intelligence for East Africa and Southeast Asia. Written by people who live there.</p>
           <p class="footer__credit">Tim Hennig — Zanzibar &nbsp;·&nbsp; Kim — Vietnam</p>
+          <p class="footer__credit">{social.map((l, i) => <><a href={l.href} rel="me noopener" target="_blank">{l.label}</a>{i < social.length - 1 ? ' · ' : ''}</>)}</p>
         </div>
         <div class="footer__col">
           <p class="footer__col-title">East Africa</p>
