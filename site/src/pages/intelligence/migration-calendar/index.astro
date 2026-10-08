@@ -1,17 +1,36 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import calendar from '@data/wildlife/calendar.json';
+import { resolvedWindows } from '../../../lib/facts-stats';
 
 const months = Object.entries(calendar.months);
 const quick = calendar.quick_reference;
 
+const windows = resolvedWindows();
+const windowsVerified = windows.map(w => w.fact.verified).sort().pop()!;
+const fmtDate = (d: string) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const calUrl = 'https://beyondparadiseadventures.com/intelligence/migration-calendar/';
+const dataset = {
+  '@context': 'https://schema.org',
+  '@type': 'Dataset',
+  name: 'East Africa migration and marine wildlife season windows',
+  description: 'Sourced season windows and peak months for the Great Migration, Mafia Island whale sharks and Tanzanian humpback whale passage.',
+  url: calUrl,
+  isAccessibleForFree: true,
+  inLanguage: 'en',
+  dateModified: windowsVerified,
+  spatialCoverage: { '@type': 'Place', name: 'Serengeti, Masai Mara, Mafia Island and Zanzibar' },
+  creator: { '@type': 'Organization', name: 'Beyond Paradise Adventures', url: 'https://beyondparadiseadventures.com', sameAs: ['https://www.wikidata.org/wiki/Q140420385'] },
+  variableMeasured: windows.map(w => w.event),
+  citation: [...new Set(windows.flatMap(w => w.fact.sources.map(x => x.url)))],
+};
 const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 ---
 <Base
-  title="East Africa Migration Calendar 2026 — When to See the Great Migration · Beyond Paradise Adventures"
-  description="Month-by-month wildlife encounter calendar for East Africa and Vietnam. Whale sharks Mafia Island, wildebeest migration Serengeti and Masai Mara, dolphins Zanzibar, sea turtles. First-hand intelligence from Tim Hennig."
-  permalink="/intelligence/migration-calendar/"
+  title="East Africa Migration Calendar: When to Go, Month by Month"
+  description="Month-by-month East Africa wildlife calendar: Great Migration crossings, Ndutu calving, Mafia whale sharks and Zanzibar dolphins, with sources."
 >
+  <script type="application/ld+json" set:html={JSON.stringify(dataset)} slot="head" />
   <div class="cal-page">
     <div class="cal-hero section--dark">
       <div class="container">
@@ -34,6 +53,32 @@ const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct',
             </div>
           ))}
         </div>
+      </section>
+
+      <!-- Sourced season windows -->
+      <section class="cal-windows reveal" id="season-windows">
+        <h2 class="display-s" style="margin-bottom:12px;">When does the Great Migration happen? Season windows</h2>
+        <p class="cal-windows__lead">Each window below is a confirmed fact backed by two or more independent sources. Sources last checked {fmtDate(windowsVerified)}.</p>
+        <div class="cal-windows__wrap">
+          <table class="cal-windows__table">
+            <caption class="sr-only">Season windows and peak months</caption>
+            <thead><tr><th scope="col">Event</th><th scope="col">Where</th><th scope="col">Window</th><th scope="col">Peak</th><th scope="col">Sources</th></tr></thead>
+            <tbody>
+              {windows.map(w => (
+                <tr>
+                  <th scope="row">{w.event}</th>
+                  <td>{w.where}</td>
+                  <td class="cal-windows__win">{w.window}</td>
+                  <td>{w.peak}</td>
+                  <td class="cal-windows__src">
+                    {w.fact.sources.slice(0, 2).map(src => <a href={src.url} rel="noopener" target="_blank">{src.name}</a>)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="cal-windows__note">Related numbers: <a href="/intelligence/east-africa-tourism-stats/">East Africa tourism statistics</a> (wildebeest counts, whale shark numbers, park costs).</p>
       </section>
 
       <!-- Month-by-month -->
@@ -103,6 +148,19 @@ const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct',
 </Base>
 
 <style>
+.cal-windows { margin-bottom: 80px; }
+.cal-windows__lead { color: var(--cream-65); margin-bottom: 20px; font-size: 14px; }
+.cal-windows__wrap { overflow-x: auto; }
+.cal-windows__table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.cal-windows__table th, .cal-windows__table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--glass-b); vertical-align: top; color: var(--cream-65); }
+.cal-windows__table thead th { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream-38); font-weight: 600; }
+.cal-windows__table tbody th { color: var(--cream); font-weight: 500; }
+.cal-windows__table .cal-windows__win { color: var(--gold); font-weight: 600; white-space: nowrap; }
+.cal-windows__src { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.cal-windows__src a { color: var(--teal-l); text-decoration: underline; text-decoration-color: rgba(74,171,184,0.4); }
+.cal-windows__note { margin-top: 16px; font-size: 14px; color: var(--cream-65); }
+.cal-windows__note a { color: var(--gold); text-decoration: underline; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .cal-hero { padding: 140px 0 80px; }
 .cal-body { padding: 64px 0 120px; }
 

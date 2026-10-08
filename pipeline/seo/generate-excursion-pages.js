@@ -113,12 +113,17 @@ function main() {
     for (const area of tour.pickup_areas) {
       const slug = `${tour.id}-from-${area.area_id}`;
       const permalink = `/excursions/${slug}/`;
-      const title = `${tour.name} from ${area.area_name}: What to Know Before You Go`;
-
-      const transferClause = area.transfer_short ? `Transfer: ${area.transfer_short}.` : '';
-      const descBudget = Math.max(40, 158 - transferClause.length - 1);
-      const charSnippet = area.character_text ? truncate(area.character_text, descBudget) : truncate(tour.intro_text, descBudget);
-      const description = [charSnippet, transferClause].filter(Boolean).join(' ');
+      // SEO title/description are hand-written per pickup area in excursions.json
+      // (seo_title <= 60 chars, seo_description <= 155 chars, complete sentence).
+      // No auto-truncation: it produced mid-sentence "..." descriptions and
+      // 100+ char titles. The site build gate (site/scripts/content-gate.mjs)
+      // enforces the same limits.
+      if (!area.seo_title || !area.seo_description) {
+        console.error(`FATAL: ${tour.id}/${area.area_id} is missing seo_title / seo_description in excursions.json`);
+        process.exit(2);
+      }
+      const title = area.seo_title;
+      const description = area.seo_description;
 
       const answerParts = [
         `${tour.name} from ${area.area_name}: ${area.transfer_short || area.transfer_text}.`,

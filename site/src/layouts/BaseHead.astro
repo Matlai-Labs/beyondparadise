@@ -7,19 +7,41 @@ interface Props {
 }
 const { title, description, ogImage = '/og-default.jpg', canonicalUrl } = Astro.props;
 const canon = canonicalUrl ?? new URL(Astro.url.pathname, Astro.site).toString();
+const ogAbs = new URL(ogImage, Astro.site).toString();
 
+// Measurement + verification are env-gated: nothing is emitted until the IDs are set at build time.
+//   PUBLIC_GA4_ID                  e.g. G-XXXXXXXXXX
+//   PUBLIC_GSC_VERIFICATION        the content value of Search Console's HTML-tag verification
+const ga4Id = (import.meta.env.PUBLIC_GA4_ID as string | undefined)?.trim();
+const gscToken = (import.meta.env.PUBLIC_GSC_VERIFICATION as string | undefined)?.trim();
+
+const ORG_ID = 'https://beyondparadiseadventures.com/#organization';
+// sameAs holds only identifiers verified to exist: the Wikidata item for the brand (Q140420385,
+// label "Beyond Paradise Adventures", checked against wikidata.org 2026-10-08). No social profile
+// URLs are listed until Tim confirms the real ones (the previously linked YouTube handles 404).
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': ORG_ID,
+  name: 'Beyond Paradise Adventures',
+  url: 'https://beyondparadiseadventures.com',
+  description: 'Independent travel editorial brand covering East Africa: sourced wildlife seasons, ethics and costs. No press trips, no hosted stays.',
+  founder: {
+    '@type': 'Person',
+    name: 'Tim Hennig',
+    sameAs: ['https://www.wikidata.org/wiki/Q140307013'],
+  },
+  sameAs: ['https://www.wikidata.org/wiki/Q140420385'],
+};
 const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
+  '@id': 'https://beyondparadiseadventures.com/#website',
   name: 'Beyond Paradise Adventures',
   url: 'https://beyondparadiseadventures.com',
-  description: 'Luxury travel intelligence for East Africa and Southeast Asia. €6,000+ trips only.',
-  author: {
-    '@type': 'Person',
-    name: 'Tim Hennig',
-    jobTitle: 'General Manager, Boutique Hotel Matlai',
-    address: { '@type': 'PostalAddress', addressLocality: 'Zanzibar' },
-  },
+  description: 'Independent East Africa travel intelligence: sourced wildlife seasons, ethics grades and lodge scores earned on paid stays.',
+  inLanguage: 'en',
+  publisher: { '@id': ORG_ID },
 };
 ---
 <meta charset="utf-8" />
@@ -28,6 +50,7 @@ const websiteSchema = {
 <link rel="canonical" href={canon} />
 <title>{title}</title>
 <meta name="description" content={description} />
+{gscToken && <meta name="google-site-verification" content={gscToken} />}
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -39,14 +62,45 @@ const websiteSchema = {
 <meta property="og:url" content={canon} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={ogImage} />
+<meta property="og:image" content={ogAbs} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
 <meta property="og:site_name" content="Beyond Paradise Adventures" />
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
-<meta name="twitter:image" content={ogImage} />
+<meta name="twitter:image" content={ogAbs} />
 
-<!-- Schema: Website + Person -->
+<!-- Schema: Organization + WebSite -->
+<script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />
 <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+
+{ga4Id && (
+  <>
+    <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}></script>
+    <script is:inline define:vars={{ ga4Id }}>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      // Consent Mode v2: analytics denied by default (no consent banner exists on this site yet),
+      // so GA4 receives cookieless pings only. Switch to 'granted' only with a lawful basis.
+      gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied', wait_for_update: 500 });
+      // AI-referral segmentation, same signal as matlai-site Base.astro: GA4 files ChatGPT,
+      // Perplexity etc. under "Referral" or "Direct". Two inputs: the referrer, and ?src=ai / utm_source=ai.
+      var AI_REF = /(^|\.)(chat\.openai|chatgpt|perplexity|claude\.ai|anthropic|copilot|bing\.com\/chat|gemini\.google|bard\.google|you\.com|phind|poe\.com)\./i;
+      var aiSource = '';
+      try {
+        var p = new URLSearchParams(location.search);
+        if (p.get('src') === 'ai' || p.get('utm_source') === 'ai') aiSource = p.get('utm_medium') || 'tool';
+        else if (document.referrer) {
+          var host = new URL(document.referrer).hostname;
+          if (AI_REF.test(host + '.')) aiSource = host.replace(/^www\./, '');
+        }
+      } catch (e) {}
+      dataLayer.push({ ai_source: aiSource || 'none', is_ai_referral: !!aiSource });
+      gtag('config', ga4Id, { ai_source: aiSource || 'none', is_ai_referral: !!aiSource });
+    </script>
+  </>
+)}

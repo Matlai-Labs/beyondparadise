@@ -18,7 +18,7 @@ for (const p of pages) {
 ---
 <Base
   title="Excursions & Day Trips — Beyond Paradise Adventures"
-  description="Practical, fact-checked logistics for real excursions across East Africa, organized by where you're staying: transfer times, seasons, and what to expect — built only from our verified facts database."
+  description="Zanzibar and Mafia Island day-trip planning by pickup area: transfer times, seasons and park rules, built only from our sourced facts database."
 >
   <div class="container excursions-hub">
     <h1 class="display-l">Excursions & Day Trips</h1>
@@ -33,11 +33,22 @@ for (const p of pages) {
         <h2>{byTour[tourId].tour_name}</h2>
         <ul>
           {byTour[tourId].items.map(item => (
-            <li><a href={item.data.permalink}>From {item.data.pickup_area_name}</a></li>
+            <li><a href={item.data.permalink}>{item.data.tour_name} from {item.data.pickup_area_name}</a></li>
           ))}
         </ul>
       </section>
     ))}
+
+    <section class="excursions-hub__tour">
+      <h2>Plan around the season</h2>
+      <ul>
+        <li><a href="/intelligence/migration-calendar/">Migration and marine wildlife calendar</a>, to pick the right month</li>
+        <li><a href="/east-africa/zanzibar/">Zanzibar travel guide</a>: seasons, entry rules and mandatory inbound insurance</li>
+        <li><a href="/east-africa/mafia-island/">Mafia Island travel guide</a>: whale shark season and marine park fees</li>
+        <li><a href="/wildlife/dolphins-menai-bay/">Dolphins in Menai Bay</a> and <a href="/wildlife/green-sea-turtle-zanzibar/">sea turtles in Zanzibar</a></li>
+        <li><a href="/intelligence/east-africa-tourism-stats/">East Africa tourism statistics</a>, including Zanzibar and Tanzania entry costs</li>
+      </ul>
+    </section>
   </div>
 </Base>
 

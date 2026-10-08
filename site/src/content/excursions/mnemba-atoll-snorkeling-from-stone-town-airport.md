@@ -1,6 +1,6 @@
 ---
-title: "Mnemba Atoll Snorkeling from Stone Town / Zanzibar Airport: What to Know Before You Go"
-description: "Best paired with the October-March window, when the Indian Ocean is calmest and… Transfer: road transfer to Matemwe, then a short boat crossing."
+title: "Mnemba Atoll Snorkeling from Stone Town: Matemwe Boat"
+description: "Snorkel Mnemba Atoll from Stone Town or the airport: road transfer to Matemwe, a short boat crossing, and why October-March is the calmest window."
 permalink: "/excursions/mnemba-atoll-snorkeling-from-stone-town-airport/"
 tour_id: "mnemba-atoll-snorkeling"
 tour_name: "Mnemba Atoll Snorkeling"
@@ -16,7 +16,7 @@ draft: false
 answer: "Mnemba Atoll Snorkeling from Stone Town / Zanzibar Airport: road transfer to Matemwe, then a short boat crossing. Best paired with the October-March window, when the Indian Ocean is calmest and visibility is highest according to our Zanzibar seasonal data — the same window that's best for marine activity generally on this coast."
 faq:
   - q: "How do I get to Mnemba Atoll Snorkeling from Stone Town / Zanzibar Airport?"
-    a: "Our source data treats Stone Town and Zanzibar Airport (they're close together) as a single starting point for this transfer: a road transfer to the Matemwe coast, then a short boat crossing to the atoll, wading through shallow water at the end since there is no jetty."
+    a: "Our source data treats Stone Town and Zanzibar Airport as a single starting point for this transfer: a road transfer to the Matemwe coast, then a short boat crossing to the atoll, wading through shallow water at the end since there is no jetty."
   - q: "What's Stone Town / Zanzibar Airport like, and does this pairing make sense?"
     a: "Best paired with the October-March window, when the Indian Ocean is calmest and visibility is highest according to our Zanzibar seasonal data — the same window that's best for marine activity generally on this coast."
   - q: "What exactly is Mnemba Atoll Snorkeling?"
@@ -45,7 +45,7 @@ Mnemba Atoll sits off Zanzibar's northeast coast, reached via the Matemwe coast.
 
 ## Getting there from Stone Town / Zanzibar Airport
 
-Our source data treats Stone Town and Zanzibar Airport (they're close together) as a single starting point for this transfer: a road transfer to the Matemwe coast, then a short boat crossing to the atoll, wading through shallow water at the end since there is no jetty.
+Our source data treats Stone Town and Zanzibar Airport as a single starting point for this transfer: a road transfer to the Matemwe coast, then a short boat crossing to the atoll, wading through shallow water at the end since there is no jetty.
 
 ## What Stone Town / Zanzibar Airport brings to this trip
 

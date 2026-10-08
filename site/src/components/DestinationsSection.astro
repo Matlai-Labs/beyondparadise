@@ -28,12 +28,12 @@ const destinations = [
     color: '#3D2E1C',
   },
   {
-    name: 'Vietnam',
-    sub: 'Hoi An · Hanoi · Ha Long',
-    author: 'Kim — Asia Lead',
-    img: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80&auto=format',
-    alt: 'Vietnam river and lantern-lit streets',
-    href: '/southeast-asia/vietnam/',
+    name: 'Mafia Island',
+    sub: 'Whale Sharks · Oct–Feb · Tanzania',
+    author: 'Tim Hennig',
+    img: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=800&q=80&auto=format',
+    alt: 'Whale shark swimming in open ocean water',
+    href: '/east-africa/mafia-island/',
     color: '#2A7B8C',
   },
 ];
@@ -67,10 +67,17 @@ const destinations = [
         </a>
       ))}
     </div>
+    <p class="dest-more reveal">
+      Planning day trips? See <a href="/excursions/">Zanzibar and Mafia Island excursions</a> by pickup area,
+      or the <a href="/intelligence/east-africa-tourism-stats/">East Africa tourism statistics</a>.
+      Southeast Asia guides from Kim are coming; none are published yet.
+    </p>
   </div>
 </section>
 
 <style>
+.dest-more { margin-top: 32px; color: var(--cream-65); font-size: 14px; line-height: 1.7; }
+.dest-more a { color: var(--gold); text-decoration: underline; text-decoration-color: rgba(201,169,110,0.4); }
 .dest-card__img-wrap { overflow: hidden; border-radius: 12px 12px 0 0; }
 .dest-card__img { transition: transform 0.5s ease; }
 .dest-card:hover .dest-card__img { transform: scale(1.04); }

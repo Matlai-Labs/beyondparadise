@@ -1,6 +1,6 @@
 ---
-title: "Masai Mara Safari Guide — Conservancy vs Reserve, and Why It Matters More Than the Season"
-description: "The Masai Mara's public reserve and its private conservancies are two different products at two different vehicle densities. River crossings peak August–September — but which side of the conservancy line you're on decides whether you see it with 3 vehicles or 50."
+title: "Masai Mara Safari Guide: Conservancy vs Reserve Explained"
+description: "The Masai Mara reserve and its private conservancies mean very different vehicle densities. Crossings peak August-September; the line sets the crowds."
 permalink: "/east-africa/masai-mara/"
 destination_id: "masai-mara"
 region: "Masai Mara, Kenya"

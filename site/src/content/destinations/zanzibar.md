@@ -1,6 +1,6 @@
 ---
-title: "Zanzibar Travel Guide — Seasons, Entry Requirements, and When to Do What"
-description: "Zanzibar has two dry seasons (June–October and December–February) and one to actively avoid (March–May). Entry requirements, mandatory inbound travel insurance, kitesurfing windows, and diving visibility by month — the practical planning layer beneath the marine wildlife guides."
+title: "Zanzibar Travel Guide: Seasons, Entry Rules, What to Do"
+description: "Zanzibar has two dry seasons (June-October, December-February) and one to avoid (March-May). Entry rules, inbound insurance, kitesurf and diving windows."
 permalink: "/east-africa/zanzibar/"
 destination_id: "zanzibar"
 region: "Zanzibar, Tanzania"

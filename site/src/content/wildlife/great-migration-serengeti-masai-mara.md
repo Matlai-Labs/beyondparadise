@@ -1,6 +1,6 @@
 ---
-title: "The Great Wildebeest Migration — Complete Month-by-Month Guide (Serengeti to Masai Mara)"
-description: "The full annual wildebeest migration circuit: Ndutu calving (Dec–Mar), Grumeti River crossings (May–Aug), Mara River crossings (Jul–Oct). The population is traditionally cited at about 1.3 million, but a 2025 satellite study suggests far fewer — the number is disputed. Here is where to be each month."
+title: "Great Wildebeest Migration: Month-by-Month Guide"
+description: "The full wildebeest circuit: Ndutu calving December-March, Grumeti crossings May-August, Mara River July-October. The 1.3 million headcount is disputed."
 permalink: "/wildlife/great-migration-serengeti-masai-mara/"
 species_id: "wildebeest-migration"
 common_name: "Great Wildebeest Migration"

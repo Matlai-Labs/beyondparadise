@@ -1,6 +1,6 @@
 ---
-title: "Stone Town & Spice Farm Day Trip from Paje: What to Know Before You Go"
-description: "Paje is Zanzibar's kitesurfing hub, with two distinct wind seasons: Kaskazi… Transfer: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town."
+title: "Stone Town Spice Tour from Paje: Kitesurf Season Timing"
+description: "Plan a Stone Town and spice farm day trip from Paje: 1-1.5 hours to the airport, and how to fit it into the Kaskazi and Kuzi kitesurf seasons."
 permalink: "/excursions/stone-town-spice-tour-from-paje/"
 tour_id: "stone-town-spice-tour"
 tour_name: "Stone Town & Spice Farm Day Trip"

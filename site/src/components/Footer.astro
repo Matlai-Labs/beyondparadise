@@ -6,19 +6,15 @@ const eastAfrica = [
   { label: 'Masai Mara', href: '/east-africa/masai-mara/' },
   { label: 'Rwanda', href: '/east-africa/rwanda/' },
   { label: 'Mafia Island', href: '/east-africa/mafia-island/' },
+  { label: 'Excursions & Day Trips', href: '/excursions/' },
+  { label: 'Great Migration Guide', href: '/wildlife/great-migration-serengeti-masai-mara/' },
   { label: 'Lodge Reviews', href: '/reviews/' },
-];
-const southeastAsia = [
-  { label: 'Vietnam', href: '/southeast-asia/vietnam/' },
-  { label: 'Hoi An', href: '/southeast-asia/hoi-an/' },
-  { label: 'Ha Long Bay', href: '/southeast-asia/ha-long-bay/' },
-  { label: 'Bali', href: '/southeast-asia/bali/' },
 ];
 const intelligence = [
   { label: 'The Tim Score', href: '/about/tim-score/' },
   { label: 'Migration Calendar', href: '/intelligence/migration-calendar/' },
-  { label: 'Price Database', href: '/intelligence/prices/' },
-  { label: 'Newsletter', href: '#newsletter' },
+  { label: 'East Africa Tourism Stats', href: '/intelligence/east-africa-tourism-stats/' },
+  { label: 'Newsletter', href: '/#newsletter' },
   { label: 'Editorial Policy', href: '/about/editorial-policy/' },
 ];
 ---
@@ -37,7 +33,7 @@ const intelligence = [
         </div>
         <div class="footer__col">
           <p class="footer__col-title">Southeast Asia</p>
-          {southeastAsia.map(l => <a href={l.href} class="footer__link">{l.label}</a>)}
+          <p class="footer__note">Kim's Vietnam guides are in production. No pages are published yet, so there is nothing to link to.</p>
         </div>
         <div class="footer__col">
           <p class="footer__col-title">Intelligence</p>
@@ -80,6 +76,7 @@ const intelligence = [
   color: #C9A96E;
   margin-bottom: 4px;
 }
+.footer__note { font-size: 14px; color: rgba(245,240,232,0.45); line-height: 1.6; }
 .footer__link { font-size: 14px; color: rgba(245,240,232,0.6); transition: color 0.18s; }
 .footer__link:hover { color: #F5F0E8; }
 .footer__bottom { border-top: 1px solid rgba(255,255,255,0.06); padding: 20px 0; }

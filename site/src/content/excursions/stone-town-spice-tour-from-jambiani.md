@@ -1,6 +1,6 @@
 ---
-title: "Stone Town & Spice Farm Day Trip from Jambiani: What to Know Before You Go"
-description: "Jambiani sits just south of Paje on Zanzibar's east coast… Transfer: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town."
+title: "Stone Town Spice Tour from Jambiani, a Turtle-Nesting Beach"
+description: "Stone Town and spice farm day trip from Jambiani: 1-1.5 hours to the airport, plus the February-July green turtle nesting window on this beach."
 permalink: "/excursions/stone-town-spice-tour-from-jambiani/"
 tour_id: "stone-town-spice-tour"
 tour_name: "Stone Town & Spice Farm Day Trip"

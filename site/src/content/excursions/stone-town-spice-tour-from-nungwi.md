@@ -1,6 +1,6 @@
 ---
-title: "Stone Town & Spice Farm Day Trip from Nungwi: What to Know Before You Go"
-description: "Nungwi is Zanzibar's built-up north-coast tip — livelier and more… Transfer: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town."
+title: "Stone Town Spice Tour from Nungwi: 50-60 km Transfer"
+description: "Stone Town and spice farm day trip from Nungwi: 50-60 km, 1-1.5 hours to the airport plus 8-15 minutes into town, and the Mnarani turtle pond."
 permalink: "/excursions/stone-town-spice-tour-from-nungwi/"
 tour_id: "stone-town-spice-tour"
 tour_name: "Stone Town & Spice Farm Day Trip"
@@ -16,7 +16,7 @@ draft: false
 answer: "Stone Town & Spice Farm Day Trip from Nungwi: ~1-1.5h to the airport (50-60km), plus 8-15min airport-to-Stone-Town. Nungwi is Zanzibar's built-up north-coast tip — livelier and more resort-dense than the quieter east coast (Michamvi, Bwejuu, Matemwe), per Tim's own notes on the island."
 faq:
   - q: "How do I get to Stone Town & Spice Farm Day Trip from Nungwi?"
-    a: "Nungwi is one of the north-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg. The airport itself sits only 5-6km (roughly 8-15 minutes by taxi) from Stone Town, so budget the trip as two short-to-moderate legs rather than a single long transfer — we don't have a recorded direct Nungwi-to-Stone-Town drive time in our database (see note below). We don't have a direct Nungwi-to-Stone-Town drive time recorded in our facts database — only the airport-transfer figures above. If you need an exact number for planning, ask your lodge to confirm the current road time; we'll add it here once we have a sourced figure."
+    a: "Nungwi is one of the north-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg. The airport itself sits only 5-6km (a short taxi ride) from Stone Town, so budget the trip as two short-to-moderate legs rather than a single long transfer — we don't have a recorded direct Nungwi-to-Stone-Town drive time in our database (see note below). We don't have a direct Nungwi-to-Stone-Town drive time recorded in our facts database — only the airport-transfer figures above. If you need an exact number for planning, ask your lodge to confirm the current road time; we'll add it here once we have a sourced figure."
   - q: "What's Nungwi like, and does this pairing make sense?"
     a: "Nungwi is Zanzibar's built-up north-coast tip — livelier and more resort-dense than the quieter east coast (Michamvi, Bwejuu, Matemwe), per Tim's own notes on the island. It's also home to the Mnarani Marine Turtles Conservation Pond, a rehabilitation pond that held 13 green turtles and 4 hawksbills as of a September 2005 count."
   - q: "What exactly is Stone Town & Spice Farm Day Trip?"
@@ -51,7 +51,7 @@ Stone Town (Zanzibar City) was inscribed as a UNESCO World Heritage Site in 2000
 
 ## Getting there from Nungwi
 
-Nungwi is one of the north-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg. The airport itself sits only 5-6km (roughly 8-15 minutes by taxi) from Stone Town, so budget the trip as two short-to-moderate legs rather than a single long transfer — we don't have a recorded direct Nungwi-to-Stone-Town drive time in our database (see note below).
+Nungwi is one of the north-coast beach areas roughly 50-60km from the airport, about 1 to 1.5 hours by road for the resort-to-airport leg. The airport itself sits only 5-6km (a short taxi ride) from Stone Town, so budget the trip as two short-to-moderate legs rather than a single long transfer — we don't have a recorded direct Nungwi-to-Stone-Town drive time in our database (see note below).
 
 **A note on this figure:** We don't have a direct Nungwi-to-Stone-Town drive time recorded in our facts database — only the airport-transfer figures above. If you need an exact number for planning, ask your lodge to confirm the current road time; we'll add it here once we have a sourced figure.
 

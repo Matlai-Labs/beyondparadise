@@ -1,6 +1,6 @@
 ---
-title: "Dolphins in Zanzibar's Menai Bay — Season, Population, and Why the Ethics Are Complicated"
-description: "Menai Bay, Zanzibar, is home to resident Indo-Pacific bottlenose dolphins and Indian Ocean humpback dolphins, and spinner dolphins also occur. Official guidelines exist for approach distance and swimming — but published research shows dolphins avoid high-tourism sites by day."
+title: "Dolphins in Zanzibar Menai Bay: Season, Numbers, Ethics"
+description: "Menai Bay, Zanzibar has resident Indo-Pacific bottlenose dolphins. Official approach guidelines exist, but research shows dolphins avoid busy sites by day."
 permalink: "/wildlife/dolphins-menai-bay/"
 species_id: "indo-pacific-bottlenose-dolphin"
 common_name: "Indo-Pacific Bottlenose & Spinner Dolphins"

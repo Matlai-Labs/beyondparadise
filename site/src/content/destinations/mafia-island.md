@@ -1,5 +1,5 @@
 ---
-title: "Mafia Island Travel Guide — Whale Sharks, Diving, and When to Go"
+title: "Mafia Island Travel Guide: Whale Sharks, Diving, When to Go"
 description: "Mafia Island whale shark season, how to get there, how the marine park fee works, and diving beyond the whale sharks."
 permalink: "/east-africa/mafia-island/"
 destination_id: "mafia-island"

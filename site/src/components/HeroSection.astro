@@ -1,4 +1,8 @@
 ---
+import { siteMetrics } from '../lib/site-metrics';
+
+const m = await siteMetrics();
+const fmt = (n: number) => n.toLocaleString('en-US');
 ---
 <section class="hero" aria-label="Hero">
   <div class="hero__bg">
@@ -28,10 +32,10 @@
   <div class="hero__stats glass-dark">
     <div class="stats-bar container">
       {[
-        ['80+',    'Luxury Lodges Reviewed'],
-        ['835',    'Verified Facts in the Database'],
+        [fmt(m.factsConfirmed), 'Confirmed, Sourced Facts'],
+        [fmt(m.guideCount),     'Published Guides'],
+        [fmt(m.scoredLodges),   'Tim Scores Published (Paid Stays Only)'],
         ['5 Years','Living in East Africa'],
-        ['€6k+',   'Only the Best Covered'],
         ['Zero',   'Press Trips or Hosted Stays'],
       ].map(([num, lbl]) => (
         <div class="stat">

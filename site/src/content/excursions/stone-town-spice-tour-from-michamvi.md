@@ -1,6 +1,6 @@
 ---
-title: "Stone Town & Spice Farm Day Trip from Michamvi (Michamvi Pingwe): What to Know Before You Go"
-description: "This is Zanzibar's quiet east-coast peninsula: calm lagoon waters on the west side, open Indian Ocean… Transfer: ~1 hour 15 minutes by road direct to Stone Town."
+title: "Stone Town & Spice Tour from Michamvi: 1h15 by Road"
+description: "Day trip from Michamvi to Stone Town and a spice farm: about 1 hour 15 minutes by road, with notes on the peninsula and its quiet east coast."
 permalink: "/excursions/stone-town-spice-tour-from-michamvi/"
 tour_id: "stone-town-spice-tour"
 tour_name: "Stone Town & Spice Farm Day Trip"

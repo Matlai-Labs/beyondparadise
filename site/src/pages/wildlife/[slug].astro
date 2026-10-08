@@ -1,6 +1,13 @@
 ---
 import { getCollection } from 'astro:content';
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import RelatedExcursions from '../../components/RelatedExcursions.astro';
+
+const SPECIES_TOURS: Record<string, string[]> = {
+  'whale-shark': ['mafia-whale-shark-snorkelling', 'mafia-marine-park-diving'],
+  'green-sea-turtle': ['mnemba-atoll-snorkeling'],
+  'indo-pacific-bottlenose-dolphin': ['safari-blue-menai-bay'],
+};
 
 export async function getStaticPaths() {
   const guides = await getCollection('wildlife', ({ data }) => !data.draft);
@@ -32,4 +39,5 @@ const d = guide.data;
   }}
 >
   <Content />
+  <RelatedExcursions tourIds={SPECIES_TOURS[d.species_id] ?? []} heading={SPECIES_TOURS[d.species_id] ? 'Trips that put you in the water' : 'Keep planning'} />
 </ArticleLayout>

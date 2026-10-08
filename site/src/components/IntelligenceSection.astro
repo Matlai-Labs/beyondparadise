@@ -1,4 +1,17 @@
 ---
+import { getCollection } from 'astro:content';
+import { resolvedGroups, lastVerified } from '../lib/facts-stats';
+
+const excursionCount = (await getCollection('excursions', ({ data }) => !data.draft)).length;
+
+const allStats = resolvedGroups().flatMap(g => g.stats);
+const pick = (l: string) => allStats.find(x => x.label.startsWith(l))!;
+const previewStats = [
+  ['Whale sharks documented, Mafia Island', pick('Documented individuals, December 2019').display],
+  ['Black rhinos in Kenya (2024)', pick('Black rhinos, Kenya').display],
+  ['Mountain gorillas worldwide (2018)', pick('Mountain gorillas').display],
+];
+const statsVerified = lastVerified();
 const calendarMonths = [
   { month: 'Jan–Mar', where: 'Zanzibar, Vietnam', icon: '🌊' },
   { month: 'Apr–Jun', where: 'Rwanda, Uganda', icon: '🦍' },
@@ -10,24 +23,19 @@ const calendarMonths = [
   <div class="container">
     <div class="section-head reveal">
       <p class="label">INTELLIGENCE</p>
-      <h2 class="display-m" style="margin-top:12px;">Always Up to Date</h2>
+      <h2 class="display-m" style="margin-top:12px;">Original Data and Planning Tools</h2>
     </div>
 
     <div class="intel-grid">
-      <!-- Newsletter preview -->
+      <!-- Excursions -->
       <div class="intel-card glass reveal">
         <div class="intel-card__header">
-          <p class="label">WEEKLY INTELLIGENCE</p>
-          <span class="intel-badge">Issue 14</span>
+          <p class="label">DAY TRIPS</p>
+          <span class="intel-badge">{excursionCount} guides</span>
         </div>
-        <h3 class="intel-card__title">Migration Update: The Mara River Crossing Has Started</h3>
-        <p class="intel-card__excerpt">This week's confirmed sightings from our Masai Mara correspondent — plus a price change at Singita Grumeti and Kim's report from her first week in Hoi An...</p>
-        <div class="intel-card__meta">
-          <span class="meta">27 June 2026</span>
-          <span class="meta" style="color:var(--cream-38);">·</span>
-          <span class="meta">Tim Hennig</span>
-        </div>
-        <a href="#newsletter" class="btn btn-gold" style="margin-top:24px;display:inline-flex;">Subscribe Free</a>
+        <h3 class="intel-card__title">Zanzibar and Mafia Island Excursions, by Pickup Area</h3>
+        <p class="intel-card__excerpt">Transfer times, seasons and park rules for Stone Town spice tours, Mnemba snorkelling, Safari Blue and Mafia whale shark and dive trips, from the beach you are staying on.</p>
+        <a href="/excursions/" class="btn btn-gold" style="margin-top:24px;display:inline-flex;">Browse Excursions</a>
       </div>
 
       <!-- Migration calendar -->
@@ -49,27 +57,23 @@ const calendarMonths = [
         <a href="/intelligence/migration-calendar/" class="btn btn-glass" style="margin-top:24px;display:inline-flex;">Full Calendar</a>
       </div>
 
-      <!-- Price database -->
+      <!-- Original data -->
       <div class="intel-card glass reveal reveal-delay-2">
         <div class="intel-card__header">
-          <p class="label">REAL PRICE DATABASE</p>
-          <span class="intel-badge">Updated Q2 2026</span>
+          <p class="label">ORIGINAL DATA</p>
+          <span class="intel-badge">Verified {statsVerified}</span>
         </div>
-        <h3 class="intel-card__title">What Luxury Safaris Actually Cost</h3>
-        <p class="intel-card__excerpt">All-in costs across 80+ properties. Park fees, transfers, levies. No hidden numbers. The only verified price database for East Africa luxury travel.</p>
+        <h3 class="intel-card__title">East Africa Tourism Statistics</h3>
+        <p class="intel-card__excerpt">Two-source numbers on wildlife populations, Great Migration counts and Tanzania entry costs, with source links and a free CSV.</p>
         <div class="price-preview">
-          {[
-            ['Budget to expect', '€6,000–12,000 / week'],
-            ['Park fees (TZ)', '€230–290 / day'],
-            ['Avg. private concession', '€1,400–2,400 / pppn'],
-          ].map(([k, v]) => (
+          {previewStats.map(([k, v]) => (
             <div class="price-row">
               <span class="price-key">{k}</span>
               <span class="price-val">{v}</span>
             </div>
           ))}
         </div>
-        <a href="/intelligence/prices/" class="btn btn-glass" style="margin-top:24px;display:inline-flex;">View Full Database</a>
+        <a href="/intelligence/east-africa-tourism-stats/" class="btn btn-glass" style="margin-top:24px;display:inline-flex;">See All Statistics</a>
       </div>
     </div>
   </div>

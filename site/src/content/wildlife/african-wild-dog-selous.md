@@ -1,6 +1,6 @@
 ---
-title: "African Wild Dogs in Nyerere National Park — Season, Population, and Why This Is Africa's Stronghold"
-description: "Nyerere National Park (Selous), Tanzania, is one of the most important strongholds for African wild dogs, a species listed Endangered on the IUCN Red List. Best season, denning behavior, and an honest gap in the ethics research."
+title: "African Wild Dogs in Nyerere National Park: Season, Ethics"
+description: "Nyerere National Park (Selous) is a stronghold for Endangered African wild dogs. Best season, denning behavior and an honest gap in the ethics research."
 permalink: "/wildlife/african-wild-dog-selous/"
 species_id: "african-wild-dog"
 common_name: "African Wild Dog"

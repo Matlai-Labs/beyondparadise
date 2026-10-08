@@ -1,6 +1,6 @@
 ---
-title: "Scuba Diving Mafia Island Marine Park from Kilindoni (Mafia Island Airport): What to Know Before You Go"
-description: "Mafia Island Marine Park charges a daily per-person conservation fee; confirm the current rate. Transfer: ~30min by road (15km) from Kilindoni to Utende, Chole Bay."
+title: "Diving Mafia Island Marine Park from Kilindoni Airport"
+description: "Scuba diving in Mafia Island Marine Park: 30 minutes by road (15 km) from Kilindoni airport to Utende, plus the daily park fee and permit checks."
 permalink: "/excursions/mafia-marine-park-diving-from-kilindoni-airport/"
 tour_id: "mafia-marine-park-diving"
 tour_name: "Scuba Diving Mafia Island Marine Park"
@@ -13,7 +13,7 @@ hero_alt: "Scuba Diving Mafia Island Marine Park — Kilindoni (Mafia Island Air
 author: "tim"
 last_updated: "2026-09-23"
 draft: false
-answer: "Scuba Diving Mafia Island Marine Park from Kilindoni (Mafia Island Airport): ~30min by road (15km) from Kilindoni to Utende, Chole Bay. Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator. Check with your operator whether any separate permit applies to your dive."
+answer: "Scuba Diving Mafia Island Marine Park from Kilindoni (Mafia Island Airport): ~30min by road (15km) from Kilindoni to Utende, Chole Bay. Mafia Island Marine Park charges a daily per-person conservation fee (children aged under 15 pay half) — sources differ on the exact amount, so confirm the current rate with the park or your operator."
 faq:
   - q: "How do I get to Scuba Diving Mafia Island Marine Park from Kilindoni (Mafia Island Airport)?"
     a: "Mafia Island's airport is near Kilindoni, but the primary diving base is in Utende on Chole Bay, about 15 kilometres away — transfers are usually arranged by the lodge or by taxi and take roughly half an hour."

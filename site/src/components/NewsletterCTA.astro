@@ -1,4 +1,8 @@
 ---
+// The Beehiiv form action is NOT hard-coded: no real publication URL exists in the repo yet.
+// Set PUBLIC_BEEHIIV_FORM_ACTION (the "Embed form" action URL from Beehiiv > Grow > Subscribe forms)
+// in the build environment. While unset, the form is hidden and a notice is shown instead.
+const formAction = import.meta.env.PUBLIC_BEEHIIV_FORM_ACTION as string | undefined;
 ---
 <section id="newsletter" class="section section--dark newsletter" aria-label="Newsletter signup">
   <div class="container">
@@ -7,8 +11,9 @@
       <h2 class="display-m newsletter__title">The Only Luxury Travel<br/>Intelligence You Need</h2>
       <p class="body-l newsletter__sub">Migration updates. Honest lodge verdicts. Price changes as they happen. Directly from Zanzibar and Vietnam — not from a press trip.</p>
 
-      <!-- Replace action with real Beehiiv embed URL -->
-      <form class="newsletter__form" action="https://app.beehiiv.com/subscribe" method="post" target="_blank">
+      {formAction ? (
+      <>
+      <form class="newsletter__form" action={formAction} method="post" target="_blank">
         <input
           type="email"
           name="email"
@@ -19,16 +24,20 @@
         />
         <button type="submit" class="btn btn-gold newsletter__btn">Join Free</button>
       </form>
-
-      <p class="newsletter__proof">
-        2,500+ luxury travelers &nbsp;·&nbsp; One email per week &nbsp;·&nbsp; Unsubscribe anytime
+      <p class="newsletter__proof">One email per week &nbsp;·&nbsp; Unsubscribe anytime</p>
+      </>
+      ) : (
+      <p class="newsletter__proof newsletter__soon">
+        The newsletter is not open yet. In the meantime, the <a href="/intelligence/east-africa-tourism-stats/">East Africa tourism statistics</a> and
+        <a href="/intelligence/migration-calendar/">migration calendar</a> are free to use.
       </p>
+      )}
 
       <div class="newsletter__features">
         {[
           ['📍', 'Migration Intelligence', 'Real-time Masai Mara & Serengeti updates'],
           ['⭐', 'New Tim Scores', 'Every lodge review before it’s published'],
-          ['💰', 'Price Alerts', 'Significant price changes across 80+ properties'],
+          ['💰', 'Price Alerts', 'Significant price changes, once verified'],
           ['📰', 'Kim’s Asia Report', 'Monthly Vietnam & Southeast Asia intelligence'],
         ].map(([icon, title, desc]) => (
           <div class="nl-feature">
@@ -86,6 +95,7 @@
 .newsletter__input::placeholder { color: var(--cream-38); }
 .newsletter__input:focus { border-color: var(--gold); }
 .newsletter__btn { flex-shrink: 0; }
+.newsletter__soon a { color: var(--gold); text-decoration: underline; }
 .newsletter__proof { font-size: 13px; color: var(--cream-38); margin-bottom: 48px; }
 
 .newsletter__features {
