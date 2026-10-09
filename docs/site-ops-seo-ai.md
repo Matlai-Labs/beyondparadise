@@ -29,9 +29,21 @@ Facts on the stats page were last accessed 2026-06-28 to 2026-06-30 (already pas
 4. `cd site && ./deploy.sh`. The honest "not open yet" notice then becomes the real form.
 5. Test with one subscription from a private address and confirm it lands in Beehiiv.
 
-### GA4 and Search Console
+### Tim: paste these (4 env vars, about 20 minutes in total)
+Put each value in `site/.env` (one `NAME=value` per line, no quotes), then `cd site && ./deploy.sh`. Anything left unset emits nothing.
+
+| Variable | Where to get it | Time |
+|---|---|---|
+| `PUBLIC_GSC_VERIFICATION` | search.google.com/search-console > Add property > URL prefix `https://beyondparadiseadventures.com` > HTML tag. Copy only the `content="..."` value. After deploy click Verify, then submit `sitemap-index.xml`. | 5 min |
+| `PUBLIC_BING_VERIFICATION` | bing.com/webmasters > Add site (or Import from Search Console, which skips this) > HTML Meta Tag. Copy only the `content="..."` value of `msvalidate.01`. After deploy click Verify, submit `sitemap-index.xml`. | 5 min |
+| `PUBLIC_GA4_ID` | analytics.google.com > Admin > Create property > Web stream. Copy the `G-XXXXXXXXXX` Measurement ID. | 5 min |
+| `PUBLIC_CF_ANALYTICS_TOKEN` | dash.cloudflare.com > Web Analytics > Add a site > enter `beyondparadiseadventures.com`, choose the JS snippet option (works on any host, GitHub Pages included, no Cloudflare proxy needed). Copy only the `token` value from `data-cf-beacon='{"token": "..."}'`. Free and cookieless. | 5 min |
+
+The site sets no Content-Security-Policy (GitHub Pages sends none and the layout has no CSP meta tag), so the Cloudflare beacon needs no allow-list. If a CSP is ever added, allow `script-src https://static.cloudflareinsights.com` and `connect-src https://cloudflareinsights.com`.
+
+### GA4 and Search Console (detail)
 GA4: Admin > Create property "Beyond Paradise Adventures" > Web stream https://beyondparadiseadventures.com > copy `G-...` into `PUBLIC_GA4_ID`; register event-scoped custom dimensions `ai_source`, `is_ai_referral`.
-GSC: add URL-prefix property https://beyondparadiseadventures.com > HTML tag method > copy only the `content` value into `PUBLIC_GSC_VERIFICATION` > deploy > Verify. (DNS TXT alternative: Hostinger, not editable from here; apex currently shows no TXT records.) Then submit /sitemap.xml.
+GSC: add URL-prefix property https://beyondparadiseadventures.com > HTML tag method > copy only the `content` value into `PUBLIC_GSC_VERIFICATION` > deploy > Verify. (DNS TXT alternative: Hostinger, not editable from here; apex currently shows no TXT records.) Then submit `sitemap-index.xml` (live URL https://beyondparadiseadventures.com/sitemap-index.xml; `/sitemap.xml` does not exist and returns 404).
 
 ### Decisions recorded
 - Social profiles verified 2026-10-08 (HTTP 200, correct titles): facebook.com/beyondparadiseadventures, instagram.com/beyondparadiseadventures, YouTube @BPA-Africa and @beyondparadiseadventures (titled "BPA - Asia"). Old @BeyondParadiseAfrica/@BeyondParadiseAsia 404.

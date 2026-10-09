@@ -1,4 +1,5 @@
 ---
+import { breadcrumbList } from '../lib/breadcrumbs.mjs';
 interface Props {
   title: string;
   description: string;
@@ -12,8 +13,13 @@ const ogAbs = new URL(ogImage, Astro.site).toString();
 // Measurement + verification are env-gated: nothing is emitted until the IDs are set at build time.
 //   PUBLIC_GA4_ID                  e.g. G-XXXXXXXXXX
 //   PUBLIC_GSC_VERIFICATION        the content value of Search Console's HTML-tag verification
+//   PUBLIC_BING_VERIFICATION       the content value of Bing Webmaster Tools' msvalidate.01 meta tag
+//   PUBLIC_CF_ANALYTICS_TOKEN      Cloudflare Web Analytics beacon token (free, cookieless, any host)
 const ga4Id = (import.meta.env.PUBLIC_GA4_ID as string | undefined)?.trim();
 const gscToken = (import.meta.env.PUBLIC_GSC_VERIFICATION as string | undefined)?.trim();
+const bingToken = (import.meta.env.PUBLIC_BING_VERIFICATION as string | undefined)?.trim();
+const cfToken = (import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN as string | undefined)?.trim();
+const crumbs = breadcrumbList(Astro.url.pathname, title, Astro.site!.toString());
 
 const ORG_ID = 'https://beyondparadiseadventures.com/#organization';
 // sameAs holds only identifiers verified to exist: the Wikidata item for the brand (Q140420385,
@@ -59,6 +65,7 @@ const websiteSchema = {
 <title>{title}</title>
 <meta name="description" content={description} />
 {gscToken && <meta name="google-site-verification" content={gscToken} />}
+{bingToken && <meta name="msvalidate.01" content={bingToken} />}
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -84,6 +91,8 @@ const websiteSchema = {
 <!-- Schema: Organization + WebSite -->
 <script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />
 <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+{crumbs && <script type="application/ld+json" set:html={JSON.stringify(crumbs)} />}
+{cfToken && <script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={JSON.stringify({ token: cfToken })}></script>}
 
 {ga4Id && (
   <>
