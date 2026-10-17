@@ -52,7 +52,7 @@ test('exact duplicates error, near-duplicates (Jaccard>=0.5) warn as cannibalisa
     T('/a', 'Zanzibar Honeymoon Villa With Private Pool | Matlai'),
     T('/b', 'Zanzibar Honeymoon Villa With Private Pool | Matlai'),
     T('/c', 'Zanzibar Honeymoon Villa Private Pool Dinner | Matlai'),
-    T('/d', 'Seaweed Farms and Tides at Michamvi Beach | Matlai'),
+    T('/d', 'Seaweed Season and Tides at Michamvi Beach | Matlai'),
     { id: '/de-a', title: 'Zanzibar Honeymoon Villa With Private Pool | Matlai', lang: 'de' },
   ]);
   assert.ok(f.some((x) => x.rule === 'duplicate' && x.severity === 'error'));
