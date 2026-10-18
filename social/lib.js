@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { createRequire } from 'node:module';
+import { scoreDraft, renderScore } from './score.js';
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 export const CONFIG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
@@ -114,7 +115,8 @@ export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [
     const v = await voiceGate(d.text); if (!v.ok) { out.push({ ...d, rejected: 'voice-lint: ' + v.reason }); continue; }
     out.push({ ...d, createdAt: now.toISOString() });
   }
-  return out;
+  // advisory score (never blocks, never changes status); fail-open
+  return out.map((d) => { try { return { ...d, score: scoreDraft(d) }; } catch { return d; } });
 }
 
 // ── scheduling slots (one post per day at postHourLocal, skipping taken days) ──
@@ -159,7 +161,7 @@ export function renderList(q) {
   const pend = q.drafts.filter((d) => d.status === STATUS.PENDING);
   if (!pend.length) return '📭 No drafts waiting. Next drafting run: Monday 07:00.';
   const lines = [`📝 ${pend.length} draft(s) for ${CONFIG.page}:`];
-  for (const d of pend) lines.push(`\n*${d.id}* (${d.kind}, ${d.sourceDate})\n${d.text.slice(0, 700)}${d.text.length > 700 ? '…' : ''}`);
+  for (const d of pend) lines.push(`\n*${d.id}* (${d.kind}, ${d.sourceDate})\n${d.text.slice(0, 700)}${d.text.length > 700 ? '…' : ''}${d.score ? `\n_${renderScore(d.score)}_` : ''}`);
   lines.push('\nReply: *bpa approve B1 B2* · *bpa skip B3* · *bpa edit B1: new text* · *bpa post B1 now*');
   return lines.join('\n');
 }
