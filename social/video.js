@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { checkReel } from './reel-qa.js';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -69,5 +70,7 @@ export function renderReel(id, spec, outDir = path.join(HERE, 'reels')) {
   const out = path.join(outDir, `${id}.mp4`);
   execFileSync('npx', ['hyperframes', 'render', dir, '-o', out, '--quality', 'looks', '--quiet'], { cwd: HERE, stdio: 'pipe', timeout: 600000 });
   if (!fs.existsSync(out)) throw new Error('hyperframes produced no output');
+  const qa = checkReel(out); // wrong shape / empty / mostly black must never be hosted or published
+  if (!qa.ok) throw new Error(`reel QA failed for ${id}: ${qa.problems.join('; ')}`);
   return out;
 }
