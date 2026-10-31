@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Weekly drafter: BPI briefs (last 7 days) → up to 3 drafts → queue (pending_approval) → WhatsApp.
-import { readBriefs, buildDrafts, loadQueue, saveQueue, nextId, STATUS, whatsapp, renderList, log, CONFIG } from './lib.js';
+import { withQueueLock, readBriefs, buildDrafts, loadQueue, saveQueue, nextId, STATUS, whatsapp, renderList, log, CONFIG } from './lib.js';
 const DRY = process.argv.includes('--dry-run');
 const briefs = readBriefs();
-const q = loadQueue();
+const q = loadQueue(); const had = new Set(q.drafts.map((d) => d.id));
 const drafts = await buildDrafts({ briefs, existingDrafts: q.drafts });
 const already = new Set(q.drafts.map((d) => d.sourceId));
 let added = 0, rejected = 0;
@@ -15,5 +15,6 @@ for (const d of drafts) {
 }
 log(`briefs=${briefs.length} drafts=${drafts.length} added=${added} rejected=${rejected}${DRY ? ' [dry-run]' : ''}`);
 if (DRY) { console.log(renderList(q)); process.exit(0); }
-saveQueue(q);
+// append onto the CURRENT file: the approval server may have changed other drafts while we were drafting
+await withQueueLock(async () => { const fresh = loadQueue(); fresh.seq = q.seq; fresh.drafts.push(...q.drafts.filter((d) => !had.has(d.id))); saveQueue(fresh); });
 if (added) await whatsapp(renderList(q)); else await whatsapp(`📭 ${CONFIG.page}: nothing new to draft this week (${briefs.length} briefs read, ${rejected} rejected by the voice/brand gate).`);

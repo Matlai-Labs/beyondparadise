@@ -47,7 +47,7 @@ html,body{margin:0;background:#09090B}
     ${body2 ? `<div class="body2" id="body2">${body2}</div>` : ''}
   </div>
   <div class="foot clip" data-start="0" data-duration="${seconds}"><div class="brand">${esc(spec.brand)}</div><div class="sub">Daily tourism intelligence for Zanzibar &amp; Dar es Salaam</div></div>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script>
     const tl = gsap.timeline({ paused: true });
     tl.from(".rule", { scaleX: 0, duration: 0.6 }, 0.1)
