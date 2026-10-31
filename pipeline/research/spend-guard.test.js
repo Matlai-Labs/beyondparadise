@@ -62,3 +62,22 @@ test('a failed (e.g. 429) provider call still counts toward the cap — caps bou
   assert.equal(http, 1, 'one HTTP attempt was made');
   assert.equal(guard.providerToday('deepseek'), before + 1, 'the failed attempt is recorded');
 });
+
+test('corrupt ledger fails closed (counters are not silently reset); missing ledger is fine', () => {
+  const L = process.env.RESEARCH_LEDGER_PATH; const good = fs.readFileSync(L, 'utf8');
+  fs.writeFileSync(L, '{"2026-10-31": 5, trunc');
+  assert.throws(() => guard.checkProvider('tavily'), /SPEND GUARD: ledger unreadable/);
+  assert.throws(() => guard.checkAffordable(1), /SPEND GUARD: ledger unreadable/);
+  assert.throws(() => guard.recordProvider('tavily'), /SPEND GUARD: ledger unreadable/, 'never overwrite a corrupt ledger with a fresh one');
+  assert.equal(fs.readFileSync(L, 'utf8'), '{"2026-10-31": 5, trunc', 'corrupt ledger left in place for a human');
+  fs.rmSync(L);
+  assert.doesNotThrow(() => guard.checkProvider('tavily'), 'first run: no ledger yet');
+  fs.writeFileSync(L, good);
+});
+
+test('ledger writes are atomic (no temp file left behind, valid JSON after write)', () => {
+  guard.recordProvider('brave');
+  const L = process.env.RESEARCH_LEDGER_PATH;
+  assert.doesNotThrow(() => JSON.parse(fs.readFileSync(L, 'utf8')));
+  assert.deepEqual(fs.readdirSync(path.dirname(L)).filter((f) => f.includes('.tmp')), []);
+});

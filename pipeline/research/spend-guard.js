@@ -33,8 +33,23 @@ const PROVIDER_PER_RUN = parseInt(process.env.RESEARCH_MAX_PROVIDER_CALLS_RUN ||
 const providerRun = {};
 let runCount = 0;
 const today = () => new Date().toISOString().slice(0, 10);
-const load = () => { try { return JSON.parse(fs.readFileSync(LEDGER, 'utf8')); } catch { return {}; } };
-const save = o => { fs.mkdirSync(path.dirname(LEDGER), { recursive: true }); fs.writeFileSync(LEDGER, JSON.stringify(o, null, 2)); };
+// Missing ledger = first run (empty). Any other read/parse failure fails CLOSED: resetting the
+// counters to zero on a corrupt file would silently lift every cap.
+const load = () => {
+  let raw;
+  try { raw = fs.readFileSync(LEDGER, 'utf8'); } catch (e) {
+    if (e.code === 'ENOENT') return {};
+    throw new Error(`SPEND GUARD: ledger unreadable (${LEDGER}: ${e.code || e.message}). Fix or remove it by hand.`);
+  }
+  try { const o = JSON.parse(raw); if (o && typeof o === 'object' && !Array.isArray(o)) return o; throw new Error('not an object'); }
+  catch (e) { throw new Error(`SPEND GUARD: ledger unreadable (${LEDGER}: ${e.message}). Fix or remove it by hand.`); }
+};
+// Atomic write (temp file + rename) so a crash mid-write cannot leave a corrupt ledger behind.
+const save = o => {
+  fs.mkdirSync(path.dirname(LEDGER), { recursive: true });
+  const tmp = `${LEDGER}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(o, null, 2)); fs.renameSync(tmp, LEDGER);
+};
 const spentToday = () => load()[today()] || 0;
 
 function checkAffordable(n = 1) {
