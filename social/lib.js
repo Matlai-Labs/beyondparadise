@@ -67,6 +67,14 @@ export function mergeQueue(base, mine, fresh) {
   for (const k of Object.keys(ms)) if (j(ms[k]) !== j(bs[k]) && j(fs_[k]) === j(bs[k])) out.state[k] = ms[k];
   return out;
 }
+/** Drafts stuck in IG 'publishing' for more than `minutes` that have NOT been alerted yet (alert once, not every run). */
+export function stuckIgPublishes(q, now = new Date(), minutes = 30) {
+  return q.drafts.filter((x) => x.ig?.status === 'publishing' && !x.ig.stuckAlertedAt && now.getTime() - new Date(x.ig.publishingAt || 0).getTime() > minutes * 60e3).map((x) => x.id);
+}
+/** Record that the stuck alert went out. Status stays 'publishing': a human checks Meta before any retry. */
+export function markStuckAlerted(q, ids, now = new Date()) {
+  for (const d of q.drafts) if (ids.includes(d.id) && d.ig) d.ig = { ...d.ig, stuckAlertedAt: now.toISOString() };
+}
 /** Atomically claim a queued IG publish: marks it 'publishing' on disk so an overlapping run or a crash cannot publish twice. */
 export async function claimIgPublish(id, now = new Date(), p = QUEUE_PATH) {
   return withQueueLock(async () => {

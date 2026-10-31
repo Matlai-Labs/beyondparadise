@@ -48,7 +48,7 @@ test('outlook is drafted only when content changes or 14 days passed', () => {
 
 // ── audit fixes (2026-11): queue lock/merge, publish claim, source gate, tz slots, auth, pinned CDN, no PII default ──
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { withQueueLock, mergeQueue, claimIgPublish, loadQueue, saveQueue, sourceGate, buildDrafts, whatsapp } from './lib.js';
+import { stuckIgPublishes, markStuckAlerted, withQueueLock, mergeQueue, claimIgPublish, loadQueue, saveQueue, sourceGate, buildDrafts, whatsapp } from './lib.js';
 import { authorize } from './auth.js';
 import { buildComposition } from './video.js';
 const tmpq = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'bpaq-')), 'queue.json');
@@ -112,4 +112,16 @@ test('whatsapp() fails closed without WHATSAPP_ALERT_TO and no phone number is c
   const prev = process.env.WHATSAPP_ALERT_TO; delete process.env.WHATSAPP_ALERT_TO; process.env.BPA_QUIET = '1';
   assert.equal(await whatsapp('x'), false); if (prev) process.env.WHATSAPP_ALERT_TO = prev;
   assert.doesNotMatch(fs.readFileSync(new URL('./lib.js', import.meta.url), 'utf8'), /\+255\d{6,}/);
+});
+
+test('stuck IG publish is alerted once per draft, not on every run', () => {
+  const now = new Date('2026-11-01T10:00:00Z');
+  const q = { drafts: [
+    { id: 'B1', ig: { status: 'publishing', publishingAt: '2026-11-01T09:00:00Z' } },
+    { id: 'B2', ig: { status: 'publishing', publishingAt: '2026-11-01T09:50:00Z' } },
+    { id: 'B3', ig: { status: 'posted' } }] };
+  assert.deepEqual(stuckIgPublishes(q, now), ['B1'], 'only >30 min in publishing');
+  markStuckAlerted(q, ['B1'], now);
+  assert.equal(q.drafts[0].ig.stuckAlertedAt, now.toISOString()); assert.equal(q.drafts[0].ig.status, 'publishing', 'status untouched (human verifies on Meta)');
+  assert.deepEqual(stuckIgPublishes(q, new Date('2026-11-01T16:00:00Z')), ['B2'], 'B1 already alerted → silent; B2 newly stuck');
 });
