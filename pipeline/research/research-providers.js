@@ -117,6 +117,7 @@ function snippetsToGroundedText(results) {
 async function callTavily(prompt) {
   const key = process.env.TAVILY_API_KEY;
   if (!key) throw new Error('no TAVILY_API_KEY');
+  guard.checkProvider('tavily');
   const r = await axios.post(
     'https://api.tavily.com/search',
     {
@@ -130,6 +131,7 @@ async function callTavily(prompt) {
       timeout: 30000,
     }
   );
+  guard.recordProvider('tavily');
   const results = (r.data.results || [])
     .map(x => ({
       title: x.title || '',
@@ -149,6 +151,7 @@ async function callTavily(prompt) {
 async function callBrave(prompt) {
   const key = process.env.BRAVE_API_KEY || process.env.BRAVE_SEARCH_API_KEY;
   if (!key) throw new Error('no BRAVE_API_KEY or BRAVE_SEARCH_API_KEY');
+  guard.checkProvider('brave');
   const r = await axios.get(
     'https://api.search.brave.com/res/v1/web/search',
     {
@@ -157,6 +160,7 @@ async function callBrave(prompt) {
       timeout: 30000,
     }
   );
+  guard.recordProvider('brave');
   const results = (r.data.web?.results || [])
     .map(x => ({
       title: x.title || '',
@@ -222,6 +226,7 @@ async function callOllamaJson(prompt) {
 async function callOpenRouterJson(model, prompt) {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) throw new Error('no OPENROUTER_API_KEY');
+  guard.checkProvider('openrouter');
   const r = await axios.post(
     'https://openrouter.ai/api/v1/chat/completions',
     {
@@ -241,6 +246,7 @@ async function callOpenRouterJson(model, prompt) {
       timeout: 60000,
     }
   );
+  guard.recordProvider('openrouter');
   const text = (r.data.choices?.[0]?.message?.content || '').trim();
   if (!text) throw new Error('empty OpenRouter response');
   parseJson(text);
@@ -250,6 +256,7 @@ async function callOpenRouterJson(model, prompt) {
 async function callDeepSeekJson(prompt) {
   const key = process.env.DEEPSEEK_API_KEY;
   if (!key) throw new Error('no DEEPSEEK_API_KEY');
+  guard.checkProvider('deepseek');
   const r = await axios.post(
     'https://api.deepseek.com/chat/completions',
     {
@@ -264,6 +271,7 @@ async function callDeepSeekJson(prompt) {
       timeout: 60000,
     }
   );
+  guard.recordProvider('deepseek');
   const text = (r.data.choices?.[0]?.message?.content || '').trim();
   if (!text) throw new Error('empty DeepSeek response');
   parseJson(text);
@@ -273,6 +281,7 @@ async function callDeepSeekJson(prompt) {
 async function callOpenAIJson(prompt) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('no OPENAI_API_KEY');
+  guard.checkProvider('openai');
   const r = await axios.post(
     'https://api.openai.com/v1/chat/completions',
     {
@@ -287,6 +296,7 @@ async function callOpenAIJson(prompt) {
       timeout: 60000,
     }
   );
+  guard.recordProvider('openai');
   const text = (r.data.choices?.[0]?.message?.content || '').trim();
   if (!text) throw new Error('empty OpenAI response');
   parseJson(text);
@@ -296,6 +306,7 @@ async function callOpenAIJson(prompt) {
 async function callAnthropicJson(prompt) {
   const key = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
   if (!key) throw new Error('no ANTHROPIC_API_KEY or CLAUDE_API_KEY');
+  guard.checkProvider('anthropic');
   const r = await axios.post(
     'https://api.anthropic.com/v1/messages',
     {
@@ -313,6 +324,7 @@ async function callAnthropicJson(prompt) {
       timeout: 60000,
     }
   );
+  guard.recordProvider('anthropic');
   const text = (r.data.content?.[0]?.text || '').trim();
   if (!text) throw new Error('empty Anthropic response');
   parseJson(text);
