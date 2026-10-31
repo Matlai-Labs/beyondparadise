@@ -125,3 +125,14 @@ test('stuck IG publish is alerted once per draft, not on every run', () => {
   assert.equal(q.drafts[0].ig.stuckAlertedAt, now.toISOString()); assert.equal(q.drafts[0].ig.status, 'publishing', 'status untouched (human verifies on Meta)');
   assert.deepEqual(stuckIgPublishes(q, new Date('2026-11-01T16:00:00Z')), ['B2'], 'B1 already alerted → silent; B2 newly stuck');
 });
+
+test('a re-claimed IG publish that gets stuck again is alerted again (old stuckAlertedAt does not silence it)', async () => {
+  const p = tmpq(); const t0 = new Date('2026-11-01T09:00:00Z');
+  saveQueue({ drafts: [{ id: 'B1', status: STATUS.SCHEDULED, ig: { status: 'queued' } }], state: {} }, p);
+  await claimIgPublish('B1', t0, p);
+  let q = loadQueue(p); assert.deepEqual(stuckIgPublishes(q, new Date('2026-11-01T10:00:00Z')), ['B1']);
+  markStuckAlerted(q, ['B1'], new Date('2026-11-01T10:00:00Z'));
+  q.drafts[0].ig.status = 'queued'; saveQueue(q, p); // human reset after checking Meta
+  await claimIgPublish('B1', new Date('2026-11-02T09:00:00Z'), p);
+  q = loadQueue(p); assert.deepEqual(stuckIgPublishes(q, new Date('2026-11-02T10:00:00Z')), ['B1']);
+});
