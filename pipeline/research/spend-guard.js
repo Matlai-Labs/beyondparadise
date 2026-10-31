@@ -9,7 +9,7 @@
 // kill-switch file. It blocks BEFORE the call — fail-closed.
 //
 //   checkAffordable(n)  — throws if the call would breach the cap
-//   record(n)           — log n successful grounded calls
+//   record(n)           — log n grounded call ATTEMPTS (called before the HTTP request)
 //
 // Override caps via env: RESEARCH_MAX_CALLS_DAY, RESEARCH_MAX_CALLS_RUN
 // Kill switch: create .research-kill at repo root to block all calls.

@@ -12,7 +12,9 @@ process.env.RESEARCH_MAX_OPENAI_CALLS_DAY = '1';
 
 let http = 0;
 const okJson = { choices: [{ message: { content: '{"a":1}' } }], content: [{ text: '{"a":1}' }], results: [{ title: 't', url: 'https://x.org/a', content: 'c' }], web: { results: [{ title: 't', url: 'https://x.org/a', description: 'd' }] } };
-const fakeAxios = { post: async () => { http++; return { data: okJson }; }, get: async () => { http++; return { data: okJson }; } };
+let failNext = false;
+const reply = async () => { http++; if (failNext) { failNext = false; const e = new Error('HTTP 429'); e.response = { status: 429 }; throw e; } return { data: okJson }; };
+const fakeAxios = { post: reply, get: reply };
 const origLoad = Module._load;
 Module._load = function (req, ...a) { return req === 'axios' ? fakeAxios : origLoad.call(this, req, ...a); };
 
@@ -47,4 +49,16 @@ test('providers record usage after a successful call', async () => {
   assert.match(r.provider, /deepseek/);
   assert.equal(guard.providerToday('deepseek'), before + 1);
   assert.equal(http, 1);
+});
+
+test('a failed (e.g. 429) provider call still counts toward the cap — caps bound attempts, not successes', async () => {
+  http = 0; failNext = true;
+  const before = guard.providerToday('deepseek');
+  delete process.env.OPENROUTER_API_KEY; process.env.RESEARCH_SKIP_GEMINI = '1'; delete process.env.RESEARCH_USE_OLLAMA; delete process.env.OLLAMA_BASE_URL;
+  const savedOpenai = process.env.OPENAI_API_KEY, savedAnth = process.env.ANTHROPIC_API_KEY;
+  delete process.env.OPENAI_API_KEY; delete process.env.ANTHROPIC_API_KEY;
+  await assert.rejects(prov.structureJson('{}'));
+  process.env.OPENAI_API_KEY = savedOpenai; process.env.ANTHROPIC_API_KEY = savedAnth;
+  assert.equal(http, 1, 'one HTTP attempt was made');
+  assert.equal(guard.providerToday('deepseek'), before + 1, 'the failed attempt is recorded');
 });
