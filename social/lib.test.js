@@ -61,6 +61,18 @@ test('withQueueLock breaks a stale lock', async () => {
   const lockPath = tmpq() + '.lock'; fs.writeFileSync(lockPath, '1'); const old = new Date(Date.now() - 3600e3); fs.utimesSync(lockPath, old, old);
   assert.equal(await withQueueLock(async () => 'ok', { lockPath, staleMs: 1000 }), 'ok');
 });
+test('withQueueLock never deletes a lock it no longer owns', async () => {
+  const lockPath = tmpq() + '.lock';
+  await withQueueLock(async () => { fs.unlinkSync(lockPath); fs.writeFileSync(lockPath, 'other-owner'); }, { lockPath });
+  assert.equal(fs.readFileSync(lockPath, 'utf8'), 'other-owner', "another process's lock survives our release");
+});
+test('withQueueLock: concurrent waiters on one stale lock still run one at a time', async () => {
+  const lockPath = tmpq() + '.lock'; fs.writeFileSync(lockPath, 'dead'); const old = new Date(Date.now() - 3600e3); fs.utimesSync(lockPath, old, old);
+  let active = 0, max = 0;
+  const job = () => withQueueLock(async () => { active++; max = Math.max(max, active); await new Promise((r) => setTimeout(r, 20)); active--; }, { lockPath, staleMs: 1000, pollMs: 2 });
+  await Promise.all([job(), job(), job(), job()]); assert.equal(max, 1); assert.equal(fs.existsSync(lockPath), false);
+  assert.deepEqual(fs.readdirSync(path.dirname(lockPath)).filter((f) => f.includes('.stale')), [], 'no stale leftovers');
+});
 test('worker snapshot save does not undo a skip made by the approval server', () => {
   const base = { drafts: [{ id: 'B1', status: STATUS.PENDING, text: 'a' }, { id: 'B2', status: STATUS.SCHEDULED, postId: null }], state: {} };
   const mine = JSON.parse(JSON.stringify(base)); mine.drafts[0].status = STATUS.EXPIRED; mine.drafts[1].status = STATUS.POSTED; mine.state.lastRunOk = 'now';

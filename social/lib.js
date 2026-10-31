@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { createRequire } from 'node:module';
+import { randomUUID } from 'node:crypto';
 import { scoreDraft, renderScore } from './score.js';
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(new URL(import.meta.url).pathname);
@@ -26,17 +27,28 @@ export function saveQueue(q, p = QUEUE_PATH) { const tmp = p + '.tmp'; fs.writeF
 // ── queue lock + three-way merge (worker and approval server share queue.json) ──
 const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
 export async function withQueueLock(fn, { lockPath = QUEUE_PATH + '.lock', staleMs = 20 * 60e3, timeoutMs = 5 * 60e3, pollMs = 25 } = {}) {
-  const start = Date.now(); let fd;
+  const start = Date.now(); const token = `${process.pid}-${randomUUID()}`;
   for (;;) {
-    try { fd = fs.openSync(lockPath, 'wx'); fs.writeSync(fd, String(process.pid)); break; }
+    try { const fd = fs.openSync(lockPath, 'wx'); try { fs.writeSync(fd, token); } finally { fs.closeSync(fd); } break; }
     catch (e) {
       if (e.code !== 'EEXIST') throw e;
-      try { if (Date.now() - fs.statSync(lockPath).mtimeMs > staleMs) { fs.unlinkSync(lockPath); continue; } } catch {}
+      breakStaleLock(lockPath, staleMs, token);
       if (Date.now() - start > timeoutMs) throw new Error('queue lock timeout');
       await sleepMs(pollMs);
     }
   }
-  try { return await fn(); } finally { try { fs.closeSync(fd); } catch {} try { fs.unlinkSync(lockPath); } catch {} }
+  try { return await fn(); }
+  finally { try { if (fs.readFileSync(lockPath, 'utf8') === token) fs.unlinkSync(lockPath); } catch {} } // release only our own lock
+}
+// Stale break via atomic rename: only one waiter can move the lock away. If what we moved turns
+// out to be fresh (someone re-took the lock between our stat and rename), put it back.
+function breakStaleLock(lockPath, staleMs, token) {
+  let st; try { st = fs.statSync(lockPath); } catch { return; }
+  if (Date.now() - st.mtimeMs <= staleMs) return;
+  const moved = `${lockPath}.stale.${token}`;
+  try { fs.renameSync(lockPath, moved); } catch { return; } // another waiter won the break
+  try { if (Date.now() - fs.statSync(moved).mtimeMs <= staleMs) { try { fs.linkSync(moved, lockPath); } catch {} } } catch {}
+  try { fs.unlinkSync(moved); } catch {}
 }
 /** Apply what `mine` changed relative to `base` onto `fresh` (the current file). On a field conflict the fresh (approval-server) value wins. */
 export function mergeQueue(base, mine, fresh) {
