@@ -50,6 +50,22 @@ const save = o => {
   const tmp = `${LEDGER}.${process.pid}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(o, null, 2)); fs.renameSync(tmp, LEDGER);
 };
+// Cross-process lock around read-modify-write (daily jobs and manual runs can overlap).
+// mkdir is atomic; a lock older than 30 s is treated as abandoned. Timeout fails CLOSED.
+const sleepSync = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+function withLedgerLock(fn) {
+  const lock = `${LEDGER}.lock`; const start = Date.now();
+  fs.mkdirSync(path.dirname(LEDGER), { recursive: true });
+  for (;;) {
+    try { fs.mkdirSync(lock); break; } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      try { if (Date.now() - fs.statSync(lock).mtimeMs > 30000) { fs.rmdirSync(lock); continue; } } catch { /* raced; retry */ }
+      if (Date.now() - start > 10000) throw new Error(`SPEND GUARD: ledger lock busy (${lock}). Remove it if no research job is running.`);
+      sleepSync(5);
+    }
+  }
+  try { return fn(); } finally { try { fs.rmdirSync(lock); } catch { /* already gone */ } }
+}
 const spentToday = () => load()[today()] || 0;
 
 function checkAffordable(n = 1) {
@@ -61,9 +77,11 @@ function checkAffordable(n = 1) {
 
 function record(n = 1) {
   runCount += n;
-  const o = load();
-  o[today()] = (o[today()] || 0) + n;
-  save(o);
+  withLedgerLock(() => {
+    const o = load();
+    o[today()] = (o[today()] || 0) + n;
+    save(o);
+  });
 }
 
 function providerCap(name, kind) {
@@ -83,8 +101,10 @@ function checkProvider(name, n = 1) {
 
 function recordProvider(name, n = 1) {
   providerRun[name] = (providerRun[name] || 0) + n;
-  const o = load(); o.providers = o.providers || {}; const d = (o.providers[today()] = o.providers[today()] || {});
-  d[name] = (d[name] || 0) + n; save(o);
+  withLedgerLock(() => {
+    const o = load(); o.providers = o.providers || {}; const d = (o.providers[today()] = o.providers[today()] || {});
+    d[name] = (d[name] || 0) + n; save(o);
+  });
 }
 
 module.exports = { checkAffordable, record, spentToday, checkProvider, recordProvider, providerToday, DAILY, PER_RUN };

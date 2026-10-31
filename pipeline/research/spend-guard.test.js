@@ -81,3 +81,18 @@ test('ledger writes are atomic (no temp file left behind, valid JSON after write
   assert.doesNotThrow(() => JSON.parse(fs.readFileSync(L, 'utf8')));
   assert.deepEqual(fs.readdirSync(path.dirname(L)).filter((f) => f.includes('.tmp')), []);
 });
+
+test('concurrent processes do not lose ledger increments (read-modify-write is locked)', async () => {
+  const { spawn } = require('child_process');
+  const L = path.join(tmp, 'concurrent-ledger.json');
+  const child = () => new Promise((res, rej) => {
+    const p = spawn(process.execPath, ['-e', "const g=require(process.argv[1]);for(let i=0;i<60;i++)g.recordProvider('race')", path.join(__dirname, 'spend-guard.js')],
+      { env: { ...process.env, RESEARCH_LEDGER_PATH: L, RESEARCH_MAX_PROVIDER_CALLS_RUN: '1000' }, stdio: ['ignore', 'ignore', 'pipe'] });
+    let err = ''; p.stderr.on('data', (d) => { err += d; });
+    p.on('exit', (c) => (c === 0 ? res() : rej(new Error(err))));
+  });
+  await Promise.all([child(), child(), child(), child()]);
+  const o = JSON.parse(fs.readFileSync(L, 'utf8'));
+  const day = Object.keys(o.providers)[0];
+  assert.equal(o.providers[day].race, 240);
+});
