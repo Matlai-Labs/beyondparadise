@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema": "1.0",
-    "description": "Beyond Paradise sourced fact database. Every claim on the site must trace back to an entry here with ≥2 independent sources. Mirrors WildToSea facts.json schema.",
+    "description": "Beyond Paradise Adventures sourced fact database. Every claim on the site must trace back to an entry here with ≥2 independent sources. Mirrors WildToSea facts.json schema.",
     "rules": "2+ independent sources required for status=confirmed. Single source = single-source. Never publish a specific number without a confirmed entry.",
     "count": 68,
     "last_updated": "2026-06-27"
@@ -27037,7 +27037,7 @@
       "added": "2026-09-25",
       "promotedOn": "2026-09-25",
       "reviewedBy": "Tim Hennig",
-      "correction": "'authoritative' per DB convention: a tier-5 operator source is authoritative for its OWN policy/pricing, not independently verified. Contact: +255 625 696 822 (phone/WhatsApp), beachbumsfishing@gmail.com. Third-party operator prices — never present as Beyond Paradise's or Matlai's own. Tim Hennig instruction 2026-09-25 — travel-facts research, official sources fetched directly (visa.immigration.go.tz, visasnews.com); logged in matlai-site/docs/revive-drafts-2026-09/*.md."
+      "correction": "'authoritative' per DB convention: a tier-5 operator source is authoritative for its OWN policy/pricing, not independently verified. Contact: +255 625 696 822 (phone/WhatsApp), beachbumsfishing@gmail.com. Third-party operator prices — never present as Beyond Paradise Adventures' or Matlai's own. Tim Hennig instruction 2026-09-25 — travel-facts research, official sources fetched directly (visa.immigration.go.tz, visasnews.com); logged in matlai-site/docs/revive-drafts-2026-09/*.md."
     },
     {
       "id": "tanzania-mainland-inbound-insurance",

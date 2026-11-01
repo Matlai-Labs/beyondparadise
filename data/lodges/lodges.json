@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema": "1.0",
-    "description": "Beyond Paradise lodge database — Tim-reviewed luxury properties with Tim Score",
+    "description": "Beyond Paradise Adventures lodge database — Tim-reviewed luxury properties with Tim Score",
     "rules": "Only lodges Tim has personally stayed at. Tim Score = 0–100. Price in EUR, all-in (accommodation + meals + activities + park fees + transfers unless noted). Minimum price bracket: €6,000+ per couple per week.",
     "last_updated": "2026-06-27",
     "maintainer": "Tim Hennig",

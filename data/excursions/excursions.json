@@ -333,7 +333,7 @@
     },
     {
       "tour_or_area": "Any tour page with a schema.org Offer (bookable price) for the excursion itself",
-      "reason": "Safari Blue's own listed price ($85 adult / $42 child, Sept 2026) is now recorded as a fact and mentioned as informational, dated, time-sensitive text on its excursion page — but it is deliberately NOT surfaced as a schema.org Offer anywhere in this dataset, since Beyond Paradise does not sell or resell bookings and has no live inventory/availability data to back an Offer. Stone Town tour and Mnemba/Mafia diving pages still have no price data of any kind, sourced or otherwise, beyond real entry/transfer costs (airport taxi $5-20, marine park entry fees) which ARE cited."
+      "reason": "Safari Blue's own listed price ($85 adult / $42 child, Sept 2026) is now recorded as a fact and mentioned as informational, dated, time-sensitive text on its excursion page — but it is deliberately NOT surfaced as a schema.org Offer anywhere in this dataset, since Beyond Paradise Adventures does not sell or resell bookings and has no live inventory/availability data to back an Offer. Stone Town tour and Mnemba/Mafia diving pages still have no price data of any kind, sourced or otherwise, beyond real entry/transfer costs (airport taxi $5-20, marine park entry fees) which ARE cited."
     }
   ]
 }
