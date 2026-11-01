@@ -24,3 +24,6 @@ Meta access: `shared_knowledge/scripts/meta-pages` (tokens in `~/.config/meta-pa
 Total = 60% rubric pass-rate + 40% hook score. The 12-part rubric has 9 post-level checks (hook window, concrete hook, one ask, 3-5 hashtags,
 brand/links, no slop, concrete fact, readability, length) and 3 profile-level parts (bio, highlights, grid) that are judged monthly and excluded.
 It is advisory only: it never blocks, edits or re-statuses a draft, and it does not predict reach. Pattern from Jakeschincariol/Instagram-agent-skill (MIT).
+
+## Approval endpoint authentication
+`POST /bpa/action` requires `BPA_APPROVAL_TOKEN` (set it for the approval server and send the same value as an `x-bpa-token` header from the WhatsApp bridge, with `content-type: application/json`). Unset = every action returns 503 (fail closed). `WHATSAPP_ALERT_TO` must also be set in the environment (no default number).

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { createRequire } from 'node:module';
+import { randomUUID } from 'node:crypto';
 import { scoreDraft, renderScore } from './score.js';
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(new URL(import.meta.url).pathname);
@@ -11,7 +12,6 @@ export const QUEUE_PATH = path.join(HERE, 'queue.json');
 export const LOG_PATH = path.join(os.homedir(), 'Library', 'Logs', 'beyondparadise', 'social.log');
 const VOICE_LINT = '/Users/tim/Desktop/AI_projects/shared_knowledge/scripts/voice-lint/voice-lint.mjs';
 const META_PUBLISH = '/Users/tim/Desktop/AI_projects/shared_knowledge/scripts/meta-pages/publish.js';
-const WA_TO = process.env.WHATSAPP_ALERT_TO || '+255772628833';
 const BRIDGE = process.env.WHATSAPP_BRIDGE_URL || 'http://127.0.0.1:3002';
 
 export function log(msg) {
@@ -23,6 +23,66 @@ export function log(msg) {
 // ── queue (JSON file, atomic write) ─────────────────────────────────────────
 export function loadQueue(p = QUEUE_PATH) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return { seq: 0, drafts: [] }; } }
 export function saveQueue(q, p = QUEUE_PATH) { const tmp = p + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(q, null, 2)); fs.renameSync(tmp, p); }
+
+// ── queue lock + three-way merge (worker and approval server share queue.json) ──
+const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+export async function withQueueLock(fn, { lockPath = QUEUE_PATH + '.lock', staleMs = 20 * 60e3, timeoutMs = 5 * 60e3, pollMs = 25 } = {}) {
+  const start = Date.now(); const token = `${process.pid}-${randomUUID()}`;
+  for (;;) {
+    try { const fd = fs.openSync(lockPath, 'wx'); try { fs.writeSync(fd, token); } finally { fs.closeSync(fd); } break; }
+    catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      breakStaleLock(lockPath, staleMs, token);
+      if (Date.now() - start > timeoutMs) throw new Error('queue lock timeout');
+      await sleepMs(pollMs);
+    }
+  }
+  try { return await fn(); }
+  finally { try { if (fs.readFileSync(lockPath, 'utf8') === token) fs.unlinkSync(lockPath); } catch {} } // release only our own lock
+}
+// Stale break via atomic rename: only one waiter can move the lock away. If what we moved turns
+// out to be fresh (someone re-took the lock between our stat and rename), put it back.
+function breakStaleLock(lockPath, staleMs, token) {
+  let st; try { st = fs.statSync(lockPath); } catch { return; }
+  if (Date.now() - st.mtimeMs <= staleMs) return;
+  const moved = `${lockPath}.stale.${token}`;
+  try { fs.renameSync(lockPath, moved); } catch { return; } // another waiter won the break
+  try { if (Date.now() - fs.statSync(moved).mtimeMs <= staleMs) { try { fs.linkSync(moved, lockPath); } catch {} } } catch {}
+  try { fs.unlinkSync(moved); } catch {}
+}
+/** Apply what `mine` changed relative to `base` onto `fresh` (the current file). On a field conflict the fresh (approval-server) value wins. */
+export function mergeQueue(base, mine, fresh) {
+  const j = JSON.stringify; const out = JSON.parse(j(fresh)); const byId = new Map(out.drafts.map((d) => [d.id, d]));
+  const baseById = new Map((base.drafts || []).map((d) => [d.id, d])); const freshById = new Map(fresh.drafts.map((d) => [d.id, d]));
+  for (const m of mine.drafts) {
+    const b = baseById.get(m.id); const t = byId.get(m.id); const f = freshById.get(m.id);
+    if (!b || !t) continue; // drafts are only created by draft.js; never resurrect a missing one
+    for (const k of Object.keys(m)) {
+      if (j(m[k]) === j(b[k])) continue; // worker did not touch this field
+      if (j(f[k]) !== j(b[k])) continue; // someone else changed it meanwhile: theirs wins
+      t[k] = m[k];
+    }
+  }
+  const ms = mine.state || {}; const bs = base.state || {}; const fs_ = fresh.state || {}; out.state = out.state || {};
+  for (const k of Object.keys(ms)) if (j(ms[k]) !== j(bs[k]) && j(fs_[k]) === j(bs[k])) out.state[k] = ms[k];
+  return out;
+}
+/** Drafts stuck in IG 'publishing' for more than `minutes` that have NOT been alerted yet for THIS publish attempt (alert once, not every run; a re-claim re-arms it). */
+export function stuckIgPublishes(q, now = new Date(), minutes = 30) {
+  return q.drafts.filter((x) => x.ig?.status === 'publishing' && !(x.ig.stuckAlertedAt && new Date(x.ig.stuckAlertedAt) >= new Date(x.ig.publishingAt || 0)) && now.getTime() - new Date(x.ig.publishingAt || 0).getTime() > minutes * 60e3).map((x) => x.id);
+}
+/** Record that the stuck alert went out. Status stays 'publishing': a human checks Meta before any retry. */
+export function markStuckAlerted(q, ids, now = new Date()) {
+  for (const d of q.drafts) if (ids.includes(d.id) && d.ig) d.ig = { ...d.ig, stuckAlertedAt: now.toISOString() };
+}
+/** Atomically claim a queued IG publish: marks it 'publishing' on disk so an overlapping run or a crash cannot publish twice. */
+export async function claimIgPublish(id, now = new Date(), p = QUEUE_PATH) {
+  return withQueueLock(async () => {
+    const q = loadQueue(p); const d = q.drafts.find((x) => x.id === id);
+    if (!d || d.ig?.status !== 'queued') return null;
+    d.ig = { ...d.ig, status: 'publishing', publishingAt: now.toISOString() }; saveQueue(q, p); return d.ig;
+  }, { lockPath: p + '.lock' });
+}
 export function nextId(q) { q.seq = (q.seq || 0) + 1; return `B${q.seq}`; }
 export const STATUS = { PENDING: 'pending_approval', SCHEDULED: 'scheduled', POSTED: 'posted', SKIPPED: 'skipped', EXPIRED: 'expired', FAILED: 'failed' };
 
@@ -63,7 +123,7 @@ export function draftFromItem(it) {
     '',
     hashtags(region),
   ];
-  return { kind: 'signal', region, text: lines.join('\n'), sourceDate: it.date, sourceId: it.signal?.id || null };
+  return { kind: 'signal', region, text: lines.join('\n'), sourceDate: it.date, sourceId: it.signal?.id || null, sourceCount: (it.sources || []).length || (it.signal?.sourceIds || []).length };
 }
 export function draftFromForecast(fc) {
   if (!fc || !fc.forecasts?.length) return null;
@@ -90,6 +150,8 @@ export function brandGuard(text) {
   if (text.length > 2000) return 'too long (>2000 chars)';
   return null;
 }
+/** CLAUDE.md rule: no number without >=2 independent sources. Signal drafts state a source count, so <2 is rejected. */
+export function sourceGate(d) { return d.kind === 'signal' && !((d.sourceCount ?? 0) >= 2) ? 'fewer than 2 independent sources (>=2 required)' : null; }
 export async function voiceGate(text) {
   const mod = await import(VOICE_LINT).catch(() => null);
   if (!mod?.lint) return { ok: false, reason: 'voice-lint unavailable (fail closed)' };
@@ -111,7 +173,7 @@ export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [
   if (drafts.length < CONFIG.maxDraftsPerWeek) { const lf = latestForecasts(briefs); const fc = draftFromForecast(lf); if (fc && outlookIsFresh(lf, existingDrafts, now)) drafts.push({ ...fc, signature: outlookSignature(lf) }); }
   const out = [];
   for (const d of drafts) {
-    const bad = brandGuard(d.text); if (bad) { out.push({ ...d, rejected: bad }); continue; }
+    const bad = brandGuard(d.text) || sourceGate(d); if (bad) { out.push({ ...d, rejected: bad }); continue; }
     const v = await voiceGate(d.text); if (!v.ok) { out.push({ ...d, rejected: 'voice-lint: ' + v.reason }); continue; }
     out.push({ ...d, createdAt: now.toISOString() });
   }
@@ -120,9 +182,10 @@ export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [
 }
 
 // ── scheduling slots (one post per day at postHourLocal, skipping taken days) ──
-export function nextSlots(q, count, now = new Date()) {
+export function nextSlots(q, count, now = new Date(), tz = CONFIG.timezone) {
   const taken = new Set(q.drafts.filter((d) => d.status === STATUS.SCHEDULED && d.scheduledFor).map((d) => d.scheduledFor.slice(0, 10)));
-  const slots = []; let day = new Date(now.getTime() + 86400e3);
+  const slots = []; const localToday = now.toLocaleDateString('en-CA', { timeZone: tz }); // YYYY-MM-DD in the slot timezone, not UTC
+  let day = new Date(localToday + 'T00:00:00Z'); day = new Date(day.getTime() + 86400e3);
   while (slots.length < count) {
     const ymd = day.toISOString().slice(0, 10);
     if (!taken.has(ymd)) { slots.push(`${ymd}T${String(CONFIG.postHourLocal).padStart(2, '0')}:00:00+03:00`); taken.add(ymd); }
@@ -136,6 +199,8 @@ export async function schedulePost(text, at) { const { createPost } = require(ME
 export async function publishNow(text) { const { createPost } = require(META_PUBLISH); return createPost(CONFIG.page, { message: text }); }
 export async function postStatus(postId) { const { findPage } = require(META_PUBLISH); const p = findPage(CONFIG.page); const r = await fetch(`https://graph.facebook.com/v21.0/${postId}?fields=id,is_published,permalink_url,scheduled_publish_time&access_token=${p.token}`); return r.json(); }
 export async function whatsapp(text) {
+  const WA_TO = process.env.WHATSAPP_ALERT_TO; // no default: a phone number must not live in the repo
+  if (!WA_TO) { log('whatsapp skipped: WHATSAPP_ALERT_TO is not set (fail closed)'); return false; }
   try {
     const s = await fetch(`${BRIDGE}/status`, { signal: AbortSignal.timeout(2000) }); if (!(await s.json()).ready) { log('bridge not ready'); return false; }
     const r = await fetch(`${BRIDGE}/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: WA_TO, text }), signal: AbortSignal.timeout(10000) });

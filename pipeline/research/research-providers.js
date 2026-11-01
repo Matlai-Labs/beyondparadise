@@ -32,7 +32,7 @@ function parseJson(text) {
 async function callGemini(parts, grounded, json) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('no GEMINI_API_KEY');
-  if (grounded) guard.checkAffordable(1);
+  if (grounded) { guard.checkAffordable(1); guard.record(1); } // counted before the call (attempts, not successes)
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
   const body = { contents: [{ parts }], generationConfig: { temperature: 0.2 } };
@@ -56,7 +56,6 @@ async function callGemini(parts, grounded, json) {
     throw new Error(`Gemini HTTP ${r.status}: ${JSON.stringify(r.data).slice(0, 300)}`);
   }
   if (r.status !== 200) throw new Error('Gemini rate-limited after 5 retries');
-  if (grounded) guard.record(1);
 
   const cand = r.data.candidates?.[0];
   const text = (cand?.content?.parts || []).map(p => p.text).filter(Boolean).join('\n');
@@ -70,6 +69,7 @@ async function callPerplexity(prompt) {
   const key = process.env.PERPLEXITY_API_KEY;
   if (!key) throw new Error('no PERPLEXITY_API_KEY');
   guard.checkAffordable(1);
+  guard.record(1); // counted before the call (attempts, not successes)
 
   const r = await axios.post(
     'https://api.perplexity.ai/chat/completions',
@@ -86,7 +86,6 @@ async function callPerplexity(prompt) {
       timeout: 120000,
     }
   );
-  guard.record(1);
 
   const text = (r.data.choices?.[0]?.message?.content || '').trim();
   const urls = [
@@ -117,6 +116,8 @@ function snippetsToGroundedText(results) {
 async function callTavily(prompt) {
   const key = process.env.TAVILY_API_KEY;
   if (!key) throw new Error('no TAVILY_API_KEY');
+  guard.checkProvider('tavily');
+  guard.recordProvider('tavily'); // count the attempt before HTTP: failed/429 calls can still be billed
   const r = await axios.post(
     'https://api.tavily.com/search',
     {
@@ -149,6 +150,8 @@ async function callTavily(prompt) {
 async function callBrave(prompt) {
   const key = process.env.BRAVE_API_KEY || process.env.BRAVE_SEARCH_API_KEY;
   if (!key) throw new Error('no BRAVE_API_KEY or BRAVE_SEARCH_API_KEY');
+  guard.checkProvider('brave');
+  guard.recordProvider('brave'); // count the attempt before HTTP: failed/429 calls can still be billed
   const r = await axios.get(
     'https://api.search.brave.com/res/v1/web/search',
     {
@@ -222,6 +225,8 @@ async function callOllamaJson(prompt) {
 async function callOpenRouterJson(model, prompt) {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) throw new Error('no OPENROUTER_API_KEY');
+  guard.checkProvider('openrouter');
+  guard.recordProvider('openrouter'); // count the attempt before HTTP: failed/429 calls can still be billed
   const r = await axios.post(
     'https://openrouter.ai/api/v1/chat/completions',
     {
@@ -250,6 +255,8 @@ async function callOpenRouterJson(model, prompt) {
 async function callDeepSeekJson(prompt) {
   const key = process.env.DEEPSEEK_API_KEY;
   if (!key) throw new Error('no DEEPSEEK_API_KEY');
+  guard.checkProvider('deepseek');
+  guard.recordProvider('deepseek'); // count the attempt before HTTP: failed/429 calls can still be billed
   const r = await axios.post(
     'https://api.deepseek.com/chat/completions',
     {
@@ -273,6 +280,8 @@ async function callDeepSeekJson(prompt) {
 async function callOpenAIJson(prompt) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('no OPENAI_API_KEY');
+  guard.checkProvider('openai');
+  guard.recordProvider('openai'); // count the attempt before HTTP: failed/429 calls can still be billed
   const r = await axios.post(
     'https://api.openai.com/v1/chat/completions',
     {
@@ -296,6 +305,8 @@ async function callOpenAIJson(prompt) {
 async function callAnthropicJson(prompt) {
   const key = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
   if (!key) throw new Error('no ANTHROPIC_API_KEY or CLAUDE_API_KEY');
+  guard.checkProvider('anthropic');
+  guard.recordProvider('anthropic'); // count the attempt before HTTP: failed/429 calls can still be billed
   const r = await axios.post(
     'https://api.anthropic.com/v1/messages',
     {
