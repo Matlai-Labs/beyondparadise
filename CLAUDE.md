@@ -19,7 +19,7 @@ Beyond Paradise is NOT a package-tourism directory. It is a **decision-support e
 The keystone product is the **Marine Wildlife Encounter Index**: species × location × month × sighting-probability × legality × verified-ethical-operator — a unified, AI-citable index that no incumbent owns.
 
 - **Tim** covers East Africa: Zanzibar, Serengeti (Tanzania), Masai Mara (Kenya), Rwanda, Mafia Island
-- **Kim** covers Southeast Asia: Vietnam (Hoi An, Hanoi, Ha Long Bay, Hue)
+- **Kim** covers Southeast Asia: Vietnam (Hoi An, Hanoi, Ha Long Bay, Hue) — **2026-10-08: Kim's byline, bio, Person JSON-LD and `/about/kim/` page were removed from the live site** (commit `869882d`, no record of her consent to be named as an author). This split is aspirational until Tim resolves that and a Kim byline is restored — see Authors section and §Recent state below.
 - Distinct from WildToSea (WildToSea = "where to go in Tanzania"; Beyond Paradise = "which experience, which month, is it ethical?")
 - Distinct from Matlai (Matlai = hotel; Beyond Paradise = independent editorial)
 
@@ -108,7 +108,7 @@ Ethics grading uses **observable criteria only**: documented tourism-impact stud
 ### 4. First-hand authority or citation
 Every claim is either:
 - **Tim first-hand** (marked `[TIM]`, includes visit date + specific observation)
-- **Kim first-hand** (marked `[KIM]`, Vietnam content)
+- **Kim first-hand** (marked `[KIM]`, Vietnam content) — no Kim content is published yet, and as of 2026-10-08 her public byline was removed pending consent; do not publish `[KIM]`-attributed claims until that's resolved
 - **Peer-reviewed** (PLOS ONE, Marine Mammal Science, CORDIO EA, IUCN Red List — all in `data/facts/sources.json`)
 - **Official** (TANAPA, KWS, Marine Parks Authority, WWF/WCS official reports)
 
@@ -126,7 +126,7 @@ AnswerBox (50–100 words, direct answer with at least 1 number)
 → ≥5 H2 sections (answer in sentence 1 of each)
 → Tim Score card (lodge reviews only)
 → FAQ (5–8 questions, 2–3 sentence answers)
-→ AuthorBlock (Tim or Kim, with first-hand context)
+→ AuthorBlock (Tim only as of 2026-10-08 — `AuthorBlock.astro` dropped the `'kim'` author option; see Authors section)
 → RelatedReads (3 internal links minimum)
 ```
 
@@ -140,7 +140,7 @@ Word counts:
 Read `shared_knowledge/docs/seo-ai-content-site-playbook.md`. Key rules:
 - Answer in sentence 1 of every section
 - Lists over prose for extractable content
-- ≥1 Tim or Kim first-person anecdote per article
+- ≥1 Tim first-person anecdote per article (Kim anecdotes paused since 2026-10-08, see Authors section)
 - heroAlt on every image (descriptive, not keyword-stuffed)
 - Schema.org markup: Article + Person (author) + Review (lodges) + Place + Event (migration calendar)
 - AI citation config: `public/llms.txt` (exists) + `public/robots.txt` (AI crawlers explicitly welcome)
@@ -156,7 +156,14 @@ Read `shared_knowledge/docs/seo-ai-content-site-playbook.md`. Key rules:
 /intelligence/prices/
 /about/tim-score/                   # Tim Score methodology
 /about/editorial-policy/
-/about/kim/                         # Kim's author page
+/about/kim/                         # REMOVED 2026-10-08 (commit 869882d) — Kim byline dropped, this is now a dead link, do not re-add until Authors section is resolved
+```
+
+Added since this list was locked (append-only, so these are additions not replacements):
+```
+/excursions/                        # added 2026-09-23 — excursion hub (tour × pickup area), fact-checked only, Tim-approved scaled-down scope
+/excursions/[slug]/                 # programmatic excursion pages, generator fails closed on any unresolved fact_id
+/intelligence/east-africa-tourism-stats/   # added ~2026-10-08 — stats dataset page + .csv.ts export
 ```
 
 Published slugs are append-only. If a slug must change: 301 redirect, update internal links same commit.
@@ -346,7 +353,7 @@ beyondparadiseadventures/
 
 **Phase 1 (Now — Q3 2026):** Landing page built, ~~live ✅~~ **actually NOT reachable as of 2026-08-02 — domain still on parking nameservers, see Deploy/URL notes above** → Tim Score methodology page → Editorial policy page → 3–5 first lodge reviews (East Africa) → First wildlife guide (whale sharks Mafia) → Beehiiv newsletter setup → Domain connect (this step was apparently never actually completed despite being listed after "live")
 
-**Phase 2 (Q4 2026):** Kim's Vietnam hub (3–5 pages) → Ethical operator directory (beta) → GYG/Viator affiliate wired → Daily pipeline live → German language pilot → Wikidata entities created
+**Phase 2 (Q4 2026):** Kim's Vietnam hub (3–5 pages) — **blocked as of 2026-10-08: Kim's public byline was removed pending consent, see Authors section** → Ethical operator directory (beta) → GYG/Viator affiliate wired → Daily pipeline live (social/Instagram side now live, see §Recent state 2026-11-01) → German language pilot → Wikidata entities created
 
 **Phase 3 (2027):** Marine Wildlife Encounter Index (full species × location × month DB) → Price database → Migration calendar (live-updated) → AI consultation product → Liveaboard agency relationship
 
@@ -354,9 +361,9 @@ beyondparadiseadventures/
 
 ## Authors
 
-**Tim Hennig** — East Africa lead. GM, Boutique Hotel Matlai, Michamvi Pingwe, Zanzibar. 5+ years living East Africa. 80+ luxury properties personally reviewed.
+**Tim Hennig** — East Africa lead. GM, Boutique Hotel Matlai, Michamvi Pingwe, Zanzibar. ~~5+ years living East Africa~~ **corrected 2026-10-08: on Zanzibar since 2011 (the "5+ years" figure was unsupported and dropped site-wide, commit 869882d) — the hotel is owned by his family, he is GM, not owner.** 80+ luxury properties personally reviewed.
 
-**Kim** — Southeast Asia lead. Vietnamese, lives in Zanzibar. First-hand knowledge of Vietnam luxury travel: Hoi An, Hanoi, Ha Long Bay, Hue.
+**Kim** — Southeast Asia lead. Vietnamese, lives in Zanzibar. First-hand knowledge of Vietnam luxury travel: Hoi An, Hanoi, Ha Long Bay, Hue. **As of 2026-10-08 Kim is NOT a public-facing author on the live site** — commit `869882d` ("fix(authors): remove stock avatars, Kim byline and unsupported experience claims") deleted her byline, Person JSON-LD, the `/about/kim/` page, and every public "Kim" mention (footer, destinations copy), because the repo has no record of her consenting to be named as an author. `AuthorBlock.astro` now only accepts `author: 'tim'`, and `tests/authors.test.mjs` fails the build on an undeclared author or a stock-photo avatar. This section describing Kim as Southeast Asia lead is the intended end-state, not the current site — do not re-add a public Kim byline without that consent on record.
 
 Wikidata: Tim Hennig = Q140307013 (see `shared_knowledge/scripts/wikidata_configs/matlai.json`)
 
@@ -388,3 +395,17 @@ profile in Agent OS, not this file.
 about how the code fits together, run `graphify query "<question>"` / `graphify explain "<symbol>"`
 BEFORE grepping — a scoped subgraph for a fraction of the tokens. After code changes: `graphify update site`
 (AST only, free). Output is gitignored; a rebuild is a few seconds and a fraction of a cent on the fleet's Gemini key.
+
+## Recent state (as of 2026-11-01 — this file was last substantively updated 2026-09-23; see git log for the full list)
+
+This file wasn't touched for 37 days while the repo kept moving. Notable additions/corrections not reflected above until this pass:
+
+- **Social/Instagram pipeline now exists** (`social/` — not described anywhere else in this file): `draft.js` → `score.js` (2026-10-18, R9-6: 12-part IG rubric + hook score, fail-open, advisory only, never changes draft status, shown in `bpa approve` lists) → `reel-qa.js` (2026-10-31: post-render QA gate — probes every rendered reel for resolution/duration/size/black-frame % and throws before WordPress hosting or Instagram publish) → `worker.js` / `approval-server.js` (WhatsApp `bpa approve` gate, per the fleet operating brief). Treat `social/` as a real, tested pipeline (lib.test.js, score.test.js, reel-qa.test.js), not a stub.
+- **Authors: Kim's public byline was removed 2026-10-08** (commit `869882d`) — see the Authors section above for the full correction. Site is single-author (Tim) until resolved.
+- **SEO gates vendored** 2026-10-08 (commit `07af616`): `site/scripts/seo-gates/` + `seo-gates-run.mjs` — title-length (60), claim-clock (time-bound/stale-period claims), click-depth (≤3), stale-page + freshness warnings. Runs alongside the existing `content-gate`/`check-links` scripts in the build.
+- **Programmatic excursion pages shipped** 2026-09-23 (commit `0f69eaa`, Tim-approved scaled-down scope, explicitly not the "3,000 pages" spam pattern it was inspired to avoid): `data/excursions/excursions.json` (tour × pickup area combos, every claim traced to a `fact_id`) + `pipeline/seo/generate-excursion-pages.js` (fails closed on any unresolved fact, runs a pairwise uniqueness check). Live at `/excursions/`.
+- **Fact-DB hygiene pass, Sept–Oct 2026**: several previously-confirmed facts were corrected or softened — 3 wrongly-confirmed "visa-on-arrival abolished" facts reverted to unverified (`f018e75`), green turtle nesting corrected to Feb–Jul with no Mnemba-specific peak claimed (`3ac0f8f`, `c6e724e`), Mafia Marine Park fee corrected to USD 23.60 (`841bc47`), the 85% dolphin-sighting rate reattributed to the Eco Culture agency rather than the operator (`7f65e99`). Read these as the rule-2/rule-"never write a specific number without ≥2 sources" discipline actually being enforced, not as one-off bugs.
+- **Cross-share pipeline** (`3d2b4ab`) now maps Beyond Paradise regions to the WildToSea master vocabulary, drops non-Tanzania regions, and runs automatically at the end of `research-daily`.
+- **GA4/GSC/Bing/Cloudflare Web Analytics wiring is env-gated** (`907c80d`, `7eb5753`) — absent credentials are a no-op, not a build failure.
+
+If you're relying on anything above this section that conflicts with these notes, trust the dated annotations over the original prose — update the original text in place the next time you're in that section rather than letting corrections pile up here indefinitely.
