@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema": "1.0",
-    "description": "Beyond Paradise destination profiles — region-level intelligence for East Africa + Southeast Asia",
+    "description": "Beyond Paradise Adventures destination profiles — region-level intelligence for East Africa + Southeast Asia",
     "last_updated": "2026-06-27",
     "maintainer": "Tim Hennig (East Africa) + Kim (Southeast Asia)"
   },
@@ -121,7 +121,7 @@
       "country": "vn",
       "region": "southeast-asia",
       "lead": "Kim",
-      "description": "Kim's home country. Hoi An's tailors and restaurants, Ha Long Bay's limestone karsts, Hanoi's French Quarter, Hue's Imperial Citadel. Beyond Paradise covers the luxury tier only.",
+      "description": "Kim's home country. Hoi An's tailors and restaurants, Ha Long Bay's limestone karsts, Hanoi's French Quarter, Hue's Imperial Citadel. Beyond Paradise Adventures covers the luxury tier only.",
       "min_budget_per_night_eur": 300,
       "best_months": [11, 12, 1, 2, 3, 4],
       "avoid_months": [9, 10],

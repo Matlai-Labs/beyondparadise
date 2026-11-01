@@ -4,15 +4,17 @@ import path from 'node:path';
 import os from 'node:os';
 import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 import { scoreDraft, renderScore } from './score.js';
+import { modulePath, resourcePath, requireResource, graphCall } from './resources.js';
 const require = createRequire(import.meta.url);
-const HERE = path.dirname(new URL(import.meta.url).pathname);
+const HERE = path.dirname(modulePath(import.meta.url));
 export const CONFIG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
 export const QUEUE_PATH = path.join(HERE, 'queue.json');
 export const LOG_PATH = path.join(os.homedir(), 'Library', 'Logs', 'beyondparadise', 'social.log');
-const VOICE_LINT = '/Users/tim/Desktop/AI_projects/shared_knowledge/scripts/voice-lint/voice-lint.mjs';
-const META_PUBLISH = '/Users/tim/Desktop/AI_projects/shared_knowledge/scripts/meta-pages/publish.js';
 const BRIDGE = process.env.WHATSAPP_BRIDGE_URL || 'http://127.0.0.1:3002';
+/** meta-pages is loaded lazily: it is outside this repo and only needed when actually publishing. */
+const metaPublish = () => require(requireResource('metaPublish'));
 
 export function log(msg) {
   fs.mkdirSync(path.dirname(LOG_PATH), { recursive: true });
@@ -153,8 +155,9 @@ export function brandGuard(text) {
 /** CLAUDE.md rule: no number without >=2 independent sources. Signal drafts state a source count, so <2 is rejected. */
 export function sourceGate(d) { return d.kind === 'signal' && !((d.sourceCount ?? 0) >= 2) ? 'fewer than 2 independent sources (>=2 required)' : null; }
 export async function voiceGate(text) {
-  const mod = await import(VOICE_LINT).catch(() => null);
-  if (!mod?.lint) return { ok: false, reason: 'voice-lint unavailable (fail closed)' };
+  const lintPath = resourcePath('voiceLint');
+  const mod = await import(pathToFileURL(lintPath).href).catch(() => null);
+  if (!mod?.lint) return { ok: false, reason: `voice-lint unavailable at ${lintPath} (fail closed; set VOICE_LINT_PATH)` };
   const res = mod.lint(text); return { ok: !!res.ok, reason: res.ok ? null : JSON.stringify(res).slice(0, 300) };
 }
 export function outlookSignature(fc) {
@@ -195,9 +198,12 @@ export function nextSlots(q, count, now = new Date(), tz = CONFIG.timezone) {
 }
 
 // ── publishing (meta-pages) + WhatsApp ─────────────────────────────────────
-export async function schedulePost(text, at) { const { createPost } = require(META_PUBLISH); return createPost(CONFIG.page, { message: text, at }); }
-export async function publishNow(text) { const { createPost } = require(META_PUBLISH); return createPost(CONFIG.page, { message: text }); }
-export async function postStatus(postId) { const { findPage } = require(META_PUBLISH); const p = findPage(CONFIG.page); const r = await fetch(`https://graph.facebook.com/v21.0/${postId}?fields=id,is_published,permalink_url,scheduled_publish_time&access_token=${p.token}`); return r.json(); }
+export async function schedulePost(text, at) { const { createPost } = metaPublish(); return createPost(CONFIG.page, { message: text, at }); }
+export async function publishNow(text) { const { createPost } = metaPublish(); return createPost(CONFIG.page, { message: text }); }
+export async function postStatus(postId) {
+  const { findPage } = metaPublish(); const p = findPage(CONFIG.page);
+  return graphCall(`${postId}?fields=id,is_published,permalink_url,scheduled_publish_time`, { token: p.token, throwOnError: false });
+}
 export async function whatsapp(text) {
   const WA_TO = process.env.WHATSAPP_ALERT_TO; // no default: a phone number must not live in the repo
   if (!WA_TO) { log('whatsapp skipped: WHATSAPP_ALERT_TO is not set (fail closed)'); return false; }
@@ -235,7 +241,7 @@ export function renderList(q) {
 import { execFileSync } from 'node:child_process';
 export function igEnabled() {
   if (!CONFIG.instagram?.enabled) return false;
-  try { const s = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.config/meta-pages/tokens.json'), 'utf8')); return (s.user?.scopes || []).includes('instagram_content_publish') || !!s.user?.igPublishOk; } catch { return false; }
+  try { const s = JSON.parse(fs.readFileSync(resourcePath('metaTokens'), 'utf8')); return (s.user?.scopes || []).includes('instagram_content_publish') || !!s.user?.igPublishOk; } catch { return false; }
 }
 export function cardSpec(d) {
   const first = d.text.split('\n')[0]; const [headline, rest] = first.split(' — ');
@@ -247,14 +253,17 @@ export function cardSpec(d) {
     const wc = body.find((l) => l.startsWith('What changed: '));
     if (wc) { head = wc.replace('What changed: ', ''); lines = body.filter((l) => l !== wc); }
   }
-  return { label: d.kind === 'outlook' ? 'Demand outlook · next 8 weeks' : 'What changed', headline: head, tag: d.region === 'all' ? 'Zanzibar & Dar es Salaam' : (d.region === 'zanzibar' ? 'Zanzibar' : 'Dar es Salaam'), date: (rest || d.sourceDate || '').trim(), lines, brand: CONFIG.brand };
+  // tagline: a PUBLISHED brand claim, so it lives in config.json where Tim can word it (audit finding 9)
+  return { label: d.kind === 'outlook' ? 'Demand outlook · next 8 weeks' : 'What changed', headline: head, tag: d.region === 'all' ? 'Zanzibar & Dar es Salaam' : (d.region === 'zanzibar' ? 'Zanzibar' : 'Dar es Salaam'), date: (rest || d.sourceDate || '').trim(), lines, brand: CONFIG.brand, tagline: CONFIG.reelTagline };
 }
 export function renderCard(d, outDir = path.join(HERE, 'cards')) {
   fs.mkdirSync(outDir, { recursive: true }); const spec = path.join(outDir, `${d.id}.json`); const png = path.join(outDir, `${d.id}.png`);
   fs.writeFileSync(spec, JSON.stringify(cardSpec(d))); execFileSync('python3', [path.join(HERE, 'card.py'), spec, png], { stdio: 'pipe' }); return png;
 }
 function wpCreds() {
-  const env = {}; for (const line of fs.readFileSync('/Users/tim/Desktop/AI_projects/Padel_Revive/.env', 'utf8').split('\n')) { const m = line.trim().match(/^(WP_[A-Z_]+)=(.*)$/); if (m) env[m[1]] = m[2].replace(/^['"]|['"]$/g, ''); }
+  const file = requireResource('mediaEnv');
+  const env = {}; for (const line of fs.readFileSync(file, 'utf8').split('\n')) { const m = line.trim().match(/^(WP_[A-Z_]+)=(.*)$/); if (m) env[m[1]] = m[2].replace(/^['"]|['"]$/g, ''); }
+  for (const k of ['WP_BASE_URL', 'WP_USERNAME', 'WP_APP_PASSWORD']) if (!env[k]) throw new Error(`${k} missing from ${file} (set BPA_MEDIA_ENV_FILE to the right file)`);
   return { base: env.WP_BASE_URL.replace(/\/$/, ''), auth: 'Basic ' + Buffer.from(`${env.WP_USERNAME}:${env.WP_APP_PASSWORD}`).toString('base64') };
 }
 export async function hostImage(pngPath, name) {
@@ -263,13 +272,13 @@ export async function hostImage(pngPath, name) {
   const j = await r.json(); if (!r.ok) throw new Error(`media upload ${r.status}: ${JSON.stringify(j).slice(0, 160)}`); return { id: j.id, url: j.source_url };
 }
 export async function igPublish(caption, imageUrl, { dryContainerOnly = false } = {}) {
-  const { findPage } = require(META_PUBLISH); const p = findPage(CONFIG.page); const ig = CONFIG.instagram.igUserId; const V = 'v21.0';
-  const call = async (pth, params) => { const r = await fetch(`https://graph.facebook.com/${V}/${pth}`, { method: 'POST', body: new URLSearchParams({ ...params, access_token: p.token }), signal: AbortSignal.timeout(60000) }); const j = await r.json(); if (j.error) throw new Error(`${pth}: ${j.error.message}`); return j; };
-  const c = await call(`${ig}/media`, { image_url: imageUrl, caption: caption.slice(0, 2200) });
-  for (let i = 0; i < 20; i++) { const s = await (await fetch(`https://graph.facebook.com/${V}/${c.id}?fields=status_code,status&access_token=${p.token}`)).json(); if (s.status_code === 'FINISHED') break; if (s.status_code === 'ERROR') throw new Error(`container error: ${s.status}`); await new Promise((r) => setTimeout(r, 3000)); }
+  const { findPage } = metaPublish(); const p = findPage(CONFIG.page); const ig = CONFIG.instagram.igUserId;
+  const post = (pth, form) => graphCall(pth, { token: p.token, method: 'POST', form });
+  const c = await post(`${ig}/media`, { image_url: imageUrl, caption: caption.slice(0, 2200) });
+  for (let i = 0; i < 20; i++) { const s = await graphCall(`${c.id}?fields=status_code,status`, { token: p.token, throwOnError: false }); if (s.status_code === 'FINISHED') break; if (s.status_code === 'ERROR') throw new Error(`container error: ${s.status}`); await new Promise((r) => setTimeout(r, 3000)); }
   if (dryContainerOnly) return { containerId: c.id, published: false };
-  const pub = await call(`${ig}/media_publish`, { creation_id: c.id });
-  const info = await (await fetch(`https://graph.facebook.com/${V}/${pub.id}?fields=id,permalink&access_token=${p.token}`)).json();
+  const pub = await post(`${ig}/media_publish`, { creation_id: c.id });
+  const info = await graphCall(`${pub.id}?fields=id,permalink`, { token: p.token, throwOnError: false });
   return { id: pub.id, permalink: info.permalink, published: true };
 }
 export async function igPostDraft(d) {
@@ -279,14 +288,14 @@ export async function igPostDraft(d) {
 
 // ── Instagram REELS (video) publish: container(REELS, video_url) → poll → publish ─────────
 export async function igPublishReel(caption, videoUrl, { dryContainerOnly = false } = {}) {
-  const { findPage } = require(META_PUBLISH); const p = findPage(CONFIG.page); const ig = CONFIG.instagram.igUserId; const V = 'v21.0';
-  const call = async (pth, params) => { const r = await fetch(`https://graph.facebook.com/${V}/${pth}`, { method: 'POST', body: new URLSearchParams({ ...params, access_token: p.token }), signal: AbortSignal.timeout(60000) }); const j = await r.json(); if (j.error) throw new Error(`${pth}: ${j.error.message}`); return j; };
-  const c = await call(`${ig}/media`, { media_type: 'REELS', video_url: videoUrl, caption: caption.slice(0, 2200), share_to_feed: 'true' });
+  const { findPage } = metaPublish(); const p = findPage(CONFIG.page); const ig = CONFIG.instagram.igUserId;
+  const post = (pth, form) => graphCall(pth, { token: p.token, method: 'POST', form });
+  const c = await post(`${ig}/media`, { media_type: 'REELS', video_url: videoUrl, caption: caption.slice(0, 2200), share_to_feed: 'true' });
   // video containers transcode server-side: poll up to ~3 min
-  for (let i = 0; i < 60; i++) { const s = await (await fetch(`https://graph.facebook.com/${V}/${c.id}?fields=status_code,status&access_token=${p.token}`)).json(); if (s.status_code === 'FINISHED') break; if (s.status_code === 'ERROR') throw new Error(`reel container error: ${s.status}`); await new Promise((r) => setTimeout(r, 3000)); }
+  for (let i = 0; i < 60; i++) { const s = await graphCall(`${c.id}?fields=status_code,status`, { token: p.token, throwOnError: false }); if (s.status_code === 'FINISHED') break; if (s.status_code === 'ERROR') throw new Error(`reel container error: ${s.status}`); await new Promise((r) => setTimeout(r, 3000)); }
   if (dryContainerOnly) return { containerId: c.id, published: false };
-  const pub = await call(`${ig}/media_publish`, { creation_id: c.id });
-  const info = await (await fetch(`https://graph.facebook.com/${V}/${pub.id}?fields=id,permalink&access_token=${p.token}`)).json();
+  const pub = await post(`${ig}/media_publish`, { creation_id: c.id });
+  const info = await graphCall(`${pub.id}?fields=id,permalink`, { token: p.token, throwOnError: false });
   return { id: pub.id, permalink: info.permalink, published: true };
 }
 export async function hostVideo(mp4Path, name) {

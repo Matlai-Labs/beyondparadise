@@ -32,23 +32,28 @@ function parseJson(text) {
 async function callGemini(parts, grounded, json) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('no GEMINI_API_KEY');
-  if (grounded) { guard.checkAffordable(1); guard.record(1); } // counted before the call (attempts, not successes)
-
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+  // The key goes in a header, not the query string: a URL is written into every proxy and error
+  // log on the way, and axios puts config.url into the error it throws.
+  // https://ai.google.dev/gemini-api/docs/generate-content/api-key
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
   const body = { contents: [{ parts }], generationConfig: { temperature: 0.2 } };
   if (grounded) body.tools = [{ google_search: {} }];
   if (json) body.generationConfig.responseMimeType = 'application/json';
 
+  const retryBaseMs = parseInt(process.env.RESEARCH_RETRY_BASE_MS || '20000', 10);
   let r;
   for (let attempt = 0; attempt < 5; attempt++) {
+    // One guard unit per HTTP ATTEMPT, so the cap bounds requests rather than logical calls: a
+    // grounded call that retries four times used to count as one.
+    if (grounded) guard.reserve(1);
     r = await axios.post(endpoint, body, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       timeout: 120000,
       validateStatus: () => true,
     });
     if (r.status === 200) break;
     if (r.status === 429 || r.status >= 500) {
-      const wait = 20000 * (attempt + 1);
+      const wait = retryBaseMs * (attempt + 1);
       console.log(`  Gemini ${r.status} - waiting ${wait / 1000}s before retry...`);
       await sleep(wait);
       continue;
@@ -68,8 +73,7 @@ async function callGemini(parts, grounded, json) {
 async function callPerplexity(prompt) {
   const key = process.env.PERPLEXITY_API_KEY;
   if (!key) throw new Error('no PERPLEXITY_API_KEY');
-  guard.checkAffordable(1);
-  guard.record(1); // counted before the call (attempts, not successes)
+  guard.reserve(1); // check + record in one lock, before the call (attempts, not successes)
 
   const r = await axios.post(
     'https://api.perplexity.ai/chat/completions',
@@ -116,8 +120,7 @@ function snippetsToGroundedText(results) {
 async function callTavily(prompt) {
   const key = process.env.TAVILY_API_KEY;
   if (!key) throw new Error('no TAVILY_API_KEY');
-  guard.checkProvider('tavily');
-  guard.recordProvider('tavily'); // count the attempt before HTTP: failed/429 calls can still be billed
+  guard.reserveProvider('tavily'); // check + record in one lock, before HTTP: failed/429 calls can still be billed
   const r = await axios.post(
     'https://api.tavily.com/search',
     {
@@ -150,8 +153,7 @@ async function callTavily(prompt) {
 async function callBrave(prompt) {
   const key = process.env.BRAVE_API_KEY || process.env.BRAVE_SEARCH_API_KEY;
   if (!key) throw new Error('no BRAVE_API_KEY or BRAVE_SEARCH_API_KEY');
-  guard.checkProvider('brave');
-  guard.recordProvider('brave'); // count the attempt before HTTP: failed/429 calls can still be billed
+  guard.reserveProvider('brave'); // check + record in one lock, before HTTP: failed/429 calls can still be billed
   const r = await axios.get(
     'https://api.search.brave.com/res/v1/web/search',
     {
@@ -225,8 +227,7 @@ async function callOllamaJson(prompt) {
 async function callOpenRouterJson(model, prompt) {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) throw new Error('no OPENROUTER_API_KEY');
-  guard.checkProvider('openrouter');
-  guard.recordProvider('openrouter'); // count the attempt before HTTP: failed/429 calls can still be billed
+  guard.reserveProvider('openrouter'); // check + record in one lock, before HTTP: failed/429 calls can still be billed
   const r = await axios.post(
     'https://openrouter.ai/api/v1/chat/completions',
     {
@@ -255,8 +256,7 @@ async function callOpenRouterJson(model, prompt) {
 async function callDeepSeekJson(prompt) {
   const key = process.env.DEEPSEEK_API_KEY;
   if (!key) throw new Error('no DEEPSEEK_API_KEY');
-  guard.checkProvider('deepseek');
-  guard.recordProvider('deepseek'); // count the attempt before HTTP: failed/429 calls can still be billed
+  guard.reserveProvider('deepseek'); // check + record in one lock, before HTTP: failed/429 calls can still be billed
   const r = await axios.post(
     'https://api.deepseek.com/chat/completions',
     {
@@ -280,8 +280,7 @@ async function callDeepSeekJson(prompt) {
 async function callOpenAIJson(prompt) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('no OPENAI_API_KEY');
-  guard.checkProvider('openai');
-  guard.recordProvider('openai'); // count the attempt before HTTP: failed/429 calls can still be billed
+  guard.reserveProvider('openai'); // check + record in one lock, before HTTP: failed/429 calls can still be billed
   const r = await axios.post(
     'https://api.openai.com/v1/chat/completions',
     {
@@ -305,8 +304,7 @@ async function callOpenAIJson(prompt) {
 async function callAnthropicJson(prompt) {
   const key = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
   if (!key) throw new Error('no ANTHROPIC_API_KEY or CLAUDE_API_KEY');
-  guard.checkProvider('anthropic');
-  guard.recordProvider('anthropic'); // count the attempt before HTTP: failed/429 calls can still be billed
+  guard.reserveProvider('anthropic'); // check + record in one lock, before HTTP: failed/429 calls can still be billed
   const r = await axios.post(
     'https://api.anthropic.com/v1/messages',
     {

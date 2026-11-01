@@ -8,8 +8,13 @@
 // This guard caps grounded calls per day and per run, with a
 // kill-switch file. It blocks BEFORE the call — fail-closed.
 //
-//   checkAffordable(n)  — throws if the call would breach the cap
+//   reserve(n)          — PREFERRED: check and record in one locked step, before the HTTP request
+//   reserveProvider(name, n) — the same for a non-Gemini cascade provider
+//   checkAffordable(n)  — throws if the call would breach the cap (kept for callers that only ask)
 //   record(n)           — log n grounded call ATTEMPTS (called before the HTTP request)
+//
+// Prefer the reserve* pair: a separate check then record leaves a window in which two overlapping
+// runs can each pass at cap-1 and both go on to spend.
 //
 // Override caps via env: RESEARCH_MAX_CALLS_DAY, RESEARCH_MAX_CALLS_RUN
 // Kill switch: create .research-kill at repo root to block all calls.
@@ -59,7 +64,15 @@ function withLedgerLock(fn) {
   for (;;) {
     try { fs.mkdirSync(lock); break; } catch (e) {
       if (e.code !== 'EEXIST') throw e;
-      try { if (Date.now() - fs.statSync(lock).mtimeMs > 30000) { fs.rmdirSync(lock); continue; } } catch { /* raced; retry */ }
+      // Break a stale lock by atomic rename, as social/lib.js does: a plain rmdir lets two waiters
+      // both "break" it, the second one removing a lock a third process has already taken.
+      try {
+        if (Date.now() - fs.statSync(lock).mtimeMs > 30000) {
+          const moved = `${lock}.stale.${process.pid}.${Date.now()}`;
+          try { fs.renameSync(lock, moved); fs.rmdirSync(moved); } catch { /* another waiter won the break */ }
+          continue;
+        }
+      } catch { /* raced; retry */ }
       if (Date.now() - start > 10000) throw new Error(`SPEND GUARD: ledger lock busy (${lock}). Remove it if no research job is running.`);
       sleepSync(5);
     }
@@ -82,6 +95,20 @@ function record(n = 1) {
     o[today()] = (o[today()] || 0) + n;
     save(o);
   });
+}
+
+/** checkAffordable + record in ONE lock section — same reason as reserveProvider below. */
+function reserve(n = 1) {
+  if (fs.existsSync(KILL)) throw new Error('SPEND GUARD: kill-switch active (.research-kill present). Remove it to resume.');
+  if (runCount + n > PER_RUN) throw new Error(`SPEND GUARD: per-run cap reached (${runCount}/${PER_RUN}). Raise RESEARCH_MAX_CALLS_RUN if intended.`);
+  withLedgerLock(() => {
+    const o = load();
+    const s = o[today()] || 0;
+    if (s + n > DAILY) throw new Error(`SPEND GUARD: daily grounded-call cap reached (${s}/${DAILY}). Wait until tomorrow or raise RESEARCH_MAX_CALLS_DAY.`);
+    o[today()] = s + n;
+    save(o);
+  });
+  runCount += n; // only after the ledger write succeeded
 }
 
 function providerCap(name, kind) {
@@ -107,4 +134,25 @@ function recordProvider(name, n = 1) {
   });
 }
 
-module.exports = { checkAffordable, record, spentToday, checkProvider, recordProvider, providerToday, DAILY, PER_RUN };
+// Preferred entry point: check AND record in ONE lock section. checkProvider followed by
+// recordProvider leaves a gap in which two overlapping runs can each pass at cap-1 and both
+// proceed, so the cap is exceeded by roughly the number of concurrent processes.
+function reserveProvider(name, n = 1) {
+  if (fs.existsSync(KILL)) throw new Error('SPEND GUARD: kill-switch active (.research-kill present). Remove it to resume.');
+  const run = providerRun[name] || 0;
+  const runCap = providerCap(name, 'RUN');
+  if (run + n > runCap) throw new Error(`SPEND GUARD: ${name} per-run cap reached (${run}/${runCap}).`);
+  withLedgerLock(() => {
+    const o = load();
+    o.providers = o.providers || {};
+    const d = (o.providers[today()] = o.providers[today()] || {});
+    const s = d[name] || 0;
+    const dayCap = providerCap(name, 'DAY');
+    if (s + n > dayCap) throw new Error(`SPEND GUARD: ${name} daily cap reached (${s}/${dayCap}).`);
+    d[name] = s + n;
+    save(o);
+  });
+  providerRun[name] = run + n; // only after the ledger write succeeded
+}
+
+module.exports = { checkAffordable, record, reserve, spentToday, checkProvider, recordProvider, reserveProvider, providerToday, DAILY, PER_RUN };

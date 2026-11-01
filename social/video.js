@@ -5,7 +5,12 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { checkReel } from './reel-qa.js';
+import { gsapAssetPath, fontAssets } from './resources.js';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
+/** Served from the render directory, copied there by renderReel — never fetched over the network. */
+const GSAP_ASSET = 'gsap.min.js';
+/** @font-face rules for the brand faces copied beside the composition (no fonts.googleapis.com). */
+const fontCss = () => fontAssets().map((f) => `@font-face{font-family:'${f.family}';font-style:${f.style};font-weight:${f.weight};font-display:block;src:url(${f.as}) format('woff2')}`).join('\n');
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /** Highlight the first number with a comma/decimal (the "hero figure") in gold. */
@@ -18,8 +23,8 @@ export function buildComposition(spec, { width = 1080, height = 1920, seconds = 
   const body = esc(clip(lines[0], 220));
   const body2 = esc(clip(lines[1], 170));
   return `<!doctype html><html><head><meta charset="utf-8">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&family=Inter:wght@400;600&display=swap">
 <style>
+${fontCss()}
 html,body{margin:0;background:#09090B}
 #stage{position:relative;width:${width}px;height:${height}px;background:#09090B;color:#F5F0E8;font-family:Inter,system-ui,sans-serif;overflow:hidden}
 .pad{position:absolute;left:88px;right:88px}
@@ -46,8 +51,8 @@ html,body{margin:0;background:#09090B}
     <div class="body" id="body">${body}</div>
     ${body2 ? `<div class="body2" id="body2">${body2}</div>` : ''}
   </div>
-  <div class="foot clip" data-start="0" data-duration="${seconds}"><div class="brand">${esc(spec.brand)}</div><div class="sub">Daily tourism intelligence for Zanzibar &amp; Dar es Salaam</div></div>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <div class="foot clip" data-start="0" data-duration="${seconds}"><div class="brand">${esc(spec.brand)}</div>${spec.tagline ? `<div class="sub">${esc(spec.tagline)}</div>` : ''}</div>
+  <script src="${GSAP_ASSET}"></script>
   <script>
     const tl = gsap.timeline({ paused: true });
     tl.from(".rule", { scaleX: 0, duration: 0.6 }, 0.1)
@@ -66,6 +71,9 @@ html,body{margin:0;background:#09090B}
 /** Render a draft's spec to an MP4 (9:16). Returns the mp4 path. ~60-90 s on this Mac, CPU only. */
 export function renderReel(id, spec, outDir = path.join(HERE, 'reels')) {
   const dir = path.join(outDir, id); fs.mkdirSync(dir, { recursive: true });
+  // local assets only: no CDN script inside headless Chrome, and the fonts render offline
+  fs.copyFileSync(gsapAssetPath(), path.join(dir, GSAP_ASSET));
+  for (const f of fontAssets()) fs.copyFileSync(f.path, path.join(dir, f.as));
   fs.writeFileSync(path.join(dir, 'index.html'), buildComposition(spec));
   const out = path.join(outDir, `${id}.mp4`);
   execFileSync('npx', ['hyperframes', 'render', dir, '-o', out, '--quality', 'looks', '--quiet'], { cwd: HERE, stdio: 'pipe', timeout: 600000 });

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema": "1.0",
-    "description": "Beyond Paradise Marine Wildlife Encounter Index — species × location × month × sighting-probability × legality × ethics. This is the keystone niche asset.",
+    "description": "Beyond Paradise Adventures Marine Wildlife Encounter Index — species × location × month × sighting-probability × legality × ethics. This is the keystone niche asset.",
     "rules": "Ethics graded on observable criteria only. Every encounter must link to ≥1 peer-reviewed source or official regulation. Re-verify sighting probabilities every season.",
     "last_updated": "2026-06-27",
     "maintainer": "Tim Hennig"

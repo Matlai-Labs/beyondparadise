@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema": "1.0",
-    "description": "Beyond Paradise source tier registry. Every claim in facts.json must reference a source from this registry. Tier 1 = highest trust. Tier 6 = firsthand (Tim/Kim).",
+    "description": "Beyond Paradise Adventures source tier registry. Every claim in facts.json must reference a source from this registry. Tier 1 = highest trust. Tier 6 = firsthand (Tim/Kim).",
     "last_updated": "2026-06-27"
   },
   "tiers": {
@@ -263,7 +263,7 @@
       "tier": 6,
       "name": "Kim — First-hand observation",
       "type": "firsthand",
-      "notes": "Kim, Vietnamese, Beyond Paradise Asia correspondent. First-hand knowledge of Vietnam luxury travel."
+      "notes": "Kim, Vietnamese, Beyond Paradise Adventures Asia correspondent. First-hand knowledge of Vietnam luxury travel."
     }
   },
   "avoid_list": [
