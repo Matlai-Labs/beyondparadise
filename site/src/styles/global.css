@@ -32,7 +32,13 @@
 
 /* ── Reset ───────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+html { -webkit-font-smoothing: antialiased; }
+/* Opt in to smooth anchor scrolling only for users who have not asked for reduced motion
+   (WCAG 2.1 SC 2.3.3, technique C39). motion.css also forces `scroll-behavior: auto` under
+   `prefers-reduced-motion: reduce` as a belt. */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
 body {
   background: var(--base);
   color: var(--cream);
@@ -144,18 +150,28 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 .section-head .label { margin-bottom: 16px; }
 
 /* ── Scroll reveal animations ────────────────────────────── */
-.reveal {
-  opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.7s cubic-bezier(0.25,0.46,0.45,0.94),
-              transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94);
-}
-.reveal.in { opacity: 1; transform: none; }
+/* The hidden state is gated on `scripting: enabled` ON PURPOSE. Only the IntersectionObserver in
+   Base.astro ever adds `.in`, so an unconditional `opacity: 0` here leaves every revealed element —
+   section heads, cards, tables, body copy — permanently invisible when JS is off or fails.
+   Visible is the default; hidden is the enhancement.
+   Do NOT rewrite this as `@media not (scripting: enabled) { .reveal { opacity: 1 } }`: a user agent
+   that does not know the `scripting` feature evaluates it to `unknown`, and `not unknown` is false
+   for @media, so the un-hiding rule would never fire and content would stay hidden. The positive
+   query fails in the safe direction. See site/src/styles/motion.css section 1. */
+@media (scripting: enabled) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s cubic-bezier(0.25,0.46,0.45,0.94),
+                transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+  .reveal.in { opacity: 1; transform: none; }
 
-.reveal-delay-1 { transition-delay: 0.10s; }
-.reveal-delay-2 { transition-delay: 0.20s; }
-.reveal-delay-3 { transition-delay: 0.30s; }
-.reveal-delay-4 { transition-delay: 0.40s; }
+  .reveal-delay-1 { transition-delay: 0.10s; }
+  .reveal-delay-2 { transition-delay: 0.20s; }
+  .reveal-delay-3 { transition-delay: 0.30s; }
+  .reveal-delay-4 { transition-delay: 0.40s; }
+}
 
 /* ── Cards grid ─────────────────────────────────────────── */
 .cards-grid {

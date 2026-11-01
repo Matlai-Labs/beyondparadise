@@ -45,9 +45,16 @@ const destinations = [
       <h2 class="display-m" style="margin-top:12px;">Where We Go</h2>
     </div>
 
-    <div class="cards-grid cards-grid--4">
+    {/*
+      data-stagger: the reveal delay for each child comes from staggerDelay() at runtime instead of
+      the four-step .reveal-delay-N ladder, which has no step 5+ (plan finding A4). The ladder
+      classes stay as the no-JS / legacy fallback.
+      data-cursor-label-from-aria: the floating label reuses this card's existing aria-label
+      ("Explore Zanzibar"), so no new copy is introduced.
+    */}
+    <div class="cards-grid cards-grid--4" data-stagger>
       {destinations.map((d, i) => (
-        <a href={d.href} class={`dest-card glass reveal reveal-delay-${i+1}`} aria-label={`Explore ${d.name}`}>
+        <a href={d.href} class={`dest-card glass reveal reveal-delay-${i+1}`} aria-label={`Explore ${d.name}`} data-cursor-label-from-aria>
           <div class="dest-card__img-wrap">
             <img
               src={d.img}

@@ -3,6 +3,7 @@ import BaseHead from './BaseHead.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
+import '../styles/motion.css';
 
 interface Props {
   title: string;
@@ -39,6 +40,18 @@ const { title, description, ogImage } = Astro.props;
         }, { threshold: 0.10, rootMargin: '0px 0px -6% 0px' });
         els.forEach(function (e) { io.observe(e); });
       })();
+    </script>
+
+    <!--
+      Motion layer: magnetic CTA, staggered reveal delays, contextual cursor label.
+      Bundled (not is:inline) so it is a module, deferred, and measurable by
+      scripts/motion-gate.mjs, which fails the build if it exceeds 4 KB gzipped.
+      enhance() attaches nothing at all unless the device can hover with a fine pointer and the
+      user has expressed no reduced-motion preference — see src/lib/motion/gate.mjs.
+    -->
+    <script>
+      import { enhance } from '../lib/motion/enhance.mjs';
+      enhance();
     </script>
 
     <!-- Sticky nav on scroll -->

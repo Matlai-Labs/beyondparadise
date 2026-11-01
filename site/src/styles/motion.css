@@ -1,0 +1,153 @@
+/* ================================================================================================
+   BEYOND PARADISE ADVENTURES — motion layer
+   ------------------------------------------------------------------------------------------------
+   VENDORED PATTERN — source note
+   Pattern: Agent OS `docs/design/interaction-patterns` (progressive-enhancement motion layer).
+   Copied as CSS into this repo on purpose: product repos never import from Agent OS, and Agent OS
+   is not reachable from the cloud VM this was written in. Written independently to the same written
+   spec as masterplan build #3, which implements the pattern in parallel. Keep in step by hand.
+
+   Contract with src/lib/motion/*: JS writes numbers into custom properties and nothing else. Every
+   visual decision lives here. The properties are:
+       --bp-magnet-x / --bp-magnet-y   px, from magnetOffset()
+       --bp-stagger                    ms, from staggerDelay()
+       --bp-cursor-x / --bp-cursor-y   px, from cursorLabelPosition()
+
+   Only transform and opacity are animated. Both are composited, so they trigger neither layout nor
+   paint and cannot feed the layout-instability algorithm — the task budget is CLS 0.
+   Tokens (gold, cream, radii, the 0.25/0.46/0.45/0.94 curve) come from global.css and DESIGN.md.
+   ============================================================================================== */
+
+/* ── 1. No-JS safety — note on where the fix actually lives ─────────────────────────────────────
+   global.css used to set `.reveal { opacity: 0 }` unconditionally, and only the IntersectionObserver
+   in Base.astro ever adds `.in`. With JS off that left section heads, cards, tables and body copy
+   invisible on all 29 pages (plan finding A1).
+
+   The fix is in global.css, not here: the HIDING rule is wrapped in the POSITIVE query
+   `@media (scripting: enabled)`. The direction matters and the negated form would be a bug:
+
+     - Positive query, UA does not know `scripting` -> the feature is unknown, the query is false,
+       the hiding rule never applies, content stays VISIBLE. Fails safe.
+     - Negated query (`not (scripting: enabled)`), same UA -> an unknown feature evaluates to
+       `unknown`, and `not unknown` is also `unknown`, i.e. false for @media. The un-hiding rule
+       would never apply and content would stay HIDDEN. Fails unsafe.
+
+   So "visible" must be the unconditional default and "hidden" the thing behind the query. Do not
+   refactor that into a `not` form. `scripting` is Baseline since Dec 2023 (Chrome/Edge 120,
+   Firefox 113, Safari 17); older browsers simply keep the content visible and lose the reveal. */
+
+/* WCAG 2.1 SC 2.3.3 / technique C39. Covers the reveal, the magnet, the cursor label and the
+   smooth-scroll in one place, so motion is off before a single line of JS has run. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    transition-delay: 0ms !important;
+  }
+  [data-magnetic] {
+    transform: none !important;
+    transition: none !important;
+  }
+  .bp-cursor-label {
+    display: none !important;
+  }
+  /* global.css sets `html { scroll-behavior: smooth }` unconditionally; anchor jumps should not
+     animate for a user who asked for less motion. Plan finding A3. */
+  html {
+    scroll-behavior: auto !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ── 2. Staggered section reveal ────────────────────────────────────────────────────────────────
+   Replaces the four-step .reveal-delay-1..4 ladder with a single property the delay table drives.
+   The ladder stays in global.css for the markup that still uses it; this wins when both apply
+   because --bp-stagger is only ever set on elements the enhancer has touched. */
+.reveal[style*='--bp-stagger'] {
+  transition-delay: var(--bp-stagger, 0ms);
+}
+
+/* ── 3. Magnetic CTA ────────────────────────────────────────────────────────────────────────────
+   Opt-in: an element only moves if the author added data-magnetic. The transform is composited and
+   the element's layout box never changes, so the pull costs no layout and no CLS.
+
+   Scoped to (hover: hover) and (pointer: fine) — the same primary-input queries gate.mjs consults,
+   so a touch device gets nothing even if a stray script were to set the properties. Mirrored pair:
+   edit both or neither. */
+@media (hover: hover) and (pointer: fine) {
+  [data-magnetic] {
+    transform: translate3d(var(--bp-magnet-x, 0px), var(--bp-magnet-y, 0px), 0);
+    transition: transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.22s ease;
+  }
+  /* The pointer has left: snap back over a slightly longer, softer curve. */
+  [data-magnetic][data-magnet-idle] {
+    transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.22s ease;
+  }
+  /* global.css gives .btn-gold/.btn-glass a translateY(-1px) lift on hover, which would be
+     overwritten by the magnet transform. Fold the lift into the magnet instead of losing it. */
+  .btn-gold[data-magnetic]:hover,
+  .btn-glass[data-magnetic]:hover {
+    transform: translate3d(var(--bp-magnet-x, 0px), calc(var(--bp-magnet-y, 0px) - 1px), 0);
+  }
+}
+
+/* A keyboard user never produces pointer coordinates, so the magnet must not disturb the focus
+   ring. Reset the transform while focus is visible. */
+[data-magnetic]:focus-visible {
+  transform: none;
+}
+
+/* ── 4. Contextual cursor label ─────────────────────────────────────────────────────────────────
+   One element, appended to <body> by the enhancer, reused for every card.
+
+   position: fixed + pointer-events: none + top/left 0 with a transform offset means it is out of
+   flow, cannot intercept the click it labels, and cannot affect the scroll box — the three things
+   that would otherwise make a floating overlay a CLS and usability risk. aria-hidden because the
+   text it shows is an echo of the card's own accessible name; announcing it twice is noise. */
+.bp-cursor-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(var(--bp-cursor-x, 0px), var(--bp-cursor-y, 0px), 0) scale(0.92);
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform, opacity;
+
+  /* DESIGN.md: gold pill, Inter semibold all-caps label, 0.3em tracking, 100px radius. */
+  padding: 7px 14px;
+  border-radius: 100px;
+  background: var(--gold, #c9a96e);
+  color: var(--base, #09090b);
+  font-family: var(--ff-sans, 'Inter', system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  max-width: 60vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bp-cursor-label[data-visible] {
+  opacity: 1;
+  transform: translate3d(var(--bp-cursor-x, 0px), var(--bp-cursor-y, 0px), 0) scale(1);
+}
+
+/* While a card is showing its label, the native cursor would sit on top of it; hide the arrow so
+   the pill reads as the cursor. Only inside the hover/fine scope — a touch device must keep its
+   default behaviour, and a device with no hover has no cursor to hide. */
+@media (hover: hover) and (pointer: fine) {
+  [data-cursor-label-active] {
+    cursor: none;
+  }
+}
