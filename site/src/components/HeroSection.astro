@@ -19,13 +19,24 @@ const fmt = (n: number) => n.toLocaleString('en-US');
 
   <div class="hero__content container">
     <p class="label reveal">EAST AFRICA &nbsp;·&nbsp; SOUTHEAST ASIA &nbsp;·&nbsp; €6,000+ ONLY</p>
-    <h1 class="hero__title reveal reveal-delay-1">Beyond<br/>Paradise<br/>Adventures</h1>
+    {/*
+      No `reveal` on this h1 on purpose — it is the Largest Contentful Paint element.
+      Measured on the pre-change build, Lighthouse `lcp-breakdown-insight` reported:
+        selector: main#main-content > section.hero > div.hero__content > h1.hero__title
+        timeToFirstByte      7 ms
+        elementRenderDelay   3,138 ms
+      Chrome does not treat an `opacity: 0` element as an LCP candidate, so LCP was not recorded
+      until the IntersectionObserver flipped the class and the 0.7 s transition painted. The
+      headline now paints with the document. Do not add a reveal/fade class here.
+      See docs/reel11/bpa-motion-kit-plan.md finding A2.
+    */}
+    <h1 class="hero__title">Beyond<br/>Paradise<br/>Adventures</h1>
     <p class="hero__sub reveal reveal-delay-2">
       The only luxury travel guide written by<br/>someone who never went home.
     </p>
     <div class="hero__ctas reveal reveal-delay-3">
-      <a href="#destinations" class="btn btn-gold">Explore East Africa</a>
-      <a href="#newsletter" class="btn btn-glass">Get the Newsletter</a>
+      <a href="#destinations" class="btn btn-gold" data-magnetic>Explore East Africa</a>
+      <a href="#newsletter" class="btn btn-glass" data-magnetic>Get the Newsletter</a>
     </div>
   </div>
 
