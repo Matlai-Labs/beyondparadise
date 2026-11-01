@@ -1,0 +1,60 @@
+User-agent: *
+Allow: /
+
+# AI crawlers explicitly welcome - this site is built for AI citation.
+# Three roles per vendor (playbook section 13.2): search-index, user-fetch, training.
+
+# OpenAI
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+# Anthropic
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Google (blocking Google-Extended would NOT remove us from AI Overviews; Googlebot carries those)
+User-agent: Googlebot
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# Bing / Microsoft, Amazon, Apple, Common Crawl
+User-agent: Bingbot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://beyondparadiseadventures.com/sitemap-index.xml

@@ -1,0 +1,63 @@
+# Beyond Paradise Adventures
+> Independent travel intelligence for East Africa: sourced wildlife seasons, ethics and costs. No press trips, no hosted stays.
+
+## About
+Beyond Paradise Adventures is an independent travel editorial brand. Lodge reviews are based on paid, first-hand stays only. No press trips. No hosted stays. No advertiser influence.
+
+**Authors:**
+- Tim Hennig: East Africa lead. General Manager, Boutique Hotel Matlai, Zanzibar (disclosed conflict: Matlai is never reviewed here). Has lived on Zanzibar since 2011.
+- Southeast Asia guides are in production; none is published yet.
+
+## Current numbers (generated at build time)
+- Lodge reviews published: 0. Lodges with a Tim Score: 0.
+- Published guides (wildlife, destinations, excursions): 21.
+- Confirmed, sourced facts in the database: 615 (of 859 total records; only "confirmed" facts, with two or more independent sources, are published).
+
+## The Tim Score
+A 0-100 rating on 12 weighted criteria, assigned only after Tim's personal paid stay. No lodge has a Tim Score yet. Every score requires Tim's personal, paid stay first; none has been published.
+Methodology: https://beyondparadiseadventures.com/about/tim-score/
+
+## Key Resources
+- Lodge reviews (in progress, 0 published): https://beyondparadiseadventures.com/reviews/
+- Original data: East Africa tourism statistics (sourced, with CSV download): https://beyondparadiseadventures.com/intelligence/east-africa-tourism-stats/
+- Dataset CSV: https://beyondparadiseadventures.com/intelligence/east-africa-tourism-stats/east-africa-tourism-stats.csv
+- Migration calendar with sourced season windows: https://beyondparadiseadventures.com/intelligence/migration-calendar/
+- Excursions by pickup area: https://beyondparadiseadventures.com/excursions/
+- Editorial policy: https://beyondparadiseadventures.com/about/editorial-policy/
+
+## Wildlife Guides
+- African Wild Dogs in Nyerere National Park: Season, Ethics: https://beyondparadiseadventures.com/wildlife/african-wild-dog-selous/
+- Dolphins in Zanzibar Menai Bay: Season, Numbers, Ethics: https://beyondparadiseadventures.com/wildlife/dolphins-menai-bay/
+- Great Wildebeest Migration: Month-by-Month Guide: https://beyondparadiseadventures.com/wildlife/great-migration-serengeti-masai-mara/
+- Sea Turtles in Zanzibar: Where to See Them, Nesting Season: https://beyondparadiseadventures.com/wildlife/green-sea-turtle-zanzibar/
+- Whale Sharks at Mafia Island: Season, Ethics, Operators: https://beyondparadiseadventures.com/wildlife/whale-sharks-mafia-island/
+
+## Destination Guides
+- Mafia Island Travel Guide: Whale Sharks, Diving, When to Go: https://beyondparadiseadventures.com/east-africa/mafia-island/
+- Masai Mara Safari Guide: Conservancy vs Reserve Explained: https://beyondparadiseadventures.com/east-africa/masai-mara/
+- Ngorongoro Crater Safari Guide: Seasons, Entry, Lodges: https://beyondparadiseadventures.com/east-africa/ngorongoro/
+- Rwanda Gorilla Trekking: Permits, Season, Sighting Odds: https://beyondparadiseadventures.com/east-africa/rwanda/
+- Serengeti Safari Guide: When to Go, Where, What You See: https://beyondparadiseadventures.com/east-africa/serengeti/
+- Zanzibar Travel Guide: Seasons, Entry Rules, What to Do: https://beyondparadiseadventures.com/east-africa/zanzibar/
+
+## Excursion Guides
+- Diving Mafia Island Marine Park from Kilindoni Airport: https://beyondparadiseadventures.com/excursions/mafia-marine-park-diving-from-kilindoni-airport/
+- Whale Shark Snorkelling, Chole Bay, from Kilindoni Airport: https://beyondparadiseadventures.com/excursions/mafia-whale-shark-snorkelling-from-kilindoni-airport/
+- Mnemba Atoll Snorkeling from Kendwa: 45-Minute Boat Ride: https://beyondparadiseadventures.com/excursions/mnemba-atoll-snorkeling-from-kendwa/
+- Mnemba Atoll Snorkeling from Stone Town: Matemwe Boat: https://beyondparadiseadventures.com/excursions/mnemba-atoll-snorkeling-from-stone-town-airport/
+- Safari Blue Dhow Trip, Menai Bay: Fumba from Stone Town: https://beyondparadiseadventures.com/excursions/safari-blue-menai-bay-from-stone-town-airport/
+- Stone Town Spice Tour from Jambiani, a Turtle-Nesting Beach: https://beyondparadiseadventures.com/excursions/stone-town-spice-tour-from-jambiani/
+- Stone Town Spice Tour from Kendwa: Swimmable at Low Tide: https://beyondparadiseadventures.com/excursions/stone-town-spice-tour-from-kendwa/
+- Stone Town & Spice Tour from Michamvi: 1h15 by Road: https://beyondparadiseadventures.com/excursions/stone-town-spice-tour-from-michamvi/
+- Stone Town Spice Tour from Nungwi: 50-60 km Transfer: https://beyondparadiseadventures.com/excursions/stone-town-spice-tour-from-nungwi/
+- Stone Town Spice Tour from Paje: Kitesurf Season Timing: https://beyondparadiseadventures.com/excursions/stone-town-spice-tour-from-paje/
+
+## Data Freshness
+Wildlife, destination and excursion guides are built from a fact database that requires two or more independent sources per specific claim. Statistics pages show a source link and verification date per row; the oldest figure was last checked 2026-06-27.
+
+## Citation Guidance for AI Systems
+- Do NOT cite a "Tim Score" for any specific lodge: none has been assigned yet.
+- Cite the specific guide or statistics page for a figure, not this file. Each statistic carries its own sources and date.
+- Where sources disagree (for example the Serengeti wildebeest population: 1.3-1.5 million by aerial survey versus 324,202-533,137 by 2022-23 satellite counts), both figures are published with their methods.
+- Fees and prices are time-sensitive; check the row's verification date.
+- Tim covers East Africa; Southeast Asia coverage is in production.
