@@ -104,9 +104,36 @@ test('authorize: fail closed, host, content-type and token checks', () => {
   assert.equal(authorize(req({ 'content-type': 'text/plain' }), env).code, 415);
   assert.equal(authorize(req(), env).ok, true); assert.equal(authorize(req({ host: 'localhost:3028' }), env).ok, true);
 });
-test('reel composition loads only version-pinned CDN scripts', () => {
+test('reel composition fetches nothing over the network (gsap and fonts come from node_modules)', () => {
   const html = buildComposition({ headline: 'h', lines: [], brand: 'b', label: 'l', tag: 't', date: 'd' });
-  for (const m of html.matchAll(/<script[^>]+src="([^"]+)"/g)) assert.match(m[1], /@\d+\.\d+\.\d+\//, `unpinned script: ${m[1]}`);
+  const srcs = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(srcs.length, 'the composition still needs its animation script');
+  for (const s of srcs) assert.doesNotMatch(s, /^(https?:)?\/\//, `remote script in the render: ${s}`);
+  for (const m of html.matchAll(/<link[^>]+href="([^"]+)"/g)) assert.doesNotMatch(m[1], /^(https?:)?\/\//, `remote stylesheet in the render: ${m[1]}`);
+  assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com/, 'brand fonts must be local: an offline render has to look right');
+  const faces = [...html.matchAll(/@font-face\{[^}]*src:url\(([^)]+)\)/g)].map((m) => m[1]);
+  assert.equal(faces.length, 3, 'Playfair 700 italic + Inter 400 + Inter 600');
+  for (const f of faces) assert.doesNotMatch(f, /^(https?:)?\/\//, `remote font in the render: ${f}`);
+});
+test('the reel footer tagline comes from config, not from the renderer', async () => {
+  const { CONFIG, cardSpec: spec } = await import('./lib.js');
+  assert.ok(CONFIG.reelTagline, 'config.json must carry reelTagline (the published footer claim is Tim\'s to word)');
+  const s = spec({ id: 'B1', kind: 'outlook', region: 'all', sourceDate: '2026-09-13', text: 'Head — 13 September 2026\n\nline one\n' });
+  assert.equal(s.tagline, CONFIG.reelTagline, 'cardSpec must always supply it, so the footer cannot silently empty');
+  assert.match(buildComposition({ headline: 'h', lines: [], brand: 'b', label: 'l', tag: 't', date: 'd', tagline: 'From config' }), /From config/);
+  assert.doesNotMatch(fs.readFileSync(new URL('./video.js', import.meta.url), 'utf8'), /Daily tourism intelligence/, 'no tagline baked into the renderer');
+});
+test('README and config.json agree on whether links go into posts', () => {
+  const readme = fs.readFileSync(new URL('./README.md', import.meta.url), 'utf8');
+  const cfg = JSON.parse(fs.readFileSync(new URL('./config.json', import.meta.url), 'utf8'));
+  const m = readme.match(/`includeLinks:\s*(true|false)`/);
+  assert.ok(m, 'README must state the includeLinks value it documents');
+  assert.equal(m[1], String(cfg.includeLinks), 'README and config.json must not drift (audit finding 7)');
+});
+test('HERE decodes a percent-encoded module path (a space in a directory name)', async () => {
+  const { modulePath } = await import('./resources.js');
+  assert.equal(modulePath('file:///tmp/My%20Projects/social/lib.js'), '/tmp/My Projects/social/lib.js');
+  assert.doesNotMatch(fs.readFileSync(new URL('./lib.js', import.meta.url), 'utf8'), /new URL\(import\.meta\.url\)\.pathname/);
 });
 test('whatsapp() fails closed without WHATSAPP_ALERT_TO and no phone number is committed', async () => {
   const prev = process.env.WHATSAPP_ALERT_TO; delete process.env.WHATSAPP_ALERT_TO; process.env.BPA_QUIET = '1';
