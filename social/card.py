@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Branded Instagram card for Beyond Paradise Adventures. Deterministic, $0.
-usage: card.py <spec.json> <out.png>   spec: {label, headline, lines[], tag, date, brand}
+usage: card.py <spec.json> <out.png>   spec: {label, headline, lines[], tag, date, brand, tagline}
 Palette from DESIGN.md: base #09090B, gold #C9A96E, teal #2A7B8C, cream #F5F0E8. 1080x1350 (4:5)."""
 import json, sys, textwrap
 from PIL import Image, ImageDraw, ImageFont
@@ -56,5 +56,8 @@ for item in spec.get("lines", [])[:4]:
 # footer
 d.line((M, H - 170, W - M, H - 170), fill="#2A2A30", width=2)
 f_brand = font(SERIF, 40); d.text((M, H - 140), spec.get("brand", "Beyond Paradise Adventures"), font=f_brand, fill=GOLD)
-f_small = font(SANS, 26); d.text((M, H - 84), spec.get("footer", "Daily tourism intelligence for Zanzibar & Dar es Salaam"), font=f_small, fill=MUTED)
+# tagline: a PUBLISHED brand claim, supplied by cardSpec from config.reelTagline (audit finding 9)
+tagline = spec.get("tagline") or spec.get("footer") or ""
+if tagline:
+    f_small = font(SANS, 26); d.text((M, H - 84), tagline, font=f_small, fill=MUTED)
 img.save(sys.argv[2], "PNG", optimize=True); print(sys.argv[2])

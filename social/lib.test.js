@@ -121,7 +121,7 @@ test('the reel footer tagline comes from config, not from the renderer', async (
   const s = spec({ id: 'B1', kind: 'outlook', region: 'all', sourceDate: '2026-09-13', text: 'Head — 13 September 2026\n\nline one\n' });
   assert.equal(s.tagline, CONFIG.reelTagline, 'cardSpec must always supply it, so the footer cannot silently empty');
   assert.match(buildComposition({ headline: 'h', lines: [], brand: 'b', label: 'l', tag: 't', date: 'd', tagline: 'From config' }), /From config/);
-  assert.doesNotMatch(fs.readFileSync(new URL('./video.js', import.meta.url), 'utf8'), /Daily tourism intelligence/, 'no tagline baked into the renderer');
+  for (const f of ['./video.js', './card.py']) assert.doesNotMatch(fs.readFileSync(new URL(f, import.meta.url), 'utf8'), /Daily tourism intelligence/, `no tagline baked into ${f}`);
 });
 test('README and config.json agree on whether links go into posts', () => {
   const readme = fs.readFileSync(new URL('./README.md', import.meta.url), 'utf8');
