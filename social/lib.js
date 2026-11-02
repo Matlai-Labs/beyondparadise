@@ -303,8 +303,41 @@ export async function hostVideo(mp4Path, name) {
   const r = await fetch(`${base}/wp-json/wp/v2/media`, { method: 'POST', headers: { Authorization: auth, 'Content-Type': 'video/mp4', 'Content-Disposition': `attachment; filename="${name}.mp4"` }, body: buf, signal: AbortSignal.timeout(180000) });
   const j = await r.json(); if (!r.ok) throw new Error(`video upload ${r.status}: ${JSON.stringify(j).slice(0, 160)}`); return { id: j.id, url: j.source_url };
 }
+// ── Instagram CAROUSEL (2-10 images): child containers -> CAROUSEL parent -> media_publish ─────
+// Flow per Meta "Content Publishing" docs (checked 2026-11-02): POST /{ig}/media image_url + is_carousel_item=true per child;
+// POST /{ig}/media media_type=CAROUSEL children=<ids comma-joined> caption; POST /{ig}/media_publish creation_id=<parent>.
+// Meta's docs now say up to 20 items; we deliberately cap at 10 (the long-standing limit; plans are 3-7). `post`/`status` are injectable for tests.
+export async function igPublishCarousel(caption, imageUrls, { post, status, igUserId, sleep, info, dryContainerOnly = false } = {}) {
+  if (!Array.isArray(imageUrls) || imageUrls.length < 2 || imageUrls.length > 10) throw new Error(`carousel needs 2-10 images, got ${imageUrls?.length ?? 0}`);
+  const ig = igUserId || CONFIG.instagram.igUserId; let token;
+  if (!post || !status || !info) { const { findPage } = metaPublish(); token = findPage(CONFIG.page).token; }
+  post = post || ((pth, form) => graphCall(pth, { token, method: 'POST', form }));
+  status = status || ((id) => graphCall(`${id}?fields=status_code,status`, { token, throwOnError: false }));
+  info = info || ((id) => graphCall(`${id}?fields=id,permalink`, { token, throwOnError: false }));
+  sleep = sleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
+  const wait = async (id, what) => { for (let i = 0; i < 20; i++) { const s = await status(id); if (s.status_code === 'FINISHED') return; if (s.status_code === 'ERROR') throw new Error(`${what} container error: ${s.status}`); await sleep(3000); } throw new Error(`${what} container not FINISHED in time`); };
+  const children = [];
+  for (const url of imageUrls) { const c = await post(`${ig}/media`, { image_url: url, is_carousel_item: 'true' }); await wait(c.id, 'child'); children.push(c.id); }
+  const parent = await post(`${ig}/media`, { media_type: 'CAROUSEL', children: children.join(','), caption: caption.slice(0, 2200) });
+  await wait(parent.id, 'carousel');
+  if (dryContainerOnly) return { containerId: parent.id, children, published: false, format: 'carousel' };
+  const pub = await post(`${ig}/media_publish`, { creation_id: parent.id });
+  const i = await info(pub.id);
+  return { id: pub.id, permalink: i.permalink, published: true, format: 'carousel', children };
+}
+/** Host N local PNGs, in order (WordPress media library, same as single cards). */
+export async function hostImages(pngPaths, namePrefix) {
+  const out = []; for (const [i, p] of pngPaths.entries()) out.push(await hostImage(p, `${namePrefix}-s${i + 1}`)); return out;
+}
 /** Post a draft to Instagram: Reel (video) when configured, else image card. */
 export async function igPostDraftAny(d) {
+  if (CONFIG.instagram?.format === 'carousel') {
+    const { planCarousel, renderCarousel } = await import('./carousel.js');
+    const plan = await planCarousel(d); if (plan.rejected) throw new Error(`carousel blocked: ${plan.rejected}`);
+    const files = renderCarousel(d, plan.slides, path.join(HERE, 'cards', `${d.id}-carousel`));
+    const hosted = await hostImages(files, `bpa-${d.id}-${d.sourceDate}`);
+    const r = await igPublishCarousel(d.text, hosted.map((h) => h.url)); return { ...r, imageUrls: hosted.map((h) => h.url), format: 'carousel' };
+  }
   if (CONFIG.instagram?.format === 'reel') {
     const { renderReel } = await import('./video.js');
     const mp4 = renderReel(d.id, cardSpec(d)); const hosted = await hostVideo(mp4, `bpa-${d.id}-${d.sourceDate}`);
