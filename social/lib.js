@@ -329,19 +329,30 @@ export async function igPublishCarousel(caption, imageUrls, { post, status, igUs
 export async function hostImages(pngPaths, namePrefix) {
   const out = []; for (const [i, p] of pngPaths.entries()) out.push(await hostImage(p, `${namePrefix}-s${i + 1}`)); return out;
 }
-/** Post a draft to Instagram: Reel (video) when configured, else image card. */
+const FORMATS = new Set(['reel', 'carousel', 'image']);
+/** Per-draft Instagram format: instagram.formatByKind[d.kind] if valid, else instagram.format, else 'image'. Pure. */
+export function chooseFormat(d, cfg = CONFIG) {
+  const k = cfg.instagram?.formatByKind?.[d?.kind]; if (FORMATS.has(k)) return k;
+  return FORMATS.has(cfg.instagram?.format) ? cfg.instagram.format : 'image';
+}
+async function postReel(d) {
+  const { renderReel } = await import('./video.js');
+  const mp4 = renderReel(d.id, cardSpec(d)); const hosted = await hostVideo(mp4, `bpa-${d.id}-${d.sourceDate}`);
+  const r = await igPublishReel(d.text, hosted.url); return { ...r, videoUrl: hosted.url, mediaId: hosted.id, format: 'reel' };
+}
+/** Post a draft to Instagram in the format chosen for its kind (see chooseFormat). */
 export async function igPostDraftAny(d) {
-  if (CONFIG.instagram?.format === 'carousel') {
+  const fmt = chooseFormat(d);
+  if (fmt === 'carousel') {
     const { planCarousel, renderCarousel } = await import('./carousel.js');
-    const plan = await planCarousel(d); if (plan.rejected) throw new Error(`carousel blocked: ${plan.rejected}`);
+    const plan = await planCarousel(d);
+    // Only a draft with too little content falls back to a reel; brand/source/voice gate blocks never do.
+    if (plan.tooLittle) return { ...(await postReel(d)), fellBackFrom: 'carousel' };
+    if (plan.rejected) throw new Error(`carousel blocked: ${plan.rejected}`);
     const files = renderCarousel(d, plan.slides, path.join(HERE, 'cards', `${d.id}-carousel`));
     const hosted = await hostImages(files, `bpa-${d.id}-${d.sourceDate}`);
     const r = await igPublishCarousel(d.text, hosted.map((h) => h.url)); return { ...r, imageUrls: hosted.map((h) => h.url), format: 'carousel' };
   }
-  if (CONFIG.instagram?.format === 'reel') {
-    const { renderReel } = await import('./video.js');
-    const mp4 = renderReel(d.id, cardSpec(d)); const hosted = await hostVideo(mp4, `bpa-${d.id}-${d.sourceDate}`);
-    const r = await igPublishReel(d.text, hosted.url); return { ...r, videoUrl: hosted.url, mediaId: hosted.id, format: 'reel' };
-  }
+  if (fmt === 'reel') return postReel(d);
   return { ...(await igPostDraft(d)), format: 'image' };
 }

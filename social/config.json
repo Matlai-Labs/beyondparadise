@@ -35,6 +35,11 @@
     "note": "enable after instagram_content_publish scope is granted (connect.js --inventory shows scopes)",
     "enabledAt": "2026-09-14",
     "format": "reel",
-    "reelNote": "HyperFrames (CPU) 1080x1920 8s; 'image' falls back to the Pillow card"
+    "reelNote": "HyperFrames (CPU) 1080x1920 8s; 'image' falls back to the Pillow card",
+    "formatByKind": {
+      "signal": "carousel",
+      "outlook": "reel"
+    },
+    "formatNote": "Policy 2026-11-02: signal drafts (facts+sources, savable) = carousel; outlook drafts (thin, 4 slides) = reel; format = fallback. Insights scope missing so no own-data A/B yet. Thin carousel plans fall back to reel."
   }
 }

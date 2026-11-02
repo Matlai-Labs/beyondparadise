@@ -45,7 +45,7 @@ export function slidePlan(d) {
 /** slidePlan + the same gates drafts pass (brandGuard, sourceGate, voice-lint on EVERY slide). Fails closed via `rejected`. */
 export async function planCarousel(d, { voice = voiceGate } = {}) {
   const bad = brandGuard(d.text) || sourceGate(d); if (bad) return { rejected: bad };
-  const plan = slidePlan(d); if (plan.reason) return { rejected: plan.reason };
+  const plan = slidePlan(d); if (plan.reason) return { rejected: plan.reason, tooLittle: true };
   for (const [i, s] of plan.slides.entries()) {
     const slideText = s.recap ? `${s.text}\n${s.recap}` : s.text;
     const b = brandGuard(slideText); if (b) return { rejected: `slide ${i + 1}: ${b}` };
