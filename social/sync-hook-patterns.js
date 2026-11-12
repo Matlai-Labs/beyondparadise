@@ -3,10 +3,11 @@
 //   npm run sync-hook-patterns            copy + validate (atomic; a failure leaves the previous copy)
 //   npm run sync-hook-patterns -- --check validate the current copy
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { DEFAULT_FILE } from './hookpatterns.js';
 
-const SOURCE = process.env.HOOK_PATTERNS_SOURCE || '/Users/tim/Desktop/AI_projects/MATLAI_VS_CODE_Agent_OS/knowledge/reference-videos/hook-patterns.json';
+const SOURCE = process.env.HOOK_PATTERNS_SOURCE || path.join(os.homedir(), 'Desktop/AI_projects/MATLAI_VS_CODE_Agent_OS/knowledge/reference-videos/hook-patterns.json');
 const TARGET = process.env.HOOK_PATTERNS_FILE || DEFAULT_FILE;
 
 export function validate(text) {
