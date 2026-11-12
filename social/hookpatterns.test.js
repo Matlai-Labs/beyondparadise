@@ -44,3 +44,18 @@ test('sync validate accepts schema 1 only', () => {
   assert.throws(() => validate('{"schema":2,"patterns":[]}'), /schema-1/);
   assert.throws(() => validate('nope'));
 });
+
+test('the COMMITTED hook-patterns.json is an empty list and behaves exactly like an absent file', async () => {
+  const { DEFAULT_FILE } = await import('./hookpatterns.js');
+  const committed = JSON.parse(fs.readFileSync(DEFAULT_FILE, 'utf8'));
+  assert.deepEqual(committed.patterns, []);
+  const absent = path.join(os.tmpdir(), 'bpa-hp-definitely-absent.json');
+  assert.deepEqual(loadHookTypes(DEFAULT_FILE), loadHookTypes(absent));
+  assert.deepEqual(loadHookTypes(DEFAULT_FILE), []);
+  for (const t of ['Zanzibar arrivals up 12% in August', 'Why is Zanzibar quiet in May?', 'Iberostar Selection Zanzibar']) {
+    assert.equal(hookAdvice(t, loadHookTypes(DEFAULT_FILE)), hookAdvice(t, loadHookTypes(absent)));
+    assert.equal(hookAdvice(t, loadHookTypes(DEFAULT_FILE)), '');
+  }
+  const txt = fs.readFileSync(DEFAULT_FILE, 'utf8');
+  assert.doesNotMatch(txt, /instagram\.com|@\w/, 'no third-party handles or URLs in the public file');
+});
