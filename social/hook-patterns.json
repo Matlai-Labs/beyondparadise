@@ -1,0 +1,5 @@
+{
+  "schema": 1,
+  "note": "Intentionally empty: no hook patterns are published in this public repo. Refresh locally with `npm run sync-hook-patterns` (output is not committed).",
+  "patterns": []
+}

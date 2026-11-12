@@ -232,7 +232,7 @@ export function renderList(q) {
   const pend = q.drafts.filter((d) => d.status === STATUS.PENDING);
   if (!pend.length) return '📭 No drafts waiting. Next drafting run: Monday 07:00.';
   const lines = [`📝 ${pend.length} draft(s) for ${CONFIG.page}:`];
-  for (const d of pend) lines.push(`\n*${d.id}* (${d.kind}, ${d.sourceDate})\n${d.text.slice(0, 700)}${d.text.length > 700 ? '…' : ''}${d.score ? `\n_${renderScore(d.score)}_` : ''}`);
+  for (const d of pend) lines.push(`\n*${d.id}* (${d.kind}, ${d.sourceDate})\n${d.text.slice(0, 700)}${d.text.length > 700 ? '…' : ''}${d.score ? `\n_${renderScore(d.score)}_` : ''}${d.hookAdvice ? `\n_${d.hookAdvice}_` : ''}`);
   lines.push('\nReply: *bpa approve B1 B2* · *bpa skip B3* · *bpa edit B1: new text* · *bpa post B1 now*');
   return lines.join('\n');
 }

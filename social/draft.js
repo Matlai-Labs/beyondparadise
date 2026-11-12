@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Weekly drafter: BPI briefs (last 7 days) → up to 3 drafts → queue (pending_approval) → WhatsApp.
 import { withQueueLock, readBriefs, buildDrafts, loadQueue, saveQueue, nextId, STATUS, whatsapp, renderList, log, CONFIG } from './lib.js';
+import { hookAdvice, loadHookTypes } from './hookpatterns.js';
 const DRY = process.argv.includes('--dry-run');
+const topTypes = loadHookTypes();
 const briefs = readBriefs();
 const q = loadQueue(); const had = new Set(q.drafts.map((d) => d.id));
 const drafts = await buildDrafts({ briefs, existingDrafts: q.drafts });
@@ -10,7 +12,9 @@ let added = 0, rejected = 0;
 for (const d of drafts) {
   if (d.rejected) { rejected++; log(`rejected draft (${d.kind} ${d.sourceId}): ${d.rejected}`); continue; }
   if (already.has(d.sourceId)) { log(`skip duplicate ${d.sourceId}`); continue; }
-  const id = nextId(q); q.drafts.push({ id, status: STATUS.PENDING, ...d }); added++;
+  // Optional, advisory hook-style line (hook-patterns.json copied from Agent OS). No file = no line, nothing else changes.
+  let hookNote = ''; try { hookNote = hookAdvice(d.text, topTypes); } catch { hookNote = ''; }
+  const id = nextId(q); q.drafts.push({ id, status: STATUS.PENDING, ...d, ...(hookNote ? { hookAdvice: hookNote } : {}) }); added++;
   log(`draft ${id} (${d.kind}) ${d.text.length} chars`);
 }
 log(`briefs=${briefs.length} drafts=${drafts.length} added=${added} rejected=${rejected}${DRY ? ' [dry-run]' : ''}`);
