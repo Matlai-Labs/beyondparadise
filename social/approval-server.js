@@ -2,6 +2,7 @@
 // 127.0.0.1:3028 — the `bpa` WhatsApp command family (bridge → POST /bpa/action {text} → {message}).
 import http from 'node:http';
 import { authorize } from './auth.js';
+import { claimGate } from './claim-gate.js';
 import { withQueueLock, loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, brandGuard, voiceGate, log, CONFIG, igEnabled, igPostDraftAny } from './lib.js';
 const PORT = CONFIG.approvalPort;
 async function handle(text) {
@@ -17,6 +18,7 @@ async function handle(text) {
     if (c.cmd === 'edit') { if (d.status !== STATUS.PENDING) { out.push(`⚠️ ${id} is ${d.status}`); continue; } const bad = brandGuard(c.text); if (bad) { out.push(`❌ ${id}: ${bad}`); continue; } const v = await voiceGate(c.text); if (!v.ok) { out.push(`❌ ${id}: voice-lint — ${v.reason}`); continue; } d.text = c.text; d.editedAt = new Date().toISOString(); out.push(`✏️ ${id} updated (${c.text.length} chars). Reply *bpa approve ${id}* to schedule.`); continue; }
     if (c.cmd === 'approve' || c.cmd === 'postnow') {
       if (d.status !== STATUS.PENDING) { out.push(`⚠️ ${id} is ${d.status}`); continue; }
+      { const g = claimGate(d); if (g) { log(`${c.cmd} ${id} refused: ${g}`); out.push(`❌ ${id}: ${g}`); continue; } }
       try {
         if (c.cmd === 'postnow') {
           const r = await publishNow(d.text); d.status = STATUS.POSTED; d.postId = r.id; d.permalink = r.permalink_url; d.postedAt = new Date().toISOString(); out.push(`✅ ${id} posted now on the Page: ${r.permalink_url || r.id}`);
