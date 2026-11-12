@@ -59,3 +59,33 @@ test('the COMMITTED hook-patterns.json is an empty list and behaves exactly like
   const txt = fs.readFileSync(DEFAULT_FILE, 'utf8');
   assert.doesNotMatch(txt, /instagram\.com|@\w/, 'no third-party handles or URLs in the public file');
 });
+
+// sync copy path: refuses a source that was not exported in reviewed mode (SOURCE/TARGET are read at import, so import fresh with the env set)
+let importN = 0;
+async function runSync(source, target, check = false) {
+  process.env.HOOK_PATTERNS_SOURCE = source; process.env.HOOK_PATTERNS_FILE = target;
+  try { const m = await import(`./sync-hook-patterns.js?run=${++importN}`); return m.sync({ check }); }
+  finally { delete process.env.HOOK_PATTERNS_SOURCE; delete process.env.HOOK_PATTERNS_FILE; }
+}
+const REVIEWED = JSON.stringify({ schema: 1, generated_at: 'x', source_count: 1, reviewed_only: true, patterns: [] });
+
+test('sync refuses a source that is not reviewed_only true and leaves an existing target byte-identical', async () => {
+  const src = tmp(), dst = tmp(REVIEWED);
+  for (const body of [{ schema: 1, source_count: 1, patterns: [] }, { schema: 1, source_count: 1, reviewed_only: false, patterns: [] }]) {
+    fs.writeFileSync(src, JSON.stringify(body));
+    await assert.rejects(() => runSync(src, dst), /reviewed mode/);
+    assert.equal(fs.readFileSync(dst, 'utf8'), REVIEWED);
+  }
+});
+
+test('sync copies a reviewed_only source, and --check still accepts the copy', async () => {
+  const src = tmp(REVIEWED), dst = path.join(path.dirname(tmp()), 'out', 'hook-patterns.json');
+  assert.match(await runSync(src, dst), /^copied /);
+  assert.equal(fs.readFileSync(dst, 'utf8'), REVIEWED);
+  assert.match(await runSync(src, dst, true), /^ok: /);
+});
+
+test('sync --check accepts a copy without reviewed_only (validate stays schema-only)', async () => {
+  const dst = tmp(JSON.stringify({ schema: 1, patterns: [] }));
+  assert.match(await runSync(tmp(), dst, true), /^ok: /);
+});
