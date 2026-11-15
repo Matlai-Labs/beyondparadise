@@ -86,7 +86,7 @@ Menai Bay is on Zanzibar's southwest coast, most commonly accessed from Fumba or
 
 If your Zanzibar itinerary also includes [Mnemba Atoll's resident sea turtles](/wildlife/green-sea-turtle-zanzibar/), that's a separate, better-regulated marine encounter on the island's northeast coast — worth considering as an alternative or addition if the Menai Bay ethics situation gives you pause.
 
-If you're based in Paje or Jambiani for the trip, you can also take a [Stone Town day trip](/excursions/stone-town-spice-tour-from-paje/) — see our [Paje](/excursions/stone-town-spice-tour-from-paje/) and [Jambiani](/excursions/stone-town-spice-tour-from-jambiani/) transfer logistics if you're combining the two.
+If you're based in Paje or Jambiani for the trip, you can also take a [Stone Town and spice farm day trip](/excursions/stone-town-spice-farm-day-trip-from-zanzibar-beaches/), which lists the recorded transfer for Paje, Jambiani, Michamvi, Nungwi and Kendwa on one page.
 
 ## Why we're covering this so directly
 

@@ -3,15 +3,18 @@ interface Props {
   items: { q: string; a: string }[];
 }
 const { items } = Astro.props;
+// FAQPage as JSON-LD (one script per page) instead of microdata: same visible Q&A, easier for parsers to read.
+const faqLd = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: items.map(i => ({ '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } })) };
 ---
+<script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
 <section class="faq reveal" aria-label="Frequently asked questions">
   <h2 class="faq__heading display-s">Frequently Asked Questions</h2>
-  <div class="faq__list" itemscope itemtype="https://schema.org/FAQPage">
+  <div class="faq__list">
     {items.map((item, i) => (
-      <details class="faq__item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-        <summary class="faq__q" itemprop="name">{item.q}</summary>
-        <div class="faq__a" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-          <p itemprop="text">{item.a}</p>
+      <details class="faq__item">
+        <summary class="faq__q">{item.q}</summary>
+        <div class="faq__a">
+          <p>{item.a}</p>
         </div>
       </details>
     ))}

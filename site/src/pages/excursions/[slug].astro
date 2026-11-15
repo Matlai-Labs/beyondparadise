@@ -36,7 +36,7 @@ const siblings = all
   schemaType="TouristTrip"
   schemaExtra={{
     name: d.title,
-    departureLocation: { '@type': 'Place', name: d.pickup_area_name },
+    departureLocation: (d.pickup_area_list ?? [d.pickup_area_name]).map(n => ({ '@type': 'Place', name: n })),
     arrivalLocation: { '@type': 'Place', name: d.region },
     provider: {
       '@type': 'Organization',

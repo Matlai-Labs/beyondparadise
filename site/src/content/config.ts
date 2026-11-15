@@ -79,6 +79,7 @@ const excursions = defineCollection({
     tour_name: z.string(),
     pickup_area_id: z.string(),
     pickup_area_name: z.string(),
+    pickup_area_list: z.array(z.string()).optional(),
     destination_id: z.string(),
     region: z.string(),
     hero_image: z.string(),

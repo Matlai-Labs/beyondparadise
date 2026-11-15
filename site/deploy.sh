@@ -4,6 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 npm run build
+node scripts/write-redirect-stubs.mjs   # retired URLs -> redirect stubs (GitHub Pages has no 301s); after the gates, not part of them
 echo "beyondparadiseadventures.com" > dist/CNAME; touch dist/.nojekyll
 cd dist && rm -rf .git && git init -q && git checkout -q -b gh-pages && git add -A \
   && git -c user.name="deploy" -c user.email="noreply@beyondparadiseadventures.com" commit -q -m "Deploy $(date -u +%FT%TZ)" \

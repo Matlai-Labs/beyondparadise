@@ -3,7 +3,8 @@
     "purpose": "Structured source data for the programmatic local-SEO excursion pages (tour x pickup-area). Every field that appears on a generated page must trace to a fact_id in data/facts/facts.json or to destinations.json. Never add a value here without a real source. Generator: pipeline/seo/generate-excursion-pages.js.",
     "created": "2026-09-23",
     "rule": "Never write specifics without the database (CLAUDE.md #2). If a fact_id list is empty for a claim, the claim must not be written.",
-    "hard_scope_note": "This dataset is intentionally small. Beyond Paradise Adventures does not operate or resell day tours (it is a decision-support editorial brand, not a package-tourism directory), and data/ has no bookable-tour product records (no departure times, itineraries, or prices for Safari Blue, spice tours, etc.). Every combination below is built ONLY from real facts.json entries about transfer logistics, seasons, regulations and named places. Combinations that would require inventing a fact (e.g. Safari Blue's actual departure point/price, a Nungwi-to-Stone-Town direct drive time, any Kendwa-specific detail) are listed in skipped_combinations instead of being generated."
+    "hard_scope_note": "This dataset is intentionally small. Beyond Paradise Adventures does not operate or resell day tours (it is a decision-support editorial brand, not a package-tourism directory), and data/ has no bookable-tour product records (no departure times, itineraries, or prices for Safari Blue, spice tours, etc.). Every combination below is built ONLY from real facts.json entries about transfer logistics, seasons, regulations and named places. Combinations that would require inventing a fact (e.g. Safari Blue's actual departure point/price, a Nungwi-to-Stone-Town direct drive time, any Kendwa-specific detail) are listed in skipped_combinations instead of being generated.",
+    "consolidation_note": "2026-11-15: the spice-tour (5 areas) and Mnemba (2 areas) tours were measured as near-duplicates (docs/seo-templated-pages-review-2026-10-09.md) and merged into two hand-written pages. Tours with consolidated_into are skipped by the generator; do not regenerate them."
   },
   "tours": [
     {
@@ -115,7 +116,8 @@
           "seo_title": "Stone Town Spice Tour from Kendwa: Swimmable at Low Tide",
           "seo_description": "Stone Town and spice farm day trip from Kendwa: 1-1.5 hours to the airport, and why Kendwa stays swimmable through the tide cycle while Nungwi does not."
         }
-      ]
+      ],
+      "consolidated_into": "/excursions/stone-town-spice-farm-day-trip-from-zanzibar-beaches/"
     },
     {
       "id": "mnemba-atoll-snorkeling",
@@ -173,7 +175,8 @@
           "seo_title": "Mnemba Atoll Snorkeling from Kendwa: 45-Minute Boat Ride",
           "seo_description": "Snorkel Mnemba Atoll from Kendwa: about 45 minutes by boat from the beach, and why the deep-water shelf lets boats launch reliably here."
         }
-      ]
+      ],
+      "consolidated_into": "/excursions/mnemba-atoll-snorkeling-from-kendwa-or-stone-town/"
     },
     {
       "id": "mafia-whale-shark-snorkelling",

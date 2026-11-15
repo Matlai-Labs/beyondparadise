@@ -75,6 +75,9 @@ function yamlEscape(s) {
 
 function main() {
   const excursions = loadJson(EXCURSIONS_PATH);
+  // Tours merged into one hand-written page (2026-11-15) must not be regenerated as per-area pages.
+  for (const t of excursions.tours.filter(t => t.consolidated_into)) console.log(`Skipping consolidated tour ${t.id} -> ${t.consolidated_into}`);
+  excursions.tours = excursions.tours.filter(t => !t.consolidated_into);
   const factsDb = loadJson(FACTS_PATH);
   const factIds = new Set(factsDb.facts.map(f => f.id));
   const factsById = new Map(factsDb.facts.map(f => [f.id, f]));
