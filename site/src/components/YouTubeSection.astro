@@ -1,4 +1,5 @@
 ---
+import { channelById } from '../lib/channels.mjs';
 const channels = [
   {
     name: 'Beyond Paradise Adventures Africa',
@@ -6,7 +7,7 @@ const channels = [
     desc: 'First-hand lodge reviews, migration intelligence, and the honest truth about East Africa luxury travel — from someone who lives there.',
     img: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&q=80&auto=format',
     alt: 'Beyond Paradise Adventures Africa YouTube channel — East Africa luxury travel',
-    url: 'https://www.youtube.com/@BPA-Africa',
+    url: channelById('youtube-africa').url,
     color: 'var(--teal)',
     region: 'EAST AFRICA',
   },
@@ -15,7 +16,7 @@ const channels = [
     desc: 'Vietnam, Bali, Thailand — covering where the luxury experience is genuine and where it’s staged.',
     img: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80&auto=format',
     alt: 'Beyond Paradise Adventures Asia YouTube channel — Southeast Asia luxury travel',
-    url: 'https://www.youtube.com/@beyondparadiseadventures',
+    url: channelById('youtube-asia').url,
     color: 'var(--gold)',
     region: 'SOUTHEAST ASIA',
   },
@@ -31,7 +32,7 @@ const channels = [
 
     <div class="yt-grid">
       {channels.map((ch, i) => (
-        <a href={ch.url} target="_blank" rel="noopener noreferrer" class={`yt-card glass reveal reveal-delay-${i+1}`} aria-label={`Watch ${ch.name} on YouTube`}>
+        <a href={ch.url} target="_blank" rel="me noopener" class={`yt-card glass reveal reveal-delay-${i+1}`} aria-label={`Watch ${ch.name} on YouTube`}>
           <div class="yt-card__thumb">
             <img src={ch.img} alt={ch.alt} class="yt-card__img" loading="lazy" width="560" height="315" />
             <div class="yt-card__overlay"></div>

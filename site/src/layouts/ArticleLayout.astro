@@ -3,6 +3,7 @@ import Base from './Base.astro';
 import AnswerBox from '../components/AnswerBox.astro';
 import AuthorBlock from '../components/AuthorBlock.astro';
 import FAQ from '../components/FAQ.astro';
+import { organizationSameAs } from '../lib/channels.mjs';
 
 interface Props {
   title: string;
@@ -45,13 +46,7 @@ const schema = {
     '@type': 'Organization',
     name: 'Beyond Paradise Adventures',
     url: 'https://beyondparadiseadventures.com',
-    sameAs: [
-  'https://www.wikidata.org/wiki/Q140420385',
-  'https://www.facebook.com/beyondparadiseadventures',
-  'https://www.instagram.com/beyondparadiseadventures/',
-  'https://www.youtube.com/@BPA-Africa',
-  'https://www.youtube.com/@beyondparadiseadventures',
-],
+    sameAs: organizationSameAs(),
   },
   ...schemaExtra,
 };
