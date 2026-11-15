@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Every 15 min: reconcile scheduled posts with Meta, expire stale drafts, alert on failures; Monday 08:00 heartbeat.
-import { stuckIgPublishes, markStuckAlerted, loadQueue, saveQueue, withQueueLock, mergeQueue, claimIgPublish, STATUS, postStatus, whatsapp, log, CONFIG, igEnabled, igPostDraftAny } from './lib.js';
+import { stuckIgPublishes, markStuckAlerted, loadQueue, saveQueue, withQueueLock, mergeQueue, claimIgPublish, STATUS, postStatus, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, igGate } from './lib.js';
 const q = loadQueue(); const base = JSON.parse(JSON.stringify(q)); const now = new Date(); let changed = false; const problems = [];
 for (const d of q.drafts) {
   if (d.status === STATUS.SCHEDULED && d.postId) {
@@ -17,6 +17,8 @@ for (const d of q.drafts) {
     catch (e) { d.ig = { ...d.ig, status: 'failed', error: e.message }; changed = true; problems.push(`${d.id} Instagram: ${e.message.slice(0, 100)}`); }
   }
 }
+// Instagram on in config.json but off in practice: say so (log per post, one alert per state change) instead of skipping quietly
+if (await igGate(q, { now })) changed = true;
 const stuck = stuckIgPublishes(q, now); // alerted once per draft; marked only after the alert is actually sent
 if (stuck.length) problems.push(`Instagram publish stuck in 'publishing' (check Meta before retrying): ${stuck.join(', ')}`);
 // health of the approval server (silence = alarm)

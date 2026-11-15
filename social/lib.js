@@ -239,9 +239,45 @@ export function renderList(q) {
 
 // ── Instagram: branded card → hosted image → container → publish ─────────────
 import { execFileSync } from 'node:child_process';
-export function igEnabled() {
-  if (!CONFIG.instagram?.enabled) return false;
-  try { const s = JSON.parse(fs.readFileSync(resourcePath('metaTokens'), 'utf8')); return (s.user?.scopes || []).includes('instagram_content_publish') || !!s.user?.igPublishOk; } catch { return false; }
+/** Is Instagram publishing on, and if it is switched on in config.json but not in practice, WHY (never contains a token value). */
+export function igStatus({ config = CONFIG, tokensPath } = {}) {
+  if (!config.instagram?.enabled) return { configEnabled: false, enabled: false, reason: 'disabled in config.json' };
+  let s;
+  try { s = JSON.parse(fs.readFileSync(tokensPath ?? resourcePath('metaTokens'), 'utf8')); } catch { return { configEnabled: true, enabled: false, reason: 'the meta-pages tokens file is missing or unreadable' }; }
+  if ((s.user?.scopes || []).includes('instagram_content_publish') || s.user?.igPublishOk) return { configEnabled: true, enabled: true, reason: null };
+  return { configEnabled: true, enabled: false, reason: Array.isArray(s.user?.scopes)
+    ? 'instagram_content_publish is not in user.scopes of the tokens file'
+    : 'user.scopes is missing from the tokens file (a re-connect without recording the granted scopes?)' };
+}
+export function igEnabled() { return igStatus().enabled; }
+/**
+ * Instagram switched ON in config.json but OFF in practice used to mean: approved posts silently went to Facebook only
+ * (2026-11-02 .. 2026-11-15). Now: one log line per affected post, ONE alert per state change (blocked / back on), kept in
+ * q.state.igGate so it is not repeated every 15-minute run. An alert that could not be sent is retried; the log lines are not.
+ * Mutates q (state + draft.igSkipNotedAt); returns true when it did, so the caller saves the queue.
+ */
+export async function igGate(q, { now = new Date(), status = igStatus(), notify = whatsapp, say = log } = {}) {
+  const state = q.state || (q.state = {}); const stamp = now.toISOString(); let changed = false;
+  if (!(status.configEnabled && !status.enabled)) {
+    if (state.igGate === 'blocked') {
+      state.igGate = 'ok'; changed = true; say('instagram publishing is back on');
+      if (state.igBlockedAlertedAt) await notify(`✅ ${CONFIG.page} social: Instagram publishing is back on.`);
+    } else if (!state.igGate) { state.igGate = 'ok'; changed = true; }
+    return changed;
+  }
+  if (state.igGate !== 'blocked') { state.igGate = 'blocked'; state.igBlockedSince = stamp; state.igBlockedAlertedAt = null; changed = true; }
+  // posts that will miss Instagram: approved without an IG leg (the approval server decided Facebook-only) or queued but never published
+  const affected = q.drafts.filter((d) => (d.status === STATUS.SCHEDULED && !d.ig) || d.ig?.status === 'queued');
+  for (const d of affected) {
+    if (d.igSkipNotedAt >= state.igBlockedSince) continue;
+    say(`${d.id} instagram NOT published, Facebook only: ${status.reason}`); d.igSkipNotedAt = stamp; changed = true;
+  }
+  if (!state.igBlockedAlertedAt) {
+    const ids = affected.map((d) => d.id).slice(0, 10).join(', ');
+    const sent = await notify(`⚠️ ${CONFIG.page} social: Instagram is switched on in config but publishing is OFF — ${status.reason}. ${ids ? `Facebook only for: ${ids}.` : 'No scheduled post is affected yet; the next approved post will go to Facebook only.'} Fix: node shared_knowledge/scripts/meta-pages/connect.js --refresh-scopes (or re-connect). You will hear again only when this changes.`);
+    if (sent) { state.igBlockedAlertedAt = stamp; changed = true; }
+  }
+  return changed;
 }
 export function cardSpec(d) {
   const first = d.text.split('\n')[0]; const [headline, rest] = first.split(' — ');
