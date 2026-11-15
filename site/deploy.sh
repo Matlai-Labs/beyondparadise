@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 npm run build
 node scripts/write-redirect-stubs.mjs   # retired URLs -> redirect stubs (GitHub Pages has no 301s); after the gates, not part of them
+node scripts/post-build-gate.mjs --self-test && node scripts/post-build-gate.mjs   # fail closed: verification tags (from .env) + redirect stubs must be in dist/ before publishing
 echo "beyondparadiseadventures.com" > dist/CNAME; touch dist/.nojekyll
 cd dist && rm -rf .git && git init -q && git checkout -q -b gh-pages && git add -A \
   && git -c user.name="deploy" -c user.email="noreply@beyondparadiseadventures.com" commit -q -m "Deploy $(date -u +%FT%TZ)" \

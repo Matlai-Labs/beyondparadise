@@ -19,10 +19,10 @@ hero_alt: "Zanzibar coast, starting point for a Stone Town and spice farm day tr
 author: "tim"
 last_updated: "2026-11-15"
 draft: false
-answer: "From Paje, Jambiani, Nungwi or Kendwa, the recorded road transfer to Zanzibar's airport side of Stone Town is 1 to 1.5 hours (50-60 km); from Michamvi it is about 1 hour 15 minutes direct, according to Tim, who drives that road. The spice farm visit itself takes about 3 hours (Zanzibar Tourism Board), so plan most of a day."
+answer: "From Paje, Jambiani, Nungwi or Kendwa, the recorded road transfer to Zanzibar's airport side of Stone Town is 1 to 1.5 hours (50-60 km); from Michamvi, Boutique Hotel Matlai publishes about 1 hour 15 minutes by road direct to Stone Town. The spice farm visit itself takes about 3 hours (Zanzibar Tourism Board), so plan most of a day."
 faq:
   - q: "How long is the drive to Stone Town from the beach areas?"
-    a: "For Kendwa, Nungwi, Paje and Jambiani we record one shared figure: about 50-60 km and 1 to 1.5 hours by road to the airport, which is a further 5-6 km (about 8-15 minutes by taxi) from Stone Town. For Michamvi we record about 1 hour 15 minutes direct. We have no measured door-to-door time for the other four areas, so ask your lodge for today's figure."
+    a: "For Kendwa, Nungwi, Paje and Jambiani we record one shared figure: about 50-60 km and 1 to 1.5 hours by road to the airport, which is a further 5-6 km (about 8-15 minutes by taxi) from Stone Town. For Michamvi we cite the figure published by Boutique Hotel Matlai in Michamvi Pingwe: about 1 hour 15 minutes by road direct to Stone Town (hotelmatlai.com fact sheet, checked 15 November 2026). We have no measured door-to-door time for the other four areas, so ask your lodge for today's figure."
   - q: "How long does a spice farm visit take?"
     a: "Spice farm tours run from Stone Town take approximately 3 hours, according to the Zanzibar Tourism Board. Add the road time in both directions and a Stone Town walk and the whole outing fills most of a day."
   - q: "Which pickup area is best for this trip?"
@@ -36,7 +36,6 @@ fact_ids:
   - "zanzibar-spice-history"
   - "zanzibar-beaches-guide-transfers-1"
   - "zanzibar-health-malaria-transfers-1"
-  - "michamvi-location-context"
   - "zanzibar-kitesurfing-paje-season-1"
   - "zanzibar-kitesurfing-paje-season-2"
   - "green-turtle-nesting-zanzibar-season-1"
@@ -48,11 +47,11 @@ sibling_area_ids: []
 
 ## Quick facts
 
-| Pickup area | Recorded transfer | What is different about it |
+| Pickup area | Recorded transfer (endpoint stated) | What is different about it |
 |---|---|---|
 | Paje | 1-1.5 h to the airport (50-60 km) | Kitesurfing hub; low-wind days suit a Stone Town trip |
 | Jambiani | 1-1.5 h to the airport (50-60 km) | Quieter, just south of Paje; recorded green turtle nesting beach |
-| Michamvi | about 1 h 15 min direct to Stone Town | The only area with a direct figure; calm lagoon west, open ocean east |
+| Michamvi | about 1 h 15 min by road to Stone Town itself (hotel's published figure) | The only area with a direct figure; calm lagoon west, open ocean east |
 | Nungwi | 1-1.5 h to the airport (50-60 km) | North tip; Mnarani turtle conservation pond |
 | Kendwa | 1-1.5 h to the airport (50-60 km) | Swimmable at every tide; 3-4 km from Nungwi |
 
@@ -64,7 +63,7 @@ A Stone Town and spice farm day combines two things. Stone Town (Zanzibar City) 
 
 ## How long the road takes from each area
 
-The answer for four of the five areas is the same recorded range: resort-to-airport transfers to Kendwa, Nungwi, Paje and Jambiani are about 50-60 km and take roughly 1 to 1.5 hours by road (Tuliza Zanzibar and Zuri Zanzibar, checked 30 June 2026). Michamvi has its own figure, about 1 hour 15 minutes direct to Stone Town, recorded first-hand by Tim, who lives on that peninsula. Nungwi and Kendwa are 3-4 km apart, roughly a 9-minute drive (Destinationz, DistancesFrom.com, checked 23 September 2026), so those two start points are practically one.
+The answer for four of the five areas is the same recorded range: resort-to-airport transfers to Kendwa, Nungwi, Paje and Jambiani are about 50-60 km and take roughly 1 to 1.5 hours by road (Tuliza Zanzibar and Zuri Zanzibar, checked 30 June 2026). Michamvi has its own figure, to Stone Town itself rather than the airport: about 1 hour 15 minutes by road, as published by Boutique Hotel Matlai in Michamvi Pingwe on its [fact sheet](https://www.hotelmatlai.com/fact-sheet) (checked 15 November 2026). That is a hotel's own published number, not a measurement by us. Nungwi and Kendwa are 3-4 km apart, roughly a 9-minute drive (Destinationz, DistancesFrom.com, checked 23 September 2026), so those two start points are practically one.
 
 Two honest limits. These are transfer ranges, not measured door-to-door times, and traffic into Stone Town in the morning is not recorded here. Ask your lodge for the pickup time and the expected return time before you book.
 
@@ -74,7 +73,7 @@ Paje has two kitesurfing seasons: Kaskazi from mid-December to February or March
 
 ## Michamvi, southeast peninsula
 
-Michamvi Pingwe is a small fishing village on the southeast coast, with calm lagoon water on the west side and open Indian Ocean on the east. It is the only area where we hold a direct drive time to Stone Town, about 1 hour 15 minutes. Tim lives on this peninsula; see the [Zanzibar travel guide](/east-africa/zanzibar/) for the seasons that apply to the whole island.
+Michamvi Pingwe is a small fishing village on the southeast coast, with calm lagoon water on the west side and open Indian Ocean on the east. It is the only area where we cite a direct drive time to Stone Town, about 1 hour 15 minutes by road, from Boutique Hotel Matlai's published fact sheet. See the [Zanzibar travel guide](/east-africa/zanzibar/) for the seasons that apply to the whole island.
 
 ## Nungwi and Kendwa, north coast
 

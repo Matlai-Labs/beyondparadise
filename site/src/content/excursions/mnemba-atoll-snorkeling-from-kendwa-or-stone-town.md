@@ -52,7 +52,7 @@ sibling_area_ids: []
 
 ## Two ways to get there
 
-Mnemba Atoll sits off Zanzibar's northeast coast, reached via the Matemwe coast. The Kendwa version is a boat day: pickup at the beach, about 45 minutes on the water, and a day that typically also includes dolphin snorkelling and a seafood lunch. The Stone Town version is a land-and-sea transfer, and guests wade ashore to the boat because there are no jetties. We record the Kendwa timing from a single operator listing and the Stone Town route from the access description of a lodge on the atoll, so treat both as estimates and ask your operator for exact times.
+Mnemba Atoll sits off Zanzibar's northeast coast, reached via the Matemwe coast. The Kendwa version is a boat day: pickup at the beach, about 45 minutes on the water, and, in the one operator listing we hold (The Abroad Guide, checked 23 September 2026), a day that also included dolphin snorkelling and a seafood lunch. Other operators will package it differently. The Stone Town version is a land-and-sea transfer, and guests wade ashore to the boat because there are no jetties. We record the Kendwa timing from a single operator listing and the Stone Town route from the access description of a lodge on the atoll, so treat both as estimates and ask your operator for exact times.
 
 Kendwa also suits boat departures for a reason that is recorded: its beach stays swimmable through the tide cycle thanks to a deep shelf close offshore, unlike neighbouring Nungwi, where the water can recede a long way at low tide (Altezza Travel and Destinationz, checked 23 September 2026).
 

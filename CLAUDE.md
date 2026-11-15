@@ -409,3 +409,9 @@ This file wasn't touched for 37 days while the repo kept moving. Notable additio
 - **GA4/GSC/Bing/Cloudflare Web Analytics wiring is env-gated** (`907c80d`, `7eb5753`) — absent credentials are a no-op, not a build failure.
 
 If you're relying on anything above this section that conflicts with these notes, trust the dated annotations over the original prose — update the original text in place the next time you're in that section rather than letting corrections pile up here indefinitely.
+
+
+## Deploy notes (2026-11-15)
+
+- Deploy ONLY from the main checkout (`/Users/tim/Desktop/AI_projects/beyondparadiseadventures/site`, `./deploy.sh`): it needs the git-ignored `site/.env` (PUBLIC_GSC_VERIFICATION, PUBLIC_BING_VERIFICATION, optional PUBLIC_CF_ANALYTICS_TOKEN / PUBLIC_GA4_ID). `deploy.sh` writes the 7 redirect stubs for the retired spice-tour and Mnemba URLs (`scripts/write-redirect-stubs.mjs`) and then runs `scripts/post-build-gate.mjs` (self-test first), which refuses to publish if a verification tag or a stub is missing, or a stub has noindex.
+- `.worktrees/seo-watch` and `.worktrees/photo-catalog` carry an OLDER `deploy.sh` without the stub step and gate. Deploying from them would delete the stubs and the merged-page redirects. Do not deploy from them (and do not edit them).
