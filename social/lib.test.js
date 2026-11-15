@@ -163,3 +163,74 @@ test('a re-claimed IG publish that gets stuck again is alerted again (old stuckA
   await claimIgPublish('B1', new Date('2026-11-02T09:00:00Z'), p);
   q = loadQueue(p); assert.deepEqual(stuckIgPublishes(q, new Date('2026-11-02T10:00:00Z')), ['B1']);
 });
+
+// ── Instagram switched on in config but off in practice must be LOUD (2026-11-15: 2 months of silent Facebook-only posts) ──
+import { igStatus, igGate } from './lib.js';
+const tokensFile = (user) => { const p = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'bpatok-')), 'tokens.json'); if (user !== undefined) fs.writeFileSync(p, JSON.stringify({ user })); return p; };
+const CFG_ON = { instagram: { enabled: true } };
+test('igStatus: says WHY Instagram is off, and igEnabled agrees with it', () => {
+  assert.deepEqual(igStatus({ config: { instagram: { enabled: false } }, tokensPath: tokensFile({ scopes: ['instagram_content_publish'] }) }), { configEnabled: false, enabled: false, reason: 'disabled in config.json' });
+  const ok = igStatus({ config: CFG_ON, tokensPath: tokensFile({ scopes: ['public_profile', 'instagram_content_publish'] }) }); assert.equal(ok.enabled, true); assert.equal(ok.reason, null);
+  assert.equal(igStatus({ config: CFG_ON, tokensPath: tokensFile({ igPublishOk: true }) }).enabled, true);
+  const noScopes = igStatus({ config: CFG_ON, tokensPath: tokensFile({ token: 'x' }) }); assert.equal(noScopes.enabled, false); assert.match(noScopes.reason, /user\.scopes is missing/);
+  const lacking = igStatus({ config: CFG_ON, tokensPath: tokensFile({ scopes: ['public_profile'] }) }); assert.equal(lacking.enabled, false); assert.match(lacking.reason, /instagram_content_publish is not in user\.scopes/);
+  const gone = igStatus({ config: CFG_ON, tokensPath: path.join(os.tmpdir(), 'bpa-no-such-dir', 'tokens.json') }); assert.equal(gone.enabled, false); assert.match(gone.reason, /unreadable/);
+  for (const r of [noScopes.reason, lacking.reason, gone.reason]) assert.doesNotMatch(r, /token":|EAA/);
+});
+const blockedStatus = { configEnabled: true, enabled: false, reason: 'user.scopes is missing from the tokens file' };
+const okStatus = { configEnabled: true, enabled: true, reason: null };
+const gateQueue = () => ({ drafts: [
+  { id: 'B1', status: STATUS.POSTED }, { id: 'B2', status: STATUS.SCHEDULED, scheduledFor: '2026-11-17T09:00:00+03:00' },
+  { id: 'B3', status: STATUS.SCHEDULED, ig: { status: 'queued', at: '2026-11-17T09:00:00+03:00' } }, { id: 'B4', status: STATUS.PENDING }, { id: 'B5', status: STATUS.SCHEDULED, ig: { status: 'posted' } }], state: {} });
+const harness = () => { const lines = []; const sent = []; const h = { lines, sent, ok: true, say: (m) => lines.push(m), notify: async (m) => { sent.push(m); return h.ok; } }; return h; };
+test('igGate: Instagram on in config but off in practice -> one log line per affected post, ONE alert, nothing more on later runs', async () => {
+  const q = gateQueue(); const h = harness(); const t = (min) => new Date(Date.UTC(2026, 10, 15, 8, min));
+  assert.equal(await igGate(q, { now: t(0), status: blockedStatus, notify: h.notify, say: h.say }), true);
+  const skipLines = h.lines.filter((l) => /instagram NOT published/.test(l)); assert.deepEqual(skipLines.map((l) => l.split(' ')[0]), ['B2', 'B3'], 'only the posts that will really miss Instagram');
+  for (const l of skipLines) assert.match(l, /user\.scopes is missing/);
+  assert.equal(h.sent.length, 1); assert.match(h.sent[0], /Instagram/); assert.match(h.sent[0], /B2, B3/); assert.match(h.sent[0], /user\.scopes is missing/); assert.match(h.sent[0], /--refresh-scopes/);
+  assert.equal(q.state.igGate, 'blocked');
+  for (let i = 1; i <= 5; i++) await igGate(q, { now: t(i * 15), status: blockedStatus, notify: h.notify, say: h.say });
+  assert.equal(h.sent.length, 1, 'later runs in the same state send nothing'); assert.equal(h.lines.filter((l) => /instagram NOT published/.test(l)).length, 2, 'each post is logged once, not on every 15-minute run');
+});
+test('igGate: a post that becomes affected later is logged once; an alert that failed to send is retried, but the log lines are not repeated', async () => {
+  const q = gateQueue(); const h = harness(); h.ok = false;
+  await igGate(q, { now: new Date('2026-11-15T08:00:00Z'), status: blockedStatus, notify: h.notify, say: h.say });
+  await igGate(q, { now: new Date('2026-11-15T08:15:00Z'), status: blockedStatus, notify: h.notify, say: h.say });
+  assert.equal(h.sent.length, 2, 'bridge was down: not recorded as alerted, so it tries again'); assert.equal(h.lines.filter((l) => /B2 instagram NOT published/.test(l)).length, 1);
+  h.ok = true; q.drafts.push({ id: 'B6', status: STATUS.SCHEDULED });
+  await igGate(q, { now: new Date('2026-11-15T08:30:00Z'), status: blockedStatus, notify: h.notify, say: h.say });
+  assert.equal(h.sent.length, 3); assert.match(h.sent[2], /B6/); assert.equal(h.lines.filter((l) => /B6 instagram NOT published/.test(l)).length, 1);
+  await igGate(q, { now: new Date('2026-11-15T08:45:00Z'), status: blockedStatus, notify: h.notify, say: h.say }); assert.equal(h.sent.length, 3);
+});
+test('igGate: recovery is announced once, and a later relapse is a NEW state change (alert + log again)', async () => {
+  const q = gateQueue(); const h = harness();
+  await igGate(q, { now: new Date('2026-11-15T08:00:00Z'), status: blockedStatus, notify: h.notify, say: h.say });
+  await igGate(q, { now: new Date('2026-11-15T09:00:00Z'), status: okStatus, notify: h.notify, say: h.say });
+  assert.equal(h.sent.length, 2); assert.match(h.sent[1], /back on/); assert.equal(q.state.igGate, 'ok');
+  await igGate(q, { now: new Date('2026-11-15T09:15:00Z'), status: okStatus, notify: h.notify, say: h.say }); assert.equal(h.sent.length, 2);
+  await igGate(q, { now: new Date('2026-11-15T10:00:00Z'), status: blockedStatus, notify: h.notify, say: h.say });
+  assert.equal(h.sent.length, 3); assert.match(h.sent[2], /switched on|OFF/i); assert.equal(h.lines.filter((l) => /B2 instagram NOT published/.test(l)).length, 2);
+});
+test('igGate: Instagram deliberately off in config, or healthy from the start, is silent', async () => {
+  const h = harness();
+  const off = gateQueue(); await igGate(off, { now: new Date(), status: { configEnabled: false, enabled: false, reason: 'disabled in config.json' }, notify: h.notify, say: h.say }); assert.equal(off.state.igGate, 'ok', 'not a fault: never "blocked"');
+  const fine = gateQueue(); await igGate(fine, { now: new Date(), status: okStatus, notify: h.notify, say: h.say });
+  assert.equal(h.sent.length, 0); assert.equal(h.lines.length, 0); assert.equal(fine.state.igGate, 'ok');
+});
+test('igGate: blocked with nothing scheduled still raises the alarm once (the NEXT approval would go Facebook-only)', async () => {
+  const q = { drafts: [{ id: 'B1', status: STATUS.PENDING }], state: {} }; const h = harness();
+  await igGate(q, { now: new Date(), status: blockedStatus, notify: h.notify, say: h.say }); await igGate(q, { now: new Date(), status: blockedStatus, notify: h.notify, say: h.say });
+  assert.equal(h.sent.length, 1); assert.match(h.sent[0], /next|approved/i);
+});
+test('igGate state survives the worker/approval-server merge (a worker-written igGate is not lost)', async () => {
+  const base = gateQueue(); const mine = JSON.parse(JSON.stringify(base)); const h = harness();
+  await igGate(mine, { now: new Date('2026-11-15T08:00:00Z'), status: blockedStatus, notify: h.notify, say: h.say });
+  const merged = mergeQueue(base, mine, JSON.parse(JSON.stringify(base)));
+  assert.equal(merged.state.igGate, 'blocked'); assert.ok(merged.state.igBlockedAlertedAt); assert.ok(merged.drafts.find((d) => d.id === 'B2').igSkipNotedAt);
+});
+test('worker.js is wired: it imports igGate and calls it exactly once, before the state is saved', () => {
+  const w = fs.readFileSync(new URL('./worker.js', import.meta.url), 'utf8');
+  assert.match(w.split('\n')[2], /\bigGate\b/, 'imported'); assert.equal((w.match(/igGate\(/g) || []).length, 1);
+  assert.ok(w.indexOf('igGate(') < w.indexOf('saveQueue(mergeQueue'), 'runs before the queue is saved, or its state would be lost');
+});

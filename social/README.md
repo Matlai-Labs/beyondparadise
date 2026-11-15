@@ -20,6 +20,7 @@ library, published by the worker at the scheduled time (IG has no API scheduling
 `"image"` falls back to the static Pillow card (`card.py`). Enable with `instagram.enabled=true` in `config.json` once `instagram_content_publish`
 is granted (re-run `meta-pages/connect.js`). Logs: `~/Library/Logs/beyondparadise/social.log`.
 Meta access: `shared_knowledge/scripts/meta-pages` (tokens in `~/.config/meta-pages/`).
+`igEnabled()` needs `instagram_content_publish` in `user.scopes` of that tokens file (written by `connect.js --exchange`; `connect.js --refresh-scopes` re-reads it from Meta without a new login). If `instagram.enabled` is true but that is missing, the worker (`igGate` in `lib.js`) logs one `… instagram NOT published, Facebook only: <reason>` line per affected post and sends ONE WhatsApp alert per state change (blocked, then back on) — state in `queue.json` → `state.igGate`. It no longer skips quietly.
 
 ## Draft score (advisory)
 `score.js` gives every new draft a `score` shown under it in `bpa` / `bpa approve` lists: `score 72/100 · hook 7/10 · rubric 6/9 ✗ cta, hashtags`.
