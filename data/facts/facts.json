@@ -54,13 +54,17 @@
       "topic": "entry",
       "region": "vietnam",
       "claim": "Vietnam e-Visa cost and validity",
-      "value": "USD 25. 90-day multiple-entry e-Visa available online at evisa.xuatnhapcanh.gov.vn. Covers all entry points. Most EU, US, UK, Australian passport holders eligible. Processing: 3 business days.",
+      "value": "The Vietnam e-visa is valid for up to 90 days, single or multiple entry. The fee is USD 25 single entry and USD 50 multiple entry. It is available to citizens of all countries and territories that are not exempt, and may only be used at the border gates on the Government list. Apply at evisa.gov.vn or thithucdientu.gov.vn. The portal's own instruction page lists 81 border gates (27 land, 15 air, 39 sea). A Government news page of 3 December 2025 on Resolution 389/NQ-CP says the total is 83, counting the Long Thanh and Gia Binh airports once they come into operation.",
       "sources": [
-        "vietnam-immigration-official"
+        "vietnam-immigration-official",
+        "vn-evisa-faq",
+        "vn-evisa-instruction",
+        "vn-immigration-portal-notice",
+        "vn-govnews-evisa-ports-phuquoc"
       ],
       "status": "single-source",
       "volatile": true,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "yellow-fever-tz",
@@ -546,9 +550,10 @@
         "vietnam-tourism-board",
         "kim-firsthand"
       ],
-      "status": "confirmed",
+      "status": "unverified",
       "volatile": false,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "note": "Blocked 2026-11-16: the source kim-firsthand has no named, consenting person and no dated visit on record. Text left as it was. Do not publish until a dated, consented first-hand source or two independent non-first-hand sources are recorded."
     },
     {
       "id": "hoi-an-luxury-hotels",
@@ -559,9 +564,10 @@
       "sources": [
         "kim-firsthand"
       ],
-      "status": "single-source",
+      "status": "unverified",
       "volatile": true,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "note": "Blocked 2026-11-16: the source kim-firsthand has no named, consenting person and no dated visit on record. Text left as it was. Do not publish until a dated, consented first-hand source or two independent non-first-hand sources are recorded."
     },
     {
       "id": "rwanda-gorilla-permit",
@@ -669,9 +675,10 @@
         "unesco-world-heritage",
         "kim-firsthand"
       ],
-      "status": "confirmed",
+      "status": "unverified",
       "volatile": false,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "note": "Blocked 2026-11-16: the source kim-firsthand has no named, consenting person and no dated visit on record. Text left as it was. Do not publish until a dated, consented first-hand source or two independent non-first-hand sources are recorded."
     },
     {
       "id": "humpback-whale-tanzanian-coast",
@@ -775,9 +782,10 @@
         "vietnam-tourism-board",
         "kim-firsthand"
       ],
-      "status": "confirmed",
+      "status": "unverified",
       "volatile": false,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "note": "Blocked 2026-11-16: the source kim-firsthand has no named, consenting person and no dated visit on record. Text left as it was. Do not publish until a dated, consented first-hand source or two independent non-first-hand sources are recorded."
     },
     {
       "id": "six-senses-con-dao",
@@ -788,9 +796,10 @@
       "sources": [
         "kim-firsthand"
       ],
-      "status": "single-source",
+      "status": "unverified",
       "volatile": true,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "note": "Blocked 2026-11-16: the source kim-firsthand has no named, consenting person and no dated visit on record. Text left as it was. Do not publish until a dated, consented first-hand source or two independent non-first-hand sources are recorded."
     },
     {
       "id": "four-seasons-nam-hai",
@@ -801,9 +810,10 @@
       "sources": [
         "kim-firsthand"
       ],
-      "status": "single-source",
+      "status": "unverified",
       "volatile": true,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "note": "Blocked 2026-11-16: the source kim-firsthand has no named, consenting person and no dated visit on record. Text left as it was. Do not publish until a dated, consented first-hand source or two independent non-first-hand sources are recorded."
     },
     {
       "id": "sofitel-metropole-hanoi",
@@ -814,9 +824,10 @@
       "sources": [
         "kim-firsthand"
       ],
-      "status": "single-source",
+      "status": "unverified",
       "volatile": true,
-      "lastChecked": "2026-06-27"
+      "lastChecked": "2026-06-27",
+      "note": "Blocked 2026-11-16: the source kim-firsthand has no named, consenting person and no dated visit on record. Text left as it was. Do not publish until a dated, consented first-hand source or two independent non-first-hand sources are recorded."
     },
     {
       "id": "ngorongoro-crater-area",
@@ -7100,102 +7111,49 @@
     },
     {
       "id": "vietnam-hoi-an-luxury-entry-1",
-      "claim": "Citizens of several EU countries, including Germany, France, Italy, and Spain, along with the UK, are unilaterally exempted from a visa for stays not exceeding 45 days when visiting Vietnam.",
+      "claim": "Citizens of Germany, France, Italy, Spain and the United Kingdom can enter Vietnam without a visa for up to 45 days. (UK: GOV.UK and Resolution 44/NQ-CP pages agree.) The exemption runs to 14 March 2028.",
       "sources": [
-        {
-          "name": "UK Government Travel Advice",
-          "url": "https://www.gov.uk/foreign-travel-advice/vietnam/entry-requirements",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "Citizens of several EU countries, including Germany, France, Italy, and Spain, along with the UK, are unilaterally exempted from a visa for stays not exceeding 45 days."
-        },
-        {
-          "name": "Vietnam E-visa Portal",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "Citizens of several EU countries, including Germany, France, Italy, and Spain, along with the UK, are unilaterally exempted from a visa for stays not exceeding 45 days."
-        },
-        {
-          "name": "My Vietnam Visa",
-          "url": "https://www.myvietnamvisa.com/visa-requirements/united-kingdom.html",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "Citizens of several EU countries, including Germany, France, Italy, and Spain, along with the UK, are unilaterally exempted from a visa for stays not exceeding 45 days."
-        }
+        "uk-fcdo-vietnam-entry",
+        "vn-mofa-res44-exemption",
+        "vn-travel-res44-exemption"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "hoi-an",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-hoi-an-luxury-entry-2",
       "claim": "For stays longer than 45 days, or for US citizens, a 90-day e-visa is available for Vietnam, costing USD 25 for a single entry and USD 50 for a multiple entry.",
       "sources": [
-        {
-          "name": "Vietnam E-visa Portal",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "The e-visa is valid for up to 90 days and can be for single or multiple entries. The cost for an e-visa is USD 25 for a single-entry visa and USD 50 for a multiple-entry visa, payable online."
-        },
-        {
-          "name": "Vietnam Visa Service",
-          "url": "https://www.vietnam-visa.com/guide/united-states/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "US citizens are required to obtain a visa to enter Vietnam for all purposes, including tourism and business. They are eligible for a 90-day e-visa, which can be for single or multiple entries. The e-visa costs USD 25 for a single entry and USD 50 for a multiple entry."
-        },
-        {
-          "name": "CIBT Visas",
-          "url": "https://cibtvisas.com/blog/vietnam-entry-requirements",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "For stays longer than 45 days, or for EU citizens not covered by the 45-day exemption, an e-visa is available. The e-visa is valid for up to 90 days and can be for single or multiple entries. The cost for an e-visa is USD 25 for a single-entry visa and USD 50 for a multiple-entry visa, payable online."
-        }
+        "vietnam-immigration-official",
+        "vn-travel-visa-requirements"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "hoi-an",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-hoi-an-luxury-health-1",
-      "claim": "As of July 1, 2026, all travelers entering, leaving, or transiting through Vietnam are required to complete a mandatory health declaration within seven days before travel.",
+      "claim": "Decree 165/2026/ND-CP (15 May 2026) allows health declarations at the border from 1 July 2026, but the Ministry of Health says it is not applied on a mandatory, routine basis to everyone. The Health Minister decides which travellers must declare and when. GOV.UK says travellers \"may be required\" to complete one.",
       "sources": [
-        {
-          "name": "UK Government Travel Advice",
-          "url": "https://www.gov.uk/foreign-travel-advice/vietnam/entry-requirements",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "As of July 1, 2026, all travelers entering, leaving, or transiting through Vietnam are required to complete a mandatory health declaration within seven days before travel."
-        },
-        {
-          "name": "Passport Health USA",
-          "url": "https://www.passporthealthusa.com/destination-advice/vietnam/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "As of July 1, 2026, all travelers entering, leaving, or transiting through Vietnam are required to complete a mandatory health declaration within seven days before travel."
-        },
-        {
-          "name": "Travelvax Australia",
-          "url": "https://www.travelvax.com.au/holiday-traveller/vaccination-requirements/vietnam",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "As of July 1, 2026, all travelers entering, leaving, or transiting through Vietnam are required to complete a mandatory health declaration within seven days before travel."
-        }
+        "vn-govnews-health-declaration",
+        "uk-fcdo-vietnam-entry"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "hoi-an",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-hoi-an-luxury-seasons-1",
@@ -9530,93 +9488,47 @@
       "id": "vietnam-ha-long-bay-entry-1",
       "claim": "Passports for all travelers must be valid for at least six months beyond the intended date of entry into Vietnam and have at least two blank pages.",
       "sources": [
-        {
-          "name": "UK Government Travel Advice",
-          "url": "https://gov.uk/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "For all travelers, passports must be valid for at least six months beyond the intended date of entry into Vietnam and have at least two blank pages."
-        },
-        {
-          "name": "Sherpa Travel Requirements",
-          "url": "https://apply.joinsherpa.com/visa/vietnam/british-citizens",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "For all travelers, passports must be valid for at least six months beyond the intended date of entry into Vietnam and have at least two blank pages."
-        }
+        "uk-fcdo-vietnam-entry",
+        "vn-travel-visa-requirements"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "ha-long-bay",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-ha-long-bay-entry-2",
       "claim": "Citizens from several European countries, including Belgium, France, Germany, Italy, Netherlands, Spain, Sweden, and Switzerland, can enter Vietnam without a visa for up to 45 days for tourism or business.",
       "sources": [
-        {
-          "name": "Official Vietnamese Government eVisa Website",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "Citizens from several European countries, including Belgium, Bulgaria, Croatia, Czechia, Denmark, Finland, France, Germany, Hungary, Italy, Luxembourg, Netherlands, Norway, Poland, Russia, Romania, Slovakia, Slovenia, Spain, Sweden, and Switzerland, can enter Vietnam without a visa for up to 45 days for tourism or business."
-        },
-        {
-          "name": "Vietnam National Administration of Tourism",
-          "url": "https://vietnam.travel/plan-your-trip/visa-requirements",
-          "tier": 3,
-          "accessed": "2026-06-30",
-          "quote": "Citizens from several European countries, including Belgium, Bulgaria, Croatia, Czechia, Denmark, Finland, France, Germany, Hungary, Italy, Luxembourg, Netherlands, Norway, Poland, Russia, Romania, Slovakia, Slovenia, Spain, Sweden, and Switzerland, can enter Vietnam without a visa for up to 45 days for tourism or business."
-        },
-        {
-          "name": "UK Government Travel Advice",
-          "url": "https://gov.uk/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "UK citizens can visit Vietnam without a visa for up to 45 days for tourism or business. This exemption is for single and multiple entries."
-        }
+        "vn-mofa-res44-exemption",
+        "vn-govnews-res229-exemption",
+        "vn-travel-res44-exemption"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "ha-long-bay",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-ha-long-bay-entry-3",
-      "claim": "For stays longer than 45 days (EU/UK) or for all US citizens, an e-visa is available for up to 90 days for single or multiple entries, costing USD 25 for single and USD 50 for multiple entries, applied via evisa.gov.vn.",
+      "claim": "The e-visa is valid for up to 90 days, single or multiple entry, USD 25 single and USD 50 multiple. Apply on evisa.gov.vn.",
       "sources": [
-        {
-          "name": "Official Vietnamese Government eVisa Website",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "The e-visa is valid for up to 90 days for single or multiple entries. The cost is USD 25 for a single-entry e-visa and USD 50 for a multiple-entry e-visa, payable online. The e-visa application is done through the official Vietnamese Government eVisa website (evisa.gov.vn)."
-        },
-        {
-          "name": "Vietnam Visa Service",
-          "url": "https://www.vietnam-visa.com/guide/united-states/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "For stays longer than 45 days, EU citizens are eligible to apply for an e-visa. The e-visa is valid for up to 90 days for single or multiple entries. The cost is USD 25 for a single-entry e-visa and USD 50 for a multiple-entry e-visa, payable online."
-        },
-        {
-          "name": "CIBTvisas",
-          "url": "https://cibtvisas.com/blog/vietnam-entry-requirements",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "US citizens can apply for an e-visa, which is valid for up to 90 days for single or multiple entries. The cost is USD 25 for a single-entry e-visa and USD 50 for a multiple-entry e-visa, payable online."
-        }
+        "vietnam-immigration-official",
+        "vn-travel-visa-requirements"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "ha-long-bay",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-ha-long-bay-entry-4",
@@ -9644,38 +9556,32 @@
           "quote": "VOA is now reserved for special or urgent situations, such as travelers needing to enter Vietnam within hours or those visiting under special invitation/sponsorship."
         }
       ],
-      "status": "confirmed",
+      "status": "unverified",
       "topic": "destinations",
       "region": "ha-long-bay",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "note": "NOT CONFIRMED 2026-11-16: no official page read says the visa on arrival was discontinued in 2022; the e-visa portal home page lists no visa on arrival. A vietnam.travel FAQ reportedly says arrival visas go only to travellers with a pre-approval letter, but that page was not opened. Do not publish until an official page is read.",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-ha-long-bay-entry-5",
-      "claim": "From April 15, 2026, all foreign nationals entering Vietnam via Tan Son Nhat Airport (SGN), Ho Chi Minh City, are encouraged to complete a digital arrival card online before arrival.",
+      "claim": "The Immigration Department asks foreign travellers to fill in an online pre-arrival declaration (prearrival.immigration.gov.vn) before arrival. It began as a pilot at Tan Son Nhat Airport on 15 April 2026 and is encouraged, not mandatory. A July 2026 embassy notice lists five airports (Noi Bai, Tan Son Nhat, Da Nang, Cam Ranh, Phu Quoc).",
       "sources": [
-        {
-          "name": "Vietnam National Administration of Tourism",
-          "url": "https://vietnam.travel/plan-your-trip/visa-requirements",
-          "tier": 3,
-          "accessed": "2026-06-30",
-          "quote": "From April 15, 2026, all foreign nationals entering Vietnam via Tan Son Nhat Airport (SGN), Ho Chi Minh City, are encouraged to complete a digital arrival card online before arrival."
-        },
-        {
-          "name": "UK Government Travel Advice",
-          "url": "https://gov.uk/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "From April 15, 2026, all foreign nationals entering Vietnam via Tan Son Nhat Airport (SGN), Ho Chi Minh City, are encouraged to complete a digital arrival card online before arrival."
-        }
+        "uk-fcdo-vietnam-entry",
+        "vn-mofa-sg-prearrival",
+        "vn-prearrival-portal",
+        "vietnamnews-prearrival",
+        "vietnam-immigration-official"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "ha-long-bay",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-ha-long-bay-health-1",
@@ -9835,50 +9741,48 @@
           "quote": "For a truly luxurious and scenic transfer, seaplane services are available from Hanoi (Noi Bai Airport) directly to Ha Long Bay. These flights offer breathtaking aerial views of the bay and significantly reduce travel time to approximately 45 minutes."
         }
       ],
-      "status": "confirmed",
+      "status": "unverified",
       "topic": "destinations",
       "region": "ha-long-bay",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "note": "NOT CONFIRMED 2026-11-16: no official page found. The vietnam.travel seaplane page is an undated article that appears to be from 2018. Press (Tuoi Tre, 2 July 2026, not an official source) says commercial seaplane operations in Ha Long Bay were suspended on 1 April. Probably out of date. Do not publish until the Quang Ninh authorities or the operator confirm.",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-hue-luxury-entry-1",
-      "claim": "Citizens from several EU countries, including Germany, France, Italy, Spain, Denmark, Sweden, Norway, Finland, and Belarus, are eligible for a visa exemption for stays up to 45 days in Vietnam.",
+      "claim": "Citizens of Germany, France, Italy, Spain, the United Kingdom, Russia, Japan, South Korea, Denmark, Sweden, Norway and Finland can enter Vietnam without a visa for up to 45 days from the date of entry (Resolution 44/NQ-CP, in force 15 March 2025 to 14 March 2028). Citizens of Belgium, Bulgaria, Croatia, Czechia, Hungary, Luxembourg, the Netherlands, Poland, Romania, Slovakia, Slovenia and Switzerland have the same 45 days (Resolution 229/NQ-CP, 15 August 2025 to 14 August 2028). Only some of these countries are in the EU.",
       "sources": [
-        {
-          "name": "Vietnam Electronic Visa Portal",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "Citizens from several EU countries, including Germany, France, Italy, Spain, Denmark, Sweden, Norway, Finland, and Belarus, are eligible for a visa exemption for stays up to 45 days."
-        }
+        "vn-mofa-res44-exemption",
+        "vn-govnews-res229-exemption",
+        "vn-travel-res44-exemption",
+        "vn-travel-visa-requirements"
       ],
       "status": "single-source",
       "topic": "destinations",
       "region": "hue",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-hue-luxury-entry-2",
       "claim": "All US citizens are required to obtain an e-visa to enter Vietnam, which permits a stay of up to 90 days for single or multiple entries, with an official fee of $25 USD for a single entry and $50 USD for a multiple entry.",
       "sources": [
-        {
-          "name": "Vietnam Electronic Visa Portal",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "All US citizens are required to obtain a visa to enter Vietnam. They are eligible to apply for an e-visa, which permits a stay of up to 90 days for single or multiple entries. The official e-visa fee is $25 USD for a single entry and $50 USD for a multiple entry. US citizens can apply online through the official government portal, evisa.gov.vn."
-        }
+        "vietnam-immigration-official",
+        "vn-travel-visa-requirements",
+        "vn-mofa-res44-exemption",
+        "vn-govnews-res229-exemption"
       ],
       "status": "single-source",
       "topic": "destinations",
       "region": "hue",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-hue-luxury-health-1",
@@ -14793,130 +14697,49 @@
     },
     {
       "id": "vietnam-hanoi-luxury-entry-1",
-      "claim": "Citizens from several EU countries, including France, Germany, Italy, Spain, Denmark, Finland, Sweden, Norway, Belgium, Bulgaria, Croatia, Czechia, Hungary, Luxembourg, Netherlands, Poland, Romania, Slovakia, Slovenia, and Switzerland, are eligible for a visa exemption, allowing stays of up to 45 days. For stays exceeding 45 days, an e-visa is available, valid for a maximum of 90 days, for either single or multiple entries, costing $25 USD for single-entry and $50 USD for multiple-entry.",
+      "claim": "Citizens of Germany, France, Italy, Spain, the United Kingdom, Russia, Japan, South Korea, Denmark, Sweden, Norway and Finland can enter Vietnam without a visa for up to 45 days from the date of entry (Resolution 44/NQ-CP, in force 15 March 2025 to 14 March 2028). Citizens of Belgium, Bulgaria, Croatia, Czechia, Hungary, Luxembourg, the Netherlands, Poland, Romania, Slovakia, Slovenia and Switzerland have the same 45 days (Resolution 229/NQ-CP, 15 August 2025 to 14 August 2028). Only some of these countries are in the EU. For longer stays an e-visa (up to 90 days) is available.",
       "sources": [
-        {
-          "name": "Vietnamese Government E-visa Website",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "E-visa applications are processed through the official Vietnamese government e-visa website. The cost for a single-entry e-visa is $25 USD, and a multiple-entry e-visa costs $50 USD."
-        },
-        {
-          "name": "CIBTvisas",
-          "url": "https://cibtvisas.com/blog/vietnam-entry-requirements",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "Citizens from several EU countries, including France, Germany, Italy, Spain, Denmark, Finland, Sweden, Norway, Belgium, Bulgaria, Croatia, Czechia, Hungary, Luxembourg, Netherlands, Poland, Romania, Slovakia, Slovenia, and Switzerland, are eligible for a visa exemption, allowing stays of up to 45 days."
-        },
-        {
-          "name": "Vietnam-Visa.com",
-          "url": "https://www.vietnam-visa.com/guide/united-states/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "For stays exceeding 45 days, an e-visa is available. The e-visa is valid for a maximum of 90 days, for either single or multiple entries."
-        },
-        {
-          "name": "MyVietnamVisa.com",
-          "url": "https://www.myvietnamvisa.com/visa-requirements/united-states.html",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "The cost for a single-entry e-visa is $25 USD, and a multiple-entry e-visa costs $50 USD."
-        },
-        {
-          "name": "Fast Track Vietnam",
-          "url": "https://fasttrack-vietnam.com/blog/vietnam-health-declaration-from-july-2026-what-travelers-need-to-know/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "For stays exceeding 45 days, an e-visa is available, valid for a maximum of 90 days, for either single or multiple entries."
-        }
+        "vn-mofa-res44-exemption",
+        "vn-govnews-res229-exemption",
+        "vietnam-immigration-official"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "hanoi",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-hanoi-luxury-entry-2",
-      "claim": "US citizens are required to obtain an e-visa to enter Vietnam, which allows for a stay of up to 90 days with either single or multiple entries. The official fee for a single-entry e-visa is $25 USD, and for a multiple-entry e-visa, it is $50 USD, with processing typically taking 3-7 business days.",
+      "claim": "The e-visa is valid for up to 90 days, single or multiple entry, USD 25 single and USD 50 multiple. The tourism authority gives processing as 3 to 5 working days (no processing time found on an immigration page).",
       "sources": [
-        {
-          "name": "Vietnamese Government E-visa Website",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "The official fee for a single-entry e-visa is $25 USD, and for a multiple-entry e-visa, it is $50 USD."
-        },
-        {
-          "name": "CIBTvisas",
-          "url": "https://cibtvisas.com/blog/vietnam-entry-requirements",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "US citizens are required to obtain a visa to enter Vietnam. The most convenient method is applying for an e-visa, which allows for a stay of up to 90 days with either single or multiple entries."
-        },
-        {
-          "name": "Vietnam-Visa.com",
-          "url": "https://www.vietnam-visa.com/guide/united-states/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "Processing typically takes 3-7 business days."
-        },
-        {
-          "name": "Vietnam Embassy in USA",
-          "url": "https://vietnamembassy-usa.org/consular/visa-application-process",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "US citizens are required to obtain a visa to enter Vietnam."
-        },
-        {
-          "name": "Vietnam Consulate in Houston",
-          "url": "https://vietnamconsulateinhouston.org/visa-information/uk-citizens/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "The most convenient method is applying for an e-visa, which allows for a stay of up to 90 days with either single or multiple entries."
-        }
+        "vietnam-immigration-official",
+        "vn-travel-visa-requirements"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "hanoi",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-hanoi-luxury-health-1",
-      "claim": "As of July 1, 2026, Vietnam requires all travelers entering, leaving, or transiting through the country to complete a mandatory health declaration, as per Decree 165/2026/ND-CP under the Law on Disease Prevention, which must be completed within 7 days before travel.",
+      "claim": "Decree 165/2026/ND-CP (15 May 2026) provides for health declarations at border gates. The Ministry of Health says it is not applied on a mandatory, routine basis to everyone entering, leaving or transiting; the Health Minister names the groups and timing.",
       "sources": [
-        {
-          "name": "Vietnamese Government E-visa Website",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "As of July 1, 2026, Vietnam requires all travelers entering, leaving, or transiting through the country to complete a mandatory health declaration, as per Decree 165/2026/ND-CP under the Law on Disease Prevention."
-        },
-        {
-          "name": "Sherpa",
-          "url": "https://apply.joinsherpa.com/visa/vietnam/british-citizens",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "This declaration must be completed within 7 days before travel, either electronically or on paper."
-        },
-        {
-          "name": "Vietnam-Visa.com",
-          "url": "https://www.vietnam-visa.com/guide/united-states/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "As of July 1, 2026, Vietnam requires all travelers entering, leaving, or transiting through the country to complete a mandatory health declaration."
-        }
+        "vn-govnews-health-declaration",
+        "uk-fcdo-vietnam-entry"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "hanoi",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-hanoi-luxury-health-2",
@@ -21179,60 +21002,32 @@
       "id": "vietnam-con-dao-luxury-entry-1",
       "claim": "The official government fee for a single-entry e-visa for US citizens is $25 USD, and for a multiple-entry e-visa, it is $50 USD, with the e-visa valid for a maximum of 90 days.",
       "sources": [
-        {
-          "name": "Vietnam E-visa Portal",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "The official government fee for a single-entry e-visa is $25 USD, and for a multiple-entry e-visa, it is $50 USD."
-        },
-        {
-          "name": "Vietnam Visa",
-          "url": "https://www.vietnam-visa.com/guide/united-states/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "The e-visa is valid for a maximum of 90 days for single or multiple entries."
-        },
-        {
-          "name": "My Vietnam Visa",
-          "url": "https://www.myvietnamvisa.com/visa-requirements/united-states.html",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "The e-visa is valid for up to 90 days, with the validity period beginning from the date specified in the approved e-visa document."
-        }
+        "vietnam-immigration-official",
+        "vn-travel-visa-requirements"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "con-dao",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-con-dao-luxury-entry-2",
       "claim": "UK (British) citizens can enter Vietnam visa-free for up to 45 days for tourism or business purposes; for stays exceeding 45 days, a visa is required.",
       "sources": [
-        {
-          "name": "GOV.UK",
-          "url": "https://www.gov.uk/foreign-travel-advice/vietnam/entry-requirements",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "UK (British) citizens can enter Vietnam visa-free for up to 45 days for tourism or business purposes. For stays exceeding 45 days, a visa is required."
-        },
-        {
-          "name": "Rickshaw Travel",
-          "url": "https://www.rickshawtravel.co.uk/vietnam/information/visa-and-money/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "UK (British) citizens can enter Vietnam visa-free for up to 45 days for tourism or business purposes. For stays exceeding 45 days, a visa is required."
-        }
+        "uk-fcdo-vietnam-entry",
+        "vn-mofa-res44-exemption",
+        "vn-travel-res44-exemption"
       ],
       "status": "confirmed",
       "topic": "destinations",
       "region": "con-dao",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Tim Hennig",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-con-dao-luxury-health-1",
@@ -21413,76 +21208,34 @@
     },
     {
       "id": "vietnam-phu-quoc-luxury-entry-1",
-      "claim": "Citizens of EU countries (e.g., Germany, France, Italy, Spain, UK, Denmark, Sweden, Norway, Finland) are exempt from visa requirements for stays up to 45 days in Vietnam.",
+      "claim": "Citizens of Germany, France, Italy, Spain, the United Kingdom, Russia, Japan, South Korea, Denmark, Sweden, Norway and Finland can enter Vietnam without a visa for up to 45 days from the date of entry (Resolution 44/NQ-CP, in force 15 March 2025 to 14 March 2028). Citizens of Belgium, Bulgaria, Croatia, Czechia, Hungary, Luxembourg, the Netherlands, Poland, Romania, Slovakia, Slovenia and Switzerland have the same 45 days (Resolution 229/NQ-CP, 15 August 2025 to 14 August 2028). Only some of these countries are in the EU.",
       "sources": [
-        {
-          "name": "My Vietnam Visa",
-          "url": "https://www.myvietnamvisa.com/visa-requirements/united-states.html",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "EU Passport Holders (e.g., Germany, France, Italy, Spain, UK, Denmark, Sweden, Norway, Finland): Citizens of these countries are exempt from visa requirements for stays up to 45 days."
-        },
-        {
-          "name": "CIBTvisas",
-          "url": "https://cibtvisas.com/blog/vietnam-entry-requirements",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "EU Passport Holders (e.g., Germany, France, Italy, Spain, UK, Denmark, Sweden, Norway, Finland): Citizens of these countries are exempt from visa requirements for stays up to 45 days."
-        },
-        {
-          "name": "Vietnam-Visa.com",
-          "url": "https://www.vietnam-visa.com/guide/united-states/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "EU Passport Holders (e.g., Germany, France, Italy, Spain, UK, Denmark, Sweden, Norway, Finland): Citizens of these countries are exempt from visa requirements for stays up to 45 days."
-        },
-        {
-          "name": "Vietnam.travel",
-          "url": "https://vietnam.travel/plan-your-trip/visa-requirements",
-          "tier": 3,
-          "accessed": "2026-06-30",
-          "quote": "EU Passport Holders (e.g., Germany, France, Italy, Spain, UK, Denmark, Sweden, Norway, Finland): Citizens of these countries are exempt from visa requirements for stays up to 45 days."
-        }
+        "vn-mofa-res44-exemption",
+        "vn-govnews-res229-exemption",
+        "vn-travel-res44-exemption"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "phu-quoc",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-phu-quoc-luxury-entry-2",
-      "claim": "Travelers arriving and departing directly from Phu Quoc by air or sea may not require a visa for up to 30 days, provided they have proof of an onward ticket to a country outside Vietnam within 30 days of arrival and are not prohibited from entering Vietnam.",
+      "claim": "Foreign tourists who fly directly into Phu Quoc International Airport and stay on the island can stay up to 30 days without a visa. Leaving the island needs a visa or e-visa.",
       "sources": [
-        {
-          "name": "My Vietnam Visa",
-          "url": "https://www.myvietnamvisa.com/visa-requirements/united-states.html",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "Travelers arriving and departing directly from Phu Quoc by air or sea may not require a visa for up to 30 days, provided they have proof of an onward ticket to a country outside Vietnam within 30 days of arrival and are not prohibited from entering Vietnam."
-        },
-        {
-          "name": "Vietnam-Visa.com",
-          "url": "https://www.vietnam-visa.com/guide/united-states/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "Travelers arriving and departing directly from Phu Quoc by air or sea may not require a visa for up to 30 days, provided they have proof of an onward ticket to a country outside Vietnam within 30 days of arrival and are not prohibited from entering Vietnam."
-        },
-        {
-          "name": "Phu Quoc Airport",
-          "url": "https://www.phuquocairport.com/phu-quoc-airport-quick-facts/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "Travelers arriving and departing directly from Phu Quoc by air or sea may not require a visa for up to 30 days, provided they have proof of an onward ticket to a country outside Vietnam within 30 days of arrival and are not prohibited from entering Vietnam."
-        }
+        "vn-govnews-evisa-ports-phuquoc",
+        "vn-travel-visa-requirements"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "phu-quoc",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-phu-quoc-luxury-health-1",
@@ -24396,104 +24149,34 @@
     },
     {
       "id": "vietnam-mekong-delta-luxury-entry-1",
-      "claim": "Citizens of many EU countries and UK citizens are exempt from a Vietnamese visa for stays not exceeding 45 days, valid for both single and multiple entries and all border arrivals (air or land).",
+      "claim": "Citizens of the 24 exempt countries (see list) can enter without a visa for up to 45 days from the date of entry. Resolution 44/NQ-CP countries (12): Germany, France, Italy, Spain, United Kingdom, Russia, Japan, South Korea, Denmark, Sweden, Norway, Finland. Resolution 229/NQ-CP countries (12): Belgium, Bulgaria, Croatia, Czechia, Hungary, Luxembourg, Netherlands, Poland, Romania, Slovakia, Slovenia, Switzerland.",
       "sources": [
-        {
-          "name": "Vietnam E-visa Portal",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "Citizens of many EU countries are exempt from a Vietnamese visa for stays not exceeding 45 days. This exemption is valid for both single and multiple entries and applies to all border arrivals (air or land)."
-        },
-        {
-          "name": "Vietnam Visa",
-          "url": "https://www.vietnam-visa.com/guide/united-states/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "UK citizens can enter Vietnam without a visa for stays of up to 45 days for tourism, transit, and business purposes (excluding paid or voluntary work). This exemption is valid for both single and multiple entries."
-        },
-        {
-          "name": "My Vietnam Visa",
-          "url": "https://www.myvietnamvisa.com/visa-requirements/united-states.html",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "Citizens of many EU countries are exempt from a Vietnamese visa for stays not exceeding 45 days."
-        },
-        {
-          "name": "Sherpa",
-          "url": "https://apply.joinsherpa.com/visa/vietnam/british-citizens",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "UK citizens can enter Vietnam without a visa for stays of up to 45 days for tourism, transit, and business purposes (excluding paid or voluntary work)."
-        },
-        {
-          "name": "Vietnam National Administration of Tourism",
-          "url": "https://vietnamtourism.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "Citizens of many EU countries are exempt from a Vietnamese visa for stays not exceeding 45 days."
-        }
+        "vn-mofa-res44-exemption",
+        "vn-govnews-res229-exemption",
+        "vn-travel-res44-exemption"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "mekong-delta",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-mekong-delta-luxury-entry-2",
-      "claim": "For stays longer than 45 days (EU/UK) or for all US citizens, an e-visa is available online, valid for up to 90 days for single or multiple entries, costing $25 USD for a single-entry and $50 USD for a multiple-entry.",
+      "claim": "For stays beyond 45 days, or if your country is not exempt, an e-visa is available online for up to 90 days, single or multiple entry, USD 25 and USD 50.",
       "sources": [
-        {
-          "name": "Vietnam E-visa Portal",
-          "url": "https://evisa.gov.vn/",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "The e-visa is valid for up to 90 days for single or multiple entries. The cost is $25 USD for a single-entry e-visa and $50 USD for a multiple-entry e-visa."
-        },
-        {
-          "name": "Vietnam Visa",
-          "url": "https://www.vietnam-visa.com/guide/united-states/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "For stays longer than 45 days, EU citizens can apply for an e-visa online. The e-visa is valid for up to 90 days for single or multiple entries. The cost is $25 USD for a single-entry e-visa and $50 USD for a multiple-entry e-visa."
-        },
-        {
-          "name": "My Vietnam Visa",
-          "url": "https://www.myvietnamvisa.com/visa-requirements/united-states.html",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "The e-visa is valid for up to 90 days for single or multiple entries. The cost is $25 USD for a single-entry e-visa and $50 USD for a multiple-entry e-visa."
-        },
-        {
-          "name": "CIBTvisas",
-          "url": "https://cibtvisas.com/blog/vietnam-entry-requirements",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "The e-visa is valid for up to 90 days for single or multiple entries. The cost is $25 USD for a single-entry e-visa and $50 USD for a multiple-entry e-visa."
-        },
-        {
-          "name": "Sherpa",
-          "url": "https://apply.joinsherpa.com/visa/vietnam/british-citizens",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "The e-visa is valid for up to 90 days for single or multiple entries. The cost is $25 USD for a single-entry e-visa and $50 USD for a multiple-entry e-visa."
-        },
-        {
-          "name": "Fast Track Vietnam",
-          "url": "https://fasttrack-vietnam.com/blog/vietnam-health-declaration-from-july-2026-what-travelers-need-to-know/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "The e-visa is valid for up to 90 days for single or multiple entries. The cost is $25 USD for a single-entry e-visa and $50 USD for a multiple-entry e-visa."
-        }
+        "vietnam-immigration-official",
+        "vn-travel-visa-requirements"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "mekong-delta",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-mekong-delta-luxury-health-1",
@@ -24537,36 +24220,18 @@
     },
     {
       "id": "vietnam-mekong-delta-luxury-health-2",
-      "claim": "Starting July 1, 2026, all inbound, outbound, and transit travelers will be required to complete a health declaration within seven days before travel, which can be submitted electronically or on paper.",
+      "claim": "From 1 July 2026 Decree 165/2026/ND-CP allows health declarations at the border, but the Ministry of Health says they are not required of everyone by routine. The Health Minister names who must declare.",
       "sources": [
-        {
-          "name": "Centers for Disease Control and Prevention",
-          "url": "https://www.cdc.gov/yellow-book/hcp/asia/vietnam.html",
-          "tier": 1,
-          "accessed": "2026-06-30",
-          "quote": "Starting July 1, 2026, all inbound, outbound, and transit travelers will be required to complete a health declaration within seven days before travel. This can be submitted electronically or on paper."
-        },
-        {
-          "name": "Travel Doctor",
-          "url": "https://www.traveldoctor.com.au/destinations/vietnam",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "Starting July 1, 2026, all inbound, outbound, and transit travelers will be required to complete a health declaration within seven days before travel."
-        },
-        {
-          "name": "Passport Health USA",
-          "url": "https://www.passporthealthusa.com/destination-advice/vietnam/",
-          "tier": null,
-          "accessed": "2026-06-30",
-          "quote": "Starting July 1, 2026, all inbound, outbound, and transit travelers will be required to complete a health declaration within seven days before travel."
-        }
+        "vn-govnews-health-declaration",
+        "uk-fcdo-vietnam-entry"
       ],
-      "status": "confirmed",
+      "status": "single-source",
       "topic": "destinations",
       "region": "mekong-delta",
       "added": "2026-06-30",
       "promotedOn": "2026-06-30",
-      "reviewedBy": "Tim Hennig"
+      "reviewedBy": "Claude (two-reader check against official pages, 2026-11-16), pending Tim spot-check",
+      "lastChecked": "2026-11-16"
     },
     {
       "id": "vietnam-mekong-delta-luxury-seasons-1",

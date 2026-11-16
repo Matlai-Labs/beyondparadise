@@ -264,6 +264,97 @@
       "name": "Kim — First-hand observation",
       "type": "firsthand",
       "notes": "Kim, Vietnamese, Beyond Paradise Adventures Asia correspondent. First-hand knowledge of Vietnam luxury travel."
+    },
+    "uk-fcdo-vietnam-entry": {
+      "tier": 1,
+      "name": "UK FCDO (GOV.UK) travel advice: Vietnam, entry requirements",
+      "url": "https://www.gov.uk/foreign-travel-advice/vietnam/entry-requirements",
+      "type": "government",
+      "notes": "read 2026-11-16. UK passports only for the exemption. Quotes: \"You can visit Vietnam without a visa for up to 45 days for tourism or business.\"; passport expiry \"at least 6 months after the date you arrive\"; \"from 1 July, if you travel to or transit through Vietnam you may be required to complete a health declaration\"; digital arrival card \"not currently a mandatory requirement\". Page carries no date."
+    },
+    "vn-mofa-res44-exemption": {
+      "tier": 1,
+      "name": "Vietnam Foreign Ministry embassy page: visa exemption policy (Resolution 44/NQ-CP)",
+      "url": "https://vnembassy-algiers.mofa.gov.vn/tin-chi-tiet/chi-tiet/viet-nam-extends-visa-exemption-policy-61153-1377.html",
+      "type": "government",
+      "notes": "read 2026-11-16. Res. 44/NQ-CP (7 March 2025): Germany, France, Italy, Spain, United Kingdom, Russia, Japan, South Korea, Denmark, Sweden, Norway, Finland; \"temporary stay duration of 45 days from the date of entry\"; \"takes effect from March 15, 2025 to March 14, 2028\". Page stamp 25/07/2026, other dates on the page conflict."
+    },
+    "vn-govnews-res229-exemption": {
+      "tier": 1,
+      "name": "Government of Vietnam news portal: visa waiver for 24 countries (Resolution 229)",
+      "url": "https://en.baochinhphu.vn/viet-nam-waives-visas-for-citizens-of-24-countries-from-mid-august-111250815144715035.htm",
+      "type": "government",
+      "notes": "read 2026-11-16. Page of 15 Aug 2025. Res. 229: Belgium, Bulgaria, Croatia, Czechia, Hungary, Luxembourg, Netherlands, Poland, Romania, Slovakia, Slovenia, Switzerland; \"up to 45 days from the date of entry\"; \"from August 15, 2025 until August 14, 2028\"."
+    },
+    "vn-govnews-health-declaration": {
+      "tier": 1,
+      "name": "Government of Vietnam news portal: health declaration not mandatory for all international travellers from 1 July 2026",
+      "url": "https://en.baochinhphu.vn/health-declaration-not-mandatory-for-all-intl-travelers-from-july-1-111260701111332151.htm",
+      "type": "government",
+      "notes": "read 2026-11-16. Page of 1 Jul 2026. Ministry of Health: will not be applied \"on a mandatory and routine basis to all persons entering, exiting, or transiting through Viet Nam\"; Decree No. 165/2026/ND-CP dated 15 May 2026; \"the Minister of Health shall issue instructions on subjects and time for health declaration at border gates\". Old site tokhaiyte.vn no longer used; new system in development."
+    },
+    "vn-govnews-evisa-ports-phuquoc": {
+      "tier": 1,
+      "name": "Government of Vietnam news portal: list of ports for e-visa expanded (Resolution 389/NQ-CP), Phu Quoc 30-day exemption",
+      "url": "https://en.baochinhphu.vn/viet-nam-expands-list-of-ports-for-e-visa-111251203153134777.htm",
+      "type": "government",
+      "notes": "read 2026-11-16. Page of 3 Dec 2025. Res. 389/NQ-CP (2 Dec 2025) supplemented 41 border gates, \"bringing the total ports to 83\" (Long Thanh and Gia Binh airports \"once coming into operation\"). Phu Quoc: foreign tourists may stay up to 30 days without a visa \"provided they remain on the island throughout their stay\"; no onward-ticket condition on this page."
+    },
+    "vn-evisa-faq": {
+      "tier": 1,
+      "name": "Vietnam e-visa portal: FAQ",
+      "url": "https://evisa.gov.vn/faq",
+      "type": "government",
+      "notes": "read 2026-11-16. Apply at evisa.gov.vn or thithucdientu.gov.vn; e-visa validity must be at least 30 days shorter than passport validity; apply up to 1 year before entry."
+    },
+    "vn-evisa-instruction": {
+      "tier": 1,
+      "name": "Vietnam e-visa portal: instruction page (border gates list)",
+      "url": "https://evisa.gov.vn/instruction",
+      "type": "government",
+      "notes": "read 2026-11-16. Lists 27 land, 15 air, 39 sea border gates (81, numbered lists counted by the reader). E-visas can only be used at border gates on the list approved by the Government."
+    },
+    "vn-immigration-portal-notice": {
+      "tier": 1,
+      "name": "Vietnam Immigration Department: notice on e-visa portal domains",
+      "url": "https://immigration.gov.vn/",
+      "type": "government",
+      "notes": "read 2026-11-16. Notice dated 11/11/2024: from 08:00 on 11/11/2024 the e-visa portal runs on https://thithucdientu.gov.vn and https://evisa.gov.vn. The old address evisa.xuatnhapcanh.gov.vn loads but shows only an access-role message."
+    },
+    "vn-mofa-sg-prearrival": {
+      "tier": 1,
+      "name": "Vietnam Foreign Ministry embassy page (Singapore): notice on the pre-arrival information declaration",
+      "url": "https://vnembassy-singapore.mofa.gov.vn/en/tin-chi-tiet/chi-tiet/notice-on-viet-nam-39-s-pre-arrival-information-declaration-60731-1390.html",
+      "type": "government",
+      "notes": "read 2026-11-16. Notice of 02/07/2026. Immigration Department declaration; airports Noi Bai, Tan Son Nhat, Da Nang, Cam Ranh, Phu Quoc; \"strongly encourage all foreign travellers to complete the declaration before travelling to Viet Nam\"; within three days prior to arrival."
+    },
+    "vn-prearrival-portal": {
+      "tier": 1,
+      "name": "Vietnam Immigration Department: pre-arrival information portal",
+      "url": "https://prearrival.immigration.gov.vn/",
+      "type": "government",
+      "notes": "read 2026-11-16. Asks travellers to complete the declaration \"before arrival\"; the page does not say it is mandatory."
+    },
+    "vietnamnews-prearrival": {
+      "tier": 4,
+      "name": "Vietnam News: pre-arrival information system to roll out nationwide after pilot",
+      "url": "https://vietnamnews.vn/society/1781090/viet-nam-to-roll-out-pre-arrival-information-system-nationwide-following-pilot-period.html",
+      "type": "news",
+      "notes": "read 2026-11-16. Article of 11 May 2026 quoting the Immigration Department: nationwide roll-out planned; the pilot at Tan Son Nhat (from 15 April) \"remains voluntary\". News outlet, so tier 4, labelled vn-gov by the second reader."
+    },
+    "vn-travel-visa-requirements": {
+      "tier": 3,
+      "name": "Vietnam National Authority of Tourism: visa requirements",
+      "url": "https://vietnam.travel/plan-your-trip/visa-requirements/",
+      "type": "tourism-board",
+      "notes": "read 2026-11-16. \"Last Updated: 2026\" (no day). E-visa USD 25 single / USD 50 multiple, up to 90 days, processing 3 to 5 working days; passport valid 6 months beyond entry with two blank pages; Phu Quoc 30 days if flying directly in; exemption groups and bilateral list. Same government as the other Vietnamese sources, so not an independent owner."
+    },
+    "vn-travel-res44-exemption": {
+      "tier": 3,
+      "name": "Vietnam National Authority of Tourism: Viet Nam waives visas for citizens of 12 countries (Resolution 44/NQ-CP)",
+      "url": "https://vietnam.travel/things-to-do/viet-nam-waives-visas-citizens-12-countries",
+      "type": "tourism-board",
+      "notes": "read 2026-11-16. No date shown (likely March 2025). Res. 44/NQ-CP of 7 March 2025, same 12 countries, 45 days from the date of entry, 15 March 2025 to 14 March 2028. Same government as the other Vietnamese sources, so not an independent owner."
     }
   },
   "avoid_list": [
