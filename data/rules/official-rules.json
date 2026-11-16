@@ -1,0 +1,131 @@
+{
+  "_meta": {
+    "description": "Official rules and fees as printed on the body's own page. Only figures read on an official page are kept here; nothing from a third-party site. Entries with confidence official-indirect or not-confirmed, or with expired true, can never feed a post idea.",
+    "first_read": "2026-11-17",
+    "confidence_values": ["official-page", "official-indirect", "not-confirmed"],
+    "figure_shape": "{ label, amount, currency (ISO code, or null when unit is days), unit (optional) }"
+  },
+  "rules": [
+    {
+      "id": "tz-visa-fee",
+      "label": "Tanzania tourist visa fee",
+      "body": "Tanzania Immigration Services Department",
+      "address": "https://www.immigration.go.tz/service-fee",
+      "figures": [
+        { "label": "Ordinary Visa", "amount": 50, "currency": "USD" },
+        { "label": "Multiple entry Visa", "amount": 100, "currency": "USD" }
+      ],
+      "read_on": "2026-11-17",
+      "date_on_page": null,
+      "confidence": "official-page",
+      "expired": false,
+      "note": "Fee table loads by script. The guidelines page (https://visa.immigration.go.tz/guidelines) says US passport holders must apply for the Multiple entry visa; a visa on arrival also exists. Tariff table carries no date."
+    },
+    {
+      "id": "znz-inbound-insurance-fee",
+      "label": "Zanzibar mandatory inbound travel insurance, adult fee",
+      "body": "Embassy of Tanzania in Japan (notice about the Zanzibar scheme)",
+      "address": "https://www.jp.tzembassy.go.tz/resources/view/mandatory-inbound-travel-insurance-to-enter-zanzibar",
+      "figures": [
+        { "label": "Per person", "amount": 44, "currency": "USD" }
+      ],
+      "read_on": "2026-11-17",
+      "date_on_page": "2024-09-11",
+      "confidence": "official-indirect",
+      "expired": false,
+      "note": "The fee appears only in the Japanese section of the embassy notice; the Zanzibar portal itself shows no fee on the pages that could be read. Child rate and under-3 exemption are not confirmed on any official page."
+    },
+    {
+      "id": "znz-inbound-insurance-term",
+      "label": "Zanzibar mandatory inbound travel insurance, maximum cover period",
+      "body": "Zanzibar inbound insurance portal (official application site)",
+      "address": "https://inbound.visitzanzibar.go.tz/faqs",
+      "figures": [
+        { "label": "Maximum consecutive days of cover", "amount": 92, "currency": null, "unit": "days" }
+      ],
+      "read_on": "2026-11-17",
+      "date_on_page": null,
+      "confidence": "official-page",
+      "expired": false,
+      "note": "FAQ: cover is valid for a maximum of 92 consecutive days and is non-renewable; after 92 days a new policy must be bought."
+    },
+    {
+      "id": "jozani-entry-fee",
+      "label": "Jozani Chwaka Bay entry fee",
+      "body": "Jozani Chwaka Bay park (official site)",
+      "address": "https://maliasilismz.go.tz/",
+      "figures": [],
+      "read_on": "2026-11-17",
+      "date_on_page": null,
+      "confidence": "not-confirmed",
+      "expired": false,
+      "note": "No official page checked states the fee."
+    },
+    {
+      "id": "azam-marine-fares-nonresident",
+      "label": "Azam Marine non-resident ferry rates, adult (12 and above)",
+      "body": "Azam Marine & Kilimanjaro Fast Ferries",
+      "address": "https://azammarine.com/rates/",
+      "figures": [
+        { "label": "Economy", "amount": 35, "currency": "USD" },
+        { "label": "VIP", "amount": 60, "currency": "USD" },
+        { "label": "Business", "amount": 40, "currency": "USD" },
+        { "label": "Royal", "amount": 100, "currency": "USD" }
+      ],
+      "read_on": "2026-11-17",
+      "date_on_page": null,
+      "confidence": "official-page",
+      "expired": false,
+      "note": "The rates page names no route and carries no date. Child (5 to 11) rates: Economy 30, VIP 60, Business 40, Royal 100 USD."
+    },
+    {
+      "id": "ncaa-entry-non-eac",
+      "label": "Ngorongoro Conservation Area entry permit, non-East African adult (16 and above)",
+      "body": "Ngorongoro Conservation Area Authority",
+      "address": "https://www.ncaa.go.tz/tariffs/",
+      "figures": [
+        { "label": "Entry permit, non-East African citizen, 16 and above", "amount": 70.8, "currency": "USD" },
+        { "label": "Crater service fee, non-East African, per vehicle per trip", "amount": 295, "currency": "USD" }
+      ],
+      "read_on": "2026-11-17",
+      "date_on_page": null,
+      "confidence": "official-page",
+      "expired": false,
+      "note": "No tariff period, date or VAT statement on the page. Child 5 to under 16: 23.60 USD."
+    },
+    {
+      "id": "tanapa-tariff-2023-24",
+      "label": "TANAPA national park conservation fee, non-resident, per park",
+      "body": "Tanzania National Parks Authority",
+      "address": "https://www.tanzaniaparks.go.tz/tourism/visitor-information/tariff",
+      "figures": [
+        { "label": "Serengeti", "amount": 178850, "currency": "TZS" },
+        { "label": "Kilimanjaro", "amount": 178850, "currency": "TZS" },
+        { "label": "Tarangire", "amount": 127750, "currency": "TZS" },
+        { "label": "Lake Manyara", "amount": 127750, "currency": "TZS" },
+        { "label": "Arusha", "amount": 127750, "currency": "TZS" }
+      ],
+      "read_on": "2026-11-17",
+      "date_on_page": null,
+      "period": "Financial Year 2023/2024, valid until June 2024",
+      "confidence": "official-page",
+      "expired": true,
+      "note": "The only tariff published on the page is the 2023/2024 one; no tariff for the period covering November 2026 was found."
+    },
+    {
+      "id": "zra-airport-charges",
+      "label": "Zanzibar international departure charges",
+      "body": "Zanzibar Revenue Authority",
+      "address": "https://www.zanrevenue.org/tax/airport-service-charge",
+      "figures": [
+        { "label": "Airport services charge, international", "amount": 40, "currency": "USD" },
+        { "label": "Safety fee, international", "amount": 9, "currency": "USD" }
+      ],
+      "read_on": "2026-11-17",
+      "date_on_page": null,
+      "confidence": "official-page",
+      "expired": false,
+      "note": "Page has no effective date; whether the charges are included in the ticket is not stated. The authority is the tax body, not the aviation authority."
+    }
+  ]
+}
