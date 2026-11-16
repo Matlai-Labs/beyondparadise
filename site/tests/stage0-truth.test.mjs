@@ -94,3 +94,29 @@ test('footer says no paid reviews, no hosted stays, and no affiliate line', () =
   assert.ok(!t.includes('Affiliate links may appear'));
 });
 
+const lodges = JSON.parse(readFileSync(join(repo, 'data/lodges/lodges.json'), 'utf8')).lodges;
+const operators = JSON.parse(readFileSync(join(repo, 'data/operators/operators.json'), 'utf8')).operators;
+
+test('no review carries a score for a lodge nobody visited', () => {
+  assert.deepEqual(findUnvisitedScoredReviews(join(root, 'src/content/reviews'), lodges), []);
+});
+
+test('unvisited-score check fires on a fixture review and passes a visited lodge', () => {
+  const d = mkdtempSync(join(tmpdir(), 'bpa-'));
+  try {
+    writeFileSync(join(d, 'x.md'), '---\nlodge_id: "x"\ntim_score: 90\ndraft: true\n---\nbody');
+    assert.equal(findUnvisitedScoredReviews(d, [{ id: 'x', tim_visited: false }]).length, 1);
+    assert.equal(findUnvisitedScoredReviews(d, [{ id: 'x', tim_visited: true }]).length, 0);
+    assert.equal(findUnvisitedScoredReviews(d, []).length, 1);
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test('no operator is verified with a score context and no recorded visit', () => {
+  assert.deepEqual(findVerifiedWithoutVisit(operators), []);
+});
+
+test('operator check fires on a fixture', () => {
+  assert.deepEqual(findVerifiedWithoutVisit([{ id: 'a', status: 'verified', tim_score_context: 90 }]), ['a']);
+  assert.deepEqual(findVerifiedWithoutVisit([{ id: 'a', status: 'verified', tim_score_context: 90, tim_visited: true }]), []);
+  assert.deepEqual(findVerifiedWithoutVisit([{ id: 'a', status: 'pending-verification' }]), []);
+});
