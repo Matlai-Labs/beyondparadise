@@ -37,11 +37,4 @@ test('the "in preparation" sentence appears exactly once across the home page so
   assert.equal(n, 1);
 });
 
-test('built dist/index.html (when present) has no Vietnam row and no "people who live there"', (t) => {
-  const f = join(site, 'dist', 'index.html');
-  if (!existsSync(f)) return t.skip('dist not built yet; scripts/check-home-asia.mjs runs after astro build');
-  const html = readFileSync(f, 'utf8');
-  assert.doesNotMatch(html, /people who live there/i);
-  assert.doesNotMatch(html, /Zanzibar, Vietnam/);
-  assert.doesNotMatch(html, /Directly from Zanzibar and Vietnam/);
-});
+// The built page is checked after the build by scripts/check-home-asia.mjs (a pre-build test would read a stale dist).
