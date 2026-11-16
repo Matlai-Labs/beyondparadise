@@ -120,3 +120,23 @@ test('operator check fires on a fixture', () => {
   assert.deepEqual(findVerifiedWithoutVisit([{ id: 'a', status: 'verified', tim_score_context: 90, tim_visited: true }]), []);
   assert.deepEqual(findVerifiedWithoutVisit([{ id: 'a', status: 'pending-verification' }]), []);
 });
+
+// 6. No operator names an on-site visit as a source, or carries a verified date, while no visit is recorded.
+//    Matched: the word "visit" in verification_sources, or a non-empty verified_date, with tim_visited not true.
+export function findVisitSourceWithoutVisit(operators) {
+  return operators
+    .filter((o) => o.tim_visited !== true)
+    .filter((o) => (o.verification_sources || []).some((s) => /\bvisit/i.test(s)) || (o.verified_date != null && o.verified_date !== ''))
+    .map((o) => o.id);
+}
+
+test('no operator claims a visit as a source or a verified date without a recorded visit', () => {
+  assert.deepEqual(findVisitSourceWithoutVisit(operators), []);
+});
+
+test('visit-source check fires on a fixture', () => {
+  assert.deepEqual(findVisitSourceWithoutVisit([{ id: 'a', verification_sources: ['On-site visit 2025'] }]), ['a']);
+  assert.deepEqual(findVisitSourceWithoutVisit([{ id: 'a', verified_date: '2026-06-27', tim_visited: false }]), ['a']);
+  assert.deepEqual(findVisitSourceWithoutVisit([{ id: 'a', verification_sources: ['On-site visit 2025'], verified_date: '2026-01-01', tim_visited: true }]), []);
+  assert.deepEqual(findVisitSourceWithoutVisit([{ id: 'a', verification_sources: ['Annual report (public)'], verified_date: null }]), []);
+});
