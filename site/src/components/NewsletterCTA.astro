@@ -9,7 +9,7 @@ const formAction = import.meta.env.PUBLIC_BEEHIIV_FORM_ACTION as string | undefi
     <div class="newsletter__inner glass reveal">
       <p class="label" style="text-align:center;">WEEKLY INTELLIGENCE</p>
       <h2 class="display-m newsletter__title">The Only Luxury Travel<br/>Intelligence You Need</h2>
-      <p class="body-l newsletter__sub">Migration updates. Honest lodge verdicts. Price changes as they happen. Directly from Zanzibar and Vietnam — not from a press trip.</p>
+      <p class="body-l newsletter__sub">Migration updates. Honest lodge verdicts. Price changes as they happen. Directly from Zanzibar — not from a press trip.</p>
 
       {formAction ? (
       <>
@@ -38,7 +38,6 @@ const formAction = import.meta.env.PUBLIC_BEEHIIV_FORM_ACTION as string | undefi
           ['📍', 'Migration Intelligence', 'Real-time Masai Mara & Serengeti updates'],
           ['⭐', 'New Tim Scores', 'Every lodge review before it’s published'],
           ['💰', 'Price Alerts', 'Significant price changes, once verified'],
-          ['📰', 'Southeast Asia Report', 'Monthly Vietnam & Southeast Asia intelligence'],
         ].map(([icon, title, desc]) => (
           <div class="nl-feature">
             <span class="nl-feature__icon">{icon}</span>
