@@ -1,3 +1,4 @@
+import './test-env.js';
 // WIRING: every path that builds or accepts draft text for the queue must pass the voice gate.
 // Source-level and deliberately blunt, in the style of the fleet's gate-wiring test: it counts
 // invocations per call site (not "the name appears somewhere"), orders the gate before the write,
