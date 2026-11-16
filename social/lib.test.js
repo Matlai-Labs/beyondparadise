@@ -136,8 +136,9 @@ test('HERE decodes a percent-encoded module path (a space in a directory name)',
   assert.doesNotMatch(fs.readFileSync(new URL('./lib.js', import.meta.url), 'utf8'), /new URL\(import\.meta\.url\)\.pathname/);
 });
 test('whatsapp() fails closed without WHATSAPP_ALERT_TO and no phone number is committed', async () => {
-  const prev = process.env.WHATSAPP_ALERT_TO; delete process.env.WHATSAPP_ALERT_TO; process.env.BPA_QUIET = '1';
-  assert.equal(await whatsapp('x'), false); if (prev) process.env.WHATSAPP_ALERT_TO = prev;
+  const prev = process.env.WHATSAPP_ALERT_TO; const prevF = process.env.WHATSAPP_ALERT_TO_FILE; delete process.env.WHATSAPP_ALERT_TO; process.env.BPA_QUIET = '1';
+  process.env.WHATSAPP_ALERT_TO_FILE = path.join(os.tmpdir(), 'bpa-no-such-alert-file'); // never read the owner's real private file in a test
+  assert.equal(await whatsapp('x'), false); if (prev) process.env.WHATSAPP_ALERT_TO = prev; if (prevF === undefined) delete process.env.WHATSAPP_ALERT_TO_FILE; else process.env.WHATSAPP_ALERT_TO_FILE = prevF;
   assert.doesNotMatch(fs.readFileSync(new URL('./lib.js', import.meta.url), 'utf8'), /\+255\d{6,}/);
 });
 
@@ -233,4 +234,44 @@ test('worker.js is wired: it imports igGate and calls it exactly once, before th
   const w = fs.readFileSync(new URL('./worker.js', import.meta.url), 'utf8');
   assert.match(w.split('\n')[2], /\bigGate\b/, 'imported'); assert.equal((w.match(/igGate\(/g) || []).length, 1);
   assert.ok(w.indexOf('igGate(') < w.indexOf('saveQueue(mergeQueue'), 'runs before the queue is saved, or its state would be lost');
+});
+
+// ── outlook post: the exchange rate has a single source, so it never goes into the public text ──
+const AFFORD = 'Affordability backdrop: EUR ≈ 2,905.2 TZS.';
+const fcWith = (drivers) => ({ date: '2026-11-16', forecasts: [{ region: 'zanzibar', direction: 'rising', confidence: 0.8, drivers }] });
+test('draftFromForecast drops the single-source exchange-rate driver', () => {
+  const d = draftFromForecast(fcWith(['Mostly drier months over the next ~8 weeks: Nov and Jan dry, Dec wetter.', AFFORD]));
+  assert.match(d.text, /Mostly drier months/); assert.doesNotMatch(d.text, /Affordability/); assert.doesNotMatch(d.text, /EUR/); assert.doesNotMatch(d.text, /TZS/);
+});
+test('draftFromForecast lets a third driver move up when the affordability one is dropped', () => {
+  const d = draftFromForecast(fcWith([AFFORD, 'A', 'B']));
+  assert.match(d.text, /Zanzibar: rising \(80% confidence\) — A; B\n/);
+});
+test('draftFromForecast with only the affordability driver has no driver part', () => {
+  const d = draftFromForecast(fcWith([AFFORD.toUpperCase()]));
+  const line = d.text.split('\n').find((l) => l.startsWith('Zanzibar:'));
+  assert.equal(line, 'Zanzibar: rising (80% confidence)'); assert.ok(!line.includes(' — '));
+});
+
+// ── alert number: variable first, then a private file outside the repo, never a literal in the repo ──
+import { alertNumber } from './lib.js';
+const fakeNum = (d) => '+' + String(d).repeat(11); // built at runtime, obviously fake
+const alertFile = (content) => { const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'bpaalert-')), 'whatsapp-alert-to'); if (content !== null) fs.writeFileSync(f, content); return f; };
+test('alertNumber: the environment variable wins over the file', () => {
+  assert.equal(alertNumber({ env: { WHATSAPP_ALERT_TO: fakeNum(1) }, file: alertFile(fakeNum(2) + '\n') }), fakeNum(1));
+});
+test('alertNumber: variable unset falls back to the file number', () => {
+  assert.equal(alertNumber({ env: {}, file: alertFile(fakeNum(2) + '\n') }), fakeNum(2));
+});
+test('alertNumber: a whitespace-only variable falls through to the file', () => {
+  assert.equal(alertNumber({ env: { WHATSAPP_ALERT_TO: '   ' }, file: alertFile(fakeNum(3)) }), fakeNum(3));
+});
+test('alertNumber: missing file gives null, never throws', () => {
+  assert.equal(alertNumber({ env: {}, file: alertFile(null) }), null);
+});
+test('alertNumber: a line that is not a number gives null', () => {
+  assert.equal(alertNumber({ env: {}, file: alertFile('call me\n') }), null);
+});
+test('alertNumber: a blank first line is skipped, the next non-empty line is used', () => {
+  assert.equal(alertNumber({ env: {}, file: alertFile('\n  \n' + fakeNum(4) + '\n') }), fakeNum(4));
 });

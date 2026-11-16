@@ -131,7 +131,7 @@ export function draftFromForecast(fc) {
   if (!fc || !fc.forecasts?.length) return null;
   const parts = fc.forecasts.map((f) => {
     const where = REGION_NAME[f.region] || f.region; const dir = f.direction || f.outlook || 'steady';
-    const conf = Math.round((f.confidence ?? 0) * 100); const drivers = (f.drivers || []).map((x) => clean(x).replace(/[.;]+$/, '')).filter(Boolean).slice(0, 2);
+    const conf = Math.round((f.confidence ?? 0) * 100); const drivers = (f.drivers || []).map((x) => clean(x).replace(/[.;]+$/, '')).filter((x) => x && !/^affordability backdrop/i.test(x)).slice(0, 2); // the exchange rate has a single source (two-source rule): never in the public post
     return `${where}: ${dir}${conf ? ` (${conf}% confidence)` : ''}${drivers.length ? ` — ${drivers.join('; ')}` : ''}`;
   });
   const text = [
@@ -204,9 +204,21 @@ export async function postStatus(postId) {
   const { findPage } = metaPublish(); const p = findPage(CONFIG.page);
   return graphCall(`${postId}?fields=id,is_published,permalink_url,scheduled_publish_time`, { token: p.token, throwOnError: false });
 }
+/** Alert number: WHATSAPP_ALERT_TO first, then the first non-empty line of a private file outside the repo
+ *  (default ~/.matlai/whatsapp-alert-to, override WHATSAPP_ALERT_TO_FILE). No number lives in the repo. Never throws; null = none. */
+export function alertNumber({ env = process.env, file = env.WHATSAPP_ALERT_TO_FILE || path.join(os.homedir(), '.matlai', 'whatsapp-alert-to') } = {}) {
+  const fromEnv = typeof env.WHATSAPP_ALERT_TO === 'string' ? env.WHATSAPP_ALERT_TO.trim() : '';
+  if (fromEnv) return fromEnv;
+  try {
+    const line = fs.readFileSync(file, 'utf8').split(/\r?\n/).map((l) => l.trim()).find(Boolean);
+    return line && /^\+\d{8,15}$/.test(line) ? line : null;
+  } catch { return null; }
+}
+let warnedAlertFile = false;
 export async function whatsapp(text) {
-  const WA_TO = process.env.WHATSAPP_ALERT_TO; // no default: a phone number must not live in the repo
-  if (!WA_TO) { log('whatsapp skipped: WHATSAPP_ALERT_TO is not set (fail closed)'); return false; }
+  const WA_TO = alertNumber();
+  if (!WA_TO) { log('whatsapp skipped: no alert number (WHATSAPP_ALERT_TO unset and no valid ~/.matlai/whatsapp-alert-to) (fail closed)'); return false; }
+  if (!String(process.env.WHATSAPP_ALERT_TO || '').trim() && !warnedAlertFile) { warnedAlertFile = true; log('whatsapp: alert number read from the private file (WHATSAPP_ALERT_TO unset)'); }
   try {
     const s = await fetch(`${BRIDGE}/status`, { signal: AbortSignal.timeout(2000) }); if (!(await s.json()).ready) { log('bridge not ready'); return false; }
     const r = await fetch(`${BRIDGE}/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: WA_TO, text }), signal: AbortSignal.timeout(10000) });
