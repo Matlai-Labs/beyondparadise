@@ -157,11 +157,16 @@ export function brandGuard(text) {
 }
 /** CLAUDE.md rule: no number without >=2 independent sources. Signal drafts state a source count, so <2 is rejected. */
 export function sourceGate(d) { return d.kind === 'signal' && !((d.sourceCount ?? 0) >= 2) ? 'fewer than 2 independent sources (>=2 required)' : null; }
+// FAIL CLOSED, on purpose. The fleet registry says "do not fail closed on a MISSING linter"; that rule is
+// about a linter reached through a sibling repo that may simply have moved. Here the linter is vendored
+// (vendor/voice-lint), so a missing or broken file means a broken checkout, and a draft must be refused.
 export async function voiceGate(text) {
   const lintPath = resourcePath('voiceLint');
   const mod = await import(pathToFileURL(lintPath).href).catch(() => null);
-  if (!mod?.lint) return { ok: false, reason: `voice-lint unavailable at ${lintPath} (fail closed; set VOICE_LINT_PATH)` };
-  const res = mod.lint(text); return { ok: !!res.ok, reason: res.ok ? null : JSON.stringify(res).slice(0, 300) };
+  if (typeof mod?.lint !== 'function') return { ok: false, reason: `voice-lint unavailable at ${lintPath} (fail closed; the vendored copy in social/vendor/voice-lint is missing or broken)` };
+  let res; try { res = mod.lint(text); } catch (e) { return { ok: false, reason: `voice-lint crashed (fail closed): ${String(e?.message || e).slice(0, 200)}` }; }
+  if (!res || typeof res !== 'object') return { ok: false, reason: 'voice-lint returned no result (fail closed)' };
+  return { ok: !!res.ok, reason: res.ok ? null : JSON.stringify(res).slice(0, 300) };
 }
 export function outlookSignature(fc) {
   if (!fc) return null;

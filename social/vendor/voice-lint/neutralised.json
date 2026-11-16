@@ -1,0 +1,21 @@
+{
+  "_note": "Substitutions applied to the upstream files to make the copies fit a public repository. Spans are identified by line range and the SHA-256 of the original text (lines joined with \"\\n\", no trailing newline); the original wording is deliberately not stored here.",
+  "files": {
+    "voice-lint.mjs": [
+      {
+        "startLine": 48,
+        "endLine": 50,
+        "original_sha256": "1506ec0b0fe31a93bab731eff8ad3904287b66e712c65fa2aa33f4b7d6df1555",
+        "replacement": "// A page link written as a root-relative path, e.g. /post/some-page-title, was missed by the\n// old https-only mask, so commits touching those pages failed on a word in the slug and were\n// made with the linter skipped, switching the whole"
+      }
+    ],
+    "rules.json": [
+      {
+        "startLine": 183,
+        "endLine": 183,
+        "original_sha256": "3b27e6c87cc1063e611b4129bfa6a2bb53813d4d444114862a4f298ad4e5e553",
+        "replacement": "    \"_crutchComment\": \"Advisory only (warn). Added 2026-10-05 after a content audit: the ban-list was clean but 'genuinely' and 'honest(ly)' appeared on most pages — constant claims of honesty are themselves a machine tell. Warns when the combined rate exceeds the max per 1,000 words.\","
+      }
+    ]
+  }
+}

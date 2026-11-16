@@ -35,7 +35,7 @@ before, so an unconfigured Mac behaves exactly as it did.
 
 | Env var | Default | What |
 |---|---|---|
-| `VOICE_LINT_PATH` | `…/shared_knowledge/scripts/voice-lint/voice-lint.mjs` | voice gate (fails closed if absent) |
+| `VOICE_LINT_PATH` | `vendor/voice-lint/voice-lint.mjs` (vendored, see its SOURCE.md) | voice gate (fails closed if absent or broken); override for tests only |
 | `META_PUBLISH_PATH` | `…/shared_knowledge/scripts/meta-pages/publish.js` | Facebook/Instagram posting |
 | `META_TOKENS_PATH` | `~/.config/meta-pages/tokens.json` | read only, to check granted scopes |
 | `BPA_MEDIA_ENV_FILE` | `…/Padel_Revive/.env` | `WP_*` credentials used to host cards/reels — see audit finding 6, the host itself is still open |
