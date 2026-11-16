@@ -7,9 +7,10 @@ import { authorize } from './auth.js';
 import { claimGate } from './claim-gate.js';
 import { withQueueLock, loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, brandGuard, voiceGate, log, CONFIG, igEnabled, igPostDraftAny, QUEUE_PATH } from './lib.js';
 import { stopStatus, engageStop, releaseStop } from './stop.js';
+import { reserveInstagramPublish } from './ledger.js';
 const PORT = CONFIG.approvalPort;
 export async function handle(text, deps = {}) {
-  const { queuePath = QUEUE_PATH, stopOpts, stop = () => stopStatus(stopOpts), schedule = schedulePost, publish = publishNow, publishIg = igPostDraftAny, igOn = igEnabled } = deps;
+  const { queuePath = QUEUE_PATH, stopOpts, stop = () => stopStatus(stopOpts), schedule = schedulePost, publish = publishNow, publishIg = igPostDraftAny, igOn = igEnabled, reserve = reserveInstagramPublish, ledgerPath, config: capConfig = CONFIG } = deps;
   const c = parseCommand(text);
   if (c.cmd === 'stop') return engageStop(stopOpts); // before the queue is read: stopping must work even when the queue file is damaged
   if (c.cmd === 'start') return releaseStop(stopOpts);
@@ -30,7 +31,11 @@ export async function handle(text, deps = {}) {
       try {
         if (c.cmd === 'postnow') {
           const r = await publish(d.text); d.status = STATUS.POSTED; d.postId = r.id; d.permalink = r.permalink_url; d.postedAt = new Date().toISOString(); out.push(`✅ ${id} posted now on the Page: ${r.permalink_url || r.id}`);
-          if (igOn()) { try { const ig = await publishIg(d); d.ig = { status: 'posted', ...ig, postedAt: new Date().toISOString() }; out.push(`📸 ${id} on Instagram: ${ig.permalink}`); } catch (e) { d.ig = { status: 'failed', error: e.message }; out.push(`❌ ${id} Instagram failed: ${e.message.slice(0, 140)}`); } }
+          if (igOn()) {
+            const rs = reserve({ id, now: new Date(), config: capConfig, path: ledgerPath }); // daily cap: ledger line written before the network call
+            if (!rs.ok) { log(`${id} instagram publish held: ${rs.reason}`); out.push(`📸 ${id} Instagram not posted: ${rs.reason}`); }
+            else { try { const ig = await publishIg(d); d.ig = { status: 'posted', ...ig, postedAt: new Date().toISOString() }; out.push(`📸 ${id} on Instagram: ${ig.permalink}`); } catch (e) { d.ig = { status: 'failed', error: e.message }; log(`${id} instagram publish failed; ledger reservation kept (safe direction): ${e.message.slice(0, 160)}`); out.push(`❌ ${id} Instagram failed: ${e.message.slice(0, 140)}`); } }
+          }
         } else {
           const [at] = nextSlots(q, 1); const r = await schedule(d.text, at); d.status = STATUS.SCHEDULED; d.postId = r.id; d.scheduledFor = at; d.decidedAt = new Date().toISOString();
           if (igOn()) d.ig = { status: 'queued', at };
