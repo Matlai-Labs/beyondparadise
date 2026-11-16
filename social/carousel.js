@@ -17,7 +17,7 @@ const sentences = (s) => s.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Bo
 const labelled = (lines, label) => { const l = lines.find((x) => x.startsWith(label + ': ')); return l ? l.slice(label.length + 2).trim() : null; };
 
 const HOOK_WHOLE_WORDS = 16; // a "What changed" statement this short is the hook as written, on one slide
-const key = (t) => t.toLowerCase().replace(/\s+/g, ' ').replace(/[\s.,;:–—!?]+$/, '');
+const key = (t) => t.toLowerCase().replace(/\s+/g, ' ').replace(/[\s,;:–—]+$/, '').replace(/\.$/, '').replace(/[\s,;:–—]+$/, '');
 const ABBR = /^(dr|mr|mrs|ms|prof|st|mt|no|vs|approx|est|e\.g|i\.e|etc|a\.m|p\.m)\.$/i;
 /** Sentence split for signal sections: like sentences(), but a full stop after an abbreviation, an initial or a number like 2.5,
  *  or before a lowercase letter or digit, is not a border (a slide must never end on "Dr."). */
@@ -75,7 +75,7 @@ export function slidePlan(d) {
     sections.push({ label: 'Why it matters', sents: signalSentences(labelled(body, 'Why it matters') || '') });
     sections.push({ label: "What I'd do", sents: signalSentences(labelled(body, "What I'd do") || '') });
     const conf = body.find((l) => /^Confidence /.test(l)); const confS = conf ? sentences(conf)[0] : null;
-    if (confS && words(confS).length <= FACT_MAX_WORDS) sections.push({ label: 'Confidence', chunks: [confS], optional: true });
+    if (confS) { if (words(confS).length > FACT_MAX_WORDS) return { reason: TOO_LONG }; sections.push({ label: 'Confidence', chunks: [confS] }); }
   } else {
     const chunks = []; for (const l of body) { if (/^This is what/.test(l)) continue; chunks.push(l.split(';')[0].trim()); }
     hookFrom = hookSrc; const hw = words(hookSrc); // if the hook was cut, the full statement still deserves a slide of its own
@@ -87,9 +87,8 @@ export function slidePlan(d) {
   for (const sec of sections) if (!sec.chunks) { sec.chunks = sectionChunks(sec.sents); if (!sec.chunks) return { reason: TOO_LONG }; }
   // a chunk that repeats a slide already shown is not shown twice
   for (const sec of sections) sec.chunks = sec.chunks.filter((c) => { const k = key(c); if (!c || (sec.legacy && words(c).length > FACT_MAX_WORDS) || seen.has(k)) return false; seen.add(k); return true; });
-  // every chunk of every section must fit under the cap, else no carousel; the optional confidence slide goes first
-  const room = MAX_SLIDES - 2; let total = sections.reduce((n, sec) => n + sec.chunks.length, 0);
-  if (total > room) { const c = sections.find((sec) => sec.optional); if (c) { total -= c.chunks.length; c.chunks = []; } }
+  // every chunk of every section, Confidence included, must fit under the cap, else no carousel (nothing shown is left out silently)
+  const room = MAX_SLIDES - 2; const total = sections.reduce((n, sec) => n + sec.chunks.length, 0);
   if (total > room && !sections.some((sec) => sec.legacy)) return { reason: NO_FIT };
   const picked = sections.flatMap((sec) => sec.chunks.slice(0, room).map((text) => ({ role: 'fact', text, ...(sec.label ? { label: sec.label } : {}) }))).slice(0, room);
   if (!hook || picked.length < MIN_SLIDES - 2) return { reason: 'too little content in the draft for a carousel (need a hook and at least 1 fact)' };

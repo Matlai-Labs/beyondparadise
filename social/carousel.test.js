@@ -161,13 +161,20 @@ test('sections: never a duplicate slide text, even when Why repeats What changed
   const k2 = slidePlan(sig(wc, `${wc}.`, `${wc}.`)).slides?.map((s) => s.text);
   if (k2) assert.equal(new Set(k2).size, k2.length);
 });
-test('sections: if the section slides do not all fit under the cap there is no carousel; confidence is dropped first', () => {
+test('sections: if the section slides do not all fit under the cap there is no carousel, Confidence included', () => {
   const big = (p, n) => Array.from({ length: n }, (_, i) => wordsN(30, `${p}${i}x`) + '.').join(' ');
   const r = slidePlan(sig('Short statement here today', big('y', 3), big('z', 3)));
   assert.equal(r.slides, undefined); assert.match(r.reason, /does not fit/);
-  const ok = slidePlan(sig('Short statement here today', big('y', 3), big('z', 2), 'Confidence 86% from 3 sources. More.')); // 3+2 = 5 fits, confidence would be a 6th fact slide
-  assert.equal(ok.slides.length, 7); assert.ok(!ok.slides.some((s) => s.label === 'Confidence'));
+  const low = slidePlan(sig('Short statement here today', big('y', 3), big('z', 2), 'Confidence low. More.')); // 3+2 fill all five slots
+  assert.equal(low.slides, undefined); assert.match(low.reason, /does not fit/);
+  assert.equal(slidePlan(sig('Short statement here today', big('y', 3), big('z', 2), 'Confidence high.')).slides, undefined);
   assert.equal(slidePlan(sig('Short statement here today', big('y', 3), big('z', 1), 'Confidence 86% from 3 sources. More.')).slides.filter((s) => s.label === 'Confidence').length, 1);
+});
+test('sections: a question is not a duplicate of the same words ending in a full stop', () => {
+  const { slides } = slidePlan(sig('Prices will rise.', 'Prices will rise?', 'Wait and see what happens next.'));
+  assert.ok(slides.some((s) => s.label === 'Why it matters' && s.text === 'Prices will rise?'));
+  const { slides: s2 } = slidePlan(sig('Prices will rise!', 'Prices will rise.', 'Wait and see what happens next.'));
+  assert.ok(s2.some((s) => s.label === 'Why it matters' && s.text === 'Prices will rise.'));
 });
 test('sections: save recap is the headline for signal drafts, the statement for others', () => {
   assert.equal(slidePlan(fixture).slides.at(-1).recap, 'Iberostar Selection Zanzibar');
@@ -184,10 +191,13 @@ test('property: every shown section sentence is on exactly one slide, in order; 
   const drafts = [fixture, sig('Short statement here today', big('y', 2), 'Do this now please. Then do that later.', 'Confidence 86% from 3 sources. More.'),
     sig('Short statement here today', `${wordsN(34, 'a')}. Not confirmed. ${wordsN(34, 'b')}.`, `Dr. Smith said it is not true. Prices rose by 2.5 percent. ${big('d', 1)}`),
     sig('Short statement here today', 'The change applies for all guests. Dr. Smith said it is not true today.', 'Wait and see what happens next. It is approx. 90 euro.'),
+    sig('Short statement here today', `Ferry fares will rise 20 percent next month. This is not confirmed by anyone ${wordsN(32)} yet.`, 'Wait and see what happens next.'),
     sig(wordsN(25, 'wc') + '. It is a long one.', 'Rooms are open now. Beds are soft.', 'Wait and see what happens next.')];
   const norm2 = (s) => s.replace(/\s+/g, ' ').trim();
   for (const d of drafts) {
-    const r = slidePlan(d); assert.equal(r.reason, undefined, d.text);
+    const r = slidePlan(d);
+    if (/Ferry fares/.test(d.text)) { assert.match(r.reason, /too long for a slide/); continue; } // an over-long sentence means no plan, never a plan without it
+    assert.equal(r.reason, undefined, d.text);
     const lines = d.text.split('\n'); const sec = (l) => { const x = lines.find((q) => q.startsWith(l + ': ')); return x ? norm2(x.slice(l.length + 2)) : ''; };
     for (const [label, name] of [['What changed', 'What changed'], ['Why it matters', 'Why it matters'], ["What I'd do", "What I'd do"]]) {
       const text = sec(name); let own = r.slides.filter((s) => s.label === label && s.role === 'fact').map((s) => norm2(s.text)); // a headline hook is not section text
