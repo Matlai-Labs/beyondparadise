@@ -1,3 +1,4 @@
+import './test-env.js';
 // Tests for social/media-catalog.js — the rights and eligibility catalogue for the finished videos.
 // Made-up file trees in a temp directory, an injected probe: no real media, no ffprobe.
 import { test } from 'node:test';
