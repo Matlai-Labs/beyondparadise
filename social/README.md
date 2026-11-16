@@ -22,6 +22,19 @@ is granted (re-run `meta-pages/connect.js`). Logs: `~/Library/Logs/beyondparadis
 Meta access: `shared_knowledge/scripts/meta-pages` (tokens in `~/.config/meta-pages/`).
 `igEnabled()` needs `instagram_content_publish` in `user.scopes` of that tokens file (written by `connect.js --exchange`; `connect.js --refresh-scopes` re-reads it from Meta without a new login). If `instagram.enabled` is true but that is missing, the worker (`igGate` in `lib.js`) logs one `… instagram NOT published, Facebook only: <reason>` line per affected post and sends ONE WhatsApp alert per state change (blocked, then back on) — state in `queue.json` → `state.igGate`. It no longer skips quietly.
 
+## Safety switches, cap and health alarm
+Config keys in `config.json` (all optional; the defaults below apply when the key is absent):
+
+| Key | Default | What |
+|---|---|---|
+| `maxInstagramPostsPerDay` | `1` | most Instagram publishes per East Africa Time calendar day; `0` = none; anything but a whole number >= 0 counts as 0 (fail closed). Counted from the ledger below. |
+| `autoPublish` | absent (false): **not active**, nothing in this pipeline publishes automatically | only READ by the health check. The "no post for N days" alarm exists but stays off until this is true. Do not turn it on without the owner. |
+| `alarmNoPostDays` | `4` | days without a successful post before the alarm, used only when `autoPublish` is true (so today: not active) |
+
+Files (folder `~/.matlai/`, override `BPA_STATE_DIR`): `bpa-social-stop` (stop flag; `BPA_STOP_FLAG`; `bpa stop` creates it, `bpa start` removes it; the fleet `stop-all.flag`, `STOP_ALL_FLAG_PATH`, also stops), `bpa-social-ig-ledger.jsonl` (`BPA_LEDGER_PATH`), `bpa-social-run.json`, `bpa-social-lastpost.json`, `bpa-social-alerts.json`. Log path override: `BPA_LOG_PATH` (tests set it; see `test-env.js`).
+`bpa stop` does not cancel Facebook posts already scheduled at Meta; the reply says how many and when.
+Health: `node health.js --check` exits 1 when the worker has not run for 45 minutes (`worker-stale`) or runs but fails (`worker-failing`: last result is an error, or no successful run for 45 minutes). The approval server runs the same check hourly and sends one WhatsApp alert per condition per 24 hours; for 20 minutes after it starts, a missing or old worker state is treated as unknown.
+
 ## Draft score (advisory)
 `score.js` gives every new draft a `score` shown under it in `bpa` / `bpa approve` lists: `score 72/100 · hook 7/10 · rubric 6/9 ✗ cta, hashtags`.
 Total = 60% rubric pass-rate + 40% hook score. The 12-part rubric has 9 post-level checks (hook window, concrete hook, one ask, 3-5 hashtags,

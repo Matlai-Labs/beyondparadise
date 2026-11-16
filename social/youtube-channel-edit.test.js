@@ -1,3 +1,4 @@
+import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, rmSync, statSync } from 'node:fs'; import { tmpdir, homedir } from 'node:os'; import { join } from 'node:path';
 import { fixDescription, fixPlaylistDescription, keywordsString, buildPlan, applyPlan, undoLedger, guardedFetch, makeSession, planMarkdown, main } from './youtube-channel-edit.js';
