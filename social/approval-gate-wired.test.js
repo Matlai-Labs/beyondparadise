@@ -1,3 +1,4 @@
+import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict'; import fs from 'node:fs';
 const s = fs.readFileSync(new URL('./approval-server.js', import.meta.url), 'utf8');
 test('approval-server calls claimGate once, inside the approve/postnow branch before any publish', () => {

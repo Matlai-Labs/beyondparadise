@@ -1,3 +1,4 @@
+import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { RUBRIC, hookScore, scoreDraft, renderScore } from './score.js';
 import { buildDrafts, renderList, STATUS } from './lib.js';

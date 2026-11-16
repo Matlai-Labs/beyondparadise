@@ -11,7 +11,9 @@ const require = createRequire(import.meta.url);
 const HERE = path.dirname(modulePath(import.meta.url));
 export const CONFIG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
 export const QUEUE_PATH = path.join(HERE, 'queue.json');
-export const LOG_PATH = path.join(os.homedir(), 'Library', 'Logs', 'beyondparadise', 'social.log');
+export const DEFAULT_LOG_PATH = path.join(os.homedir(), 'Library', 'Logs', 'beyondparadise', 'social.log');
+/** BPA_LOG_PATH redirects the log (tests set it via test-env.js so they never write the real log). */
+export const LOG_PATH = process.env.BPA_LOG_PATH || DEFAULT_LOG_PATH;
 const BRIDGE = process.env.WHATSAPP_BRIDGE_URL || 'http://127.0.0.1:3002';
 /** meta-pages is loaded lazily: it is outside this repo and only needed when actually publishing. */
 const metaPublish = () => require(requireResource('metaPublish'));

@@ -1,3 +1,4 @@
+import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { pickItems, draftFromItem, draftFromForecast, brandGuard, parseCommand, nextSlots, STATUS, renderList } from './lib.js';
 const item = (id, conf, mag, region = 'zanzibar') => ({ signal: { id, subject: 'Sauti za Busara', region, summary: 'The festival dates were confirmed for February.', confidence: conf, magnitude: mag, sourceIds: ['a', 'b'] }, whyItMatters: 'Beds in Stone Town fill a month early.', whatToDo: 'Open February availability now.', confidence: conf, sources: [{ id: 'a' }, { id: 'b' }] });
