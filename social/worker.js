@@ -3,7 +3,7 @@
 // Exported as runWorker(deps) so tests can inject every external call; the launchd entry (node worker.js) runs it once.
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { stuckIgPublishes, markStuckAlerted, loadQueue, saveQueue, withQueueLock, mergeQueue, claimIgPublish, STATUS, postStatus as metaPostStatus, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, igGate, QUEUE_PATH } from './lib.js';
+import { stuckIgPublishes, markStuckAlerted, loadQueue, saveQueue, withQueueLock, mergeQueue, claimIgPublish, STATUS, postStatus as metaPostStatus, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, igGate, QUEUE_PATH, finalCheck, blockDraft } from './lib.js';
 import { stopStatus, StoppedError } from './stop.js';
 import { reserveInstagramPublish, releaseInstagramReservation, eatDay } from './ledger.js';
 import { recordWorkerRun, recordPost } from './health.js';
@@ -20,7 +20,7 @@ export async function runWorker(deps = {}) {
 }
 async function runWorkerInner(deps) {
   const { now = new Date(), lastPostPath, queuePath = QUEUE_PATH, igOn = igEnabled, publishIg = igPostDraftAny, postStatus = metaPostStatus, notify = whatsapp, say = log,
-    approvalHealth = defaultApprovalHealth, reserve = reserveInstagramPublish, release = releaseInstagramReservation, ledgerPath, config: capConfig = CONFIG, stopOpts, stop = () => stopStatus(stopOpts) } = deps;
+    approvalHealth = defaultApprovalHealth, reserve = reserveInstagramPublish, release = releaseInstagramReservation, ledgerPath, config: capConfig = CONFIG, stopOpts, stop = () => stopStatus(stopOpts), check = finalCheck, neverPromotePatterns } = deps;
   const lockOpts = { lockPath: queuePath + '.lock' };
   // stop flag (own or fleet-wide): publish nothing, schedule nothing, touch nothing; one line; exit code stays 0
   { const st = stop(); if (st.stopped) { say(`worker: ${st.reason}`); return { exitCode: 0, stopped: true }; } }
@@ -34,6 +34,8 @@ async function runWorkerInner(deps) {
     // Instagram has no reliable API scheduling: publish queued IG items when their time comes.
     if (d.ig?.status === 'queued' && new Date(d.ig.at).getTime() <= now.getTime() && igOn()) {
       { const st = stop(); if (st.stopped) { if (!stopNoted) { stopNoted = true; say(`worker: ${st.reason} (publishing skipped mid-run)`); } continue; } } // re-checked right before the claim
+      // FINAL CHECK on the exact text that is about to go out (voice gate + rules). Before the cap reservation, so a blocked item uses no slot; blocked is never retried.
+      { const fc = await check(d, { neverPromotePatterns }); if (!fc.ok) { await blockDraft(d, fc, { stage: 'Instagram publish', now, notify, say }); changed = true; continue; } }
       // daily cap: reserve (ledger line written NOW, before any network call). Refused = the item stays queued and is retried on a later day.
       const rs = reserve({ id: d.id, now, config: capConfig, path: ledgerPath });
       if (!rs.ok) {
@@ -63,7 +65,7 @@ async function runWorkerInner(deps) {
   const local = new Date(now.toLocaleString('en-US', { timeZone: CONFIG.timezone })); const week = `${local.getFullYear()}-W${Math.ceil(((local - new Date(local.getFullYear(), 0, 1)) / 86400e3 + 1) / 7)}`;
   if (local.getDay() === 1 && local.getHours() >= 8 && state.lastHeartbeat !== week) {
     const n = (s) => q.drafts.filter((d) => d.status === s).length;
-    if (await notify(`💚 ${CONFIG.page} social weekly: pending ${n(STATUS.PENDING)}, scheduled ${n(STATUS.SCHEDULED)}, posted ${n(STATUS.POSTED)}, skipped ${n(STATUS.SKIPPED)}, expired ${n(STATUS.EXPIRED)}.`)) { state.lastHeartbeat = week; changed = true; }
+    if (await notify(`💚 ${CONFIG.page} social weekly: pending ${n(STATUS.PENDING)}, scheduled ${n(STATUS.SCHEDULED)}, posted ${n(STATUS.POSTED)}, skipped ${n(STATUS.SKIPPED)}, expired ${n(STATUS.EXPIRED)}, blocked ${n(STATUS.BLOCKED)}.`)) { state.lastHeartbeat = week; changed = true; }
   }
   state.lastRunOk = now.toISOString(); changed = true;
   if (changed) await withQueueLock(async () => saveQueue(mergeQueue(base, q, loadQueue(queuePath)), queuePath), lockOpts);
