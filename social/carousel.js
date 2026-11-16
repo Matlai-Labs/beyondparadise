@@ -18,23 +18,38 @@ const labelled = (lines, label) => { const l = lines.find((x) => x.startsWith(la
 
 const HOOK_WHOLE_WORDS = 16; // a "What changed" statement this short is the hook as written, on one slide
 const key = (t) => t.toLowerCase().replace(/\s+/g, ' ').replace(/[\s.,;:–—!?]+$/, '');
-/** Split one section's sentences into slide texts: whole section if <= FACT_MAX_WORDS, else runs of consecutive whole sentences. */
+const ABBR = /^(dr|mr|mrs|ms|prof|st|mt|no|vs|approx|est|e\.g|i\.e|etc|a\.m|p\.m)\.$/i;
+/** Sentence split for signal sections: like sentences(), but a full stop after an abbreviation, an initial or a number like 2.5,
+ *  or before a lowercase letter or digit, is not a border (a slide must never end on "Dr."). */
+const signalSentences = (s) => {
+  const out = [];
+  for (const piece of sentences(s)) {
+    const prev = out.at(-1);
+    const tok = prev ? prev.split(/\s+/).at(-1) : '';
+    const joins = prev && /[.]$/.test(prev) && (ABBR.test(tok) || /^[A-Z]\.$/.test(tok) || /^\d+\.\d+\.$/.test(tok) || /^[a-z0-9]/.test(piece));
+    if (joins) out[out.length - 1] = `${prev} ${piece}`; else out.push(piece);
+  }
+  return out;
+};
+const TOO_LONG = 'a sentence is too long for a slide; the draft goes out as a short video instead';
+const NO_FIT = 'the section text does not fit on 5 slides; the draft goes out as a short video instead';
+/** Split one section's sentences into slide texts, never leaving a sentence out: the whole section if <= FACT_MAX_WORDS,
+ *  else runs of consecutive whole sentences. Returns null when one sentence alone is too long for a slide. */
 function sectionChunks(sents) {
   if (!sents.length) return [];
-  const whole = sents.join(' '); if (words(whole).length <= FACT_MAX_WORDS) return [whole];
+  if (sents.some((x) => words(x).length > FACT_MAX_WORDS)) return null;
+  if (words(sents.join(' ')).length <= FACT_MAX_WORDS) return [sents.join(' ')];
   const runs = []; let cur = [];
-  const flush = () => { if (cur.length) runs.push(cur); cur = []; };
-  for (const s of sents) {
-    const n = words(s).length; if (n > FACT_MAX_WORDS) { flush(); continue; } // too long to carry a slide: dropped, ends the run
-    if (cur.length && words([...cur, s].join(' ')).length > FACT_MAX_WORDS) flush();
-    cur.push(s);
+  for (const x of sents) {
+    if (cur.length && words([...cur, x].join(' ')).length > FACT_MAX_WORDS) { runs.push(cur); cur = []; }
+    cur.push(x);
   }
-  flush();
-  // no slide may be one sentence of < 6 words: fold it into a neighbour when it fits, else drop it
+  runs.push(cur);
+  // a slide of one sentence under 6 words is folded into a neighbour when that stays within the limit; otherwise it stands alone
   for (let i = 0; i < runs.length; i++) {
     if (runs[i].length !== 1 || words(runs[i][0]).length >= 6) continue;
-    const j = [i - 1, i + 1].find((k) => runs[k] && words([...runs[k], ...runs[i]].join(' ')).length <= FACT_MAX_WORDS && words(runs[k].join(' ')).length);
-    if (j === undefined) { runs.splice(i, 1); i--; } else { runs[Math.min(i, j)] = j < i ? [...runs[j], ...runs[i]] : [...runs[i], ...runs[j]]; runs.splice(Math.max(i, j), 1); i = -1; }
+    if (i > 0 && words([...runs[i - 1], ...runs[i]].join(' ')).length <= FACT_MAX_WORDS) { runs[i - 1].push(...runs[i]); runs.splice(i, 1); i = -1; }
+    else if (i + 1 < runs.length && words([...runs[i], ...runs[i + 1]].join(' ')).length <= FACT_MAX_WORDS) { runs[i].push(...runs[i + 1]); runs.splice(i + 1, 1); i = -1; }
   }
   return runs.map((r) => r.join(' '));
 }
@@ -51,36 +66,34 @@ export function slidePlan(d) {
     if (wc) {
       hookSrc = wc; hookLabel = 'What changed';
       if (words(wc).length <= HOOK_WHOLE_WORDS) hookText = clean(wc); // else the headline is the hook (hookFrom)
-      else if (words(wc).length <= FACT_MAX_WORDS) sections.push({ label: 'What changed', chunks: [wc] }); // headline hooks; the full statement follows
+      else sections.push({ label: 'What changed', sents: signalSentences(wc) }); // headline hooks; the full statement follows
     }
     hookLabel = hookLabel || 'What changed';
     // Order is what changed -> why it matters -> what I'd do -> confidence, each section kept together.
     // Interleaving why/do sentences was tried first; a reader looked at all seven slides on 16 Nov 2026 and refused them
     // (single sentences stood alone without context, and slide 2 repeated slide 1).
-    sections.push({ label: 'Why it matters', chunks: sectionChunks(sentences(labelled(body, 'Why it matters') || '')) });
-    sections.push({ label: "What I'd do", chunks: sectionChunks(sentences(labelled(body, "What I'd do") || '')) });
+    sections.push({ label: 'Why it matters', sents: signalSentences(labelled(body, 'Why it matters') || '') });
+    sections.push({ label: "What I'd do", sents: signalSentences(labelled(body, "What I'd do") || '') });
     const conf = body.find((l) => /^Confidence /.test(l)); const confS = conf ? sentences(conf)[0] : null;
-    if (confS && words(confS).length <= FACT_MAX_WORDS) sections.push({ label: 'Confidence', chunks: [confS] });
+    if (confS && words(confS).length <= FACT_MAX_WORDS) sections.push({ label: 'Confidence', chunks: [confS], optional: true });
   } else {
     const chunks = []; for (const l of body) { if (/^This is what/.test(l)) continue; chunks.push(l.split(';')[0].trim()); }
     hookFrom = hookSrc; const hw = words(hookSrc); // if the hook was cut, the full statement still deserves a slide of its own
     if (hw.length > HOOK_WORDS && hw.length <= FACT_MAX_WORDS) chunks.unshift(hookSrc);
-    sections.push({ label: undefined, chunks });
+    sections.push({ label: undefined, chunks, legacy: true });
   }
   const hook = hookText ?? clean(words(hookFrom).slice(0, HOOK_WORDS).join(' '));
   const seen = new Set([key(hook)]);
-  // dedupe + length filter, keeping section structure
-  for (const sec of sections) sec.chunks = sec.chunks.filter((c) => { const k = key(c); if (!c || words(c).length > FACT_MAX_WORDS || seen.has(k)) return false; seen.add(k); return true; });
-  // pick: one slide from each section before a second from any, then restore plan order
-  const room = MAX_SLIDES - 2; const take = sections.map(() => 0); let used = 0;
-  for (let round = 0; used < room; round++) {
-    let added = false;
-    sections.forEach((sec, i) => { if (used < room && take[i] === round && sec.chunks[round] !== undefined) { take[i]++; used++; added = true; } });
-    if (!added) break;
-  }
-  const picked = sections.flatMap((sec, i) => sec.chunks.slice(0, take[i]).map((text) => ({ role: 'fact', text, ...(sec.label ? { label: sec.label } : {}) })));
+  for (const sec of sections) if (!sec.chunks) { sec.chunks = sectionChunks(sec.sents); if (!sec.chunks) return { reason: TOO_LONG }; }
+  // a chunk that repeats a slide already shown is not shown twice
+  for (const sec of sections) sec.chunks = sec.chunks.filter((c) => { const k = key(c); if (!c || (sec.legacy && words(c).length > FACT_MAX_WORDS) || seen.has(k)) return false; seen.add(k); return true; });
+  // every chunk of every section must fit under the cap, else no carousel; the optional confidence slide goes first
+  const room = MAX_SLIDES - 2; let total = sections.reduce((n, sec) => n + sec.chunks.length, 0);
+  if (total > room) { const c = sections.find((sec) => sec.optional); if (c) { total -= c.chunks.length; c.chunks = []; } }
+  if (total > room && !sections.some((sec) => sec.legacy)) return { reason: NO_FIT };
+  const picked = sections.flatMap((sec) => sec.chunks.slice(0, room).map((text) => ({ role: 'fact', text, ...(sec.label ? { label: sec.label } : {}) }))).slice(0, room);
   if (!hook || picked.length < MIN_SLIDES - 2) return { reason: 'too little content in the draft for a carousel (need a hook and at least 1 fact)' };
-  const save = { role: 'save', text: `Save this for later.\n— ${CONFIG.author}, ${CONFIG.brand}`, recap: hookSrc };
+  const save = { role: 'save', text: `Save this for later.\n— ${CONFIG.author}, ${CONFIG.brand}`, recap: d.kind === 'signal' ? headline : hookSrc };
   const hookSlide = { role: 'hook', text: hook, ...(d.kind === 'signal' ? { label: hookLabel } : {}) };
   return { slides: [hookSlide, ...picked, save] };
 }
