@@ -17,7 +17,9 @@ export const CHANNELS = {
 };
 export const SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube.readonly'];
 // Same loopback shape the hotel's Desktop client uses (http://127.0.0.1:<port>/callback); Desktop clients accept any port.
-export const REDIRECT_URI = 'http://127.0.0.1:8124/callback';
+// Loopback only. YOUTUBE_LOGIN_REDIRECT may move the port (a local listener can then catch the redirect); anything else is ignored.
+const REDIRECT_OVERRIDE = process.env.YOUTUBE_LOGIN_REDIRECT;
+export const REDIRECT_URI = /^http:\/\/127\.0\.0\.1:\d{2,5}\/callback$/.test(REDIRECT_OVERRIDE || '') ? REDIRECT_OVERRIDE : 'http://127.0.0.1:8124/callback';
 export const CONFIG_DIR = join(homedir(), '.config', 'beyondparadise');
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
