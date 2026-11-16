@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { scoreDraft, renderScore } from './score.js';
 import { modulePath, resourcePath, requireResource, graphCall } from './resources.js';
 import { assertNotStopped } from './stop.js';
+import { rulesGate, loadNeverPromote } from './rules-gate.js';
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(modulePath(import.meta.url));
 export const CONFIG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
@@ -89,7 +90,7 @@ export async function claimIgPublish(id, now = new Date(), p = QUEUE_PATH) {
   }, { lockPath: p + '.lock' });
 }
 export function nextId(q) { q.seq = (q.seq || 0) + 1; return `B${q.seq}`; }
-export const STATUS = { PENDING: 'pending_approval', SCHEDULED: 'scheduled', POSTED: 'posted', SKIPPED: 'skipped', EXPIRED: 'expired', FAILED: 'failed' };
+export const STATUS = { PENDING: 'pending_approval', SCHEDULED: 'scheduled', POSTED: 'posted', SKIPPED: 'skipped', EXPIRED: 'expired', FAILED: 'failed', BLOCKED: 'blocked' };
 
 // ── BPI input ───────────────────────────────────────────────────────────────
 export function readBriefs(dir = CONFIG.bpiOutDir, lookbackDays = CONFIG.lookbackDays, now = new Date()) {
@@ -168,6 +169,47 @@ export async function voiceGate(text) {
   if (!res || typeof res !== 'object') return { ok: false, reason: 'voice-lint returned no result (fail closed)' };
   return { ok: !!res.ok, reason: res.ok ? null : JSON.stringify(res).slice(0, 300) };
 }
+/** The owner's content rules (rules-gate.js) on one text. The private never-promote list is loaded here unless injected; unreadable = refused (fail closed). */
+export function rulesCheck(text, { claims, neverPromotePatterns } = {}) {
+  let patterns = neverPromotePatterns; let listReason = null;
+  if (patterns === undefined) { const l = loadNeverPromote(); patterns = l.ok ? l.patterns : null; if (!l.ok) listReason = l.reason; }
+  const r = rulesGate(text, { neverPromotePatterns: patterns, claims: claims || [] });
+  const ruleIds = [...new Set(r.violations.map((v) => v.rule))];
+  return { ...r, ruleIds, reason: r.ok ? null : ruleIds.join(', '), listReason };
+}
+const asTexts = (v) => (Array.isArray(v) ? v : [v]).flatMap((x) => (typeof x === 'string' ? [x] : x && typeof x === 'object' ? [x.text, x.recap] : [])).filter((x) => typeof x === 'string' && x.trim());
+/** Every text that will go out for this item: caption, carousel slides (carried by the item, plus the plan when the format is a carousel), on-video text. */
+async function outgoingTexts(d) {
+  const parts = [d.text, ...asTexts(d.slides ?? []), ...asTexts(d.videoText ?? [])];
+  if (chooseFormat(d) === 'carousel' && typeof d.text === 'string') { const { slidePlan } = await import('./carousel.js'); const p = slidePlan(d); parts.push(...asTexts(p.slides ?? [])); }
+  return [...new Set(parts.filter((x) => typeof x === 'string'))];
+}
+/** FINAL CHECK, immediately before any publish or schedule: re-runs the voice gate AND the rules check on the exact outgoing text
+ *  (so a direct edit of queue.json after the earlier gates cannot get through). Never throws: a crash is a blocking result. */
+export async function finalCheck(d, { neverPromotePatterns, voice = voiceGate } = {}) {
+  const ids = new Set(); let listReason = null;
+  try {
+    if (!d || typeof d.text !== 'string' || !d.text.trim()) return { ok: false, ruleIds: ['no-text'], violations: [{ rule: 'no-text', match: '' }], listReason };
+    let patterns = neverPromotePatterns;
+    if (patterns === undefined) { const l = loadNeverPromote(); patterns = l.ok ? l.patterns : null; if (!l.ok) listReason = l.reason; }
+    const violations = [];
+    for (const t of await outgoingTexts(d)) {
+      const v = await voice(t); if (!v?.ok) { ids.add('voice-lint'); violations.push({ rule: 'voice-lint', match: '' }); }
+      const r = rulesGate(t, { neverPromotePatterns: patterns, claims: d.claims || [] });
+      for (const x of r.violations) { ids.add(x.rule); violations.push(x); }
+    }
+    return { ok: ids.size === 0, ruleIds: [...ids], violations, listReason };
+  } catch (e) { return { ok: false, ruleIds: ['check-error'], violations: [{ rule: 'check-error', match: '' }], listReason }; }
+}
+/** A failed final check: the item becomes `blocked` (never retried automatically), one log line, one alert with rule ids only (never the text). */
+export async function blockDraft(d, check, { stage, now = new Date(), notify = whatsapp, say = log } = {}) {
+  const rules = check.ruleIds.join(', ');
+  d.blockedFrom = d.status; d.status = STATUS.BLOCKED; d.blocked = { at: now.toISOString(), stage, rules: check.ruleIds };
+  if (d.ig && d.ig.status === 'queued') d.ig = { ...d.ig, status: 'blocked' };
+  say(`${d.id} BLOCKED before ${stage}: ${rules}${check.listReason ? ` (${check.listReason})` : ''}`);
+  const meta = d.postId ? ' A Facebook post for it is already scheduled at Meta and will still go out; cancel it in Meta if needed.' : '';
+  try { await notify(`🚫 ${CONFIG.page} social: ${d.id} blocked before ${stage}: ${rules}. Nothing was published or scheduled by this step.${meta} Fix the text or the list, then draft it again.`); } catch { /* the log line stands */ }
+}
 export function outlookSignature(fc) {
   if (!fc) return null;
   return (fc.forecasts || []).map((f) => `${f.region}:${f.direction || f.outlook}:${(f.drivers || []).map((x) => clean(x).toLowerCase()).join('|')}`).sort().join(';');
@@ -179,7 +221,7 @@ export function outlookIsFresh(fc, existingDrafts, now = new Date(), minDays = 1
   const last = prev.map((d) => new Date(d.createdAt || 0).getTime()).sort().pop() || 0;
   return now.getTime() - last >= minDays * 86400e3;
 }
-export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [], config = CONFIG }) {
+export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [], config = CONFIG, neverPromotePatterns }) {
   if (config.tourismStatsDrafts === false) return []; // switch: no drafts from the tourism statistics source (absent/true = on)
   const items = pickItems(briefs); const drafts = items.map(draftFromItem);
   if (drafts.length < CONFIG.maxDraftsPerWeek) { const lf = latestForecasts(briefs); const fc = draftFromForecast(lf); if (fc && outlookIsFresh(lf, existingDrafts, now)) drafts.push({ ...fc, signature: outlookSignature(lf) }); }
@@ -187,6 +229,7 @@ export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [
   for (const d of drafts) {
     const bad = brandGuard(d.text) || sourceGate(d); if (bad) { out.push({ ...d, rejected: bad }); continue; }
     const v = await voiceGate(d.text); if (!v.ok) { out.push({ ...d, rejected: 'voice-lint: ' + v.reason }); continue; }
+    const rc = rulesCheck(d.text, { claims: d.claims, neverPromotePatterns }); if (!rc.ok) { out.push({ ...d, rejected: 'rules: ' + rc.reason }); continue; }
     out.push({ ...d, createdAt: now.toISOString() });
   }
   // advisory score (never blocks, never changes status); fail-open
@@ -254,9 +297,11 @@ export function parseCommand(text) {
 }
 export function renderList(q) {
   const pend = q.drafts.filter((d) => d.status === STATUS.PENDING);
-  if (!pend.length) return '📭 No drafts waiting. Next drafting run: Monday 07:00.';
+  const blockedNote = q.drafts.filter((d) => d.status === STATUS.BLOCKED).map((d) => `\n🚫 *${d.id}* blocked: ${(d.blocked?.rules || []).join(', ') || 'unknown rule'} (never retried; the text is not shown)`).join('');
+  if (!pend.length) return `📭 No drafts waiting. Next drafting run: Monday 07:00.${blockedNote}`;
   const lines = [`📝 ${pend.length} draft(s) for ${CONFIG.page}:`];
   for (const d of pend) lines.push(`\n*${d.id}* (${d.kind}, ${d.sourceDate})\n${d.text.slice(0, 700)}${d.text.length > 700 ? '…' : ''}${d.score ? `\n_${renderScore(d.score)}_` : ''}${d.hookAdvice ? `\n_${d.hookAdvice}_` : ''}`);
+  if (blockedNote) lines.push(blockedNote);
   lines.push('\nReply: *bpa approve B1 B2* · *bpa skip B3* · *bpa edit B1: new text* · *bpa post B1 now* · *bpa stop* / *bpa start*');
   return lines.join('\n');
 }

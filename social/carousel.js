@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { CONFIG, brandGuard, sourceGate, voiceGate } from './lib.js';
+import { CONFIG, brandGuard, sourceGate, voiceGate, rulesCheck } from './lib.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 /** Instagram's long-standing carousel cap. The current docs say 20, but we plan 3-7 and refuse >10 on purpose. */
@@ -98,13 +98,14 @@ export function slidePlan(d) {
 }
 
 /** slidePlan + the same gates drafts pass (brandGuard, sourceGate, voice-lint on EVERY slide). Fails closed via `rejected`. */
-export async function planCarousel(d, { voice = voiceGate } = {}) {
+export async function planCarousel(d, { voice = voiceGate, rules = rulesCheck } = {}) {
   const bad = brandGuard(d.text) || sourceGate(d); if (bad) return { rejected: bad };
   const plan = slidePlan(d); if (plan.reason) return { rejected: plan.reason, tooLittle: true };
   for (const [i, s] of plan.slides.entries()) {
     const slideText = s.recap ? `${s.text}\n${s.recap}` : s.text;
     const b = brandGuard(slideText); if (b) return { rejected: `slide ${i + 1}: ${b}` };
     const v = await voice(slideText); if (!v.ok) return { rejected: `voice-lint (slide ${i + 1}): ${v.reason}` };
+    const rg = rules(slideText, { claims: d.claims }); if (!rg.ok) return { rejected: `rules (slide ${i + 1}): ${rg.reason}` };
   }
   const last = plan.slides.at(-1); if (!/Beyond Paradise Adventures/.test(last.text) || /https?:|www\./i.test(last.text)) return { rejected: 'last slide must carry the full brand and no link' };
   return { slides: plan.slides };

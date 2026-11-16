@@ -8,5 +8,7 @@ process.env.BPA_LOG_PATH = path.join(dir, 'social.log');
 process.env.BPA_STATE_DIR = path.join(dir, 'state');
 process.env.BPA_STOP_FLAG = path.join(dir, 'state', 'bpa-social-stop');
 process.env.STOP_ALL_FLAG_PATH = path.join(dir, 'state', 'stop-all.flag');
+process.env.BPA_NEVER_PROMOTE_FILE = path.join(dir, 'bpa-never-promote.json'); // a made-up list: tests never read the real ~/.matlai one
+fs.writeFileSync(process.env.BPA_NEVER_PROMOTE_FILE, JSON.stringify({ patterns: ['examplehotel'] }));
 process.env.BPA_QUIET = '1';
 export const TEST_ENV_DIR = dir;

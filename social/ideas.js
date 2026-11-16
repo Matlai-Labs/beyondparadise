@@ -29,34 +29,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { REFUSAL_PATTERNS, FIRST_PERSON_PATTERNS, refusalHits } from './rules-gate.js';
 
 export const BASE = 50, FRESH_MAX = 50, FRESH_DAYS = 730, MONTH_BONUS = 5;
 export const DEFAULT_REGIONS = ['tanzania', 'zanzibar'];
 const DAY = 86400000;
 
-/** Sea-condition observations are never proposed. Whole-word, case-insensitive. */
-export const REFUSAL_PATTERNS = {
-  seaweed: /\bseaweeds?\b/i,
-  seaState: /\bsea[- ]states?\b/i,
-  waves: /\bwaves?\b/i,
-  swimming: /\bswimming\b/i,
-  swimConditions: /\bswim(?:ming)? conditions?\b/i,
-};
-// "Seaweed farming in Paje, Jambiani and parts of Bwejuu" is a fact about those places, not a sea observation.
-const SEAWEED_FARMING = /\bseaweed farm(?:ing|s|ers?)?\b/i, SEAWEED_OK_PLACE = /\b(?:Paje|Jambiani|Bwejuu)\b/, SEAWEED_BAD_PLACE = /\b(?:Michamvi|Pingwe|Kae)\b/;
-/** First person about having been somewhere. */
-export const FIRST_PERSON_PATTERNS = [
-  /\b(?:we|i)\s+(?:stayed|visited|tried|went|saw|ate|dived|snorkell?ed|slept|tested|booked|spent|walked|swam|toured|drove|flew|took|loved|enjoyed)\b/i,
-  /\b(?:we|i)(?:['’]ve|\s+have)\s+(?:been|stayed|visited|tried|seen)\b/i,
-  /\bour\s+(?:visit|stay|trip|tour|experience|night|nights)\b/i,
-  /\b(?:we|i)\s+(?:were|was)\s+(?:at|in|there|staying)\b/i,
-];
-export function refusalHits(text) {
-  const t = String(text || '');
-  const hits = Object.entries(REFUSAL_PATTERNS).filter(([, re]) => re.test(t)).map(([n]) => n);
-  if (hits.includes('seaweed') && SEAWEED_FARMING.test(t) && SEAWEED_OK_PLACE.test(t) && !SEAWEED_BAD_PLACE.test(t)) hits.splice(hits.indexOf('seaweed'), 1);
-  return hits;
-}
+// The sea-condition, seaweed-farming and first-person constants live in rules-gate.js (one source of truth); re-exported here.
+export { REFUSAL_PATTERNS, FIRST_PERSON_PATTERNS, refusalHits };
 
 // Region slugs used in facts.json -> country group. East-africa / global / unknown slugs map to null and are skipped by default.
 const COUNTRY = {

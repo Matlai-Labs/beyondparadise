@@ -31,7 +31,7 @@ test('call site 2: the approval-server edit branch gates the new text before it 
 
 test('call site 3: carousel slides each pass the gate (default gate is voiceGate, called once per slide in the loop)', () => {
   const body = between(read('carousel.js'), 'export async function planCarousel', null);
-  assert.match(body, /\{ voice = voiceGate \} = \{\}/, 'planCarousel default must be the real voiceGate');
+  assert.match(body, /\{ voice = voiceGate(?:, rules = rulesCheck)? \} = \{\}/, 'planCarousel default must be the real voiceGate');
   assert.equal(count(body, /await voice\(/g), 1);
   assert.ok(body.slice(0, body.indexOf('await voice(')).includes('for ('), 'the gate call must sit inside the slide loop');
 });
