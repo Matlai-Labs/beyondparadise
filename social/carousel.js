@@ -31,7 +31,7 @@ export function slidePlan(d) {
   } else {
     for (const l of body) { if (/^This is what/.test(l)) continue; pool.push(l.split(';')[0].trim()); }
   }
-  const hookW = words(hookSrc); const hook = hookW.slice(0, HOOK_WORDS).join(' ');
+  const hookW = words(hookSrc); const hook = hookW.slice(0, HOOK_WORDS).join(' ').replace(/[,;:–—\s]+$/, ''); // never end the first slide on a dangling mark
   // if the hook was cut, the full statement still deserves a slide of its own
   if (hookW.length > HOOK_WORDS && hookW.length <= FACT_MAX_WORDS) pool.unshift(hookSrc);
   const seen = new Set(); const facts = [];

@@ -75,3 +75,21 @@ test('publish: refuses >10 and <2 images before any call; child ERROR aborts bef
   await assert.rejects(igPublishCarousel('c', ['https://x/1.png', 'https://x/2.png'], { post, igUserId: 'IG', sleep: async () => {}, status: async () => ({ status_code: 'ERROR', status: 'bad' }) }), /child container error/);
   assert.ok(!calls.includes('IG/media_publish')); assert.equal(calls.length, 1);
 });
+
+// --- hook slide never ends on dangling punctuation (B25 regression) ---
+const b25Text = (changed) => `Iberostar Selection Zanzibar — Zanzibar\n\nWhat changed: ${changed}\nWhy it matters: The resort sits in the far north of Zanzibar, near Matemwe, with views of Mnemba Island. Iberostar has announced the opening.\nWhat I'd do: Treat it as new and unscored. We score a lodge only after a paid stay of our own.\n\nHow we choose where to stay: https://beyondparadiseadventures.com/about/tim-score/\n\n— Tim, Beyond Paradise Adventures\n\n#BeyondParadiseAdventures #Zanzibar #Tanzania`;
+const b25 = (changed = "Iberostar Selection Zanzibar has opened on Muyuni Beach, the group's first hotel in Tanzania") => ({ id: 'B25', kind: 'signal', region: 'zanzibar', sourceDate: '2026-11-10', sourceCount: 2, text: b25Text(changed) });
+test('plan: hook slide does not end on dangling punctuation (B25)', async () => {
+  const { slides, rejected } = await planCarousel(b25(), { voice: okVoice }); assert.equal(rejected, undefined);
+  assert.doesNotMatch(slides[0].text, /[,;:–—\s]$/); assert.equal(slides[0].text, 'Iberostar Selection Zanzibar has opened on Muyuni Beach');
+});
+test('plan: hook cut ending on ; : – — is also stripped, cut position unchanged', async () => {
+  for (const p of [';', ':', ' –', ' —', ' ,']) {
+    const { slides } = await planCarousel(b25(`Iberostar Selection Zanzibar has opened on Muyuni Beach${p} the group's first hotel in Tanzania`), { voice: okVoice });
+    assert.equal(slides[0].text, 'Iberostar Selection Zanzibar has opened on Muyuni Beach', `p=${p}`);
+  }
+});
+test('plan: hook that ends with a full stop is unchanged', async () => {
+  const { slides } = await planCarousel(b25('The new resort opened on Muyuni Beach today. More rooms follow later this year'), { voice: okVoice });
+  assert.equal(slides[0].text, 'The new resort opened on Muyuni Beach today.');
+});
