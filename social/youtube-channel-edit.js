@@ -16,14 +16,14 @@ const NEW_SITE = 'https://beyondparadiseadventures.com/';
 const CANON = `Beyond Paradise Adventures: ${NEW_SITE}`;
 const INSTAGRAM = 'https://www.instagram.com/beyondparadiseadventures/';
 const OTHER_CHANNEL_LINE = {
-  asia: 'Africa channel: https://www.youtube.com/@BPA-Africa',
+  asia: 'Africa channel: https://www.youtube.com/@bpa-africa',
   africa: 'Asia channel: https://www.youtube.com/@beyondparadiseadventures',
 };
 const HOSTS = new Set(['www.googleapis.com', 'oauth2.googleapis.com']);
 
 // ---------------------------------------------------------------- text rules
 const ADDR = /(?:https?:\/\/|www\.|\b[a-z0-9-]+\.(?:com|net|org|io|co)\b)/i;
-const OLD_SITE = /(?<![\w.@-])(?:https?:\/\/)?(?:www\.)?beyondparadiseadventures\.net(?![a-z])(?:\/+(?![\w-]))?!?/gi;
+const OLD_SITE = /(?<![\w.@-])(?:https?:\/\/)?(?:www\.)?beyondparadiseadventures\.net(?![a-z])(?:\/+(?![\w-]))?!?(?:\.(?!\w))?/gi;
 const SHOP = /shop\.beyondparadiseadventures\.net/i;
 const strip = (l) => l.replace(/^[^\p{L}\p{N}]+/u, '');
 
@@ -39,8 +39,28 @@ function tidyLines(lines) {
 }
 const toLines = (text) => String(text ?? '').replace(/\r\n?/g, '\n').split('\n');
 
+const GLUED = /(?<=\S)(?=(?:Shop Travel Gear|Instagram|TikTok|Twitter|Website):)/g;
 function rule1(text) {
-  return text.replace(OLD_SITE, (m, offset, whole) => (whole[offset + m.length] === '/' ? NEW_SITE.slice(0, -1) : NEW_SITE));
+  return text.replace(OLD_SITE, (m, offset, whole) => (whole[offset + m.length] === '/' ? NEW_SITE.slice(0, -1) : NEW_SITE))
+    .replace(/(https:\/\/beyondparadiseadventures\.com\/)\.(?!\w)/g, '$1')
+    .replace(/([^\s:\/]):(?=https?:\/\/)/g, '$1: ');
+}
+// A lead-in line ending with ":" that the edit left with nothing under it is removed (only when something stood under it before).
+function dropOrphanLeads(before, after) {
+  let cur = after.slice();
+  for (;;) {
+    let p = 0; const drop = new Set();
+    cur.forEach((l, i) => {
+      const j = before.indexOf(l, p); if (j < 0) return; p = j + 1;
+      if (i > 0 && /:$/.test(l.trim()) && (i === cur.length - 1 || !cur[i + 1].trim()) && before[j + 1] !== undefined && before[j + 1].trim()) drop.add(i);
+    });
+    if (!drop.size) return cur;
+    cur = cur.filter((_, i) => !drop.has(i));
+  }
+}
+const EMOJI_ONLY = /^[\s\p{Extended_Pictographic}\uFE0F\u200D\u2190-\u21FF]+$/u;
+function dropEmptyPlaceholders(lines) {
+  return lines.filter((l, i) => !(i > 1 && l.trim() && EMOJI_ONLY.test(l) && /:$/.test(lines[i - 1].trim())));
 }
 function rule2(lines) {
   const del = new Set();
@@ -76,7 +96,7 @@ function sentences(text) {
   for (const m of text.matchAll(/.*?(?:[.!?]+(?![\p{L}\p{N}\/@])[^\p{L}\p{N}@#]*|$)/gsu)) if (m[0].length) out.push(m[0]);
   return out;
 }
-const isPromo = (s) => /beyondparadiseadventures\.com/i.test(s) || /\bget your tickets\b/i.test(s) || /\bhotel\s*&\s*flight bookings\b/i.test(s);
+const isPromo = (s) => (/beyondparadiseadventures\.com/i.test(s) && !/^\W*Website\s*:\s*\S+\s*$/i.test(s.trim())) || /\bget your tickets\b/i.test(s) || /\bhotel\s*&\s*flight bookings\b/i.test(s);
 function isLeadIn(s) {
   const t = s.trim(); if (!t) return true;
   if ((/:$/.test(t) || /\b(?:at|from|on|via)$/i.test(t)) && LEAD_WORDS.test(t)) return true;
@@ -92,7 +112,7 @@ function stripLeadIns(text) {
 }
 const hasWords = (s) => /[\p{L}\p{N}]/u.test(s);
 
-function rule6(lines) {
+function rule6(lines, lo = 1) {
   // units: soft-wrapped lines (next line starts lowercase, this one has no end punctuation) are one unit. Line 1 is never touched.
   const units = [];
   lines.forEach((l, i) => {
@@ -100,13 +120,13 @@ function rule6(lines) {
     if (i > 0 && t && /^[a-z]/.test(t) && !/^(?:https?:|www\.)/i.test(t)) {
       let k = units.length - 1, blanks = 0;
       while (k >= 0 && !units[k].text.trim()) { k--; blanks++; }
-      if (k >= 1 && !TERMINATED.test(units[k].text)) { units.length = k + 1; units[k].text += '\n'.repeat(blanks + 1) + l; return; }
+      if (k >= lo && !TERMINATED.test(units[k].text)) { units.length = k + 1; units[k].text += '\n'.repeat(blanks + 1) + l; return; }
     }
     units.push({ idx: i, text: l });
   });
   const out = [];
   const sweepUp = () => {
-    for (let k = out.length - 1; k >= 1; k--) {
+    for (let k = out.length - 1; k >= lo; k--) {
       if (!out[k].trim()) continue;
       const left = stripLeadIns(out[k]);
       if (left === out[k].trimEnd()) return;
@@ -116,7 +136,7 @@ function rule6(lines) {
     }
   };
   for (const u of units) {
-    if (u.idx === 0 || !u.text.trim()) { out.push(u.text); continue; }
+    if ((lo === 1 && u.idx === 0) || !u.text.trim()) { out.push(u.text); continue; }
     const ss = sentences(u.text);
     if (!ss.some(isPromo)) { out.push(u.text); continue; }
     let left = stripLeadIns(ss.filter((s) => !isPromo(s)).join(''));
@@ -125,52 +145,61 @@ function rule6(lines) {
   }
   return out.filter((l) => l !== '\u0000').join('\n').split('\n');
 }
-function promoWarnings(lines) {
+function promoWarnings(lines, lo = 1) {
   const w = [];
   lines.forEach((l, i) => {
-    if (i === 0 || l === CANON) return;
+    if (i < lo || l === CANON) return;
     const t = l.trim();
-    if (((/:$/.test(t) || /\b(?:at|from)$/i.test(t)) && /\b(?:plan|book|tickets?)\b/i.test(t)) ||
+    if (((/:$/.test(t) || /\b(?:at|from)$/i.test(t)) && /\b(?:plan|book|tickets?)\b/i.test(t) && !(/:$/.test(t) && (lines[i + 1] || '').trim())) ||
         /\bbook(?:ing)?s?\b[^.!?\n]*\b(?:tours?|flights?|tickets?|trips?|adventures?)\b/i.test(t) || /\b(?:our website|travel blog)\b/i.test(t)) w.push(`line ${i + 1}: promo wording left (cannot be removed cleanly): "${t.slice(0, 90)}"`);
   });
   return w;
 }
 
+function runRules(text, { channel, playlist }) {
+  const raw = String(text ?? '').replace(/\r\n?/g, '\n').replace(GLUED, '\n');
+  const original = tidyLines(raw.split('\n')).filter((l) => l.trim() !== CANON);
+  let lines = tidyLines(rule1(raw).split('\n')).filter((l) => l.trim() !== CANON);
+  lines = rule2(lines);
+  lines = lines.filter((l, i) => (!playlist && i === 0) || !/^[^\p{L}\p{N}]*(?:TikTok|Twitter)\s*:/iu.test(l)); // rule 3
+  lines = lines.map((l) => l.replace(/Instagram:\s*@beyondparadiseadventures\b/gi, `Instagram: ${INSTAGRAM}`)); // rule 4
+  if (!playlist) lines = rule5(lines, channel);
+  lines = rule6(lines, playlist ? 0 : 1);
+  lines = dropEmptyPlaceholders(tidyLines(lines));
+  lines = tidyLines(dropOrphanLeads(original, lines));
+  return lines;
+}
 export function fixDescription(text, { channel } = {}) {
   if (!OTHER_CHANNEL_LINE[channel]) throw new Error(`fixDescription: channel must be "asia" or "africa", got "${channel}"`);
-  let lines = tidyLines(rule1(String(text ?? '').replace(/\r\n?/g, '\n')).split('\n'));
-  lines = rule2(lines);
-  lines = lines.filter((l, i) => i === 0 || !/^[^\p{L}\p{N}]*(?:TikTok|Twitter)\s*:/iu.test(l)); // rule 3
-  lines = lines.map((l) => l.replace(/Instagram:\s*@beyondparadiseadventures\b/gi, `Instagram: ${INSTAGRAM}`)); // rule 4
-  lines = rule5(lines, channel);
-  lines = lines.filter((l) => l.trim() !== CANON);
-  lines = rule6(lines);
-  lines = tidyLines(lines);
+  let lines = runRules(text, { channel });
   if (lines.length === 0) lines = [CANON]; else lines.splice(1, 0, CANON); // rule 7
   lines = tidyLines(lines);
   return { text: lines.join('\n'), warnings: promoWarnings(lines) };
 }
 export function fixPlaylistDescription(text) {
-  const lines = tidyLines(rule2(tidyLines(rule1(String(text ?? '').replace(/\r\n?/g, '\n')).split('\n'))));
-  return { text: lines.join('\n'), warnings: [] };
+  if (!String(text ?? '').trim()) return { text: '', warnings: [] };
+  const lines = runRules(text, { playlist: true });
+  if (!lines.some((l) => l.includes(NEW_SITE))) lines.push(CANON);
+  return { text: lines.join('\n'), warnings: promoWarnings(lines, 0) };
 }
 export const keywordsString = (list) => list.map((k) => (/\s/.test(k) ? `"${k}"` : k)).join(' ');
 
 // ---------------------------------------------------------------- network guard + session
+function assertGoogleUrl(url) {
+  let u; try { u = new URL(String(url)); } catch { throw new Error(`refused request: bad address`); }
+  if (u.protocol !== 'https:') throw new Error(`refused request: host ${u.host} must use https`);
+  if (!HOSTS.has(u.hostname)) throw new Error(`refused request to host "${u.host}" (only www.googleapis.com and oauth2.googleapis.com are allowed)`);
+}
 export function guardedFetch(inner) {
-  return async (url, opts) => {
-    let u; try { u = new URL(String(url)); } catch { throw new Error(`refused request: bad address`); }
-    if (u.protocol !== 'https:') throw new Error(`refused request: host ${u.host} must use https`);
-    if (!HOSTS.has(u.hostname)) throw new Error(`refused request to host "${u.host}" (only www.googleapis.com and oauth2.googleapis.com are allowed)`);
-    return inner(url, opts);
-  };
+  return async (url, opts) => { assertGoogleUrl(url); return inner(url, opts); };
 }
 const qs = (o) => new URLSearchParams(o).toString();
-function makeSession(deps = {}, maxUnits = 3000) {
+export function makeSession(deps = {}, maxUnits = 3000) {
   const d = { ...deps, fetch: guardedFetch(deps.fetch || globalThis.fetch) };
   const s = { d, units: 0, maxUnits, tokens: {}, own: {} };
   s.token = async (ch) => (s.tokens[ch] ??= await accessToken(ch, d));
   s.call = async (method, url, ch, body) => {
+    assertGoogleUrl(url); // checked before anything is sent, not only inside the fetch wrapper
     const t = await s.token(ch);
     s.units += method === 'GET' ? 1 : 50;
     const r = await d.fetch(url, { method, headers: { Authorization: `Bearer ${t}`, ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
@@ -263,7 +292,7 @@ function ledgerAppend(file, line) {
 export async function buildPlan(deps = {}) {
   const s = makeSession(deps); const d = s.d;
   const texts = deps.texts || JSON.parse(readFileSync(new URL('./youtube-channel-texts.json', import.meta.url), 'utf8'));
-  const ops = [];
+  const ops = []; const skipped = [];
   for (const channel of Object.keys(CHANNELS)) {
     const info = await channelInfo(channel, d);
     if (!info || info.id !== CHANNELS[channel].id) throw new Error(`channel guard: the "${channel}" sign-in belongs to ${info?.id}, expected ${CHANNELS[channel].id}`);
@@ -272,17 +301,22 @@ export async function buildPlan(deps = {}) {
     const after = { description: texts[channel].description, keywords: keywordsString(texts[channel].keywords) };
     if (canon(before) !== canon(after)) ops.push({ kind: 'channel', channel, id: info.id, title: info.snippet?.title ?? bc.title ?? '', before, after });
     for (const v of await listVideos(channel, d)) {
-      const sn = v.snippet || {}; const fixed = fixDescription(sn.description ?? '', { channel });
+      const sn = v.snippet || {};
+      if (v.status?.privacyStatus === 'private') { skipped.push({ kind: 'video', channel, id: v.id, title: sn.title ?? '', reason: 'private' }); continue; }
+      const fixed = fixDescription(sn.description ?? '', { channel });
       const cat = channel === 'africa' && sn.categoryId === '22' ? '19' : sn.categoryId;
       const b = { description: sn.description ?? '', categoryId: sn.categoryId }; const a = { description: fixed.text, categoryId: cat };
       if (canon(a) !== canon(b)) ops.push({ kind: 'video', channel, id: v.id, title: sn.title ?? '', before: b, after: a, warnings: fixed.warnings });
     }
     for (const p of await listPlaylists(channel, d)) {
-      const b = { description: p.snippet?.description ?? '' }; const a = { description: fixPlaylistDescription(b.description).text };
-      if (canon(a) !== canon(b)) ops.push({ kind: 'playlist', channel, id: p.id, title: p.snippet?.title ?? '', before: b, after: a });
+      const fixed = fixPlaylistDescription(p.snippet?.description ?? '');
+      const b = { description: p.snippet?.description ?? '' }; const a = { description: fixed.text };
+      if (canon(a) !== canon(b)) ops.push({ kind: 'playlist', channel, id: p.id, title: p.snippet?.title ?? '', before: b, after: a, warnings: fixed.warnings });
     }
   }
-  return { createdAt: (deps.now || new Date()).toISOString(), ops };
+  const rank = (o) => ['video', 'playlist', 'channel'].indexOf(o.kind) * 2 + (o.channel === 'africa' ? 0 : 1);
+  ops.sort((x, y) => rank(x) - rank(y)); // stable: videos, playlists, channels last; Africa before Asia
+  return { createdAt: (deps.now || new Date()).toISOString(), ops, skipped };
 }
 
 function lineDiff(a, b) {
@@ -302,6 +336,8 @@ export function planMarkdown(plan) {
   const md = [`# YouTube channel edit plan (${plan.createdAt})`, '', '| kind | channel | ops | with warnings |', '|---|---|---|---|'];
   for (const k of Object.keys(rows).sort()) { const [kind, ch] = k.split('|'); md.push(`| ${kind} | ${ch} | ${rows[k].ops} | ${rows[k].warn} |`); }
   md.push(`| total | | ${plan.ops.length} | ${plan.ops.filter((o) => o.warnings?.length).length} |`, '');
+  const sk = plan.skipped || [];
+  if (sk.length) { md.push(`## skipped: private (${sk.length})`, ...sk.map((o) => `- ${o.kind} ${o.channel} ${o.id} — ${o.title}`), ''); }
   for (const o of plan.ops) {
     md.push(`## ${o.kind} ${o.channel} ${o.id} — ${o.title}`, '```diff');
     for (const k of Object.keys(o.after)) md.push(...(o.before[k] === o.after[k] ? [] : lineDiff(`${k === 'description' ? '' : k + ': '}${o.before[k] ?? ''}`.replace(/^(?=.)/, ''), `${k === 'description' ? '' : k + ': '}${o.after[k] ?? ''}`)));
@@ -347,19 +383,24 @@ export async function applyPlan(plan, { only, maxUnits = 3000, ledgerDir } = {},
 // ---------------------------------------------------------------- undo
 export async function undoLedger(ledgerFile, { only, maxUnits = 3000 } = {}, deps = {}) {
   const lines = readFileSync(ledgerFile, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  // Every write attempt starts with a pending line, so every pending line is restorable (done, failed, mismatch or nothing after it),
+  // unless a later undone line already points at it.
   const undone = new Set(lines.filter((l) => l.status === 'undone').map((l) => `${l.id}|${l.of}`));
-  const todo = lines.filter((l) => l.status === 'done' && !undone.has(`${l.id}|${l.ts}`) && (!only || only.includes(l.id))).reverse();
+  const todo = lines.filter((l) => l.status === 'pending' && !undone.has(`${l.id}|${l.ts}`) && (!only || only.includes(l.id))).reverse();
   const s = makeSession(deps, maxUnits); const out = deps.out || (() => {});
-  const sum = { undone: 0, 'changed-since': 0, units: 0, ledger: ledgerFile, stoppedReason: null };
+  const sum = { undone: 0, 'changed-since': 0, 'not-applied': 0, units: 0, ledger: ledgerFile, stoppedReason: null };
   for (const e of todo) {
     const op = { kind: e.kind, channel: e.channel, id: e.id };
     await s.ownChannelId(op.channel);
     const live = await readLive(s, op); const sent = partOf(op.kind, live); const cur = fieldsOf(op.kind, sent);
-    if (Object.keys(e.planned).some((k) => cur[k] !== e.planned[k])) { sum['changed-since']++; out(`skipped ${e.kind} ${e.id}: changed-since (live text no longer equals what this tool wrote)`); continue; }
+    const keys = Object.keys(e.planned); const bf = fieldsOf(op.kind, e.before);
+    if (keys.every((k) => cur[k] === bf[k])) { sum['not-applied']++; out(`${e.kind} ${e.id}: not-applied (live text already equals the before text, nothing written)`); continue; }
+    if (!keys.every((k) => cur[k] === e.planned[k])) { sum['changed-since']++; out(`skipped ${e.kind} ${e.id}: changed-since (live text equals neither the before text nor what this tool planned)`); continue; }
     if (s.units + 50 > s.maxUnits) { sum.stoppedReason = `stopped before undoing ${e.kind} ${e.id}: the next write would pass maxUnits (${s.maxUnits})`; break; }
-    const restore = {}; const bf = fieldsOf(op.kind, e.before); for (const k of Object.keys(e.planned)) restore[k] = bf[k];
+    const restore = {}; for (const k of keys) restore[k] = bf[k];
     const merged = withFields(op.kind, sent, restore);
-    const after = (await s.call('PUT', putUrl(op.kind), op.channel, bodyOf(op.kind, op.kind === 'channel' ? live.id : op.id, merged)), await readLive(s, op));
+    await s.call('PUT', putUrl(op.kind), op.channel, bodyOf(op.kind, op.kind === 'channel' ? live.id : op.id, merged));
+    const after = await readLive(s, op);
     const diffs = differences(op.kind, merged, restore, live, after);
     if (diffs.length) { ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'mismatch', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, differences: diffs }); throw new Error(`undo read-back mismatch for ${e.kind} ${e.id}: ${diffs.join('; ')}. Run stopped.`); }
     ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'undone', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, after: partOf(op.kind, after), verified: true });
@@ -390,7 +431,7 @@ export async function main(argv, deps = {}) {
     }
     const lf = val('--ledger'); if (!lf) { err(USAGE); return 2; }
     const r = await undoLedger(lf, { only: val('--only')?.split(',').filter(Boolean) }, { ...deps, out });
-    out(`undone ${r.undone} / changed-since ${r['changed-since']}; units ${r.units}; ledger ${r.ledger}${r.stoppedReason ? `\n${r.stoppedReason}` : ''}`); return 0;
+    out(`undone ${r.undone} / not-applied ${r['not-applied']} / changed-since ${r['changed-since']}; units ${r.units}; ledger ${r.ledger}${r.stoppedReason ? `\n${r.stoppedReason}` : ''}`); return 0;
   } catch (e) { err(`error: ${e.message}`); if (e.summary) err(`so far: done ${e.summary.done} / stale ${e.summary.stale} / failed ${e.summary.failed}; ledger ${e.summary.ledger}`); return 1; }
 }
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) main(process.argv.slice(2)).then((c) => { process.exitCode = c; });

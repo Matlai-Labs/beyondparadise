@@ -1,6 +1,6 @@
 import { test } from 'node:test'; import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync, readdirSync, existsSync, rmSync, statSync } from 'node:fs'; import { tmpdir, homedir } from 'node:os'; import { join } from 'node:path';
-import { fixDescription, fixPlaylistDescription, keywordsString, buildPlan, applyPlan, undoLedger, guardedFetch, main } from './youtube-channel-edit.js';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, rmSync, statSync } from 'node:fs'; import { tmpdir, homedir } from 'node:os'; import { join } from 'node:path';
+import { fixDescription, fixPlaylistDescription, keywordsString, buildPlan, applyPlan, undoLedger, guardedFetch, makeSession, planMarkdown, main } from './youtube-channel-edit.js';
 import { CHANNELS } from './youtube-login.js';
 
 const U = 'https://beyondparadiseadventures.com/';
@@ -8,12 +8,11 @@ const CANON = `Beyond Paradise Adventures: ${U}`;
 const fa = (t, channel = 'asia') => fixDescription(t, { channel });
 
 // ---------- text rules ----------
-test('rule 1: every old address form becomes the new one', () => {
-  for (const f of ['www.beyondparadiseadventures.net', 'beyondparadiseadventures.net', 'http://www.beyondparadiseadventures.net', 'https://beyondparadiseadventures.net/', 'https://www.beyondparadiseadventures.net/', 'www.beyondparadiseadventures.net!']) {
-    assert.equal(fixPlaylistDescription(`See ${f} today`).text, `See ${U} today`, f);
+test('rule 1: every old address form becomes the new one (also a trailing full stop is dropped, at: gets a space)', () => {
+  for (const f of ['www.beyondparadiseadventures.net', 'beyondparadiseadventures.net', 'http://www.beyondparadiseadventures.net', 'https://beyondparadiseadventures.net/', 'https://www.beyondparadiseadventures.net/', 'www.beyondparadiseadventures.net!', 'beyondparadiseadventures.net.', 'https://beyondparadiseadventures.com/.']) {
+    assert.equal(fixPlaylistDescription(`Title\nWebsite: ${f}`).text, `Title\nWebsite: ${U}`, f);
   }
-  assert.equal(fixPlaylistDescription('Visit www.beyondparadiseadventures.net/ now').text, `Visit ${U} now`);
-  assert.equal(fixPlaylistDescription('x http://beyondparadiseadventures.net! y').text, `x ${U} y`);
+  assert.equal(fixPlaylistDescription(`Title\nWebsite:www.beyondparadiseadventures.net`).text, `Title\nWebsite: ${U}`);
   assert.equal(fa('T\nSee www.beyondparadiseadventures.net').text.includes('.net'), false);
 });
 test('rule 2: shop line and its gear lead-in go; other lines stay; lead-in with another address stays', () => {
@@ -22,7 +21,7 @@ test('rule 2: shop line and its gear lead-in go; other lines stay; lead-in with 
   const r2 = fa('T\nSee https://example.org gear & shop:\nhttps://shop.beyondparadiseadventures.net/\nAfter');
   assert.ok(r2.text.includes('example.org')); assert.equal(r2.text.includes('shop.'), false);
   assert.equal(fa('T\n👉www.shop.beyondparadiseadventures.net\nZ').text.includes('shop.'), false);
-  assert.equal(fixPlaylistDescription('A\n🛒 Check out our curated travel gear:https://shop.beyondparadiseadventures.net/\nB').text, 'A\nB');
+  assert.equal(fixPlaylistDescription('A\n🛒 Check out our curated travel gear:https://shop.beyondparadiseadventures.net/\nB').text, `A\nB\n${CANON}`);
 });
 test('rule 3: TikTok and Twitter lines are deleted, with or without emoji', () => {
   const r = fa('T\nInstagram: @beyondparadiseadventures\nTikTok: @beyondparadiseadventures\n🐦 Twitter: @beyondparadiseA\nEnd');
@@ -33,7 +32,7 @@ test('rule 4: Instagram handle becomes the profile address, emoji kept', () => {
 });
 test('rule 5: other-channel block becomes one line, lead-in removed (asia and africa)', () => {
   const a = fa('T\n🎥 Subscribe to both our YouTube channels for travel videos across the globe:\n🌍 Africa Channel: BPA-Africa\n🌏 Asia Channel: BPA-Asia\n🔔 Don’t forget to like!', 'asia');
-  assert.equal(a.text, `T\n${CANON}\nAfrica channel: https://www.youtube.com/@BPA-Africa\n🔔 Don’t forget to like!`);
+  assert.equal(a.text, `T\n${CANON}\nAfrica channel: https://www.youtube.com/@bpa-africa\n🔔 Don’t forget to like!`);
   const b = fa('T\n▶️ Follow also our channel specialized in Traveling to Asia:\n👉 https://www.youtube.com/channel/UCkWgpqnOXI6RRxZzjFayajg', 'africa');
   assert.equal(b.text, `T\n${CANON}\nAsia channel: https://www.youtube.com/@beyondparadiseadventures`);
   const c = fa('T\n🎥 Subscribe to our YouTube channels\nAfrica & global travel: BPA-Africa\nAsia: BPA-Asia', 'africa');
@@ -82,12 +81,39 @@ test('idempotent and invariants over a messy synthetic description', () => {
     assert.equal(once.text.split('\n')[1], CANON);
   }
 });
-test('playlist: rules 1 and 2 plus tidy only; other promo wording stays; idempotent', () => {
-  const t = 'Playlist\n\n📍 Plan your next adventure with us at www.beyondparadiseadventures.net ✈️\n\nTikTok: @x\n';
+test('playlist: same rules as videos except line 2; canon line appended last when no site address is left', () => {
+  const t = 'Playlist\n\n📍 Plan your next adventure with us at www.beyondparadiseadventures.net ✈️\n\nInstagram: @beyondparadiseadventures\nTikTok: @x\nTwitter: @y\n\n#tag';
   const r = fixPlaylistDescription(t);
-  assert.equal(r.text, `Playlist\n\n📍 Plan your next adventure with us at ${U} ✈️\n\nTikTok: @x`);
+  assert.equal(r.text, `Playlist\n\nInstagram: ${'https://www.instagram.com/beyondparadiseadventures/'}\n\n#tag\n${CANON}`);
   assert.equal(fixPlaylistDescription(r.text).text, r.text);
-  assert.equal(fixPlaylistDescription('').text, '');
+  assert.deepEqual(r.warnings, []);
+});
+test('playlist: an address that is kept (Website line) means no canon line is added; empty stays empty', () => {
+  assert.equal(fixPlaylistDescription('Website: www.beyondparadiseadventures.net').text, `Website: ${U}`);
+  assert.equal(fixPlaylistDescription('').text, ''); assert.equal(fixPlaylistDescription('  \n ').text, '');
+});
+test('playlist: promo sentences of every real shape are removed', () => {
+  for (const line of ['📍 Book your next adventure with us at www.beyondparadiseadventures.net – your go-to platform for flights, tours, and unforgettable experiences!', 'Follow @beyondparadiseadventures for more travel inspiration and visit www.beyondparadiseadventures.net to book your dream safari experience!', '🚀 Plan your dream island escape now at www.beyondparadiseadventures.net ✈️🏝️', '🔗 Plan your trip and read our full travel guides at:www.beyondparadiseadventures.net', 'For more luxury travel and spa recommendations, visit our website: beyondparadiseadventures.net.']) {
+    assert.equal(fixPlaylistDescription(`Title\n\n${line}\n\n#t`).text, `Title\n\n#t\n${CANON}`, line);
+  }
+  const r = fixPlaylistDescription('Title\n🌐 Plan your trip, book flights & hotels, and read our travel blog at:\nwww.beyondparadiseadventures.net\n#t');
+  assert.equal(r.text, `Title\n#t\n${CANON}`);
+});
+test('playlist: the run-together Africa line is split, keeps Website and Instagram link, loses shop, TikTok, Twitter', () => {
+  const t = 'Namibia\n\nWebsite: www.beyondparadiseadventures.netShop Travel Gear: shop.beyondparadiseadventures.netInstagram: @beyondparadiseadventuresTikTok: @beyondparadiseadventuresTwitter: @beyondparadiseA\n\n🧭 For more African journeys, subscribe!\n\n#x';
+  const r = fixPlaylistDescription(t);
+  assert.equal(r.text, `Namibia\n\nWebsite: ${U}\nInstagram: https://www.instagram.com/beyondparadiseadventures/\n\n🧭 For more African journeys, subscribe!\n\n#x`);
+  assert.equal(fixPlaylistDescription(r.text).text, r.text);
+});
+test('orphan lead-in: a line ending with : left with nothing under it is removed, but only when the edit removed what stood under it', () => {
+  const r = fa('T\n\n📌 Check out our website for more:\n👉 www.beyondparadiseadventures.net\n\nAbout:\n\nBody');
+  assert.equal(r.text, `T\n${CANON}\n\nAbout:\n\nBody`);
+  const p = fixPlaylistDescription('T\n\nSee more:\nTikTok: @x\n\nEnd');
+  assert.equal(p.text, `T\n\nEnd\n${CANON}`);
+});
+test('leftover: an emoji-only placeholder under a lead-in goes (video EHT9 shape)', () => {
+  const r = fa('T\n\n📌 Website:\n👉 www.beyondparadiseadventures.net\n\n📺 Watch next:\n➡️ \n\n💬 Follow us!');
+  assert.equal(r.text, `T\n${CANON}\n\n💬 Follow us!`);
 });
 test('keywordsString quotes phrases with spaces only', () => {
   assert.equal(keywordsString(['Beyond Paradise Adventures', 'Hanoi', 'Ha Long Bay']), '"Beyond Paradise Adventures" Hanoi "Ha Long Bay"');
@@ -111,6 +137,9 @@ test('real saved data: every description passes the invariants and no rule warns
       const r = fixPlaylistDescription(p.snippet.description);
       assert.equal(fixPlaylistDescription(r.text).text, r.text, `pl idem ${p.id}`);
       assert.ok(!r.text.includes('.net') && !r.text.includes('shop.'), `pl ${p.id}`);
+      assert.ok(!/^\W*(TikTok|Twitter):/im.test(r.text) && !/Instagram:\s*@/.test(r.text), `pl social ${p.id}`);
+      if (p.snippet.description.trim()) assert.ok(r.text.includes(U), `pl site ${p.id}`); else assert.equal(r.text, '');
+      assert.deepEqual(r.warnings, [], `pl warn ${p.id}`);
     }
   }
   assert.deepEqual(warned, []);
@@ -137,6 +166,7 @@ function world(opts = {}) {
     if (u.host === 'oauth2.googleapis.com') { const b = new URLSearchParams(o.body); const who = b.get('refresh_token') === refresh.asia ? 'asia' : 'africa'; return json({ access_token: 'AT-' + who }); }
     const owner = chanOfToken(o.headers.Authorization); const q = u.searchParams; const p = u.pathname;
     if (method === 'GET') {
+      if (state.failReadOnce) { state.failReadOnce = false; return json({ error: { message: 'read broke' } }, 500); }
       if (p.endsWith('/channels')) return json({ items: [{ id: state.channels[owner].id, brandingSettings: structuredClone(state.channels[owner].brandingSettings), contentDetails: { relatedPlaylists: { uploads: 'UP' } } }] });
       if (p.endsWith('/videos')) return json({ items: q.get('id').split(',').filter((i) => state.videos[i]).map((i) => structuredClone(state.videos[i])) });
       if (p.endsWith('/playlists')) return json({ items: q.get('id') ? [structuredClone(state.playlists[q.get('id')])].filter(Boolean) : Object.values(state.playlists).filter((x) => x.snippet.channelId === state.channels[owner].id).map((x) => structuredClone(x)) });
@@ -146,9 +176,13 @@ function world(opts = {}) {
       state.events.push('PUT'); if (state.onPut) state.onPut(url, o);
       const body = JSON.parse(o.body); state.puts = (state.puts || []).concat([{ url, body }]);
       if (state.failPut) return json({ error: { message: 'boom' } }, 500);
-      if (p.endsWith('/videos')) { const cur = state.videos[body.id]; const sn = { publishedAt: cur.snippet.publishedAt, channelId: cur.snippet.channelId, ...body.snippet }; if (state.corruptPut) sn.title = 'CHANGED'; cur.snippet = sn; return json(cur); }
-      if (p.endsWith('/playlists')) { const cur = state.playlists[body.id]; cur.snippet = { channelId: cur.snippet.channelId, ...body.snippet }; return json(cur); }
-      if (p.endsWith('/channels')) { state.channels[owner].brandingSettings = body.brandingSettings; return json(state.channels[owner]); }
+      let res;
+      if (p.endsWith('/videos')) { const cur = state.videos[body.id]; const sn = { publishedAt: cur.snippet.publishedAt, channelId: cur.snippet.channelId, ...body.snippet }; if (state.corruptPut) sn.title = 'CHANGED'; cur.snippet = sn; res = cur; }
+      if (p.endsWith('/playlists')) { const cur = state.playlists[body.id]; cur.snippet = { channelId: cur.snippet.channelId, ...body.snippet }; res = cur; }
+      if (p.endsWith('/channels')) { state.channels[owner].brandingSettings = body.brandingSettings; res = state.channels[owner]; }
+      if (state.afterPut) state.afterPut(p, owner);
+      if (state.dieAfterPut) throw new Error('network went away');
+      return json(res);
     }
     return json({}, 404);
   };
@@ -162,22 +196,25 @@ const oneOp = (w, id = 'v1', chan = 'asia') => {
 };
 const readLedger = (w) => { const f = readdirSync(w.ledgerDir).map((n) => join(w.ledgerDir, n)); return { file: f[0], lines: readFileSync(f[0], 'utf8').trim().split('\n').map((l) => JSON.parse(l)) }; };
 
-test('buildPlan: one op per changed object, none for unchanged ones, africa category 22 -> 19', async () => {
+test('buildPlan: one op per changed object, none for unchanged ones, africa category 22 -> 19, order videos/playlists/channels, Africa first', async () => {
   const w = world();
   try {
-    // v2 already fixed, asia channel already matches the texts
+    // v2 already fixed, asia channel already matches the texts, v3 is private
     w.state.videos.v2.snippet.description = fa(w.state.videos.v2.snippet.description, 'asia').text;
+    w.state.videos.v3 = { ...structuredClone(w.state.videos.v1), id: 'v3' }; w.state.videos.v3.status.privacyStatus = 'private';
     const texts = JSON.parse(readFileSync(new URL('./youtube-channel-texts.json', import.meta.url), 'utf8'));
     w.state.channels.asia.brandingSettings.channel.description = texts.asia.description; w.state.channels.asia.brandingSettings.channel.keywords = keywordsString(texts.asia.keywords);
     const plan = await buildPlan(w.deps);
     assert.equal(plan.createdAt, '2026-11-16T10:00:00.000Z');
-    const ids = plan.ops.map((o) => `${o.kind}:${o.channel}:${o.id}`).sort();
-    assert.deepEqual(ids, [`channel:africa:${CHANNELS.africa.id}`, 'playlist:asia:p1', 'video:africa:a1', 'video:asia:v1'].sort());
+    const ids = plan.ops.map((o) => `${o.kind}:${o.channel}:${o.id}`);
+    assert.deepEqual(ids, ['video:africa:a1', 'video:asia:v1', 'playlist:asia:p1', `channel:africa:${CHANNELS.africa.id}`]);
+    assert.deepEqual(plan.skipped.map((o) => `${o.id}:${o.reason}`), ['v3:private']);
     const a1 = plan.ops.find((o) => o.id === 'a1'); assert.equal(a1.before.categoryId, '22'); assert.equal(a1.after.categoryId, '19');
     assert.equal(plan.ops.find((o) => o.id === 'v1').after.categoryId, '19');
-    assert.equal(plan.ops.find((o) => o.kind === 'playlist').after.description, 'x');
+    assert.equal(plan.ops.find((o) => o.kind === 'playlist').after.description, `x\n${CANON}`);
     assert.equal(putCount(w), 0);
     const ch = plan.ops.find((o) => o.kind === 'channel'); assert.equal(ch.after.keywords, '"Beyond Paradise Adventures" "East Africa travel" Zanzibar "Stone Town" "Africa travel" "Rwanda gorilla trekking"');
+    const md = planMarkdown(plan); assert.match(md, /## skipped: private \(1\)\n- video asia v3/); assert.ok(md.lastIndexOf('## channel') > md.lastIndexOf('## playlist') && md.lastIndexOf('## playlist') > md.lastIndexOf('## video'));
   } finally { w.clean(); }
 });
 
@@ -321,3 +358,103 @@ test('CLI plan writes plan.json and a compact plan.md with a summary table', asy
     assert.equal(putCount(w), 0);
   } finally { w.clean(); }
 });
+
+// ---------- fix round: undo of unfinished writes ----------
+const landed = (w, id = 'v1') => oneOp(w, id);
+test('undo: a pending-only ledger (run died after the write landed) is restored', async () => {
+  const w = world();
+  try {
+    const op = landed(w); const orig = structuredClone(w.state.videos.v1.snippet);
+    const before = partOfVideo(orig);
+    w.state.videos.v1.snippet.description = op.after.description; // the write landed
+    const file = writeLedger(w, [{ ts: 't1', status: 'pending', kind: 'video', channel: 'asia', id: 'v1', before, planned: op.after }]);
+    const r = await undoLedger(file, {}, w.deps);
+    assert.equal(r.undone, 1); assert.equal(w.state.videos.v1.snippet.description, orig.description); assert.deepEqual(w.state.videos.v1.snippet.tags, orig.tags);
+    assert.equal(putCount(w), 1);
+  } finally { w.clean(); }
+});
+test('undo after a mismatch run restores the text', async () => {
+  const w = world(); w.state.corruptPut = true;
+  try {
+    const orig = w.state.videos.v1.snippet.description;
+    await assert.rejects(() => applyPlan({ ops: [oneOp(w)] }, { ledgerDir: w.ledgerDir }, w.deps), /mismatch/i);
+    w.state.corruptPut = false;
+    const r = await undoLedger(readLedger(w).file, {}, w.deps);
+    assert.equal(r.undone, 1); assert.equal(w.state.videos.v1.snippet.description, orig);
+  } finally { w.clean(); }
+});
+test('undo after a failed read-back (write landed, then the read failed) restores the text', async () => {
+  const w = world(); w.state.afterPut = () => { w.state.failReadOnce = true; };
+  try {
+    const orig = w.state.videos.v1.snippet.description;
+    await assert.rejects(() => applyPlan({ ops: [oneOp(w)] }, { ledgerDir: w.ledgerDir }, w.deps), /read broke|500/);
+    assert.deepEqual(readLedger(w).lines.map((l) => l.status), ['pending', 'failed']); assert.equal(w.state.videos.v1.snippet.description, 'NEW v1');
+    w.state.afterPut = null;
+    const r = await undoLedger(readLedger(w).file, {}, w.deps);
+    assert.equal(r.undone, 1); assert.equal(w.state.videos.v1.snippet.description, orig);
+  } finally { w.clean(); }
+});
+test('undo where the write never landed: not-applied, and undo issues no write', async () => {
+  const w = world(); w.state.failPut = true;
+  try {
+    await assert.rejects(() => applyPlan({ ops: [oneOp(w)] }, { ledgerDir: w.ledgerDir }, w.deps), /500|boom/);
+    const before = putCount(w);
+    const r = await undoLedger(readLedger(w).file, {}, w.deps);
+    assert.equal(r['not-applied'], 1); assert.equal(r.undone, 0); assert.equal(putCount(w), before);
+  } finally { w.clean(); }
+});
+test('undo of an entry whose live text is neither before nor planned: changed-since, no write', async () => {
+  const w = world();
+  try {
+    await assert.rejects(() => { w.state.failPut = false; w.state.dieAfterPut = true; return applyPlan({ ops: [oneOp(w)] }, { ledgerDir: w.ledgerDir }, w.deps); }, /network/);
+    w.state.dieAfterPut = false; w.state.videos.v1.snippet.description = 'hand edit';
+    const n = putCount(w); const r = await undoLedger(readLedger(w).file, {}, w.deps);
+    assert.equal(r['changed-since'], 1); assert.equal(putCount(w), n);
+  } finally { w.clean(); }
+});
+test('undo honours the channel guard: wrong sign-in is refused with no write', async () => {
+  const w = world();
+  try {
+    await applyPlan({ ops: [oneOp(w)] }, { ledgerDir: w.ledgerDir }, w.deps);
+    const n = putCount(w); w.state.tokenOwner.asia = 'africa';
+    await assert.rejects(() => undoLedger(readLedger(w).file, {}, w.deps), /channel/i);
+    assert.equal(putCount(w), n);
+  } finally { w.clean(); }
+});
+
+// ---------- fix round: guard tests ----------
+test('session level: a non-Google address throws and nothing is sent to it', async () => {
+  const w = world();
+  try {
+    const s = makeSession(w.deps);
+    for (const url of ['https://evil.example.com/steal', 'http://www.googleapis.com/youtube/v3/videos', 'https://www.googleapis.com.evil.com/x']) await assert.rejects(() => s.call('GET', url, 'asia'), /host|refused/i);
+    assert.equal(w.state.calls.length, 0);
+  } finally { w.clean(); }
+});
+test('channel read-back: a changed country or banner after the write gives mismatch and stops the run', async () => {
+  for (const mutate of [(b) => { b.channel.country = 'XX'; }, (b) => { b.image.bannerExternalUrl = 'https://other/x'; }, (b) => { b.channel.title = 'Renamed'; }]) {
+    const w = world(); w.state.afterPut = (p, owner) => { if (p.endsWith('/channels')) mutate(w.state.channels[owner].brandingSettings); };
+    try {
+      const ch = { kind: 'channel', channel: 'asia', id: CHANNELS.asia.id, title: 'x', before: { description: 'old', keywords: 'old' }, after: { description: 'N', keywords: 'k' } };
+      await assert.rejects(() => applyPlan({ ops: [ch, oneOp(w)] }, { ledgerDir: w.ledgerDir }, w.deps), /mismatch/i);
+      assert.equal(putCount(w), 1); assert.deepEqual(readLedger(w).lines.map((l) => l.status), ['pending', 'mismatch']);
+    } finally { w.clean(); }
+  }
+});
+test('plan-level whitelist: channel kind may change only description and keywords; an after key without before is refused', async () => {
+  const w = world();
+  try {
+    const base = { kind: 'channel', channel: 'asia', id: CHANNELS.asia.id, title: 'x', before: { description: 'old', keywords: 'old' }, after: { description: 'N', keywords: 'k' } };
+    for (const [side, key] of [['after', 'country'], ['after', 'title'], ['before', 'defaultLanguage']]) {
+      const op = structuredClone(base); op[side][key] = 'x';
+      await assert.rejects(() => applyPlan({ ops: [op] }, { ledgerDir: w.ledgerDir }, w.deps), new RegExp(key));
+    }
+    const noBefore = structuredClone(base); delete noBefore.before.keywords;
+    await assert.rejects(() => applyPlan({ ops: [noBefore] }, { ledgerDir: w.ledgerDir }, w.deps), /no before/);
+    const wrongId = structuredClone(base); wrongId.id = CHANNELS.africa.id;
+    await assert.rejects(() => applyPlan({ ops: [wrongId] }, { ledgerDir: w.ledgerDir }, w.deps), /not the asia/);
+    assert.equal(w.state.calls.length, 0);
+  } finally { w.clean(); }
+});
+function partOfVideo(sn) { const o = {}; for (const k of ['title', 'description', 'tags', 'categoryId', 'defaultLanguage', 'defaultAudioLanguage']) if (k in sn) o[k] = sn[k]; return o; }
+function writeLedger(w, lines) { mkdirSync(w.ledgerDir, { recursive: true }); const f = join(w.ledgerDir, 'changes-test.jsonl'); writeFileSync(f, lines.map((l) => JSON.stringify(l)).join('\n') + '\n'); return f; }
