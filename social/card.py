@@ -35,7 +35,7 @@ def render_slides(spec, outdir):
                 out.append(cur)
             return out
         role = s.get("role"); counter = s.get("counter", f"{i+1}/{n}")
-        d.text((M, 96), (spec.get("label", "") if role != "save" else "Save this").upper(), font=font(SANS_B, 30), fill=GOLD)
+        d.text((M, 96), (s.get("label") or spec.get("label", "") if role != "save" else "Save this").upper(), font=font(SANS_B, 30), fill=GOLD)
         f_c = font(SANS_B, 30); cw = d.textlength(counter, font=f_c); d.text((W - M - cw, 96), counter, font=f_c, fill=MUTED)
         d.line((M, 150, W - M, 150), fill=GOLD, width=2)
         if role == "hook": fonts, start, lim = SERIF_I, 112, 6
