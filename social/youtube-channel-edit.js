@@ -2,6 +2,7 @@
 // Text clean-up + guarded write tool for the two Beyond Paradise Adventures YouTube channels.
 // - Pure text functions (fixDescription, fixPlaylistDescription, keywordsString): no I/O.
 // - buildPlan / `plan`: reads the live channels (GET only) and writes a plan. Nothing is written to YouTube.
+//   With `plan --decisions <file>` the plan is built ONLY from explicit decisions (titles, playlist privacy, new playlists); the text rules are not run.
 // - applyPlan / `apply`: the ONLY code path that writes. Guarded: channel check, stale check, field whitelist,
 //   ledger line BEFORE each write, full-part PUT, read-back verification, quota cap, Google-hosts-only.
 // - undoLedger / `undo`: restores the "before" values from a ledger file, same guards.
@@ -204,7 +205,7 @@ export function makeSession(deps = {}, maxUnits = 3000) {
     s.units += method === 'GET' ? 1 : 50;
     const r = await d.fetch(url, { method, headers: { Authorization: `Bearer ${t}`, ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(`HTTP ${r.status} ${j?.error?.message || j?.error || ''} (${new URL(url).pathname})`.trim());
+    if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status} ${j?.error?.message || j?.error || ''} (${new URL(url).pathname})`.trim()), { http: r.status });
     return j;
   };
   s.ownChannelId = async (ch) => {
@@ -217,7 +218,14 @@ export function makeSession(deps = {}, maxUnits = 3000) {
 
 // ---------------------------------------------------------------- parts
 const SNIPPET_KEYS = { video: ['title', 'description', 'tags', 'categoryId', 'defaultLanguage', 'defaultAudioLanguage'], playlist: ['title', 'description', 'tags', 'defaultLanguage'] };
-const ALLOWED = { video: ['description', 'categoryId'], playlist: ['description'], channel: ['description', 'keywords'] };
+// The ONE place that lists what may be written, per kind. A video's privacy and any delete are deliberately absent.
+// 'playlist-create' is the pseudo-kind of a new playlist (playlists.insert); its items are playlistItems.insert.
+export const ALLOWED = {
+  video: ['description', 'categoryId', 'title'],
+  playlist: ['description', 'title', 'privacyStatus'],
+  channel: ['description', 'keywords', 'title'],
+  'playlist-create': ['title', 'description', 'privacyStatus'],
+};
 const clone = (o) => JSON.parse(JSON.stringify(o));
 function partOf(kind, live) {
   if (kind === 'channel') return clone(live.brandingSettings || {});
@@ -225,17 +233,30 @@ function partOf(kind, live) {
   for (const k of SNIPPET_KEYS[kind]) if (k in sn) p[k] = clone(sn[k]);
   return p;
 }
-function fieldsOf(kind, part) {
-  if (kind === 'channel') return { description: part.channel?.description ?? '', keywords: part.channel?.keywords ?? '' };
-  return { description: part.description ?? '', categoryId: part.categoryId };
-}
-function withFields(kind, part, fields) {
-  const p = clone(part);
-  if (kind === 'channel') p.channel = { ...(p.channel || {}), ...fields }; else Object.assign(p, fields);
+// partOf + the privacy that lives in the status part (video/playlist). This is what the ledger records as "before".
+function stateOf(kind, live) {
+  const p = partOf(kind, live);
+  if (kind !== 'channel') p.privacyStatus = live.status?.privacyStatus;
   return p;
 }
-const bodyOf = (kind, id, part) => (kind === 'channel' ? { id, brandingSettings: part } : { id, snippet: part });
-const putUrl = (kind) => (kind === 'channel' ? `${API}/channels?part=brandingSettings` : `${API}/${kind}s?part=snippet`);
+function fieldsOf(kind, part) {
+  if (kind === 'channel') return { title: part.channel?.title ?? '', description: part.channel?.description ?? '', keywords: part.channel?.keywords ?? '' };
+  return { title: part.title ?? '', description: part.description ?? '', categoryId: part.categoryId, privacyStatus: part.privacyStatus };
+}
+// privacyStatus is not a snippet field: it is sent in the status part (see putSpec), never merged into the snippet.
+function withFields(kind, part, fields) {
+  const p = clone(part);
+  if (kind === 'channel') p.channel = { ...(p.channel || {}), ...fields };
+  else for (const k of Object.keys(fields)) if (k !== 'privacyStatus') p[k] = fields[k];
+  return p;
+}
+// url + body of an update: channel -> brandingSettings; video/playlist -> snippet and/or status, in ONE call.
+function putSpec(kind, id, merged, changed) {
+  if (kind === 'channel') return { url: `${API}/channels?part=brandingSettings`, body: { id, brandingSettings: merged } };
+  const sn = Object.keys(changed).some((k) => k !== 'privacyStatus'); const st = 'privacyStatus' in changed;
+  const body = { id }; if (sn) body.snippet = merged; if (st) body.status = { privacyStatus: changed.privacyStatus };
+  return { url: `${API}/${kind}s?part=${[sn && 'snippet', st && 'status'].filter(Boolean).join(',')}`, body };
+}
 const canon = (v) => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((q) => [q, x[q]])) : x));
 const trunc = (v) => { const t = typeof v === 'string' ? v : canon(v); return JSON.stringify((t ?? 'undefined').slice(0, 80)); };
 
@@ -248,12 +269,12 @@ async function readLive(s, op) {
   }
   const plural = kind === 'video' ? 'videos' : 'playlists';
   const it = (await s.call('GET', `${API}/${plural}?${qs({ part: 'snippet,status', id })}`, channel)).items?.[0];
-  if (!it) throw new Error(`${kind} ${id} not found on channel ${channel}`);
+  if (!it) throw Object.assign(new Error(`${kind} ${id} not found on channel ${channel}`), { notFound: true });
   if (it.snippet?.channelId !== CHANNELS[channel].id) throw new Error(`channel guard: ${kind} ${id} belongs to channel ${it.snippet?.channelId}, expected ${CHANNELS[channel].id}. Nothing written.`);
   return it;
 }
 function differences(kind, sent, changed, prevLive, newLive) {
-  const out = []; const np = partOf(kind, newLive); const nf = fieldsOf(kind, np);
+  const out = []; const np = partOf(kind, newLive); const nf = fieldsOf(kind, stateOf(kind, newLive));
   const cmp = (label, a, b) => { if (canon(a) !== canon(b)) out.push(`${label}: expected ${trunc(a)}, got ${trunc(b)}`); };
   for (const k of Object.keys(changed)) cmp(k, changed[k], nf[k]);
   if (kind === 'channel') {
@@ -261,7 +282,7 @@ function differences(kind, sent, changed, prevLive, newLive) {
     for (const k of Object.keys(sent.channel || {})) if (!(k in changed)) cmp(`brandingSettings.channel.${k}`, sent.channel[k], np.channel?.[k]);
   } else {
     for (const k of Object.keys(sent)) if (!(k in changed)) cmp(k, sent[k], np[k]);
-    cmp('status.privacyStatus', prevLive.status?.privacyStatus, newLive.status?.privacyStatus);
+    if (!('privacyStatus' in changed)) cmp('status.privacyStatus', prevLive.status?.privacyStatus, newLive.status?.privacyStatus); // a privacy change is checked as a changed field above
   }
   return out;
 }
@@ -286,9 +307,55 @@ async function verifyWrite(s, op, merged, changed, prevLive, putResp) {
   return { ok: false, attempts: READ_ATTEMPTS, diffs, live };
 }
 
+// ---------------------------------------------------------------- content rules for explicit decisions
+// Fields a decisions file may set (a subset of ALLOWED: no categoryId, keywords, channel description).
+const DECISION_FIELDS = { video: ['title', 'description'], playlist: ['title', 'description', 'privacyStatus'], channel: ['title'], 'playlist-create': ['title', 'description', 'privacyStatus'] };
+for (const [k, fields] of Object.entries(DECISION_FIELDS)) for (const f of fields) if (!ALLOWED[k].includes(f)) throw new Error(`internal: decision field ${k}.${f} is not in ALLOWED`);
+const LIMITS = { video: { title: 100, description: 5000 }, playlist: { title: 150, description: 5000 }, 'playlist-create': { title: 150, description: 5000 }, channel: { title: 100 } };
+const OK_HOSTS = new Set(['beyondparadiseadventures.com', 'www.instagram.com', 'www.youtube.com', 'www.facebook.com']);
+const TLDS = 'com|net|org|io|co|info|app|me|tv|ly|be|de|vn|tz|uk|us|eu|biz|xyz|site|online|shop|blog|travel|ae|fr|nl|asia|africa';
+const ADDRESS = new RegExp(`https?:\\/\\/[^\\s<>"')\\]]+|(?<![\\w.@-])www\\.[^\\s<>"')\\]]+|\\b(?:[a-z0-9-]+\\.)+(?:${TLDS})\\b(?:\\/[^\\s<>"')\\]]*)?`, 'gi');
+function hostOf(token) {
+  const t = token.replace(/[.,;:!?)\]]+$/, '');
+  try { return new URL(/^https?:\/\//i.test(t) ? t : `https://${t}`).hostname.toLowerCase(); } catch { return null; }
+}
+// Problems with the values of one object (field -> text). Empty list = fine. Used at plan time AND again at apply time.
+function contentProblems(kind, set) {
+  const out = [];
+  for (const [k, v] of Object.entries(set)) {
+    if (typeof v !== 'string') { out.push(`${k} must be text`); continue; }
+    if (k === 'privacyStatus') {
+      if (kind !== 'playlist' && kind !== 'playlist-create') out.push(`privacyStatus of a ${kind} can never be set by this tool`);
+      else if (v !== 'private' && v !== 'public') out.push(`privacyStatus must be "private" or "public", got "${v}"`);
+      continue;
+    }
+    if (k !== 'title' && k !== 'description') continue;
+    if (k === 'title' && !v.trim()) out.push('title is empty');
+    const max = LIMITS[kind]?.[k]; if (max && v.length > max) out.push(`${k} is ${v.length} characters, the limit is ${max}`);
+    if (/[<>]/.test(v)) out.push(`${k} contains "<" or ">"`);
+    if (/beyondparadiseadventures\.net/i.test(v)) out.push(`${k} contains the old address beyondparadiseadventures.net`);
+    const bad = new Set();
+    for (const m of v.matchAll(ADDRESS)) { const h = hostOf(m[0]); if (!h || !OK_HOSTS.has(h)) bad.add(h || m[0]); }
+    for (const h of bad) out.push(`${k} contains the address host "${h}" (allowed: ${[...OK_HOSTS].join(', ')})`);
+  }
+  return out;
+}
+const TEXT_FIELDS = new Set(['title', 'privacyStatus']);
+// Ops that carry the new fields, or come from a decisions plan, get the full content check again when applied (a plan.json can be edited by hand).
+const needsContentCheck = (op) => op.kind === 'playlist-create' || op.source === 'decisions' || Object.keys(op.after || {}).some((k) => TEXT_FIELDS.has(k));
+
+function validateCreate(op) {
+  if (typeof op.id !== 'string' || !op.id || op.key !== op.id) throw new Error('plan refused: playlist-create without a key (id must equal key)');
+  if (!Array.isArray(op.items) || op.items.some((i) => typeof i !== 'string' || !i)) throw new Error(`plan refused: playlist-create ${op.id}: items must be a list of video ids`);
+  if (!op.after || typeof op.after !== 'object') throw new Error(`plan refused: op ${op.id} has no after`);
+  for (const k of Object.keys(op.after)) if (!ALLOWED['playlist-create'].includes(k)) throw new Error(`plan refused: playlist-create ${op.id} would set "${k}" (only ${ALLOWED['playlist-create'].join(', ')} may be set)`);
+  for (const k of ['title', 'privacyStatus']) if (typeof op.after[k] !== 'string') throw new Error(`plan refused: playlist-create ${op.id} has no ${k}`);
+  const bad = contentProblems('playlist-create', op.after); if (bad.length) throw new Error(`plan refused: playlist-create ${op.id}: ${bad.join('; ')}`);
+}
 function validateOp(op) {
   if (!op || !ALLOWED[op.kind]) throw new Error(`plan refused: unknown op kind "${op?.kind}"`);
   if (!CHANNELS[op.channel]) throw new Error(`plan refused: unknown channel "${op.channel}"`);
+  if (op.kind === 'playlist-create') return validateCreate(op);
   if (typeof op.id !== 'string' || !op.id) throw new Error('plan refused: op without id');
   if (op.kind === 'channel' && op.id !== CHANNELS[op.channel].id) throw new Error(`plan refused: channel op id ${op.id} is not the ${op.channel} channel`);
   for (const side of ['before', 'after']) {
@@ -299,6 +366,7 @@ function validateOp(op) {
     }
   }
   for (const k of Object.keys(op.after)) if (!(k in op.before)) throw new Error(`plan refused: op ${op.id} after.${k} has no before value`);
+  if (needsContentCheck(op)) { const bad = contentProblems(op.kind, op.after); if (bad.length) throw new Error(`plan refused: ${op.kind} ${op.id}: ${bad.join('; ')}`); }
 }
 
 // ---------------------------------------------------------------- ledger
@@ -308,9 +376,98 @@ function ledgerAppend(file, line) {
   appendFileSync(file, JSON.stringify(line) + '\n', { mode: 0o600 }); chmodSync(file, 0o600);
 }
 
+// ---------------------------------------------------------------- plan: explicit decisions (--decisions <file.json>)
+const OP_KEYS = { video: ['channel', 'kind', 'id', 'set'], playlist: ['channel', 'kind', 'id', 'set'], channel: ['channel', 'kind', 'id', 'set'], 'playlist-create': ['channel', 'kind', 'key', 'set', 'items'] };
+const normTitle = (t) => String(t ?? '').trim().toLowerCase();
+const opLabel = (i, o) => `decisions op #${i + 1} (${o?.kind} ${o?.id ?? o?.key ?? '?'}, channel ${o?.channel})`;
+// Everything that can be checked without the network. Returns a list of "<label>: <problem>" strings.
+function checkDecisions(dec) {
+  if (!dec || typeof dec !== 'object' || Array.isArray(dec) || !Array.isArray(dec.ops)) throw new Error('decisions refused: the file must be {"ops": [...]}');
+  for (const k of Object.keys(dec)) if (k !== 'ops') throw new Error(`decisions refused: unknown top-level key "${k}" (only "ops")`);
+  if (!dec.ops.length) throw new Error('decisions refused: "ops" is empty');
+  const errors = []; const seen = new Set(); const titles = new Set(); const keys = new Set();
+  dec.ops.forEach((o, i) => {
+    const bad = (m) => errors.push(`${opLabel(i, o)}: ${m}`);
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return bad('not an object');
+    if (!OP_KEYS[o.kind]) return bad(`unknown op kind "${o.kind}" (allowed: ${Object.keys(OP_KEYS).join(', ')}; there is no delete)`);
+    for (const k of Object.keys(o)) if (!OP_KEYS[o.kind].includes(k)) bad(`unknown key "${k}"`);
+    if (!CHANNELS[o.channel]) return bad(`unknown channel "${o.channel}"`);
+    if (!o.set || typeof o.set !== 'object' || Array.isArray(o.set) || !Object.keys(o.set).length) return bad('"set" must be an object with something to set');
+    const create = o.kind === 'playlist-create';
+    for (const f of Object.keys(o.set)) {
+      if (DECISION_FIELDS[o.kind].includes(f)) continue;
+      bad(f === 'privacyStatus' ? `privacyStatus of a ${o.kind} can never be set by this tool` : `field "${f}" is not allowed for ${o.kind} (allowed: ${DECISION_FIELDS[o.kind].join(', ')})`);
+    }
+    for (const m of contentProblems(o.kind, Object.fromEntries(Object.entries(o.set).filter(([f]) => DECISION_FIELDS[o.kind].includes(f))))) bad(m);
+    if (create) {
+      if (typeof o.key !== 'string' || !/^[a-z0-9][a-z0-9-]{0,40}$/i.test(o.key)) bad('a playlist-create needs a "key" (letters, digits, dashes)');
+      else if (keys.has(o.key)) bad(`key "${o.key}" is used twice`); else keys.add(o.key);
+      if (typeof o.set.title !== 'string') bad('title is required'); if (typeof o.set.privacyStatus !== 'string') bad('privacyStatus is required ("private" or "public")');
+      if (!Array.isArray(o.items) || o.items.some((x) => typeof x !== 'string' || !x)) bad('"items" must be a list of video ids');
+      else if (new Set(o.items).size !== o.items.length) bad('an item is listed twice');
+      const t = `${o.channel}|${normTitle(o.set.title)}`; if (titles.has(t)) bad('another playlist-create has the same title on this channel'); titles.add(t);
+    } else {
+      if (typeof o.id !== 'string' || !o.id) bad('"id" is required');
+      else if (o.kind === 'channel' && o.id !== CHANNELS[o.channel].id) bad(`channel id ${o.id} is not the ${o.channel} channel`);
+      const t = `${o.kind}|${o.channel}|${o.id}`; if (seen.has(t)) bad('the same object is named by two ops'); seen.add(t);
+    }
+  });
+  return errors;
+}
+async function ownPlaylists(s, channel) {
+  const out = []; let page;
+  do {
+    const p = { part: 'snippet,status', mine: 'true', maxResults: '50' }; if (page) p.pageToken = page;
+    const j = await s.call('GET', `${API}/playlists?${qs(p)}`, channel);
+    out.push(...(j.items || [])); page = j.nextPageToken;
+  } while (page);
+  return out;
+}
+// Problems with the videos a new playlist would hold: each must exist, belong to this channel and be public.
+async function itemProblems(s, channel, items) {
+  const found = {}; const out = [];
+  for (let i = 0; i < items.length; i += 50) for (const v of (await s.call('GET', `${API}/videos?${qs({ part: 'snippet,status', id: items.slice(i, i + 50).join(',') })}`, channel)).items || []) found[v.id] = v;
+  for (const id of items) {
+    const v = found[id];
+    if (!v) out.push(`item ${id} not found`);
+    else if (v.snippet?.channelId !== CHANNELS[channel].id) out.push(`item ${id} belongs to another channel`);
+    else if (v.status?.privacyStatus !== 'public') out.push(`item ${id} is ${v.status?.privacyStatus}, only public videos may be added`);
+  }
+  return out;
+}
+async function buildDecisionsPlan(s, deps) {
+  const dec = deps.decisions; const errors = checkDecisions(dec);
+  if (errors.length) throw new Error(`plan refused (nothing written):\n- ${errors.join('\n- ')}`);
+  const ops = []; const skipped = []; const lists = {};
+  for (const [i, o] of dec.ops.entries()) {
+    const bad = (m) => errors.push(`${opLabel(i, o)}: ${m}`);
+    try {
+      await s.ownChannelId(o.channel);
+      if (o.kind === 'playlist-create') {
+        const existing = (lists[o.channel] ??= await ownPlaylists(s, o.channel));
+        if (existing.some((p) => normTitle(p.snippet?.title) === normTitle(o.set.title))) { skipped.push({ kind: o.kind, channel: o.channel, id: o.key, title: o.set.title, reason: 'already-exists' }); continue; }
+        const probs = await itemProblems(s, o.channel, o.items); if (probs.length) { probs.forEach(bad); continue; }
+        ops.push({ kind: o.kind, channel: o.channel, id: o.key, key: o.key, title: o.set.title, before: {}, after: { title: o.set.title, description: o.set.description ?? '', privacyStatus: o.set.privacyStatus }, items: [...o.items], source: 'decisions', warnings: [] });
+        continue;
+      }
+      const live = await readLive(s, o);
+      const label = o.kind === 'channel' ? (live.brandingSettings?.channel?.title ?? '') : (live.snippet?.title ?? '');
+      if (o.kind === 'video' && live.status?.privacyStatus === 'private') { skipped.push({ kind: o.kind, channel: o.channel, id: o.id, title: label, reason: 'private' }); continue; }
+      const cur = fieldsOf(o.kind, stateOf(o.kind, live)); const before = {}; const after = {};
+      for (const k of Object.keys(o.set)) if (cur[k] !== o.set[k]) { before[k] = cur[k] ?? ''; after[k] = o.set[k]; }
+      if (!Object.keys(after).length) { skipped.push({ kind: o.kind, channel: o.channel, id: o.id, title: label, reason: 'already-applied' }); continue; }
+      ops.push({ kind: o.kind, channel: o.channel, id: o.id, title: label, before, after, source: 'decisions', warnings: [] });
+    } catch (e) { bad(String(e.message || e)); }
+  }
+  if (errors.length) throw new Error(`plan refused (nothing written):\n- ${errors.join('\n- ')}`);
+  ops.forEach(validateOp); // the plan must be one that apply would accept
+  return { createdAt: (deps.now || new Date()).toISOString(), source: 'decisions', ops, skipped };
+}
+
 // ---------------------------------------------------------------- plan
 export async function buildPlan(deps = {}) {
   const s = makeSession(deps); const d = s.d;
+  if (deps.decisions !== undefined) return buildDecisionsPlan(s, deps); // decisions only: the text rules below are never run (a null/empty file is refused, never "no decisions = rules")
   const texts = deps.texts || JSON.parse(readFileSync(new URL('./youtube-channel-texts.json', import.meta.url), 'utf8'));
   const ops = []; const skipped = [];
   for (const channel of Object.keys(CHANNELS)) {
@@ -356,12 +513,13 @@ export function planMarkdown(plan) {
   const md = [`# YouTube channel edit plan (${plan.createdAt})`, '', '| kind | channel | ops | with warnings |', '|---|---|---|---|'];
   for (const k of Object.keys(rows).sort()) { const [kind, ch] = k.split('|'); md.push(`| ${kind} | ${ch} | ${rows[k].ops} | ${rows[k].warn} |`); }
   md.push(`| total | | ${plan.ops.length} | ${plan.ops.filter((o) => o.warnings?.length).length} |`, '');
-  const sk = plan.skipped || [];
-  if (sk.length) { md.push(`## skipped: private (${sk.length})`, ...sk.map((o) => `- ${o.kind} ${o.channel} ${o.id} — ${o.title}`), ''); }
+  const byReason = {}; for (const o of plan.skipped || []) (byReason[o.reason || 'private'] ??= []).push(o);
+  for (const [reason, list] of Object.entries(byReason)) md.push(`## skipped: ${reason} (${list.length})`, ...list.map((o) => `- ${o.kind} ${o.channel} ${o.id} — ${o.title}`), '');
   for (const o of plan.ops) {
     md.push(`## ${o.kind} ${o.channel} ${o.id} — ${o.title}`, '```diff');
     for (const k of Object.keys(o.after)) md.push(...(o.before[k] === o.after[k] ? [] : lineDiff(`${k === 'description' ? '' : k + ': '}${o.before[k] ?? ''}`.replace(/^(?=.)/, ''), `${k === 'description' ? '' : k + ': '}${o.after[k] ?? ''}`)));
     md.push('```');
+    if (o.items) md.push(`items (${o.items.length}): ${o.items.join(', ')}`);
     for (const w of o.warnings || []) md.push(`WARNING: ${w}`);
     md.push('');
   }
@@ -375,26 +533,70 @@ export async function applyPlan(plan, { only, maxUnits = 3000, ledgerDir } = {},
   for (const op of plan.ops) validateOp(op); // everything is checked before the first request
   const s = makeSession(deps, maxUnits); const d = s.d;
   const file = join(ledgerDir, `changes-${dayOf(deps)}.jsonl`);
-  const sum = { done: 0, stale: 0, alreadyApplied: 0, skipped: 0, failed: 0, units: 0, ledger: file, stoppedReason: null };
+  const sum = { done: 0, stale: 0, alreadyApplied: 0, skipped: 0, failed: 0, refused: 0, units: 0, ledger: file, stoppedReason: null };
   const fin = () => { sum.units = s.units; return sum; };
-  const log = (status, op, extra) => ledgerAppend(file, { ts: new Date().toISOString(), status, kind: op.kind, channel: op.channel, id: op.id, ...extra });
+  const log = (status, op, extra) => { const line = { ts: new Date().toISOString(), status, kind: op.kind, channel: op.channel, id: op.id, ...extra }; ledgerAppend(file, line); return line; };
+  const fail = (op, e, extra) => { sum.failed++; log('failed', op, { error: String(e.message || e), ...extra }); return Object.assign(e, { summary: fin() }); };
+
+  // A new playlist: pending line, playlists.insert, "created" line with the new id, one playlistItems.insert per item (own line each), done line.
+  // Costs 50 units per insert; the whole op is paid for up front so the budget never stops it half way.
+  async function applyCreate(op) {
+    await s.ownChannelId(op.channel);
+    if ((await ownPlaylists(s, op.channel)).some((p) => normTitle(p.snippet?.title) === normTitle(op.after.title))) { sum.alreadyApplied++; log('already-applied', op, { planned: op.after }); return; }
+    if ((await itemProblems(s, op.channel, op.items)).length) { sum.stale++; return; } // an item is no longer a public video of this channel
+    const cost = 50 * (1 + op.items.length);
+    if (s.units + cost > s.maxUnits) { sum.stoppedReason = `stopped before creating playlist ${op.id}: it needs ${cost} units (1 insert + ${op.items.length} items) and would pass maxUnits (${s.maxUnits}; ${s.units} used)`; return 'stop'; }
+    const pending = log('pending', op, { before: {}, planned: op.after, items: op.items });
+    let resp;
+    try { resp = await s.call('POST', `${API}/playlists?part=snippet,status`, op.channel, { snippet: { title: op.after.title, description: op.after.description ?? '' }, status: { privacyStatus: op.after.privacyStatus } }); }
+    catch (e) { throw fail(op, e); }
+    const newId = resp?.id;
+    if (typeof newId !== 'string' || !newId) throw fail(op, new Error('the insert answered without a playlist id; check the channel by hand for a playlist titled "' + op.after.title + '"'));
+    log('created', op, { of: pending.ts, playlistId: newId });
+    const matches = (it) => it?.snippet?.title === op.after.title && (it.snippet.description ?? '') === (op.after.description ?? '') && it.status?.privacyStatus === op.after.privacyStatus && (it.snippet.channelId === undefined || it.snippet.channelId === CHANNELS[op.channel].id);
+    let ok = matches(resp), attempts = 0;
+    for (let a = 1; !ok && a <= READ_ATTEMPTS; a++) {
+      if (a > 1) await (s.d.sleep || defaultSleep)(READ_GAP_MS);
+      attempts = a;
+      try { ok = matches(await readLive(s, { kind: 'playlist', channel: op.channel, id: newId })); } catch (e) { if (!e.notFound) throw fail(op, e, { playlistId: newId }); }
+    }
+    if (!ok) { log('mismatch', op, { playlistId: newId, attempts }); throw Object.assign(new Error(`read-back mismatch for new playlist ${newId} (${op.id}) after ${attempts} reads. Run stopped; undo deletes it.`), { summary: fin() }); }
+    const itemIds = [];
+    for (const videoId of op.items) {
+      let r;
+      try { r = await s.call('POST', `${API}/playlistItems?part=snippet`, op.channel, { snippet: { playlistId: newId, resourceId: { kind: 'youtube#video', videoId } } }); }
+      catch (e) { throw fail(op, e, { playlistId: newId, videoId, itemsDone: itemIds.length }); }
+      if (typeof r?.id !== 'string' || !r.id || (r.snippet?.resourceId?.videoId && r.snippet.resourceId.videoId !== videoId)) throw fail(op, new Error(`the playlist item insert for ${videoId} did not answer with a matching item`), { playlistId: newId, videoId, itemsDone: itemIds.length });
+      itemIds.push(r.id); log('item-created', op, { of: pending.ts, playlistId: newId, videoId, playlistItemId: r.id });
+    }
+    log('done', op, { of: pending.ts, playlistId: newId, itemIds, planned: op.after, verified: true, attempts });
+    sum.done++;
+  }
+
   for (const op of plan.ops) {
     if (only && !only.includes(op.id)) { sum.skipped++; continue; }
+    if (op.kind === 'playlist-create') { if (await applyCreate(op) === 'stop') return fin(); continue; }
     if (canon(op.before) === canon(op.after)) { sum.skipped++; continue; }
     await s.ownChannelId(op.channel);
     const live = await readLive(s, op);
-    const sent = partOf(op.kind, live); const cur = fieldsOf(op.kind, sent);
+    const sent = partOf(op.kind, live); const state = stateOf(op.kind, live); const cur = fieldsOf(op.kind, state);
     if (Object.keys(op.after).every((k) => cur[k] === op.after[k])) { sum.alreadyApplied++; log('already-applied', op, { planned: op.after }); continue; }
     if (Object.keys(op.before).some((k) => cur[k] !== op.before[k])) { sum.stale++; continue; }
     if (s.units + 50 > s.maxUnits) { sum.stoppedReason = `stopped before writing ${op.kind} ${op.id}: the next write would pass maxUnits (${s.maxUnits}; ${s.units} used)`; return fin(); }
-    log('pending', op, { before: sent, planned: op.after });
-    const merged = withFields(op.kind, sent, op.after); let v;
-    try {
-      const resp = await s.call('PUT', putUrl(op.kind), op.channel, bodyOf(op.kind, op.kind === 'channel' ? live.id : op.id, merged));
-      v = await verifyWrite(s, op, merged, op.after, live, resp);
-    } catch (e) { sum.failed++; log('failed', op, { error: String(e.message || e) }); throw Object.assign(e, { summary: fin() }); }
-    if (!v.ok) { log('mismatch', op, { differences: v.diffs, attempts: v.attempts, after: partOf(op.kind, v.live) }); throw Object.assign(new Error(`read-back mismatch for ${op.kind} ${op.id} after ${v.attempts} reads: ${v.diffs.join('; ')}. Run stopped.`), { summary: fin() }); }
-    log('done', op, { before: sent, after: partOf(op.kind, v.live), planned: op.after, verified: true, attempts: v.attempts, via: v.via });
+    log('pending', op, { before: state, planned: op.after });
+    const merged = withFields(op.kind, sent, op.after); let v, resp;
+    const titleOp = op.kind === 'channel' && 'title' in op.after; // a channel rename can be refused by YouTube; that must not strand the rest of the run
+    const refuse = (error) => { sum.refused++; log('refused-by-youtube', op, { error, before: state, planned: op.after }); };
+    const spec = putSpec(op.kind, op.kind === 'channel' ? live.id : op.id, merged, op.after);
+    try { resp = await s.call('PUT', spec.url, op.channel, spec.body); }
+    catch (e) { if (titleOp && e.http >= 400 && e.http < 500) { refuse(String(e.message || e)); continue; } throw fail(op, e); }
+    try { v = await verifyWrite(s, op, merged, op.after, live, resp); }
+    catch (e) { throw fail(op, e); }
+    if (!v.ok) {
+      if (titleOp && v.diffs.length === 1 && v.diffs[0].startsWith('title:') && partOf('channel', v.live).channel?.title === op.before.title) { refuse(`YouTube kept the old title after ${v.attempts} reads`); continue; }
+      log('mismatch', op, { differences: v.diffs, attempts: v.attempts, after: stateOf(op.kind, v.live) }); throw Object.assign(new Error(`read-back mismatch for ${op.kind} ${op.id} after ${v.attempts} reads: ${v.diffs.join('; ')}. Run stopped.`), { summary: fin() });
+    }
+    log('done', op, { before: state, after: stateOf(op.kind, v.live), planned: op.after, verified: true, attempts: v.attempts, via: v.via });
     sum.done++;
   }
   return fin();
@@ -409,28 +611,50 @@ export async function undoLedger(ledgerFile, { only, maxUnits = 3000 } = {}, dep
   const todo = lines.filter((l) => l.status === 'pending' && !undone.has(`${l.id}|${l.ts}`) && (!only || only.includes(l.id))).reverse();
   const s = makeSession(deps, maxUnits); const out = deps.out || (() => {});
   const sum = { undone: 0, 'changed-since': 0, 'not-applied': 0, units: 0, ledger: ledgerFile, stoppedReason: null };
+  // A created playlist may only be deleted when THIS ledger file recorded its id as created for exactly this attempt and channel.
+  const createdIdOf = (e) => lines.find((l) => l.status === 'created' && l.kind === 'playlist-create' && l.of === e.ts && l.id === e.id && l.channel === e.channel && typeof l.playlistId === 'string' && l.playlistId)?.playlistId;
+  const undoCreate = async (e) => {
+    const playlistId = createdIdOf(e);
+    if (!playlistId) { sum['not-applied']++; out(`playlist-create ${e.id}: nothing undone (this ledger has no created playlist id for it, so the insert response was never recorded). If the insert did go through, a playlist titled "${e.planned?.title}" may exist on the ${e.channel} channel: look and delete it by hand.`); return; }
+    await s.ownChannelId(e.channel);
+    const op = { kind: 'playlist', channel: e.channel, id: playlistId };
+    let live; try { live = await readLive(s, op); } catch (err) { if (err.notFound) { sum['not-applied']++; out(`playlist-create ${e.id}: not-applied (playlist ${playlistId} is already gone, nothing written)`); return; } throw err; }
+    if (live.snippet?.title !== e.planned?.title) { sum['changed-since']++; out(`skipped playlist-create ${e.id}: changed-since (playlist ${playlistId} no longer has the title this tool gave it, so it is not deleted)`); return; }
+    if (s.units + 50 > s.maxUnits) { sum.stoppedReason = `stopped before undoing playlist-create ${e.id}: the next write would pass maxUnits (${s.maxUnits})`; return 'stop'; }
+    await s.call('DELETE', `${API}/playlists?${qs({ id: playlistId })}`, e.channel);
+    const sleep = s.d.sleep || defaultSleep; let gone = false;
+    for (let a = 1; a <= READ_ATTEMPTS && !gone; a++) { if (a > 1) await sleep(READ_GAP_MS); try { await readLive(s, op); } catch (err) { if (err.notFound) gone = true; else throw err; } }
+    if (!gone) { ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'mismatch', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, playlistId, differences: ['playlist still exists after delete'], attempts: READ_ATTEMPTS }); throw new Error(`undo: playlist ${playlistId} still exists after delete (${READ_ATTEMPTS} reads). Run stopped.`); }
+    ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'undone', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, playlistId, deleted: true, verified: true });
+    sum.undone++;
+  };
   for (const e of todo) {
+    if (!ALLOWED[e.kind]) throw new Error(`undo refused: ledger line for ${e.id} has unknown kind "${e.kind}". Nothing written.`);
+    if (e.kind === 'playlist-create') { if (await undoCreate(e) === 'stop') break; continue; }
     const op = { kind: e.kind, channel: e.channel, id: e.id };
+    const keys = Object.keys(e.planned);
+    for (const k of keys) if (!ALLOWED[e.kind].includes(k)) throw new Error(`undo refused: ledger line for ${e.kind} ${e.id} lists field "${k}", which is not writable (only ${ALLOWED[e.kind].join(', ')}). Nothing written.`);
     await s.ownChannelId(op.channel);
-    const live = await readLive(s, op); const sent = partOf(op.kind, live); const cur = fieldsOf(op.kind, sent);
-    const keys = Object.keys(e.planned); const bf = fieldsOf(op.kind, e.before);
+    const live = await readLive(s, op); const sent = partOf(op.kind, live); const cur = fieldsOf(op.kind, stateOf(op.kind, live));
+    const bf = fieldsOf(op.kind, e.before);
     if (keys.every((k) => cur[k] === bf[k])) { sum['not-applied']++; out(`${e.kind} ${e.id}: not-applied (live text already equals the before text, nothing written)`); continue; }
     if (!keys.every((k) => cur[k] === e.planned[k])) { sum['changed-since']++; out(`skipped ${e.kind} ${e.id}: changed-since (live text equals neither the before text nor what this tool planned)`); continue; }
     if (s.units + 50 > s.maxUnits) { sum.stoppedReason = `stopped before undoing ${e.kind} ${e.id}: the next write would pass maxUnits (${s.maxUnits})`; break; }
-    const restore = {}; for (const k of keys) restore[k] = bf[k];
+    const restore = {}; for (const k of keys) { if (k === 'privacyStatus' && bf[k] === undefined) throw new Error(`undo refused: ledger line for ${e.kind} ${e.id} has no before value for "${k}". Nothing written.`); restore[k] = bf[k]; }
     const merged = withFields(op.kind, sent, restore);
-    const resp = await s.call('PUT', putUrl(op.kind), op.channel, bodyOf(op.kind, op.kind === 'channel' ? live.id : op.id, merged));
+    const spec = putSpec(op.kind, op.kind === 'channel' ? live.id : op.id, merged, restore);
+    const resp = await s.call('PUT', spec.url, op.channel, spec.body);
     const v = await verifyWrite(s, op, merged, restore, live, resp);
     if (!v.ok) { ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'mismatch', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, differences: v.diffs, attempts: v.attempts }); throw new Error(`undo read-back mismatch for ${e.kind} ${e.id} after ${v.attempts} reads: ${v.diffs.join('; ')}. Run stopped.`); }
     const after = v.live;
-    ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'undone', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, after: partOf(op.kind, after), verified: true });
+    ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'undone', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, after: stateOf(op.kind, after), verified: true });
     sum.undone++;
   }
   sum.units = s.units; return sum;
 }
 
 // ---------------------------------------------------------------- CLI
-const USAGE = 'usage: node youtube-channel-edit.js plan --out <dir>\n       node youtube-channel-edit.js apply --plan <plan.json> --ledger <dir> [--only id1,id2] [--max-units N]\n       node youtube-channel-edit.js undo --ledger <file> [--only id]';
+const USAGE = 'usage: node youtube-channel-edit.js plan --out <dir> [--decisions <file.json>]   (with --decisions the plan is built ONLY from that file; the text rules are not run)\n       node youtube-channel-edit.js apply --plan <plan.json> --ledger <dir> [--only id1,id2] [--max-units N]\n       node youtube-channel-edit.js undo --ledger <file> [--only id]';
 export async function main(argv, deps = {}) {
   const out = deps.out || ((s) => console.log(s)); const err = deps.err || ((s) => console.error(s));
   const [cmd, ...rest] = argv;
@@ -439,15 +663,18 @@ export async function main(argv, deps = {}) {
   try {
     if (cmd === 'plan') {
       const dir = val('--out'); if (!dir) { err(USAGE); return 2; }
-      const plan = await buildPlan(deps); mkdirSync(dir, { recursive: true });
+      const df = val('--decisions'); if (rest.includes('--decisions') && !df) { err(USAGE); return 2; }
+      let decisions; // read and parsed BEFORE any network call
+      if (df) { try { decisions = JSON.parse(readFileSync(df, 'utf8')); } catch (e) { throw new Error(`decisions refused: cannot read ${df} as JSON (${e.message})`); } }
+      const plan = await buildPlan(df ? { ...deps, decisions } : deps); mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, 'plan.json'), JSON.stringify(plan, null, 2)); writeFileSync(join(dir, 'plan.md'), planMarkdown(plan));
-      out(`plan: ${plan.ops.length} ops (${plan.ops.filter((o) => o.warnings?.length).length} with warnings) written to ${join(dir, 'plan.json')} and plan.md`); return 0;
+      out(`plan: ${plan.ops.length} ops (${plan.ops.filter((o) => o.warnings?.length).length} with warnings) written to ${join(dir, 'plan.json')} and plan.md${plan.source === 'decisions' ? `; ${plan.skipped.length} dropped with a note (${[...new Set(plan.skipped.map((o) => o.reason))].join(', ') || 'none'})` : ''}`); return 0;
     }
     if (cmd === 'apply') {
       const pf = val('--plan'), ledgerDir = val('--ledger'); if (!pf || !ledgerDir) { err(USAGE); return 2; }
       const only = val('--only')?.split(',').filter(Boolean); const mu = val('--max-units');
       const r = await applyPlan(JSON.parse(readFileSync(pf, 'utf8')), { only, ledgerDir, ...(mu ? { maxUnits: Number(mu) } : {}) }, { ...deps, out });
-      out(`done ${r.done} / already-applied ${r.alreadyApplied} / stale ${r.stale} / skipped ${r.skipped} / failed ${r.failed}; units ${r.units}; ledger ${r.ledger}${r.stoppedReason ? `\n${r.stoppedReason}` : ''}`); return 0;
+      out(`done ${r.done} / already-applied ${r.alreadyApplied} / stale ${r.stale} / skipped ${r.skipped} / failed ${r.failed}${r.refused ? ` / refused-by-youtube ${r.refused}` : ''}; units ${r.units}; ledger ${r.ledger}${r.stoppedReason ? `\n${r.stoppedReason}` : ''}`); return 0;
     }
     const lf = val('--ledger'); if (!lf) { err(USAGE); return 2; }
     const r = await undoLedger(lf, { only: val('--only')?.split(',').filter(Boolean) }, { ...deps, out });
