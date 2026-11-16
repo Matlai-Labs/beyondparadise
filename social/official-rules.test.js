@@ -1,3 +1,4 @@
+import './test-env.js';
 // Schema check for the official rules file (the file post ideas of kind "rule" are built from).
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
