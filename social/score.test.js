@@ -48,7 +48,7 @@ test('renderScore format', () => {
 });
 test('buildDrafts output carries score; renderList shows it', async () => {
   const brief = { date: '2026-09-11', items: [{ signal: { id: 'x', subject: 'Sauti za Busara', region: 'zanzibar', summary: 'The festival dates were confirmed for February.', confidence: 0.9, magnitude: 1, sourceIds: ['a', 'b'] }, whyItMatters: 'Beds in Stone Town fill a month early.', whatToDo: 'Open February availability now.', confidence: 0.9, sources: [{ id: 'a' }, { id: 'b' }] }] };
-  const out = await buildDrafts({ briefs: [brief], now: new Date('2026-09-12T00:00:00Z'), existingDrafts: [] });
+  const out = await buildDrafts({ briefs: [brief], now: new Date('2026-09-12T00:00:00Z'), existingDrafts: [], config: { tourismStatsDrafts: true } });
   assert.equal(out.length, 1);
   const d = out[0];
   if (d.rejected) return; // voice-lint is a sibling-repo dependency; rejected drafts are not scored

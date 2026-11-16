@@ -88,7 +88,7 @@ test('claimIgPublish marks publishing once; a second claim gets nothing', async 
 test('sourceGate / buildDrafts reject signal drafts with fewer than 2 sources', async () => {
   const one = item('s1', 0.9, 1); one.sources = [{ id: 'a' }]; one.signal.sourceIds = ['a'];
   assert.match(sourceGate(draftFromItem({ ...one, date: '2026-09-11' })), /fewer than 2/); assert.equal(sourceGate(draftFromItem({ ...item('s2', 0.9, 1), date: '2026-09-11' })), null);
-  const out = await buildDrafts({ briefs: [{ date: '2026-09-11', items: [one] }], existingDrafts: [] });
+  const out = await buildDrafts({ briefs: [{ date: '2026-09-11', items: [one] }], existingDrafts: [], config: { tourismStatsDrafts: true } });
   assert.match(out[0].rejected, /fewer than 2/);
 });
 test('nextSlots uses the Africa/Dar_es_Salaam day, not the UTC day', () => {

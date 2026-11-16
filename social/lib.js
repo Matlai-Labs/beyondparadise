@@ -171,7 +171,8 @@ export function outlookIsFresh(fc, existingDrafts, now = new Date(), minDays = 1
   const last = prev.map((d) => new Date(d.createdAt || 0).getTime()).sort().pop() || 0;
   return now.getTime() - last >= minDays * 86400e3;
 }
-export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [] }) {
+export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [], config = CONFIG }) {
+  if (config.tourismStatsDrafts === false) return []; // switch: no drafts from the tourism statistics source (absent/true = on)
   const items = pickItems(briefs); const drafts = items.map(draftFromItem);
   if (drafts.length < CONFIG.maxDraftsPerWeek) { const lf = latestForecasts(briefs); const fc = draftFromForecast(lf); if (fc && outlookIsFresh(lf, existingDrafts, now)) drafts.push({ ...fc, signature: outlookSignature(lf) }); }
   const out = [];
