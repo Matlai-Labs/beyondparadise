@@ -131,7 +131,7 @@ export function draftFromForecast(fc) {
   if (!fc || !fc.forecasts?.length) return null;
   const parts = fc.forecasts.map((f) => {
     const where = REGION_NAME[f.region] || f.region; const dir = f.direction || f.outlook || 'steady';
-    const conf = Math.round((f.confidence ?? 0) * 100); const drivers = (f.drivers || []).map((x) => clean(x).replace(/[.;]+$/, '')).filter(Boolean).slice(0, 2);
+    const conf = Math.round((f.confidence ?? 0) * 100); const drivers = (f.drivers || []).map((x) => clean(x).replace(/[.;]+$/, '')).filter((x) => x && !/^affordability backdrop/i.test(x)).slice(0, 2); // the exchange rate has a single source (two-source rule): never in the public post
     return `${where}: ${dir}${conf ? ` (${conf}% confidence)` : ''}${drivers.length ? ` — ${drivers.join('; ')}` : ''}`;
   });
   const text = [

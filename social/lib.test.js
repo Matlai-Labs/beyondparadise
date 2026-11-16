@@ -234,3 +234,20 @@ test('worker.js is wired: it imports igGate and calls it exactly once, before th
   assert.match(w.split('\n')[2], /\bigGate\b/, 'imported'); assert.equal((w.match(/igGate\(/g) || []).length, 1);
   assert.ok(w.indexOf('igGate(') < w.indexOf('saveQueue(mergeQueue'), 'runs before the queue is saved, or its state would be lost');
 });
+
+// ── outlook post: the exchange rate has a single source, so it never goes into the public text ──
+const AFFORD = 'Affordability backdrop: EUR ≈ 2,905.2 TZS.';
+const fcWith = (drivers) => ({ date: '2026-11-16', forecasts: [{ region: 'zanzibar', direction: 'rising', confidence: 0.8, drivers }] });
+test('draftFromForecast drops the single-source exchange-rate driver', () => {
+  const d = draftFromForecast(fcWith(['Mostly drier months over the next ~8 weeks: Nov and Jan dry, Dec wetter.', AFFORD]));
+  assert.match(d.text, /Mostly drier months/); assert.doesNotMatch(d.text, /Affordability/); assert.doesNotMatch(d.text, /EUR/); assert.doesNotMatch(d.text, /TZS/);
+});
+test('draftFromForecast lets a third driver move up when the affordability one is dropped', () => {
+  const d = draftFromForecast(fcWith([AFFORD, 'A', 'B']));
+  assert.match(d.text, /Zanzibar: rising \(80% confidence\) — A; B\n/);
+});
+test('draftFromForecast with only the affordability driver has no driver part', () => {
+  const d = draftFromForecast(fcWith([AFFORD.toUpperCase()]));
+  const line = d.text.split('\n').find((l) => l.startsWith('Zanzibar:'));
+  assert.equal(line, 'Zanzibar: rising (80% confidence)'); assert.ok(!line.includes(' — '));
+});
