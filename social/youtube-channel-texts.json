@@ -1,0 +1,10 @@
+{
+  "asia": {
+    "description": "Beyond Paradise Adventures: Southeast Asia travel videos, mostly Vietnam.\n\nWebsite: https://beyondparadiseadventures.com/\nAfrica channel: https://www.youtube.com/@BPA-Africa\nInstagram: https://www.instagram.com/beyondparadiseadventures/\nFacebook: https://www.facebook.com/beyondparadiseadventures/",
+    "keywords": ["Beyond Paradise Adventures", "Vietnam travel", "Southeast Asia travel", "Hanoi", "Ha Long Bay", "Sapa", "Laos", "Malaysia"]
+  },
+  "africa": {
+    "description": "Beyond Paradise Adventures: Africa travel videos, including Zanzibar.\n\nWebsite: https://beyondparadiseadventures.com/\nAsia channel: https://www.youtube.com/@beyondparadiseadventures\nInstagram: https://www.instagram.com/beyondparadiseadventures/\nFacebook: https://www.facebook.com/beyondparadiseadventures/",
+    "keywords": ["Beyond Paradise Adventures", "East Africa travel", "Zanzibar", "Stone Town", "Africa travel", "Rwanda gorilla trekking"]
+  }
+}
