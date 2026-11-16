@@ -205,7 +205,8 @@ export function makeSession(deps = {}, maxUnits = 3000) {
     s.units += method === 'GET' ? 1 : 50;
     const r = await d.fetch(url, { method, headers: { Authorization: `Bearer ${t}`, ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status} ${j?.error?.message || j?.error || ''} (${new URL(url).pathname})`.trim()), { http: r.status, reasons: (j?.error?.errors || []).map((x) => String(x?.reason ?? '')) });
+    if (!r.ok) { const reasons = (j?.error?.errors || []).map((x) => String(x?.reason ?? '')).filter(Boolean);
+      throw Object.assign(new Error(`HTTP ${r.status} ${j?.error?.message || j?.error || ''} (${new URL(url).pathname})${reasons.length ? ` [reason: ${reasons.join(', ')}]` : ''}`.trim()), { http: r.status, reasons }); }
     return j;
   };
   s.ownChannelId = async (ch) => {
@@ -251,11 +252,12 @@ function withFields(kind, part, fields) {
   return p;
 }
 // url + body of an update: channel -> brandingSettings; video/playlist -> snippet and/or status, in ONE call.
-function putSpec(kind, id, merged, changed) {
+function putSpec(kind, id, merged, changed, livePrivacy) {
   if (kind === 'channel') return { url: `${API}/channels?part=brandingSettings`, body: { id, brandingSettings: merged } };
-  const sn = Object.keys(changed).some((k) => k !== 'privacyStatus'); const st = 'privacyStatus' in changed;
-  const body = { id }; if (sn) body.snippet = merged; if (st) body.status = { privacyStatus: changed.privacyStatus };
-  return { url: `${API}/${kind}s?part=${[sn && 'snippet', st && 'status'].filter(Boolean).join(',')}`, body };
+  if (kind === 'playlist') { // the real API rejects a playlists.update without snippet.title, whatever parts are named: ALWAYS full live snippet + status
+    return { url: `${API}/playlists?part=snippet,status`, body: { id, snippet: merged, status: { privacyStatus: 'privacyStatus' in changed ? changed.privacyStatus : livePrivacy } } };
+  }
+  return { url: `${API}/${kind}s?part=snippet`, body: { id, snippet: merged } }; // a video's privacy is never part of an update
 }
 const canon = (v) => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((q) => [q, x[q]])) : x));
 const trunc = (v) => { const t = typeof v === 'string' ? v : canon(v); return JSON.stringify((t ?? 'undefined').slice(0, 80)); };
@@ -324,12 +326,16 @@ const DECISION_FIELDS = { video: ['title', 'description'], playlist: ['title', '
 for (const [k, fields] of Object.entries(DECISION_FIELDS)) for (const f of fields) if (!ALLOWED[k].includes(f)) throw new Error(`internal: decision field ${k}.${f} is not in ALLOWED`);
 const LIMITS = { video: { title: 100, description: 5000 }, playlist: { title: 150, description: 5000 }, 'playlist-create': { title: 150, description: 5000 }, channel: { title: 100 } };
 const OK_HOSTS = new Set(['beyondparadiseadventures.com', 'www.instagram.com', 'www.youtube.com', 'www.facebook.com']);
-const TLDS = 'com|net|org|io|co|info|app|me|tv|ly|be|de|vn|tz|uk|us|eu|biz|xyz|site|online|shop|blog|travel|ae|fr|nl|asia|africa';
+const NONWORD_TLDS = 'com|net|org|io|ly|vn|tz|uk|eu|biz|xyz|ae|fr|nl|tv|de'.split('|'); // never ordinary words: matched in any case
+const WORD_TLDS = 'be|me|co|us|app|info|shop|blog|site|online|travel|asia|africa'.split('|'); // also English words: lowercase or ALL CAPS only
+const anyCase = (t) => [...t].map((c) => `[${c}${c.toUpperCase()}]`).join('');
+const TLDS = [...WORD_TLDS, ...NONWORD_TLDS.map(anyCase)].join('|');
+const TLDS_UP = [...WORD_TLDS, ...NONWORD_TLDS].map((t) => t.toUpperCase()).join('|');
 // A web address is: anything with a scheme, anything starting with www., or a dotted word whose part after the last dot is a LOWERCASE
 // (or ALL-CAPS) known top-level domain followed by "/", end of text, whitespace or punctuation. "Great.Be careful", "Day 1.Co-op" are not addresses.
 const URLISH = /https?:\/\/[^\s<>"')\]]+|(?<![\w.@-])www\.[^\s<>"')\]]+/gi;
 const BARE = new RegExp(`\\b(?:[A-Za-z0-9-]+\\.)+(?:${TLDS})(?![A-Za-z0-9-])(?:\\/[^\\s<>"')\\]]*)?`, 'g');
-const BARE_UP = new RegExp(`\\b(?:[A-Z0-9-]+\\.)+(?:${TLDS.toUpperCase()})(?![A-Za-z0-9-])(?:\\/[^\\s<>"')\\]]*)?`, 'g');
+const BARE_UP = new RegExp(`\\b(?:[A-Z0-9-]+\\.)+(?:${TLDS_UP})(?![A-Za-z0-9-])(?:\\/[^\\s<>"')\\]]*)?`, 'g');
 function addressTokens(v) {
   const out = []; const rest = v.replace(URLISH, (m) => { out.push(m); return ' '; });
   for (const re of [BARE, BARE_UP]) for (const m of rest.matchAll(re)) out.push(m[0]);
@@ -569,11 +575,14 @@ export async function applyPlan(plan, { only, maxUnits = 3000, ledgerDir } = {},
   if (!ledgerDir) throw new Error('ledgerDir is required');
   for (const op of plan.ops) validateOp(op); // everything is checked before the first request
   const s = makeSession(deps, maxUnits); const d = s.d;
-  const file = join(ledgerDir, `changes-${dayOf(deps)}.jsonl`);
+  // One ledger file per run (day + time, a _n suffix if the same second is taken), so undo of a later run can never touch an earlier run's lines.
+  const stamp = (deps.now || new Date()).toISOString().slice(11, 19).replace(/:/g, '');
+  const base = join(ledgerDir, `changes-${dayOf(deps)}-${stamp}`); let file = `${base}.jsonl`;
+  for (let n = 2; existsSync(file); n++) file = `${base}_${n}.jsonl`;
   const sum = { done: 0, stale: 0, alreadyApplied: 0, skipped: 0, failed: 0, refused: 0, units: 0, ledger: file, stoppedReason: null };
   const fin = () => { sum.units = s.units; return sum; };
   const log = (status, op, extra) => { const line = { ts: new Date().toISOString(), status, kind: op.kind, channel: op.channel, id: op.id, ...extra }; ledgerAppend(file, line); return line; };
-  const fail = (op, e, extra) => { sum.failed++; log('failed', op, { error: String(e.message || e), ...extra }); return Object.assign(e, { summary: fin() }); };
+  const fail = (op, e, extra) => { sum.failed++; log('failed', op, { error: String(e.message || e), ...(e.reasons?.length ? { reasons: e.reasons } : {}), ...extra }); return Object.assign(e, { summary: fin() }); };
 
   // A new playlist is ALWAYS inserted private, so a half-built one is never visible. Order: pending line, playlists.insert (private), "created" line
   // with the new id, one playlistItems.insert per item (own line each), and only then the requested privacy (own pending/result lines, read back), done.
@@ -591,16 +600,16 @@ export async function applyPlan(plan, { only, maxUnits = 3000, ledgerDir } = {},
     return { good, attempts };
   }
   async function setPrivacy(op, playlistId, pendingTs) {
-    const want = op.after.privacyStatus;
+    const want = op.after.privacyStatus; const pop = { kind: 'playlist', channel: op.channel, id: playlistId };
     log('privacy-pending', op, { of: pendingTs, playlistId, before: { privacyStatus: 'private' }, planned: { privacyStatus: want } });
-    let resp;
-    try { resp = await s.call('PUT', `${API}/playlists?part=status`, op.channel, { id: playlistId, status: { privacyStatus: want } }); }
-    catch (e) { throw fail(op, e, { playlistId, step: 'privacy' }); }
-    const ok = (it) => it?.status?.privacyStatus === want && it?.snippet?.title === op.after.title;
-    let good = resp?.status?.privacyStatus === want && resp?.snippet?.title === op.after.title, attempts = 0;
-    if (!good) ({ good, attempts } = await readBackPlaylist(op, playlistId, ok, { step: 'privacy' }));
-    if (!good) { log('mismatch', op, { of: pendingTs, playlistId, step: 'privacy', differences: [`privacyStatus: expected "${want}"`], attempts }); throw Object.assign(new Error(`read-back mismatch for the privacy of new playlist ${playlistId} (${op.id}) after ${attempts} reads. It stays private; run again to finish, or undo to delete it. Run stopped.`), { summary: fin() }); }
-    log('privacy-done', op, { of: pendingTs, playlistId, planned: { privacyStatus: want }, verified: true, attempts });
+    let live, merged, v;
+    try {
+      live = await readLive(s, pop); merged = partOf('playlist', live); // full live snippet goes back unchanged
+      const spec = putSpec('playlist', playlistId, merged, { privacyStatus: want }, live.status?.privacyStatus);
+      v = await verifyWrite(s, pop, merged, { privacyStatus: want }, live, await s.call('PUT', spec.url, op.channel, spec.body));
+    } catch (e) { throw fail(op, e, { playlistId, step: 'privacy' }); }
+    if (!v.ok) { log('mismatch', op, { of: pendingTs, playlistId, step: 'privacy', differences: v.diffs, attempts: v.attempts }); throw Object.assign(new Error(`read-back mismatch for the privacy of new playlist ${playlistId} (${op.id}) after ${v.attempts} reads: ${v.diffs.join('; ')}. It stays private; run again to finish, or undo to delete it. Run stopped.`), { summary: fin() }); }
+    log('privacy-done', op, { of: pendingTs, playlistId, planned: { privacyStatus: want }, verified: true, attempts: v.attempts });
   }
   async function insertItems(op, playlistId, pendingTs, videoIds, itemIds) {
     for (const videoId of videoIds) {
@@ -675,7 +684,7 @@ export async function applyPlan(plan, { only, maxUnits = 3000, ledgerDir } = {},
     const merged = withFields(op.kind, sent, op.after); let v, resp;
     const titleOp = op.kind === 'channel' && 'title' in op.after; // a channel rename can be refused by YouTube; that must not strand the rest of the run
     const refuse = (error) => { sum.refused++; log('refused-by-youtube', op, { error, before: state, planned: op.after }); };
-    const spec = putSpec(op.kind, op.kind === 'channel' ? live.id : op.id, merged, op.after);
+    const spec = putSpec(op.kind, op.kind === 'channel' ? live.id : op.id, merged, op.after, live.status?.privacyStatus);
     try { resp = await s.call('PUT', spec.url, op.channel, spec.body); }
     catch (e) { if (titleOp && renameRefusalContinues(e)) { refuse(String(e.message || e)); continue; } throw fail(op, e); }
     try { v = await verifyWrite(s, op, merged, op.after, live, resp); }
@@ -735,7 +744,7 @@ export async function undoLedger(ledgerFile, { only, maxUnits = 3000 } = {}, dep
     if (s.units + 50 > s.maxUnits) { sum.stoppedReason = `stopped before undoing ${e.kind} ${e.id}: the next write would pass maxUnits (${s.maxUnits})`; break; }
     const restore = {}; for (const k of keys) { if (k === 'privacyStatus' && bf[k] === undefined) throw new Error(`undo refused: ledger line for ${e.kind} ${e.id} has no before value for "${k}". Nothing written.`); restore[k] = bf[k]; }
     const merged = withFields(op.kind, sent, restore);
-    const spec = putSpec(op.kind, op.kind === 'channel' ? live.id : op.id, merged, restore);
+    const spec = putSpec(op.kind, op.kind === 'channel' ? live.id : op.id, merged, restore, live.status?.privacyStatus);
     const resp = await s.call('PUT', spec.url, op.channel, spec.body);
     const v = await verifyWrite(s, op, merged, restore, live, resp);
     if (!v.ok) { ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'mismatch', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, differences: v.diffs, attempts: v.attempts }); throw new Error(`undo read-back mismatch for ${e.kind} ${e.id} after ${v.attempts} reads: ${v.diffs.join('; ')}. Run stopped.`); }

@@ -38,6 +38,7 @@ function world(opts = {}) {
     if (method === 'PUT') {
       const body = JSON.parse(o.body); state.puts = (state.puts || []).concat([{ url, body }]); let res;
       if (p.endsWith('/videos')) { const cur = state.videos[body.id]; if (body.snippet) cur.snippet = { publishedAt: cur.snippet.publishedAt, channelId: cur.snippet.channelId, ...body.snippet }; if (body.status) cur.status = { ...cur.status, ...body.status }; res = cur; }
+      if (p.endsWith('/playlists') && !body.snippet?.title) return json({ error: { message: '{0}' } }, 400); // what the real API answers
       if (p.endsWith('/playlists')) { const cur = state.playlists[body.id]; if (body.snippet) cur.snippet = { channelId: cur.snippet.channelId, ...body.snippet }; if (body.status) cur.status = { ...cur.status, ...body.status }; res = cur; }
       if (p.endsWith('/channels')) {
         const cur = state.channels[owner]; const changes = body.brandingSettings.channel.title !== cur.brandingSettings.channel.title;
@@ -265,11 +266,11 @@ test('apply: a title edited by hand since the plan is stale, nothing written', a
 });
 
 // ---------- apply: playlists ----------
-test('apply playlist privacy: part=status only, the snippet is untouched', async () => {
+test('apply playlist privacy-only: part=snippet,status with the full live snippet (the real API needs snippet.title)', async () => {
   const w = world();
   try {
     const r = await run(w, [pl('p1', { privacyStatus: 'private' })]); assert.equal(r.done, 1);
-    assert.match(w.state.puts[0].url, /playlists\?part=status$/); assert.deepEqual(w.state.puts[0].body, { id: 'p1', status: { privacyStatus: 'private' } });
+    assert.match(w.state.puts[0].url, /playlists\?part=snippet,status$/); assert.deepEqual(w.state.puts[0].body, { id: 'p1', snippet: { title: 'PL', description: 'x', defaultLanguage: 'en' }, status: { privacyStatus: 'private' } });
     assert.equal(w.state.playlists.p1.status.privacyStatus, 'private'); assert.equal(w.state.playlists.p1.snippet.title, 'PL'); assert.equal(w.state.playlists.p1.snippet.description, 'x');
     const l = readLedger(w).lines; assert.equal(l[0].before.privacyStatus, 'public'); assert.equal(l[0].before.title, 'PL');
   } finally { w.clean(); }
@@ -285,7 +286,7 @@ test('apply playlist title + privacy: one call with both parts', async () => {
 });
 test('apply playlist description: part=snippet only (as the rules path does)', async () => {
   const w = world();
-  try { await run(w, [pl('p1', { description: 'new text' })]); assert.match(w.state.puts[0].url, /playlists\?part=snippet$/); assert.equal(w.state.puts[0].body.status, undefined); } finally { w.clean(); }
+  try { await run(w, [pl('p1', { description: 'new text' })]); assert.match(w.state.puts[0].url, /playlists\?part=snippet,status$/); assert.deepEqual(w.state.puts[0].body.status, { privacyStatus: 'public' }); } finally { w.clean(); }
 });
 test('a playlist privacy change that the read-back does not show is a mismatch and stops', async () => {
   const w = world(); w.state.afterPut = (p) => { if (p.endsWith('/playlists')) w.state.playlists.p1.status.privacyStatus = 'unlisted'; };
@@ -341,7 +342,7 @@ test('playlist-create with two items: insert, two item inserts, one ledger line 
     const r = await run(w, [create('vietnam', 'Vietnam', ['v1', 'v2'])]); assert.equal(r.done, 1);
     assert.equal(w.state.posts.length, 3);
     assert.match(w.state.posts[0].url, /playlists\?part=snippet,status$/); assert.deepEqual(w.state.posts[0].body, { snippet: { title: 'Vietnam', description: 'About Vietnam' }, status: { privacyStatus: 'private' } }); // ALWAYS inserted private
-    assert.equal(w.state.puts.length, 1); assert.match(w.state.puts[0].url, /playlists\?part=status$/); assert.deepEqual(w.state.puts[0].body, { id: 'PLNEW1', status: { privacyStatus: 'public' } });
+    assert.equal(w.state.puts.length, 1); assert.match(w.state.puts[0].url, /playlists\?part=snippet,status$/); assert.deepEqual(w.state.puts[0].body, { id: 'PLNEW1', snippet: { title: 'Vietnam', description: 'About Vietnam' }, status: { privacyStatus: 'public' } });
     assert.deepEqual(writes(w).map((c) => c.method), ['POST', 'POST', 'POST', 'PUT']); // privacy is the LAST write
     assert.match(w.state.posts[1].url, /playlistItems\?part=snippet$/); assert.deepEqual(w.state.posts[1].body, { snippet: { playlistId: 'PLNEW1', resourceId: { kind: 'youtube#video', videoId: 'v1' } } });
     assert.equal(w.state.posts[2].body.snippet.resourceId.videoId, 'v2');
@@ -569,7 +570,9 @@ test('create: a failed item leaves the playlist PRIVATE; a re-run resumes (only 
     assert.equal(w.state.playlists.PLNEW1.status.privacyStatus, 'public');
     const st = ledgerLines(w).map((l) => l.status); assert.equal(st.at(-1), 'done'); assert.ok(st.includes('privacy-done'));
     // and undo of the resumed attempt still deletes exactly that playlist
-    const u = await undoLedger(readLedger(w).file, { only: ['vietnam'] }, w.deps); assert.ok(u.undone >= 1); assert.equal(w.state.playlists.PLNEW1, undefined);
+    const files = readdirSync(w.ledgerDir).sort().map((n) => join(w.ledgerDir, n)); assert.equal(files.length, 2);
+    const u0 = await undoLedger(files[0], { only: ['vietnam'] }, w.deps); assert.equal(u0['changed-since'], 1); assert.ok(w.state.playlists.PLNEW1); // the first run's file does not know the item the resume inserted
+    const u = await undoLedger(files[1], { only: ['vietnam'] }, w.deps); assert.ok(u.undone >= 1); assert.equal(w.state.playlists.PLNEW1, undefined);
   } finally { w.clean(); }
 });
 test('create: the privacy is only set after EVERY item has its ledger line; a refused privacy update leaves it private and a re-run finishes', async () => {
@@ -745,4 +748,108 @@ for (const [what, mutate, re] of [
 test('playlist update where the fake clears the description: the run stops with a mismatch', async () => {
   const w = world(); w.state.afterPut = (p) => { if (p.endsWith('/playlists')) w.state.playlists.p1.snippet.description = ''; };
   try { await assert.rejects(() => run(w, [pl('p1', { title: 'New PL' }), vid('v1', { title: 'T1' })]), /mismatch.*description/); assert.equal(writes(w).length, 1); } finally { w.clean(); }
+});
+
+// ======================= real-API round =======================
+const allFiles = (w) => readdirSync(w.ledgerDir).sort().map((n) => join(w.ledgerDir, n));
+const linesOf = (f) => readFileSync(f, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+
+// ---- 1/2. every playlists.update carries the full live snippet and the status ----
+test('the fake is as strict as the real API: a playlists.update without snippet.title is a 400 "{0}"', async () => {
+  const w = world();
+  try { const r = await w.deps.fetch('https://www.googleapis.com/youtube/v3/playlists?part=status', { method: 'PUT', headers: { Authorization: 'Bearer AT-asia' }, body: JSON.stringify({ id: 'p1', status: { privacyStatus: 'private' } }) }); assert.equal(r.status, 400); assert.equal((await r.json()).error.message, '{0}'); } finally { w.clean(); }
+});
+test('playlist privacy-only op: sends part=snippet,status with title, description, language and the new privacy; read-back checks all of it', async () => {
+  const w = world();
+  try {
+    w.state.playlists.p1.snippet.tags = ['t1']; const r = await run(w, [pl('p1', { privacyStatus: 'private' })]); assert.equal(r.done, 1);
+    assert.match(w.state.puts[0].url, /playlists\?part=snippet,status$/);
+    assert.deepEqual(w.state.puts[0].body, { id: 'p1', snippet: { title: 'PL', description: 'x', tags: ['t1'], defaultLanguage: 'en' }, status: { privacyStatus: 'private' } });
+    assert.equal(w.state.playlists.p1.status.privacyStatus, 'private');
+  } finally { w.clean(); }
+});
+test('playlist title/description op keeps the LIVE privacy in the status part', async () => {
+  const w = world();
+  try { await run(w, [pl('p2', { description: 'new' }, 'africa')]); assert.deepEqual(w.state.puts[0].body.status, { privacyStatus: 'private' }); assert.equal(w.state.playlists.p2.status.privacyStatus, 'private'); } finally { w.clean(); }
+});
+test('playlist read-back compares the snippet too: a privacy op where the fake clears the description is a mismatch', async () => {
+  const w = world(); w.state.afterPut = (p) => { if (p.endsWith('/playlists')) w.state.playlists.p1.snippet.description = ''; };
+  try { await assert.rejects(() => run(w, [pl('p1', { privacyStatus: 'private' })]), /mismatch.*description/); } finally { w.clean(); }
+});
+test('create: the final privacy step sends the full live snippet (strict fake), and its undo restores nothing it should not', async () => {
+  const w = world();
+  try {
+    const r = await run(w, [create('vietnam', 'Vietnam', ['v1'])]); assert.equal(r.done, 1); assert.equal(w.state.playlists.PLNEW1.status.privacyStatus, 'public');
+    assert.equal(w.state.puts[0].body.snippet.title, 'Vietnam');
+  } finally { w.clean(); }
+});
+test('undo of a playlist privacy change restores it through a valid playlists.update (title included)', async () => {
+  const w = world();
+  try {
+    await run(w, [pl('p1', { privacyStatus: 'private' })]);
+    const u = await undoLedger(allFiles(w)[0], {}, w.deps); assert.equal(u.undone, 1); assert.equal(w.state.playlists.p1.status.privacyStatus, 'public');
+    assert.match(w.state.puts[1].url, /part=snippet,status$/); assert.equal(w.state.puts[1].body.snippet.title, 'PL'); assert.deepEqual(w.state.puts[1].body.status, { privacyStatus: 'public' });
+  } finally { w.clean(); }
+});
+
+// ---- 3. mixed-case TLDs ----
+test('address check: non-word TLDs match in any case, English-word TLDs only in lowercase / all caps', async () => {
+  const w = world();
+  try {
+    for (const [t, host] of [['Evil.Com', /evil\.com/i], ['evil.cOm/x', /evil\.com/i], ['see Evil.NET today', /evil\.net/i], ['a.IO', /a\.io/i], ['x.Vn', /x\.vn/i], ['EVIL.COM', /evil\.com/i], ['evil.be', /evil\.be/], ['evil.co/x', /evil\.co/]]) await assert.rejects(() => plan(w, [vid('v1', { description: t })]), host, t);
+    for (const t of ['Great.Be careful', 'Nice day.Me too', 'Day 1.Co-op', 'Fun.Us all', 'Look.Info below', 'Go.Shop now']) assert.equal((await plan(w, [vid('v1', { description: t })])).ops.length, 1, t);
+  } finally { w.clean(); }
+});
+
+// ---- 4. one ledger file per run ----
+test('each apply run writes its own ledger file, even two runs in the same second; undo of the later run does not revert the earlier one', async () => {
+  const w = world();
+  try {
+    await run(w, [vid('v1', { title: 'T1' })]); await run(w, [vid('v1', { title: 'T2' })]);
+    const fs = allFiles(w); assert.equal(fs.length, 2); for (const f of fs) assert.match(f, /changes-2026-11-16-100000(_\d+)?\.jsonl$/);
+    const later = fs.find((f) => linesOf(f).some((l) => l.planned?.title === 'T2'));
+    const u = await undoLedger(later, {}, w.deps); assert.equal(u.undone, 1); assert.equal(w.state.videos.v1.snippet.title, 'T1');
+  } finally { w.clean(); }
+});
+test('a ledger with the OLD file name is still read: by undo, and by the create re-run rules', async () => {
+  const w = world();
+  try {
+    const old = join(w.ledgerDir, 'changes-2026-11-16.jsonl'); mkdirSync(w.ledgerDir, { recursive: true });
+    w.state.videos.v1.snippet.title = 'T1';
+    writeFileSync(old, JSON.stringify({ ts: 't1', status: 'pending', kind: 'video', channel: 'asia', id: 'v1', before: { title: 'Title v1', description: 'L1 v1\nwww.beyondparadiseadventures.net', tags: ['a', 'b'], categoryId: '19', defaultLanguage: 'en', defaultAudioLanguage: 'en' }, planned: { title: 'T1' } }) + '\n');
+    assert.equal((await undoLedger(old, {}, w.deps)).undone, 1); assert.equal(w.state.videos.v1.snippet.title, 'Title v1');
+    const r = await run(w, [create('vietnam', 'Vietnam', ['v1'])]); assert.equal(r.done, 1);
+    writeFileSync(old, readFileSync(old, 'utf8')); // old-named file next to the new one: the re-run reads both
+    const r2 = await applyPlan({ ops: [{ kind: 'playlist-create', channel: 'asia', id: 'vietnam', key: 'vietnam', title: 'Vietnam', before: {}, after: { title: 'Vietnam', description: 'About Vietnam', privacyStatus: 'public' }, items: ['v1'], source: 'decisions' }] }, { ledgerDir: w.ledgerDir }, w.deps);
+    assert.equal(r2.alreadyApplied, 1);
+  } finally { w.clean(); }
+});
+
+// ---- 5. a failed op shows the response's reason ----
+test('a failed op prints the reason from the response body, not only the message', async () => {
+  const w = world(); const orig = w.deps.fetch;
+  w.deps.fetch = async (u, o = {}) => (o.method === 'PUT' ? { ok: false, status: 400, json: async () => ({ error: { message: '{0}', errors: [{ reason: 'playlistTitleRequired', message: '{0}' }] } }) } : orig(u, o));
+  try {
+    await assert.rejects(() => run(w, [vid('v1', { title: 'T1' })]), /playlistTitleRequired/);
+    const f = linesOf(allFiles(w)[0]).find((l) => l.status === 'failed'); assert.match(f.error, /playlistTitleRequired/); assert.deepEqual(f.reasons, ['playlistTitleRequired']);
+  } finally { w.clean(); }
+});
+
+// ---- operator re-run of the same plan after a pending+failed pair ----
+test('a pending+failed pair from an earlier run does not block or confuse a re-run of the same plan; undo then restores the public state once', async () => {
+  const w = world();
+  try {
+    const p = await plan(w, [vid('v1', { title: 'T1' }), pl('p1', { privacyStatus: 'private' })]);
+    await applyPlan(p, { ledgerDir: w.ledgerDir, only: ['v1'] }, w.deps); // the video op is done
+    const orig = w.deps.fetch; let once = true;
+    w.deps.fetch = async (u, o = {}) => (o.method === 'PUT' && /playlists/.test(u) && once ? (once = false, json({ error: { message: '{0}' } }, 400)) : orig(u, o));
+    await assert.rejects(() => applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps), /400/); // playlist op: pending + failed, nothing changed
+    assert.equal(w.state.playlists.p1.status.privacyStatus, 'public');
+    const r = await applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps); // re-run of the SAME plan object
+    assert.equal(r.alreadyApplied, 1); assert.equal(r.done, 1); assert.equal(r.stale, 0); assert.equal(w.state.playlists.p1.status.privacyStatus, 'private');
+    const fs = allFiles(w); const last = fs[fs.length - 1]; const puts = w.state.puts.length;
+    const u = await undoLedger(last, {}, w.deps); assert.equal(u.undone, 1); assert.equal(w.state.playlists.p1.status.privacyStatus, 'public'); assert.equal(w.state.puts.length, puts + 1);
+    const failedFile = fs.find((f) => linesOf(f).some((l) => l.status === 'failed')); const u2 = await undoLedger(failedFile, { only: ['p1'] }, w.deps);
+    assert.equal(u2.undone, 0); assert.equal(u2['not-applied'], 1); assert.equal(w.state.puts.length, puts + 1); // restored once, not twice
+  } finally { w.clean(); }
 });

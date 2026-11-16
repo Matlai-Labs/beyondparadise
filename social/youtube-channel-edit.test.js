@@ -230,7 +230,7 @@ test('apply sends the complete snippet back (tags, title, languages) with only d
     assert.deepEqual(put.body, { id: 'v1', snippet: { title: before.title, description: 'NEW v1', tags: before.tags, categoryId: before.categoryId, defaultLanguage: 'en', defaultAudioLanguage: 'en' } });
     assert.equal(w.state.videos.v1.snippet.tags.length, 2);
     const { lines, file } = readLedger(w); assert.deepEqual(lines.map((l) => l.status), ['pending', 'done']); assert.equal(lines[1].verified, true);
-    assert.match(file, /changes-2026-11-16\.jsonl$/); assert.equal(statSync(file).mode & 0o777, 0o600);
+    assert.match(file, /changes-2026-11-16-100000\.jsonl$/); assert.equal(statSync(file).mode & 0o777, 0o600);
     assert.equal(r.ledger, file);
   } finally { w.clean(); }
 });
@@ -245,7 +245,7 @@ test('apply playlist and channel parts are sent whole', async () => {
     const ch = { kind: 'channel', channel: 'asia', id: CHANNELS.asia.id, title: 'BPA - Asia', before: { description: 'old', keywords: 'old' }, after: { description: 'N', keywords: '"A B" C' } };
     const r = await applyPlan({ ops: [pl, ch] }, { ledgerDir: w.ledgerDir }, w.deps);
     assert.equal(r.done, 2);
-    assert.deepEqual(w.state.puts[0].body, { id: 'p1', snippet: { title: 'PL', description: 'x', defaultLanguage: 'en' } });
+    assert.deepEqual(w.state.puts[0].body, { id: 'p1', snippet: { title: 'PL', description: 'x', defaultLanguage: 'en' }, status: { privacyStatus: 'public' } }); // the real API needs snippet.title on every playlists.update
     assert.match(w.state.puts[1].url, /channels\?part=brandingSettings$/);
     const sent = w.state.puts[1].body.brandingSettings; assert.deepEqual(sent.image, { bannerExternalUrl: 'https://x/y' });
     assert.equal(sent.channel.country, 'VN'); assert.equal(sent.channel.unsubscribedTrailer, 'tr'); assert.equal(sent.channel.title, 'BPA - Asia'); assert.equal(sent.channel.description, 'N'); assert.equal(sent.channel.keywords, '"A B" C');
