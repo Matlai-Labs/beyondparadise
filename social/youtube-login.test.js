@@ -25,11 +25,11 @@ function fakeFetch({ channelId, title = 'Some Channel', scope = SCOPES.join(' ')
 }
 const redirectedFor = (u, extra = {}) => { const p = new URLSearchParams({ state: u.searchParams.get('state'), code: 'abc', ...extra }); return `${u.searchParams.get('redirect_uri')}?${p}`; };
 
-test('--url prints one line with exactly the two scopes, offline access, prompt and a saved state', async () => {
+test('--url prints one line with exactly the three scopes, offline access, prompt and a saved state', async () => {
   const s = setup(); const u = await getUrl(s);
   assert.equal(s.out.length, 1);
   assert.equal(u.origin + u.pathname, 'https://accounts.google.com/o/oauth2/v2/auth');
-  assert.deepEqual(u.searchParams.get('scope').split(' ').sort(), ['https://www.googleapis.com/auth/youtube.readonly', 'https://www.googleapis.com/auth/youtube.upload']);
+  assert.deepEqual(u.searchParams.get('scope').split(' ').sort(), ['https://www.googleapis.com/auth/youtube.force-ssl', 'https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/yt-analytics.readonly']);
   assert.equal(u.searchParams.get('access_type'), 'offline');
   assert.equal(u.searchParams.get('prompt'), 'consent select_account');
   assert.equal(u.searchParams.get('client_id'), s.env.YOUTUBE_OAUTH_CLIENT_ID);

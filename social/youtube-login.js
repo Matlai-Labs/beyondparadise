@@ -15,7 +15,8 @@ export const CHANNELS = {
   asia: { id: 'UCkWgpqnOXI6RRxZzjFayajg', name: 'BPA - Asia' },
   africa: { id: 'UChgJACHQ-bmtDldU0et_gFg', name: 'BPA - Africa' },
 };
-export const SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube.readonly'];
+// upload = publish videos; force-ssl = read and edit the channel (titles, descriptions, playlists, comments, thumbnails); yt-analytics.readonly = read the channel's statistics
+export const SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube.force-ssl', 'https://www.googleapis.com/auth/yt-analytics.readonly'];
 // Same loopback shape the hotel's Desktop client uses (http://127.0.0.1:<port>/callback); Desktop clients accept any port.
 // Loopback only. YOUTUBE_LOGIN_REDIRECT may move the port (a local listener can then catch the redirect); anything else is ignored.
 const REDIRECT_OVERRIDE = process.env.YOUTUBE_LOGIN_REDIRECT;
