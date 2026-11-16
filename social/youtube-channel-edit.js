@@ -7,7 +7,7 @@
 //   ledger line BEFORE each write, full-part PUT, read-back verification, quota cap, Google-hosts-only.
 // - undoLedger / `undo`: restores the "before" values from a ledger file, same guards.
 // Node built-ins only. Sign-in files and client values live outside the repo (see youtube-channel.js); never printed.
-import { readFileSync, writeFileSync, mkdirSync, appendFileSync, chmodSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, appendFileSync, chmodSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { accessToken, channelInfo, listVideos, listPlaylists } from './youtube-channel.js';
 import { CHANNELS } from './youtube-login.js';
@@ -205,7 +205,7 @@ export function makeSession(deps = {}, maxUnits = 3000) {
     s.units += method === 'GET' ? 1 : 50;
     const r = await d.fetch(url, { method, headers: { Authorization: `Bearer ${t}`, ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status} ${j?.error?.message || j?.error || ''} (${new URL(url).pathname})`.trim()), { http: r.status });
+    if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status} ${j?.error?.message || j?.error || ''} (${new URL(url).pathname})`.trim()), { http: r.status, reasons: (j?.error?.errors || []).map((x) => String(x?.reason ?? '')) });
     return j;
   };
   s.ownChannelId = async (ch) => {
@@ -287,13 +287,24 @@ function differences(kind, sent, changed, prevLive, newLive) {
   return out;
 }
 
+// Which refusals of a channel RENAME let the run continue: YouTube said no to this title (400, or a 403 with a title-specific reason).
+// Auth, quota, rate-limit and plain "forbidden" answers (401, 429, wrong channel) always stop the run.
+export function renameRefusalContinues(e) {
+  if (e.http !== 400 && e.http !== 403) return false;
+  const text = `${(e.reasons || []).join(' ')} ${e.message}`;
+  if (/quota|ratelimit|limitexceeded|autherror|insufficientpermissions|unauthori[sz]ed/i.test(text)) return false;
+  if ((e.reasons || []).some((r) => r.toLowerCase() === 'forbidden')) return false;
+  return true;
+}
+
 // Verify a write. YouTube's read right after a write can lag, so: (1) check the PUT response body, (2) read back up to 6 times, 5 s apart.
 const READ_ATTEMPTS = 6, READ_GAP_MS = 5000;
 const defaultSleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function verifyWrite(s, op, merged, changed, prevLive, putResp) {
   const sleep = s.d.sleep || defaultSleep;
   const part = op.kind === 'channel' ? putResp?.brandingSettings : putResp?.snippet;
-  if (part && typeof part === 'object') {
+  const trustAnswer = !(op.kind === 'channel' && 'title' in changed); // a channel title is only believed after a live read
+  if (trustAnswer && part && typeof part === 'object') {
     const fromPut = op.kind === 'channel' ? { ...putResp, id: prevLive.id } : { ...putResp, status: putResp.status || prevLive.status };
     if (!differences(op.kind, merged, changed, prevLive, fromPut).length) return { ok: true, attempts: 0, via: 'put-response', live: fromPut };
   }
@@ -314,7 +325,16 @@ for (const [k, fields] of Object.entries(DECISION_FIELDS)) for (const f of field
 const LIMITS = { video: { title: 100, description: 5000 }, playlist: { title: 150, description: 5000 }, 'playlist-create': { title: 150, description: 5000 }, channel: { title: 100 } };
 const OK_HOSTS = new Set(['beyondparadiseadventures.com', 'www.instagram.com', 'www.youtube.com', 'www.facebook.com']);
 const TLDS = 'com|net|org|io|co|info|app|me|tv|ly|be|de|vn|tz|uk|us|eu|biz|xyz|site|online|shop|blog|travel|ae|fr|nl|asia|africa';
-const ADDRESS = new RegExp(`https?:\\/\\/[^\\s<>"')\\]]+|(?<![\\w.@-])www\\.[^\\s<>"')\\]]+|\\b(?:[a-z0-9-]+\\.)+(?:${TLDS})\\b(?:\\/[^\\s<>"')\\]]*)?`, 'gi');
+// A web address is: anything with a scheme, anything starting with www., or a dotted word whose part after the last dot is a LOWERCASE
+// (or ALL-CAPS) known top-level domain followed by "/", end of text, whitespace or punctuation. "Great.Be careful", "Day 1.Co-op" are not addresses.
+const URLISH = /https?:\/\/[^\s<>"')\]]+|(?<![\w.@-])www\.[^\s<>"')\]]+/gi;
+const BARE = new RegExp(`\\b(?:[A-Za-z0-9-]+\\.)+(?:${TLDS})(?![A-Za-z0-9-])(?:\\/[^\\s<>"')\\]]*)?`, 'g');
+const BARE_UP = new RegExp(`\\b(?:[A-Z0-9-]+\\.)+(?:${TLDS.toUpperCase()})(?![A-Za-z0-9-])(?:\\/[^\\s<>"')\\]]*)?`, 'g');
+function addressTokens(v) {
+  const out = []; const rest = v.replace(URLISH, (m) => { out.push(m); return ' '; });
+  for (const re of [BARE, BARE_UP]) for (const m of rest.matchAll(re)) out.push(m[0]);
+  return out;
+}
 function hostOf(token) {
   const t = token.replace(/[.,;:!?)\]]+$/, '');
   try { return new URL(/^https?:\/\//i.test(t) ? t : `https://${t}`).hostname.toLowerCase(); } catch { return null; }
@@ -331,18 +351,19 @@ function contentProblems(kind, set) {
     }
     if (k !== 'title' && k !== 'description') continue;
     if (k === 'title' && !v.trim()) out.push('title is empty');
-    const max = LIMITS[kind]?.[k]; if (max && v.length > max) out.push(`${k} is ${v.length} characters, the limit is ${max}`);
+    const max = LIMITS[kind]?.[k]; // what YouTube counts: a description in UTF-8 bytes, a title in characters (code points)
+    if (max) { const n = k === 'description' ? Buffer.byteLength(v, 'utf8') : [...v].length; if (n > max) out.push(`${k} is ${n} ${k === 'description' ? 'bytes' : 'characters'}, the limit is ${max}`); }
     if (/[<>]/.test(v)) out.push(`${k} contains "<" or ">"`);
     if (/beyondparadiseadventures\.net/i.test(v)) out.push(`${k} contains the old address beyondparadiseadventures.net`);
     const bad = new Set();
-    for (const m of v.matchAll(ADDRESS)) { const h = hostOf(m[0]); if (!h || !OK_HOSTS.has(h)) bad.add(h || m[0]); }
+    for (const tok of addressTokens(v)) { const h = hostOf(tok); if (!h || !OK_HOSTS.has(h)) bad.add(h || tok); }
     for (const h of bad) out.push(`${k} contains the address host "${h}" (allowed: ${[...OK_HOSTS].join(', ')})`);
   }
   return out;
 }
 const TEXT_FIELDS = new Set(['title', 'privacyStatus']);
 // Ops that carry the new fields, or come from a decisions plan, get the full content check again when applied (a plan.json can be edited by hand).
-const needsContentCheck = (op) => op.kind === 'playlist-create' || op.source === 'decisions' || Object.keys(op.after || {}).some((k) => TEXT_FIELDS.has(k));
+const needsContentCheck = (op) => op.kind === 'playlist-create' || op.source === 'decisions' || Object.keys(op.after || {}).some((k) => TEXT_FIELDS.has(k) || k === 'description');
 
 function validateCreate(op) {
   if (typeof op.id !== 'string' || !op.id || op.key !== op.id) throw new Error('plan refused: playlist-create without a key (id must equal key)');
@@ -434,6 +455,22 @@ async function itemProblems(s, channel, items) {
     else if (v.status?.privacyStatus !== 'public') out.push(`item ${id} is ${v.status?.privacyStatus}, only public videos may be added`);
   }
   return out;
+}
+// The items a playlist holds right now: [{ id (playlistItem id), videoId }].
+async function ownItems(s, channel, playlistId) {
+  const out = []; let page;
+  do {
+    const p = { part: 'snippet', playlistId, maxResults: '50' }; if (page) p.pageToken = page;
+    const j = await s.call('GET', `${API}/playlistItems?${qs(p)}`, channel);
+    for (const it of j.items || []) out.push({ id: it.id, videoId: it.snippet?.resourceId?.videoId });
+    page = j.nextPageToken;
+  } while (page);
+  return out;
+}
+// Every parsable line of every changes-*.jsonl in the ledger directory ("this ledger" for resume decisions).
+function allLedgerLines(dir) {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).filter((n) => /^changes-.*\.jsonl$/.test(n)).sort().flatMap((n) => readFileSync(join(dir, n), 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean));
 }
 async function buildDecisionsPlan(s, deps) {
   const dec = deps.decisions; const errors = checkDecisions(dec);
@@ -538,37 +575,88 @@ export async function applyPlan(plan, { only, maxUnits = 3000, ledgerDir } = {},
   const log = (status, op, extra) => { const line = { ts: new Date().toISOString(), status, kind: op.kind, channel: op.channel, id: op.id, ...extra }; ledgerAppend(file, line); return line; };
   const fail = (op, e, extra) => { sum.failed++; log('failed', op, { error: String(e.message || e), ...extra }); return Object.assign(e, { summary: fin() }); };
 
-  // A new playlist: pending line, playlists.insert, "created" line with the new id, one playlistItems.insert per item (own line each), done line.
-  // Costs 50 units per insert; the whole op is paid for up front so the budget never stops it half way.
-  async function applyCreate(op) {
-    await s.ownChannelId(op.channel);
-    if ((await ownPlaylists(s, op.channel)).some((p) => normTitle(p.snippet?.title) === normTitle(op.after.title))) { sum.alreadyApplied++; log('already-applied', op, { planned: op.after }); return; }
-    if ((await itemProblems(s, op.channel, op.items)).length) { sum.stale++; return; } // an item is no longer a public video of this channel
-    const cost = 50 * (1 + op.items.length);
-    if (s.units + cost > s.maxUnits) { sum.stoppedReason = `stopped before creating playlist ${op.id}: it needs ${cost} units (1 insert + ${op.items.length} items) and would pass maxUnits (${s.maxUnits}; ${s.units} used)`; return 'stop'; }
-    const pending = log('pending', op, { before: {}, planned: op.after, items: op.items });
-    let resp;
-    try { resp = await s.call('POST', `${API}/playlists?part=snippet,status`, op.channel, { snippet: { title: op.after.title, description: op.after.description ?? '' }, status: { privacyStatus: op.after.privacyStatus } }); }
-    catch (e) { throw fail(op, e); }
-    const newId = resp?.id;
-    if (typeof newId !== 'string' || !newId) throw fail(op, new Error('the insert answered without a playlist id; check the channel by hand for a playlist titled "' + op.after.title + '"'));
-    log('created', op, { of: pending.ts, playlistId: newId });
-    const matches = (it) => it?.snippet?.title === op.after.title && (it.snippet.description ?? '') === (op.after.description ?? '') && it.status?.privacyStatus === op.after.privacyStatus && (it.snippet.channelId === undefined || it.snippet.channelId === CHANNELS[op.channel].id);
-    let ok = matches(resp), attempts = 0;
-    for (let a = 1; !ok && a <= READ_ATTEMPTS; a++) {
+  // A new playlist is ALWAYS inserted private, so a half-built one is never visible. Order: pending line, playlists.insert (private), "created" line
+  // with the new id, one playlistItems.insert per item (own line each), and only then the requested privacy (own pending/result lines, read back), done.
+  // Re-run: a done line for the key = already-applied; a created line of this ledger without done = RESUME (insert only the missing items, then privacy);
+  // a same-title playlist this ledger did not create = playlist-exists-not-ours (never adopted, never deleted).
+  const wantPublic = (op) => op.after.privacyStatus !== 'private';
+  const sameChannelPlaylist = (op, it) => it?.snippet?.title === op.after.title && (it.snippet.description ?? '') === (op.after.description ?? '') && (it.snippet.channelId === undefined || it.snippet.channelId === CHANNELS[op.channel].id);
+  async function readBackPlaylist(op, playlistId, ok, extra) {
+    let good = false, attempts = 0;
+    for (let a = 1; a <= READ_ATTEMPTS && !good; a++) {
       if (a > 1) await (s.d.sleep || defaultSleep)(READ_GAP_MS);
       attempts = a;
-      try { ok = matches(await readLive(s, { kind: 'playlist', channel: op.channel, id: newId })); } catch (e) { if (!e.notFound) throw fail(op, e, { playlistId: newId }); }
+      try { good = ok(await readLive(s, { kind: 'playlist', channel: op.channel, id: playlistId })); } catch (e) { if (!e.notFound) throw fail(op, e, { playlistId, ...extra }); }
     }
-    if (!ok) { log('mismatch', op, { playlistId: newId, attempts }); throw Object.assign(new Error(`read-back mismatch for new playlist ${newId} (${op.id}) after ${attempts} reads. Run stopped; undo deletes it.`), { summary: fin() }); }
-    const itemIds = [];
-    for (const videoId of op.items) {
+    return { good, attempts };
+  }
+  async function setPrivacy(op, playlistId, pendingTs) {
+    const want = op.after.privacyStatus;
+    log('privacy-pending', op, { of: pendingTs, playlistId, before: { privacyStatus: 'private' }, planned: { privacyStatus: want } });
+    let resp;
+    try { resp = await s.call('PUT', `${API}/playlists?part=status`, op.channel, { id: playlistId, status: { privacyStatus: want } }); }
+    catch (e) { throw fail(op, e, { playlistId, step: 'privacy' }); }
+    const ok = (it) => it?.status?.privacyStatus === want && it?.snippet?.title === op.after.title;
+    let good = resp?.status?.privacyStatus === want && resp?.snippet?.title === op.after.title, attempts = 0;
+    if (!good) ({ good, attempts } = await readBackPlaylist(op, playlistId, ok, { step: 'privacy' }));
+    if (!good) { log('mismatch', op, { of: pendingTs, playlistId, step: 'privacy', differences: [`privacyStatus: expected "${want}"`], attempts }); throw Object.assign(new Error(`read-back mismatch for the privacy of new playlist ${playlistId} (${op.id}) after ${attempts} reads. It stays private; run again to finish, or undo to delete it. Run stopped.`), { summary: fin() }); }
+    log('privacy-done', op, { of: pendingTs, playlistId, planned: { privacyStatus: want }, verified: true, attempts });
+  }
+  async function insertItems(op, playlistId, pendingTs, videoIds, itemIds) {
+    for (const videoId of videoIds) {
       let r;
-      try { r = await s.call('POST', `${API}/playlistItems?part=snippet`, op.channel, { snippet: { playlistId: newId, resourceId: { kind: 'youtube#video', videoId } } }); }
-      catch (e) { throw fail(op, e, { playlistId: newId, videoId, itemsDone: itemIds.length }); }
-      if (typeof r?.id !== 'string' || !r.id || (r.snippet?.resourceId?.videoId && r.snippet.resourceId.videoId !== videoId)) throw fail(op, new Error(`the playlist item insert for ${videoId} did not answer with a matching item`), { playlistId: newId, videoId, itemsDone: itemIds.length });
-      itemIds.push(r.id); log('item-created', op, { of: pending.ts, playlistId: newId, videoId, playlistItemId: r.id });
+      try { r = await s.call('POST', `${API}/playlistItems?part=snippet`, op.channel, { snippet: { playlistId, resourceId: { kind: 'youtube#video', videoId } } }); }
+      catch (e) { throw fail(op, e, { playlistId, videoId, itemsDone: itemIds.length }); }
+      if (typeof r?.id !== 'string' || !r.id || (r.snippet?.resourceId?.videoId && r.snippet.resourceId.videoId !== videoId)) throw fail(op, new Error(`the playlist item insert for ${videoId} did not answer with a matching item`), { playlistId, videoId, itemsDone: itemIds.length });
+      itemIds.push(r.id); log('item-created', op, { of: pendingTs, playlistId, videoId, playlistItemId: r.id });
     }
+  }
+  const notOurs = (op, id, why) => fail(op, new Error(`playlist-exists-not-ours: ${why} (playlist id ${id}, channel ${op.channel}, title "${op.after.title}"). It was not created by this ledger, so it is NOT adopted and NOT changed or deleted. Open YouTube Studio, look at it, and rename or delete it yourself (or change the decision), then run again.`), { code: 'playlist-exists-not-ours', playlistId: id });
+  async function applyCreate(op) {
+    await s.ownChannelId(op.channel);
+    const prior = allLedgerLines(ledgerDir).filter((l) => l.kind === 'playlist-create' && l.id === op.id && l.channel === op.channel);
+    const found = (await ownPlaylists(s, op.channel)).filter((p) => normTitle(p.snippet?.title) === normTitle(op.after.title));
+    if (found.length) {
+      const createdIds = new Set(prior.filter((l) => l.status === 'created' && l.playlistId).map((l) => l.playlistId));
+      const mine = found.find((p) => createdIds.has(p.id));
+      if (!mine) throw notOurs(op, found[0].id, 'a playlist with this title already exists');
+      if (prior.some((l) => l.status === 'done' && l.playlistId === mine.id)) { sum.alreadyApplied++; log('already-applied', op, { planned: op.after, playlistId: mine.id }); return; }
+      // ---- resume ----
+      const known = new Set(prior.filter((l) => (l.status === 'item-created' || l.status === 'item-present') && l.playlistId === mine.id).map((l) => l.playlistItemId));
+      const live = await ownItems(s, op.channel, mine.id);
+      const foreign = live.filter((i) => !known.has(i.id));
+      if (foreign.length) throw notOurs(op, mine.id, `it holds ${foreign.length} item(s) this ledger did not insert (${foreign.map((i) => i.videoId).join(', ')})`);
+      const have = new Set(live.map((i) => i.videoId)); const missing = op.items.filter((v) => !have.has(v));
+      const needPrivacy = wantPublic(op) && (await readLive(s, { kind: 'playlist', channel: op.channel, id: mine.id })).status?.privacyStatus !== op.after.privacyStatus;
+      if ((await itemProblems(s, op.channel, missing)).length) { sum.stale++; return; }
+      const cost = 50 * (missing.length + (needPrivacy ? 1 : 0));
+      if (s.units + cost > s.maxUnits) { sum.stoppedReason = `stopped before resuming playlist ${op.id}: it needs ${cost} units (${missing.length} missing items${needPrivacy ? ' + 1 privacy update' : ''}) and would pass maxUnits (${s.maxUnits}; ${s.units} used)`; return 'stop'; }
+      const pending = log('pending', op, { before: {}, planned: op.after, items: op.items, resume: true, playlistId: mine.id });
+      log('created', op, { of: pending.ts, playlistId: mine.id, resumed: true });
+      for (const i of live) log('item-present', op, { of: pending.ts, playlistId: mine.id, videoId: i.videoId, playlistItemId: i.id });
+      const itemIds = live.map((i) => i.id);
+      await insertItems(op, mine.id, pending.ts, missing, itemIds);
+      if (needPrivacy) await setPrivacy(op, mine.id, pending.ts);
+      log('done', op, { of: pending.ts, playlistId: mine.id, itemIds, planned: op.after, verified: true, resumed: true });
+      sum.done++; return;
+    }
+    if ((await itemProblems(s, op.channel, op.items)).length) { sum.stale++; return; } // an item is no longer a public video of this channel
+    const cost = 50 * (1 + op.items.length + (wantPublic(op) ? 1 : 0));
+    if (s.units + cost > s.maxUnits) { sum.stoppedReason = `stopped before creating playlist ${op.id}: it needs ${cost} units (1 insert + ${op.items.length} items${wantPublic(op) ? ' + 1 privacy update' : ''}) and would pass maxUnits (${s.maxUnits}; ${s.units} used)`; return 'stop'; }
+    const pending = log('pending', op, { before: {}, planned: op.after, items: op.items });
+    let resp;
+    try { resp = await s.call('POST', `${API}/playlists?part=snippet,status`, op.channel, { snippet: { title: op.after.title, description: op.after.description ?? '' }, status: { privacyStatus: 'private' } }); }
+    catch (e) { throw fail(op, e); }
+    const newId = resp?.id;
+    if (typeof newId !== 'string' || !newId) throw fail(op, new Error('the insert answered without a playlist id; the playlist (if it exists) is private: check YouTube Studio for a playlist titled "' + op.after.title + '"'));
+    log('created', op, { of: pending.ts, playlistId: newId });
+    const okNew = (it) => sameChannelPlaylist(op, it) && it.status?.privacyStatus === 'private';
+    let good = okNew(resp), attempts = 0;
+    if (!good) ({ good, attempts } = await readBackPlaylist(op, newId, okNew));
+    if (!good) { log('mismatch', op, { playlistId: newId, attempts }); throw Object.assign(new Error(`read-back mismatch for new playlist ${newId} (${op.id}) after ${attempts} reads. Run stopped; undo deletes it.`), { summary: fin() }); }
+    const itemIds = [];
+    await insertItems(op, newId, pending.ts, op.items, itemIds);
+    if (wantPublic(op)) await setPrivacy(op, newId, pending.ts);
     log('done', op, { of: pending.ts, playlistId: newId, itemIds, planned: op.after, verified: true, attempts });
     sum.done++;
   }
@@ -589,7 +677,7 @@ export async function applyPlan(plan, { only, maxUnits = 3000, ledgerDir } = {},
     const refuse = (error) => { sum.refused++; log('refused-by-youtube', op, { error, before: state, planned: op.after }); };
     const spec = putSpec(op.kind, op.kind === 'channel' ? live.id : op.id, merged, op.after);
     try { resp = await s.call('PUT', spec.url, op.channel, spec.body); }
-    catch (e) { if (titleOp && e.http >= 400 && e.http < 500) { refuse(String(e.message || e)); continue; } throw fail(op, e); }
+    catch (e) { if (titleOp && renameRefusalContinues(e)) { refuse(String(e.message || e)); continue; } throw fail(op, e); }
     try { v = await verifyWrite(s, op, merged, op.after, live, resp); }
     catch (e) { throw fail(op, e); }
     if (!v.ok) {
@@ -620,6 +708,11 @@ export async function undoLedger(ledgerFile, { only, maxUnits = 3000 } = {}, dep
     const op = { kind: 'playlist', channel: e.channel, id: playlistId };
     let live; try { live = await readLive(s, op); } catch (err) { if (err.notFound) { sum['not-applied']++; out(`playlist-create ${e.id}: not-applied (playlist ${playlistId} is already gone, nothing written)`); return; } throw err; }
     if (live.snippet?.title !== e.planned?.title) { sum['changed-since']++; out(`skipped playlist-create ${e.id}: changed-since (playlist ${playlistId} no longer has the title this tool gave it, so it is not deleted)`); return; }
+    const ours = new Set(lines.filter((l) => (l.status === 'item-created' || l.status === 'item-present') && l.playlistId === playlistId).map((l) => l.playlistItemId));
+    const foreign = (await ownItems(s, e.channel, playlistId)).filter((i) => !ours.has(i.id));
+    if (foreign.length) { sum['changed-since']++; out(`skipped playlist-create ${e.id}: changed-since (playlist ${playlistId} holds ${foreign.length} item(s) this ledger did not insert, so it is not deleted)`); return; }
+    const pv = live.status?.privacyStatus;
+    if (pv !== 'private' && pv !== e.planned?.privacyStatus) { sum['changed-since']++; out(`skipped playlist-create ${e.id}: changed-since (playlist ${playlistId} is "${pv}", neither private nor the planned "${e.planned?.privacyStatus}")`); return; }
     if (s.units + 50 > s.maxUnits) { sum.stoppedReason = `stopped before undoing playlist-create ${e.id}: the next write would pass maxUnits (${s.maxUnits})`; return 'stop'; }
     await s.call('DELETE', `${API}/playlists?${qs({ id: playlistId })}`, e.channel);
     const sleep = s.d.sleep || defaultSleep; let gone = false;

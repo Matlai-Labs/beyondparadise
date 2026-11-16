@@ -32,6 +32,7 @@ function world(opts = {}) {
     if (method === 'GET') {
       if (p.endsWith('/channels')) return json({ items: [{ id: state.channels[owner].id, brandingSettings: structuredClone(state.channels[owner].brandingSettings) }] });
       if (p.endsWith('/videos')) return json({ items: q.get('id').split(',').filter((i) => state.videos[i]).map((i) => structuredClone(state.videos[i])) });
+      if (p.endsWith('/playlistItems')) return json({ items: (state.items[q.get('playlistId')] || []).map((r) => structuredClone(r)) });
       if (p.endsWith('/playlists')) return json({ items: q.get('id') ? [structuredClone(state.playlists[q.get('id')])].filter(Boolean) : Object.values(state.playlists).filter((x) => x.snippet.channelId === state.channels[owner].id).map((x) => structuredClone(x)) });
     }
     if (method === 'PUT') {
@@ -41,8 +42,8 @@ function world(opts = {}) {
       if (p.endsWith('/channels')) {
         const cur = state.channels[owner]; const changes = body.brandingSettings.channel.title !== cur.brandingSettings.channel.title;
         if (changes && state.channelTitle === 'http') return json({ error: { message: 'Invalid channel title' } }, 400);
-        if (!(changes && state.channelTitle === 'ignore')) cur.brandingSettings = body.brandingSettings;
-        res = cur;
+        if (changes && state.channelTitle === 'lie') res = { id: cur.id, brandingSettings: body.brandingSettings }; // the answer claims the new title, the state keeps the old one
+        else { if (!(changes && state.channelTitle === 'ignore')) cur.brandingSettings = body.brandingSettings; res = cur; }
       }
       if (state.afterPut) state.afterPut(p, owner);
       return json(res);
@@ -339,12 +340,14 @@ test('playlist-create with two items: insert, two item inserts, one ledger line 
   try {
     const r = await run(w, [create('vietnam', 'Vietnam', ['v1', 'v2'])]); assert.equal(r.done, 1);
     assert.equal(w.state.posts.length, 3);
-    assert.match(w.state.posts[0].url, /playlists\?part=snippet,status$/); assert.deepEqual(w.state.posts[0].body, { snippet: { title: 'Vietnam', description: 'About Vietnam' }, status: { privacyStatus: 'public' } });
+    assert.match(w.state.posts[0].url, /playlists\?part=snippet,status$/); assert.deepEqual(w.state.posts[0].body, { snippet: { title: 'Vietnam', description: 'About Vietnam' }, status: { privacyStatus: 'private' } }); // ALWAYS inserted private
+    assert.equal(w.state.puts.length, 1); assert.match(w.state.puts[0].url, /playlists\?part=status$/); assert.deepEqual(w.state.puts[0].body, { id: 'PLNEW1', status: { privacyStatus: 'public' } });
+    assert.deepEqual(writes(w).map((c) => c.method), ['POST', 'POST', 'POST', 'PUT']); // privacy is the LAST write
     assert.match(w.state.posts[1].url, /playlistItems\?part=snippet$/); assert.deepEqual(w.state.posts[1].body, { snippet: { playlistId: 'PLNEW1', resourceId: { kind: 'youtube#video', videoId: 'v1' } } });
     assert.equal(w.state.posts[2].body.snippet.resourceId.videoId, 'v2');
-    const { lines, file } = readLedger(w); assert.deepEqual(lines.map((l) => l.status), ['pending', 'created', 'item-created', 'item-created', 'done']);
+    const { lines, file } = readLedger(w); assert.deepEqual(lines.map((l) => l.status), ['pending', 'created', 'item-created', 'item-created', 'privacy-pending', 'privacy-done', 'done']);
     assert.equal(lines[1].playlistId, 'PLNEW1'); assert.equal(lines[1].of, lines[0].ts);
-    assert.deepEqual(lines.slice(2, 4).map((l) => [l.videoId, l.playlistItemId]), [['v1', 'PI2'], ['v2', 'PI3']]); assert.deepEqual(lines[4].itemIds, ['PI2', 'PI3']);
+    assert.deepEqual(lines.slice(2, 4).map((l) => [l.videoId, l.playlistItemId]), [['v1', 'PI2'], ['v2', 'PI3']]); assert.deepEqual(lines[6].itemIds, ['PI2', 'PI3']); assert.equal(w.state.playlists.PLNEW1.status.privacyStatus, 'public');
     assert.ok(r.units >= 150);
     // applying again must not create a second playlist
     const again = await applyPlan(await plan(w, [create('vietnam', 'Vietnam', ['v1', 'v2'])]), { ledgerDir: w.ledgerDir }, w.deps); assert.equal(again.done, 0);
@@ -416,16 +419,16 @@ test('undo of a created playlist that is already gone: not-applied, no delete ca
 test('unit budget counts inserts: a create needing 150 units is not started when it cannot be paid in full', async () => {
   const w = world();
   try {
-    const r = await run(w, [create('vietnam', 'Vietnam', ['v1', 'v2'])], { maxUnits: 152 }); // 3 read units + 150 would be 153
+    const r = await run(w, [create('vietnam', 'Vietnam', ['v1', 'v2'])], { maxUnits: 202 }); // 3 read units + 150 inserts + 50 privacy update would be 203
     assert.equal(r.done, 0); assert.match(r.stoppedReason, /maxUnits/); assert.equal(writes(w).length, 0); assert.equal(existsSync(w.ledgerDir) ? readdirSync(w.ledgerDir).length : 0, 0);
-    const r2 = await run(w, [create('vietnam', 'Vietnam', ['v1', 'v2'])], { maxUnits: 153 }); assert.equal(r2.done, 1); assert.equal(writes(w).length, 3);
+    const r2 = await run(w, [create('vietnam', 'Vietnam', ['v1', 'v2'])], { maxUnits: 203 }); assert.equal(r2.done, 1); assert.equal(writes(w).length, 4);
   } finally { w.clean(); }
 });
 test('unit budget: inserts of an earlier op are counted against the next op', async () => {
   const w = world();
   try {
     const r = await run(w, [create('a', 'Alpha', ['v1', 'v2']), create('b', 'Beta', ['v1', 'v2'])], { maxUnits: 300 });
-    assert.equal(r.done, 1); assert.match(r.stoppedReason, /maxUnits/); assert.equal(w.state.posts.length, 3); assert.ok(r.units >= 153);
+    assert.equal(r.done, 1); assert.match(r.stoppedReason, /maxUnits/); assert.equal(w.state.posts.length, 3); assert.ok(r.units >= 203);
   } finally { w.clean(); }
 });
 test('apply re-checks the items: a video that turned private since the plan makes the create stale, nothing written', async () => {
@@ -544,4 +547,202 @@ test('CLI plan --decisions: missing value, missing file and broken json are clea
 });
 test('CLI usage mentions --decisions', async () => {
   const msgs = []; await main([], { err: (s) => msgs.push(s) }); assert.match(msgs.join('\n'), /--decisions/);
+});
+
+// ======================= fix round: review findings =======================
+const planOnce = async (w, ops) => plan(w, ops);
+const ledgerLines = (w) => readdirSync(w.ledgerDir).sort().flatMap((n) => readFileSync(join(w.ledgerDir, n), 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)));
+const itemVideos = (w, id) => w.state.items[id].map((r) => r.snippet.resourceId.videoId);
+
+// ---- 1. private-first create, resume, never adopt ----
+test('create: a failed item leaves the playlist PRIVATE; a re-run resumes (only the missing item, then privacy, then done), never a second playlist', async () => {
+  const w = world({ failItemAt: 1 });
+  try {
+    const p = await planOnce(w, [create('vietnam', 'Vietnam', ['v1', 'v2'])]);
+    await assert.rejects(() => applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps), /item broke/);
+    assert.equal(w.state.playlists.PLNEW1.status.privacyStatus, 'private'); assert.deepEqual(itemVideos(w, 'PLNEW1'), ['v1']); assert.equal(w.state.puts, undefined);
+    w.state.failItemAt = -1; const before = w.state.posts.length;
+    const r = await applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps);
+    assert.equal(r.done, 1); assert.equal(r.alreadyApplied, 0);
+    assert.deepEqual(itemVideos(w, 'PLNEW1'), ['v1', 'v2']); assert.equal(Object.keys(w.state.playlists).filter((k) => k.startsWith('PLNEW')).length, 1);
+    assert.equal(w.state.posts.length, before + 1); assert.equal(w.state.posts.at(-1).body.snippet.resourceId.videoId, 'v2'); // only the missing item
+    assert.equal(w.state.playlists.PLNEW1.status.privacyStatus, 'public');
+    const st = ledgerLines(w).map((l) => l.status); assert.equal(st.at(-1), 'done'); assert.ok(st.includes('privacy-done'));
+    // and undo of the resumed attempt still deletes exactly that playlist
+    const u = await undoLedger(readLedger(w).file, { only: ['vietnam'] }, w.deps); assert.ok(u.undone >= 1); assert.equal(w.state.playlists.PLNEW1, undefined);
+  } finally { w.clean(); }
+});
+test('create: the privacy is only set after EVERY item has its ledger line; a refused privacy update leaves it private and a re-run finishes', async () => {
+  const w = world();
+  try {
+    const p = await planOnce(w, [create('vietnam', 'Vietnam', ['v1', 'v2'])]);
+    w.state.afterPut = (path) => { if (path.endsWith('/playlists')) w.state.playlists.PLNEW1.status.privacyStatus = 'private'; }; // YouTube "forgets" the update
+    await assert.rejects(() => applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps), /mismatch/);
+    assert.deepEqual(ledgerLines(w).map((l) => l.status), ['pending', 'created', 'item-created', 'item-created', 'privacy-pending', 'mismatch']);
+    w.state.afterPut = null; const posts = w.state.posts.length;
+    const r = await applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps); assert.equal(r.done, 1); assert.equal(w.state.posts.length, posts); // no item inserted twice
+    assert.equal(w.state.playlists.PLNEW1.status.privacyStatus, 'public'); assert.deepEqual(itemVideos(w, 'PLNEW1'), ['v1', 'v2']);
+  } finally { w.clean(); }
+});
+test('create: a requested private playlist gets no privacy update at all', async () => {
+  const w = world();
+  try { const r = await run(w, [create('vietnam', 'Vietnam', ['v1'], 'private')]); assert.equal(r.done, 1); assert.equal(w.state.puts, undefined); assert.ok(!ledgerLines(w).some((l) => /^privacy/.test(l.status))); } finally { w.clean(); }
+});
+test('create: insert succeeded but the response was lost (no created line): the playlist is private, a re-run stops with playlist-exists-not-ours and touches nothing', async () => {
+  const w = world({ dieAfterPost: true });
+  try {
+    const p = await planOnce(w, [create('vietnam', 'Vietnam', ['v1'])]);
+    await assert.rejects(() => applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps), /network/);
+    assert.equal(w.state.playlists.PLNEW1.status.privacyStatus, 'private'); w.state.dieAfterPost = false; const posts = w.state.posts.length;
+    await assert.rejects(() => applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps), (e) => { assert.match(e.message, /playlist-exists-not-ours/); assert.match(e.message, /PLNEW1/); assert.match(e.message, /Studio/); return true; });
+    assert.equal(w.state.posts.length, posts); assert.equal(w.state.deletes, undefined); assert.equal(w.state.puts, undefined); assert.ok(w.state.playlists.PLNEW1);
+  } finally { w.clean(); }
+});
+test('create: a playlist with the title that this ledger did not create is never adopted, never deleted', async () => {
+  const w = world();
+  try {
+    const op = { kind: 'playlist-create', channel: 'asia', id: 'k', key: 'k', title: 'PL', before: {}, after: { title: 'PL', description: '', privacyStatus: 'public' }, items: ['v1'], source: 'decisions' }; // p1 is titled PL
+    await assert.rejects(() => applyPlan({ ops: [op] }, { ledgerDir: w.ledgerDir }, w.deps), /playlist-exists-not-ours.*p1/s);
+    assert.equal(writes(w).length, 0); assert.ok(w.state.playlists.p1);
+  } finally { w.clean(); }
+});
+test('create: a created line in ANOTHER op or channel does not let a same-title playlist be resumed', async () => {
+  const w = world();
+  try {
+    writeLedger(w, [{ ts: 't1', status: 'pending', kind: 'playlist-create', channel: 'asia', id: 'other', planned: { title: 'x' } }, { ts: 't2', status: 'created', kind: 'playlist-create', channel: 'asia', id: 'other', of: 't1', playlistId: 'p1' }]);
+    const op = { kind: 'playlist-create', channel: 'asia', id: 'k', key: 'k', title: 'PL', before: {}, after: { title: 'PL', description: '', privacyStatus: 'public' }, items: ['v1'], source: 'decisions' };
+    await assert.rejects(() => applyPlan({ ops: [op] }, { ledgerDir: w.ledgerDir }, w.deps), /playlist-exists-not-ours/); assert.equal(writes(w).length, 0);
+  } finally { w.clean(); }
+});
+test('create: a done line for the key means already-applied (no list, no insert)', async () => {
+  const w = world();
+  try {
+    const p = await planOnce(w, [create('vietnam', 'Vietnam', ['v1'])]); await applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps); const n = writes(w).length;
+    const r = await applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps); assert.equal(r.alreadyApplied, 1); assert.equal(writes(w).length, n);
+  } finally { w.clean(); }
+});
+test('create budget: the privacy update is counted (150 for a private create, 200 for a public one); a resume counts only what is missing', async () => {
+  const w = world();
+  try {
+    const rp = await run(w, [create('a', 'Alpha', ['v1', 'v2'], 'private')], { maxUnits: 152 }); assert.equal(rp.done, 0); assert.match(rp.stoppedReason, /maxUnits/);
+    const rp2 = await run(w, [create('a', 'Alpha', ['v1', 'v2'], 'private')], { maxUnits: 153 }); assert.equal(rp2.done, 1);
+  } finally { w.clean(); }
+  const w2 = world({ failItemAt: 1 });
+  try {
+    const p = await planOnce(w2, [create('vietnam', 'Vietnam', ['v1', 'v2'])]);
+    await assert.rejects(() => applyPlan(p, { ledgerDir: w2.ledgerDir }, w2.deps), /item broke/); w2.state.failItemAt = -1;
+    const r = await applyPlan(p, { ledgerDir: w2.ledgerDir, maxUnits: 100 }, w2.deps); // 1 missing item + 1 privacy update = 100 units, plus the reads
+    assert.equal(r.done, 0); assert.match(r.stoppedReason, /maxUnits/); assert.equal(w2.state.playlists.PLNEW1.status.privacyStatus, 'private');
+    const r2 = await applyPlan(p, { ledgerDir: w2.ledgerDir, maxUnits: 110 }, w2.deps); assert.equal(r2.done, 1);
+  } finally { w2.clean(); }
+});
+test('undo of a created playlist: items we did not insert, or a privacy that is neither private nor the planned one, make it changed-since (nothing deleted)', async () => {
+  const w = world();
+  try {
+    await run(w, [create('vietnam', 'Vietnam', ['v1'])]);
+    w.state.items.PLNEW1.push({ id: 'PIHAND', snippet: { playlistId: 'PLNEW1', resourceId: { videoId: 'v2' } } });
+    const u = await undoLedger(readLedger(w).file, {}, w.deps); assert.equal(u['changed-since'], 1); assert.equal(w.state.deletes, undefined);
+    w.state.items.PLNEW1.pop(); w.state.playlists.PLNEW1.status.privacyStatus = 'unlisted';
+    const u2 = await undoLedger(readLedger(w).file, {}, w.deps); assert.equal(u2['changed-since'], 1); assert.equal(w.state.deletes, undefined);
+    w.state.playlists.PLNEW1.status.privacyStatus = 'private'; // still private (an unfinished build) is deletable
+    assert.equal((await undoLedger(readLedger(w).file, {}, w.deps)).undone, 1); assert.equal(w.state.playlists.PLNEW1, undefined);
+  } finally { w.clean(); }
+});
+
+// ---- 2. which refusals let a channel rename continue ----
+const putFails = (w, status, reasons, message) => { const orig = w.deps.fetch; w.deps.fetch = async (u, o = {}) => (o.method === 'PUT' && /\/channels\?/.test(u) ? { ok: false, status, json: async () => ({ error: { message, errors: reasons.map((reason) => ({ reason })) } }) } : orig(u, o)); };
+for (const [status, reasons, message, cont] of [
+  [400, ['invalidValue'], 'Invalid channel title', true], [400, [], 'bad request', true], [403, ['channelTitleUpdateForbidden'], 'title cannot be changed now', true], [403, [], 'refused', true], [403, ['somethingElse'], 'refused', true],
+  [401, [], 'Invalid Credentials', false], [429, [], 'Too many requests', false], [403, ['quotaExceeded'], 'quota', false], [403, ['rateLimitExceeded'], 'slow down', false], [403, ['dailyLimitExceeded'], 'x', false],
+  [403, ['forbidden'], 'The caller does not have permission for this channel', false], [403, ['authError'], 'x', false], [403, ['insufficientPermissions'], 'x', false], [400, ['quotaExceeded'], 'quota', false], [403, [], 'The request cannot be completed because you have exceeded your quota.', false],
+]) {
+  test(`channel title write answered ${status} [${reasons.join(',')}] ${cont ? 'continues the run' : 'STOPS the run'}`, async () => {
+    const w = world(); putFails(w, status, reasons, message);
+    try {
+      const p = await planOnce(w, [chan({ title: 'New' }), vid('v1', { title: 'T1' })]);
+      if (cont) { const r = await applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps); assert.equal(r.refused, 1); assert.equal(r.done, 1); assert.deepEqual(readLedger(w).lines.map((l) => l.status), ['pending', 'refused-by-youtube', 'pending', 'done']); }
+      else { await assert.rejects(() => applyPlan(p, { ledgerDir: w.ledgerDir }, w.deps)); assert.deepEqual(readLedger(w).lines.map((l) => l.status), ['pending', 'failed']); assert.equal(w.state.videos.v1.snippet.title, 'Title v1'); }
+    } finally { w.clean(); }
+  });
+}
+
+// ---- 3. a channel title never trusts the write's own answer ----
+test('channel title: an answer that CLAIMS the new title is not believed; the live read-back (all retries) decides -> refused-by-youtube', async () => {
+  const w = world({ channelTitle: 'lie' });
+  try {
+    const r = await run(w, [chan({ title: 'Claimed' }), vid('v1', { title: 'T1' })]);
+    assert.equal(r.refused, 1); assert.equal(r.done, 1); assert.deepEqual(w.state.sleeps, [5000, 5000, 5000, 5000, 5000]);
+    assert.equal(w.state.channels.asia.brandingSettings.channel.title, 'BPA - Asia'); assert.equal(readLedger(w).lines[1].status, 'refused-by-youtube');
+    const reads = w.state.calls.slice(w.state.calls.findIndex((c) => c.method === 'PUT')).filter((c) => c.method === 'GET' && /channels\?/.test(c.url) && /brandingSettings/.test(c.url)).length; assert.equal(reads, 6);
+  } finally { w.clean(); }
+});
+test('channel title that really lands is verified by a live read (attempts >= 1, via read-back)', async () => {
+  const w = world();
+  try { await run(w, [chan({ title: 'Real' })]); const d = readLedger(w).lines[1]; assert.equal(d.via, 'read-back'); assert.ok(d.attempts >= 1); } finally { w.clean(); }
+});
+
+// ---- 4. limits by what YouTube counts ----
+test('description limit is 5000 BYTES: 2400 three-byte characters and 2600 two-byte characters are refused at plan time, 2400 two-byte ones are fine', async () => {
+  const w = world();
+  try {
+    await assert.rejects(() => plan(w, [vid('v1', { description: '€'.repeat(2400) })]), /7200 bytes|5000/);
+    await assert.rejects(() => plan(w, [vid('v1', { description: 'é'.repeat(2600) })]), /5200 bytes|5000/);
+    assert.equal((await plan(w, [vid('v1', { description: 'é'.repeat(2400) })])).ops.length, 1); assert.equal((await plan(w, [vid('v1', { description: 'x'.repeat(5000) })])).ops.length, 1);
+    await assert.rejects(() => plan(w, [pl('p1', { description: '€'.repeat(2400) })]), /5000/); await assert.rejects(() => plan(w, [create('k', 'N', ['v1']), { ...create('k2', 'M', ['v1']), set: { title: 'M', privacyStatus: 'public', description: '€'.repeat(2400) } }]), /5000/);
+  } finally { w.clean(); }
+});
+test('title limits count code points: 51 emoji in a video title are fine (102 UTF-16 units), 101 emoji are refused; playlist 150, channel 100 the same way', async () => {
+  const w = world(); const e = (n) => '😀'.repeat(n);
+  try {
+    assert.equal((await plan(w, [vid('v1', { title: e(51) })])).ops.length, 1); assert.equal((await plan(w, [vid('v1', { title: e(100) })])).ops.length, 1);
+    await assert.rejects(() => plan(w, [vid('v1', { title: e(101) })]), /100/);
+    assert.equal((await plan(w, [pl('p1', { title: e(150) })])).ops.length, 1); await assert.rejects(() => plan(w, [pl('p1', { title: e(151) })]), /150/);
+    assert.equal((await plan(w, [chan({ title: e(100) })])).ops.length, 1); await assert.rejects(() => plan(w, [chan({ title: e(101) })]), /100/);
+  } finally { w.clean(); }
+});
+
+// ---- 5. address check: no false refusals, no new holes ----
+test('address check: sentence borders without a space, abbreviations and chapter lines pass', async () => {
+  const w = world();
+  try {
+    for (const t of ['Great.Be careful', 'Nice day.Me too', 'Day 1.Co-op', 'approx. 20 minutes', 'Made in the U.S. in 2020', 'No. 1 trip', "St. Monica's church", '00:00 Intro\n01:23 Hanoi\n05:10 Ha Long Bay\n1.Introduction', 'Ha Long Bay.Vietnam is great.Next stop', 'e.g. rice, i.e. noodles']) {
+      assert.equal((await plan(w, [vid('v1', { description: t })])).ops.length, 1, t);
+    }
+  } finally { w.clean(); }
+});
+test('address check: every real foreign host, the old domain, mixed case, trailing dots, youtu.be, hosts inside @ and # are still refused', async () => {
+  const w = world();
+  try {
+    for (const [t, host] of [['Evil.com', /evil\.com/i], ['EVIL.COM', /evil\.com/i], ['mail me@evil.com', /evil\.com/], ['tag #evil.com', /evil\.com/], ['https://youtu.be/abc', /youtu\.be/], ['youtu.be/abc', /youtu\.be/], ['HTTPS://WWW.EVIL.COM/x', /evil\.com/], ['Www.Evil.Com', /evil\.com/], ['see evil.com.', /evil\.com/], ['https://evil.com./x', /evil\.com/], ['https://www.instagram.com./x', /instagram\.com\./], ['see BeyondParadiseAdventures.NET', /old address/], ['go to shop.example.org/x', /example\.org/]]) {
+      await assert.rejects(() => plan(w, [vid('v1', { description: t })]), host, t);
+    }
+  } finally { w.clean(); }
+});
+
+// ---- 6. apply-time content check does not depend on a flag in the plan file ----
+test('apply refuses a title/description with a foreign address even when the "source" flag was removed from the op', async () => {
+  const w = world();
+  try {
+    const op = (await plan(w, [vid('v1', { title: 'T1' })])).ops[0]; delete op.source; op.before.description = 'd'; op.after.description = 'see https://evil.example.com'; w.state.calls.length = 0;
+    await assert.rejects(() => applyPlan({ ops: [op] }, { ledgerDir: w.ledgerDir }, w.deps), /evil\.example\.com/); assert.equal(w.state.calls.length, 0);
+    const op2 = (await plan(w, [vid('v1', { title: 'T1' })])).ops[0]; delete op2.source; op2.after.title = 'a<b'; w.state.calls.length = 0;
+    await assert.rejects(() => applyPlan({ ops: [op2] }, { ledgerDir: w.ledgerDir }, w.deps), /<|>/); assert.equal(w.state.calls.length, 0);
+  } finally { w.clean(); }
+});
+
+// ---- 7. more fake-YouTube sabotage on the read-back ----
+for (const [what, mutate, re] of [
+  ['defaultAudioLanguage cleared', (v) => { delete v.snippet.defaultAudioLanguage; }, /defaultAudioLanguage/],
+  ['defaultLanguage changed', (v) => { v.snippet.defaultLanguage = 'vi'; }, /defaultLanguage/],
+  ['tags dropped', (v) => { delete v.snippet.tags; }, /tags/],
+  ['privacy flipped', (v) => { v.status.privacyStatus = 'unlisted'; }, /privacyStatus/],
+]) {
+  test(`video title update where the fake ${what}: the run stops with a mismatch`, async () => {
+    const w = world(); w.state.afterPut = (p) => { if (p.endsWith('/videos')) mutate(w.state.videos.v1); };
+    try { await assert.rejects(() => run(w, [vid('v1', { title: 'T1' }), vid('v2', { title: 'T2' })]), (e) => /mismatch/.test(e.message) && re.test(e.message)); assert.equal(writes(w).length, 1); } finally { w.clean(); }
+  });
+}
+test('playlist update where the fake clears the description: the run stops with a mismatch', async () => {
+  const w = world(); w.state.afterPut = (p) => { if (p.endsWith('/playlists')) w.state.playlists.p1.snippet.description = ''; };
+  try { await assert.rejects(() => run(w, [pl('p1', { title: 'New PL' }), vid('v1', { title: 'T1' })]), /mismatch.*description/); assert.equal(writes(w).length, 1); } finally { w.clean(); }
 });
