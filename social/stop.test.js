@@ -2,7 +2,7 @@ import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { stopStatus, engageStop, releaseStop, assertNotStopped, StoppedError, stopFlagPath, fleetStopPath } from './stop.js';
-import { parseCommand, loadQueue, saveQueue, log } from './lib.js';
+import { parseCommand, loadQueue, saveQueue } from './lib.js';
 import { runWorker } from './worker.js';
 import { runDraft } from './draft.js';
 import { handle } from './approval-server.js';
@@ -99,9 +99,8 @@ test('draft job without the flag runs', async () => {
   assert.equal(built, 1); assert.equal(r.exitCode, 0);
 });
 
-// ── every path to a publish or schedule call passes the stop check (counted in source) ──
+// ── every path to a publish or schedule call passes the stop check (behaviour, not a name search) ──
 const read = (f) => fs.readFileSync(new URL(`./${f}`, import.meta.url), 'utf8');
-/** body of a top-level `export async function name` / `export function name` in lib.js: from its start to the next top-level declaration */
 function bodyOf(src, name) {
   const re = new RegExp(`^export (?:async )?function ${name}\\b`, 'm'); const m = re.exec(src); assert.ok(m, `lib.js must define ${name}`);
   const rest = src.slice(m.index + 1); const next = rest.search(/\n(?:export |async function |function |const |let |\/\/ ──|\/\*\*)/);
@@ -113,20 +112,37 @@ test('every lib.js function that calls createPost or media_publish contains asse
   assert.deepEqual(publishing.sort(), ['igPublish', 'igPublishCarousel', 'igPublishReel', 'publishNow', 'schedulePost'], 'the set of functions that reach a publish call changed: review each for the stop check');
   for (const n of [...publishing, 'igPostDraftAny']) assert.match(bodyOf(src, n), /assertNotStopped\(/, `${n} reaches a publish call without the stop check`);
 });
-test('every caller of a publish function is itself stop-aware: worker.js and approval-server.js call stopStatus, draft.js too', () => {
-  const callers = { 'worker.js': /stopStatus|deps\.stop|stop\(\)/, 'approval-server.js': /stopStatus|stop\(\)/, 'draft.js': /stopStatus|stop\(\)/ };
-  for (const [f, re] of Object.entries(callers)) assert.match(read(f), re, `${f} has no stop check`);
-  // no other non-test source file may call a publish primitive
+test('no source file other than lib.js, worker.js and approval-server.js calls a publish function', () => {
   const dir = path.dirname(new URL(import.meta.url).pathname);
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.js') && !x.endsWith('.test.js') && !['lib.js', 'worker.js', 'approval-server.js'].includes(x))) {
     assert.doesNotMatch(fs.readFileSync(path.join(dir, f), 'utf8'), /\b(schedulePost|publishNow|igPostDraftAny|igPostDraft|igPublish\w*)\s*\(/, `${f} calls a publish function outside the audited callers`);
   }
 });
-test('approval-server: every approve/postnow path checks the stop flag before schedulePost/publishNow (counted)', () => {
-  const s = read('approval-server.js');
-  const calls = (s.match(/\b(schedule|publish)\(/g) || []).length + (s.match(/\bschedulePost\(|\bpublishNow\(/g) || []).length;
-  assert.ok(calls >= 2, 'expected the schedule and publish calls');
-  assert.equal((s.match(/stopStatus\(|stop\(\)/g) || []).length >= 1, true);
-  const idxStop = s.search(/stop(Status)?\(/); const idxSched = s.search(/\bschedule\(|schedulePost\(/);
-  assert.ok(idxStop > -1 && idxStop < idxSched, 'the stop check must come before the first schedule call');
+const pend = () => ({ id: 'B1', status: 'pending_approval', kind: 'outlook', text: 'Outlook text with no figures', sourceDate: '2026-11-17' });
+function hdeps(flagged) {
+  const p = paths(); const queuePath = path.join(p.dir, 'q.json'); saveQueue({ seq: 1, drafts: [pend()] }, queuePath); if (flagged) engageStop(p);
+  const calls = { schedule: 0, publish: 0, publishIg: 0 };
+  return { calls, queuePath, deps: { queuePath, stopOpts: p, igOn: () => true, config: {}, ledgerPath: path.join(p.dir, 'l.jsonl'), lastPostPath: path.join(p.dir, 'lp.json'),
+    schedule: async () => { calls.schedule++; return { id: 'p1' }; }, publish: async () => { calls.publish++; return { id: 'p1', permalink_url: 'https://example.invalid/p1' }; }, publishIg: async () => { calls.publishIg++; return { permalink: 'https://example.invalid/i1' }; } } };
+}
+test('handle: with the stop flag, approve and post-now call none of schedule/publish/publishIg and reply with the refusal', async () => {
+  for (const cmd of ['bpa approve B1', 'bpa post B1 now']) {
+    const { calls, deps, queuePath } = hdeps(true); const out = await handle(cmd, deps);
+    assert.deepEqual(calls, { schedule: 0, publish: 0, publishIg: 0 }, cmd); assert.match(out, /^⏸ B1: stopped by flag since/, cmd); assert.equal(loadQueue(queuePath).drafts[0].status, 'pending_approval');
+  }
+});
+test('handle: without the flag, approve schedules and post-now publishes (so the test above can fail)', async () => {
+  { const { calls, deps } = hdeps(false); await handle('bpa approve B1', deps); assert.equal(calls.schedule, 1); assert.equal(calls.publish, 0); }
+  { const { calls, deps } = hdeps(false); await handle('bpa post B1 now', deps); assert.equal(calls.publish, 1); assert.equal(calls.publishIg, 1); }
+});
+test('the backstop inside lib.js: with the flag set, the REAL schedulePost/publishNow/igPostDraftAny/igPublish* reach no network and throw StoppedError', async () => {
+  const lib = await import('./lib.js'); const flag = process.env.BPA_STOP_FLAG; const realFetch = globalThis.fetch; let fetched = 0;
+  fs.mkdirSync(path.dirname(flag), { recursive: true }); fs.writeFileSync(flag, 'x'); globalThis.fetch = () => { fetched++; throw new Error('network must not be reached'); };
+  try {
+    const d = { id: 'B1', kind: 'signal', text: 'x', sourceDate: '2026-11-17' };
+    for (const call of [() => lib.schedulePost('x', '2026-11-18T09:00:00+03:00'), () => lib.publishNow('x'), () => lib.igPostDraftAny(d), () => lib.igPublish('c', 'https://example.invalid/i.png'), () => lib.igPublishReel('c', 'https://example.invalid/v.mp4'), () => lib.igPublishCarousel('c', ['https://example.invalid/1.png', 'https://example.invalid/2.png'])]) {
+      await assert.rejects(Promise.resolve().then(call), (e) => e instanceof StoppedError);
+    }
+    assert.equal(fetched, 0);
+  } finally { globalThis.fetch = realFetch; fs.unlinkSync(flag); }
 });
