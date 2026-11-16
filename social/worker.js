@@ -6,11 +6,20 @@ import { fileURLToPath } from 'node:url';
 import { stuckIgPublishes, markStuckAlerted, loadQueue, saveQueue, withQueueLock, mergeQueue, claimIgPublish, STATUS, postStatus as metaPostStatus, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, igGate, QUEUE_PATH } from './lib.js';
 import { stopStatus } from './stop.js';
 import { reserveInstagramPublish, eatDay } from './ledger.js';
+import { recordWorkerRun, recordPost } from './health.js';
 
 const defaultApprovalHealth = async () => { const h = await fetch(`http://127.0.0.1:${CONFIG.approvalPort}/health`, { signal: AbortSignal.timeout(3000) }); return h.json(); };
 
+/** Runs once and records the run (ok / stopped / error) in the health state; an error is recorded and rethrown, so launchd still sees it. */
 export async function runWorker(deps = {}) {
-  const { now = new Date(), queuePath = QUEUE_PATH, igOn = igEnabled, publishIg = igPostDraftAny, postStatus = metaPostStatus, notify = whatsapp, say = log,
+  let r;
+  try { r = await runWorkerInner(deps); }
+  catch (e) { recordWorkerRun({ now: deps.now || new Date(), result: `error: ${String(e.message).slice(0, 200)}`, path: deps.runStatePath }); throw e; }
+  recordWorkerRun({ now: deps.now || new Date(), result: r.stopped ? 'stopped' : 'ok', path: deps.runStatePath });
+  return r;
+}
+async function runWorkerInner(deps) {
+  const { now = new Date(), lastPostPath, queuePath = QUEUE_PATH, igOn = igEnabled, publishIg = igPostDraftAny, postStatus = metaPostStatus, notify = whatsapp, say = log,
     approvalHealth = defaultApprovalHealth, reserve = reserveInstagramPublish, ledgerPath, config: capConfig = CONFIG, stopOpts, stop = () => stopStatus(stopOpts) } = deps;
   const lockOpts = { lockPath: queuePath + '.lock' };
   // stop flag (own or fleet-wide): publish nothing, schedule nothing, touch nothing; one line; exit code stays 0
@@ -18,7 +27,7 @@ export async function runWorker(deps = {}) {
   const q = loadQueue(queuePath); const base = JSON.parse(JSON.stringify(q)); let changed = false; const problems = []; let stopNoted = false; const state = q.state || (q.state = {});
   for (const d of q.drafts) {
     if (d.status === STATUS.SCHEDULED && d.postId) {
-      try { const s = await postStatus(d.postId); if (s.error) throw new Error(s.error.message); if (s.is_published) { d.status = STATUS.POSTED; d.permalink = s.permalink_url; d.postedAt = now.toISOString(); changed = true; say(`${d.id} posted ${s.permalink_url}`); } }
+      try { const s = await postStatus(d.postId); if (s.error) throw new Error(s.error.message); if (s.is_published) { d.status = STATUS.POSTED; d.permalink = s.permalink_url; d.postedAt = now.toISOString(); changed = true; say(`${d.id} posted ${s.permalink_url}`); recordPost({ now, id: d.id, path: lastPostPath }); } }
       catch (e) { if (new Date(d.scheduledFor).getTime() + 3600e3 < now.getTime()) { problems.push(`${d.id}: ${e.message.slice(0, 100)}`); } }
     }
     if (d.status === STATUS.PENDING && now.getTime() - new Date(d.createdAt).getTime() > CONFIG.draftTtlDays * 86400e3) { d.status = STATUS.EXPIRED; changed = true; say(`${d.id} expired`); }
@@ -35,7 +44,7 @@ export async function runWorker(deps = {}) {
       const claimed = await claimIgPublish(d.id, now, queuePath); // persisted 'publishing' marker before any Meta call
       if (!claimed) { say(`${d.id} instagram claim failed after the reservation; reservation kept`); continue; } // another run took it, or it was changed meanwhile
       d.ig = claimed; base.drafts.find((x) => x.id === d.id).ig = JSON.parse(JSON.stringify(claimed));
-      try { const r = await publishIg(d); d.ig = { status: 'posted', ...r, postedAt: now.toISOString() }; changed = true; say(`${d.id} instagram ${r.permalink}`); }
+      try { const r = await publishIg(d); d.ig = { status: 'posted', ...r, postedAt: now.toISOString() }; changed = true; say(`${d.id} instagram ${r.permalink}`); recordPost({ now, id: d.id, path: lastPostPath }); }
       catch (e) { d.ig = { ...d.ig, status: 'failed', error: e.message }; changed = true; say(`${d.id} instagram publish failed; ledger reservation kept (safe direction): ${e.message.slice(0, 160)}`); problems.push(`${d.id} Instagram: ${e.message.slice(0, 100)}`); }
     }
   }

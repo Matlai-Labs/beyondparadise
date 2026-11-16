@@ -219,14 +219,15 @@ export function alertNumber({ env = process.env, file = env.WHATSAPP_ALERT_TO_FI
   } catch { return null; }
 }
 let warnedAlertFile = false;
-export async function whatsapp(text) {
-  const WA_TO = alertNumber();
+export async function whatsapp(text, { fetchImpl = fetch, number } = {}) { // fetchImpl / number are injectable so tests never open the real bridge
+  const WA_TO = number !== undefined ? number : alertNumber();
   if (!WA_TO) { log('whatsapp skipped: no alert number (WHATSAPP_ALERT_TO unset and no valid ~/.matlai/whatsapp-alert-to) (fail closed)'); return false; }
-  if (!String(process.env.WHATSAPP_ALERT_TO || '').trim() && !warnedAlertFile) { warnedAlertFile = true; log('whatsapp: alert number read from the private file (WHATSAPP_ALERT_TO unset)'); }
+  if (number === undefined && !String(process.env.WHATSAPP_ALERT_TO || '').trim() && !warnedAlertFile) { warnedAlertFile = true; log('whatsapp: alert number read from the private file (WHATSAPP_ALERT_TO unset)'); }
   try {
-    const s = await fetch(`${BRIDGE}/status`, { signal: AbortSignal.timeout(2000) }); if (!(await s.json()).ready) { log('bridge not ready'); return false; }
-    const r = await fetch(`${BRIDGE}/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: WA_TO, text }), signal: AbortSignal.timeout(10000) });
-    const j = await r.json().catch(() => ({})); if (!r.ok || j.ok === false) { log(`whatsapp failed ${r.status} ${j.error || ''}`); return false; }
+    const s = await fetchImpl(`${BRIDGE}/status`, { signal: AbortSignal.timeout(2000) }); if (!(await s.json()).ready) { log('bridge not ready'); return false; }
+    const r = await fetchImpl(`${BRIDGE}/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: WA_TO, text }), signal: AbortSignal.timeout(10000) });
+    // Delivered only on HTTP ok AND body {ok:true} (bridge playbook: "only mark state when ok === true"). Anything else is a logged failure.
+    const j = await r.json().catch(() => ({})); if (!r.ok || j.ok !== true) { log(`whatsapp failed ${r.status} ${j.error || ''}`.trim()); return false; }
     return true;
   } catch (e) { log(`whatsapp error ${e.message}`); return false; }
 }
