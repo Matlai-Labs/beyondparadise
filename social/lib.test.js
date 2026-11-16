@@ -136,8 +136,9 @@ test('HERE decodes a percent-encoded module path (a space in a directory name)',
   assert.doesNotMatch(fs.readFileSync(new URL('./lib.js', import.meta.url), 'utf8'), /new URL\(import\.meta\.url\)\.pathname/);
 });
 test('whatsapp() fails closed without WHATSAPP_ALERT_TO and no phone number is committed', async () => {
-  const prev = process.env.WHATSAPP_ALERT_TO; delete process.env.WHATSAPP_ALERT_TO; process.env.BPA_QUIET = '1';
-  assert.equal(await whatsapp('x'), false); if (prev) process.env.WHATSAPP_ALERT_TO = prev;
+  const prev = process.env.WHATSAPP_ALERT_TO; const prevF = process.env.WHATSAPP_ALERT_TO_FILE; delete process.env.WHATSAPP_ALERT_TO; process.env.BPA_QUIET = '1';
+  process.env.WHATSAPP_ALERT_TO_FILE = path.join(os.tmpdir(), 'bpa-no-such-alert-file'); // never read the owner's real private file in a test
+  assert.equal(await whatsapp('x'), false); if (prev) process.env.WHATSAPP_ALERT_TO = prev; if (prevF === undefined) delete process.env.WHATSAPP_ALERT_TO_FILE; else process.env.WHATSAPP_ALERT_TO_FILE = prevF;
   assert.doesNotMatch(fs.readFileSync(new URL('./lib.js', import.meta.url), 'utf8'), /\+255\d{6,}/);
 });
 
@@ -250,4 +251,27 @@ test('draftFromForecast with only the affordability driver has no driver part', 
   const d = draftFromForecast(fcWith([AFFORD.toUpperCase()]));
   const line = d.text.split('\n').find((l) => l.startsWith('Zanzibar:'));
   assert.equal(line, 'Zanzibar: rising (80% confidence)'); assert.ok(!line.includes(' — '));
+});
+
+// ── alert number: variable first, then a private file outside the repo, never a literal in the repo ──
+import { alertNumber } from './lib.js';
+const fakeNum = (d) => '+' + String(d).repeat(11); // built at runtime, obviously fake
+const alertFile = (content) => { const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'bpaalert-')), 'whatsapp-alert-to'); if (content !== null) fs.writeFileSync(f, content); return f; };
+test('alertNumber: the environment variable wins over the file', () => {
+  assert.equal(alertNumber({ env: { WHATSAPP_ALERT_TO: fakeNum(1) }, file: alertFile(fakeNum(2) + '\n') }), fakeNum(1));
+});
+test('alertNumber: variable unset falls back to the file number', () => {
+  assert.equal(alertNumber({ env: {}, file: alertFile(fakeNum(2) + '\n') }), fakeNum(2));
+});
+test('alertNumber: a whitespace-only variable falls through to the file', () => {
+  assert.equal(alertNumber({ env: { WHATSAPP_ALERT_TO: '   ' }, file: alertFile(fakeNum(3)) }), fakeNum(3));
+});
+test('alertNumber: missing file gives null, never throws', () => {
+  assert.equal(alertNumber({ env: {}, file: alertFile(null) }), null);
+});
+test('alertNumber: a line that is not a number gives null', () => {
+  assert.equal(alertNumber({ env: {}, file: alertFile('call me\n') }), null);
+});
+test('alertNumber: a blank first line is skipped, the next non-empty line is used', () => {
+  assert.equal(alertNumber({ env: {}, file: alertFile('\n  \n' + fakeNum(4) + '\n') }), fakeNum(4));
 });
