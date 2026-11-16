@@ -233,7 +233,7 @@ test('igGate state survives the worker/approval-server merge (a worker-written i
 });
 test('worker.js is wired: it imports igGate and calls it exactly once, before the state is saved', () => {
   const w = fs.readFileSync(new URL('./worker.js', import.meta.url), 'utf8');
-  assert.match(w.split('\n')[2], /\bigGate\b/, 'imported'); assert.equal((w.match(/igGate\(/g) || []).length, 1);
+  assert.match(w.split('\n').find((l) => /^import .* from '.\/lib.js'/.test(l)), /\bigGate\b/, 'imported'); assert.equal((w.match(/igGate\(/g) || []).length, 1);
   assert.ok(w.indexOf('igGate(') < w.indexOf('saveQueue(mergeQueue'), 'runs before the queue is saved, or its state would be lost');
 });
 

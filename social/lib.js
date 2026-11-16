@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { scoreDraft, renderScore } from './score.js';
 import { modulePath, resourcePath, requireResource, graphCall } from './resources.js';
+import { assertNotStopped } from './stop.js';
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(modulePath(import.meta.url));
 export const CONFIG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
@@ -201,8 +202,8 @@ export function nextSlots(q, count, now = new Date(), tz = CONFIG.timezone) {
 }
 
 // ── publishing (meta-pages) + WhatsApp ─────────────────────────────────────
-export async function schedulePost(text, at) { const { createPost } = metaPublish(); return createPost(CONFIG.page, { message: text, at }); }
-export async function publishNow(text) { const { createPost } = metaPublish(); return createPost(CONFIG.page, { message: text }); }
+export async function schedulePost(text, at) { assertNotStopped(); const { createPost } = metaPublish(); return createPost(CONFIG.page, { message: text, at }); }
+export async function publishNow(text) { assertNotStopped(); const { createPost } = metaPublish(); return createPost(CONFIG.page, { message: text }); }
 export async function postStatus(postId) {
   const { findPage } = metaPublish(); const p = findPage(CONFIG.page);
   return graphCall(`${postId}?fields=id,is_published,permalink_url,scheduled_publish_time`, { token: p.token, throwOnError: false });
@@ -237,6 +238,8 @@ export function parseCommand(text) {
   if (/^status$/i.test(t)) return { cmd: 'status' };
   if (/^help$/i.test(t)) return { cmd: 'help' };
   let m;
+  if (/^stop$/i.test(t)) return { cmd: 'stop' };
+  if (/^start$/i.test(t)) return { cmd: 'start' };
   if ((m = t.match(/^approve\s+((?:b\d+[\s,]*)+)$/i))) return { cmd: 'approve', ids: m[1].toUpperCase().match(/B\d+/g) };
   if ((m = t.match(/^skip\s+((?:b\d+[\s,]*)+)$/i))) return { cmd: 'skip', ids: m[1].toUpperCase().match(/B\d+/g) };
   if ((m = t.match(/^post\s+(b\d+)\s+now$/i))) return { cmd: 'postnow', ids: [m[1].toUpperCase()] };
@@ -248,7 +251,7 @@ export function renderList(q) {
   if (!pend.length) return '📭 No drafts waiting. Next drafting run: Monday 07:00.';
   const lines = [`📝 ${pend.length} draft(s) for ${CONFIG.page}:`];
   for (const d of pend) lines.push(`\n*${d.id}* (${d.kind}, ${d.sourceDate})\n${d.text.slice(0, 700)}${d.text.length > 700 ? '…' : ''}${d.score ? `\n_${renderScore(d.score)}_` : ''}${d.hookAdvice ? `\n_${d.hookAdvice}_` : ''}`);
-  lines.push('\nReply: *bpa approve B1 B2* · *bpa skip B3* · *bpa edit B1: new text* · *bpa post B1 now*');
+  lines.push('\nReply: *bpa approve B1 B2* · *bpa skip B3* · *bpa edit B1: new text* · *bpa post B1 now* · *bpa stop* / *bpa start*');
   return lines.join('\n');
 }
 
@@ -323,6 +326,7 @@ export async function hostImage(pngPath, name) {
   const j = await r.json(); if (!r.ok) throw new Error(`media upload ${r.status}: ${JSON.stringify(j).slice(0, 160)}`); return { id: j.id, url: j.source_url };
 }
 export async function igPublish(caption, imageUrl, { dryContainerOnly = false } = {}) {
+  if (!dryContainerOnly) assertNotStopped();
   const { findPage } = metaPublish(); const p = findPage(CONFIG.page); const ig = CONFIG.instagram.igUserId;
   const post = (pth, form) => graphCall(pth, { token: p.token, method: 'POST', form });
   const c = await post(`${ig}/media`, { image_url: imageUrl, caption: caption.slice(0, 2200) });
@@ -339,6 +343,7 @@ export async function igPostDraft(d) {
 
 // ── Instagram REELS (video) publish: container(REELS, video_url) → poll → publish ─────────
 export async function igPublishReel(caption, videoUrl, { dryContainerOnly = false } = {}) {
+  if (!dryContainerOnly) assertNotStopped();
   const { findPage } = metaPublish(); const p = findPage(CONFIG.page); const ig = CONFIG.instagram.igUserId;
   const post = (pth, form) => graphCall(pth, { token: p.token, method: 'POST', form });
   const c = await post(`${ig}/media`, { media_type: 'REELS', video_url: videoUrl, caption: caption.slice(0, 2200), share_to_feed: 'true' });
@@ -359,6 +364,7 @@ export async function hostVideo(mp4Path, name) {
 // POST /{ig}/media media_type=CAROUSEL children=<ids comma-joined> caption; POST /{ig}/media_publish creation_id=<parent>.
 // Meta's docs now say up to 20 items; we deliberately cap at 10 (the long-standing limit; plans are 3-7). `post`/`status` are injectable for tests.
 export async function igPublishCarousel(caption, imageUrls, { post, status, igUserId, sleep, info, dryContainerOnly = false } = {}) {
+  if (!dryContainerOnly) assertNotStopped();
   if (!Array.isArray(imageUrls) || imageUrls.length < 2 || imageUrls.length > 10) throw new Error(`carousel needs 2-10 images, got ${imageUrls?.length ?? 0}`);
   const ig = igUserId || CONFIG.instagram.igUserId; let token;
   if (!post || !status || !info) { const { findPage } = metaPublish(); token = findPage(CONFIG.page).token; }
@@ -393,6 +399,7 @@ async function postReel(d) {
 }
 /** Post a draft to Instagram in the format chosen for its kind (see chooseFormat). */
 export async function igPostDraftAny(d) {
+  assertNotStopped(); // before any rendering or upload, not only before the final publish call
   const fmt = chooseFormat(d);
   if (fmt === 'carousel') {
     const { planCarousel, renderCarousel } = await import('./carousel.js');
