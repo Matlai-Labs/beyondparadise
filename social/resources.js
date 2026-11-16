@@ -23,8 +23,10 @@ const AI_PROJECTS = '/Users/tim/Desktop/AI_projects';
 export const RESOURCES = {
   voiceLint: {
     env: 'VOICE_LINT_PATH',
-    default: `${AI_PROJECTS}/shared_knowledge/scripts/voice-lint/voice-lint.mjs`,
-    what: 'the shared voice-lint module (the voice gate fails closed without it)',
+    // Vendored copy inside this repo (social/vendor/voice-lint, see SOURCE.md). The default must never
+    // point at a sibling repository: a deployment holds only this repo.
+    default: path.join(HERE, 'vendor', 'voice-lint', 'voice-lint.mjs'),
+    what: 'the vendored voice-lint module (the voice gate fails closed without it)',
   },
   metaPublish: {
     env: 'META_PUBLISH_PATH',
