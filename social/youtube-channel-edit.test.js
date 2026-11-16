@@ -166,27 +166,29 @@ function world(opts = {}) {
     if (u.host === 'oauth2.googleapis.com') { const b = new URLSearchParams(o.body); const who = b.get('refresh_token') === refresh.asia ? 'asia' : 'africa'; return json({ access_token: 'AT-' + who }); }
     const owner = chanOfToken(o.headers.Authorization); const q = u.searchParams; const p = u.pathname;
     if (method === 'GET') {
+      const src = state.lagLeft > 0 && state.snap ? (state.lagLeft--, state.snap) : state; // reads that lag behind a write serve the old state
       if (state.failReadOnce) { state.failReadOnce = false; return json({ error: { message: 'read broke' } }, 500); }
-      if (p.endsWith('/channels')) return json({ items: [{ id: state.channels[owner].id, brandingSettings: structuredClone(state.channels[owner].brandingSettings), contentDetails: { relatedPlaylists: { uploads: 'UP' } } }] });
-      if (p.endsWith('/videos')) return json({ items: q.get('id').split(',').filter((i) => state.videos[i]).map((i) => structuredClone(state.videos[i])) });
-      if (p.endsWith('/playlists')) return json({ items: q.get('id') ? [structuredClone(state.playlists[q.get('id')])].filter(Boolean) : Object.values(state.playlists).filter((x) => x.snippet.channelId === state.channels[owner].id).map((x) => structuredClone(x)) });
-      if (p.endsWith('/playlistItems')) return json({ items: Object.keys(state.videos).filter((i) => state.videos[i].snippet.channelId === state.channels[owner].id).map((i) => ({ contentDetails: { videoId: i } })) });
+      if (p.endsWith('/channels')) return json({ items: [{ id: src.channels[owner].id, brandingSettings: structuredClone(src.channels[owner].brandingSettings), contentDetails: { relatedPlaylists: { uploads: 'UP' } } }] });
+      if (p.endsWith('/videos')) return json({ items: q.get('id').split(',').filter((i) => src.videos[i]).map((i) => structuredClone(src.videos[i])) });
+      if (p.endsWith('/playlists')) return json({ items: q.get('id') ? [structuredClone(src.playlists[q.get('id')])].filter(Boolean) : Object.values(src.playlists).filter((x) => x.snippet.channelId === src.channels[owner].id).map((x) => structuredClone(x)) });
+      if (p.endsWith('/playlistItems')) return json({ items: Object.keys(src.videos).filter((i) => src.videos[i].snippet.channelId === src.channels[owner].id).map((i) => ({ contentDetails: { videoId: i } })) });
     }
     if (method === 'PUT') {
       state.events.push('PUT'); if (state.onPut) state.onPut(url, o);
       const body = JSON.parse(o.body); state.puts = (state.puts || []).concat([{ url, body }]);
       if (state.failPut) return json({ error: { message: 'boom' } }, 500);
+      if (state.lag) { state.snap = structuredClone({ channels: state.channels, videos: state.videos, playlists: state.playlists }); state.lagLeft = state.lag; }
       let res;
       if (p.endsWith('/videos')) { const cur = state.videos[body.id]; const sn = { publishedAt: cur.snippet.publishedAt, channelId: cur.snippet.channelId, ...body.snippet }; if (state.corruptPut) sn.title = 'CHANGED'; cur.snippet = sn; res = cur; }
       if (p.endsWith('/playlists')) { const cur = state.playlists[body.id]; cur.snippet = { channelId: cur.snippet.channelId, ...body.snippet }; res = cur; }
       if (p.endsWith('/channels')) { state.channels[owner].brandingSettings = body.brandingSettings; res = state.channels[owner]; }
       if (state.afterPut) state.afterPut(p, owner);
       if (state.dieAfterPut) throw new Error('network went away');
-      return json(res);
+      return json(state.emptyPutResponse ? {} : res);
     }
     return json({}, 404);
   };
-  const deps = { configDir: dir, env: {}, fetch, now: new Date('2026-11-16T10:00:00Z') };
+  const deps = { configDir: dir, env: {}, fetch, now: new Date('2026-11-16T10:00:00Z'), sleep: async (ms) => { state.sleeps = (state.sleeps || []).concat([ms]); } };
   return { dir, ledgerDir, state, deps, clean: () => rmSync(dir, { recursive: true, force: true }) };
 }
 const putCount = (w) => w.state.calls.filter((c) => c.method === 'PUT').length;
@@ -384,7 +386,7 @@ test('undo after a mismatch run restores the text', async () => {
   } finally { w.clean(); }
 });
 test('undo after a failed read-back (write landed, then the read failed) restores the text', async () => {
-  const w = world(); w.state.afterPut = () => { w.state.failReadOnce = true; };
+  const w = world(); w.state.emptyPutResponse = true; w.state.afterPut = () => { w.state.failReadOnce = true; };
   try {
     const orig = w.state.videos.v1.snippet.description;
     await assert.rejects(() => applyPlan({ ops: [oneOp(w)] }, { ledgerDir: w.ledgerDir }, w.deps), /read broke|500/);
@@ -458,3 +460,53 @@ test('plan-level whitelist: channel kind may change only description and keyword
 });
 function partOfVideo(sn) { const o = {}; for (const k of ['title', 'description', 'tags', 'categoryId', 'defaultLanguage', 'defaultAudioLanguage']) if (k in sn) o[k] = sn[k]; return o; }
 function writeLedger(w, lines) { mkdirSync(w.ledgerDir, { recursive: true }); const f = join(w.ledgerDir, 'changes-test.jsonl'); writeFileSync(f, lines.map((l) => JSON.stringify(l)).join('\n') + '\n'); return f; }
+
+// ---------- fix round: lagging reads after a write ----------
+const gets = (w) => w.state.calls.filter((c) => c.method === 'GET' && c.url.includes('/videos?')).length;
+test('the PUT response body verifies the write: no read-back needed', async () => {
+  const w = world();
+  try {
+    const r = await applyPlan({ ops: [oneOp(w)] }, { ledgerDir: w.ledgerDir }, w.deps);
+    assert.equal(r.done, 1); const d = readLedger(w).lines[1]; assert.equal(d.attempts, 0); assert.equal(d.via, 'put-response'); assert.equal(gets(w), 1);
+  } finally { w.clean(); }
+});
+test('lagging read: old text on the first two reads, new on the third gives done with attempts 3 and one PUT', async () => {
+  const w = world(); w.state.emptyPutResponse = true; w.state.lag = 2;
+  try {
+    const r = await applyPlan({ ops: [oneOp(w)] }, { ledgerDir: w.ledgerDir }, w.deps);
+    assert.equal(r.done, 1); assert.equal(putCount(w), 1);
+    const d = readLedger(w).lines[1]; assert.equal(d.status, 'done'); assert.equal(d.attempts, 3); assert.equal(d.verified, true);
+    assert.deepEqual(w.state.sleeps, [5000, 5000]);
+  } finally { w.clean(); }
+});
+test('the new text never shows: mismatch after exactly 6 reads and the run stops', async () => {
+  const w = world(); w.state.emptyPutResponse = true; w.state.lag = 99;
+  try {
+    await assert.rejects(() => applyPlan({ ops: [oneOp(w, 'v1'), oneOp(w, 'v2')] }, { ledgerDir: w.ledgerDir }, w.deps), /mismatch/i);
+    const after = w.state.calls.slice(w.state.calls.findIndex((c) => c.method === 'PUT') + 1).filter((c) => c.url.includes('/videos?')).length;
+    assert.equal(after, 6); assert.equal(putCount(w), 1); assert.equal(w.state.sleeps.length, 5);
+    assert.deepEqual(readLedger(w).lines.map((l) => l.status), ['pending', 'mismatch']);
+  } finally { w.clean(); }
+});
+test('already-applied: live text already equals the planned text, no PUT, run continues', async () => {
+  const w = world();
+  try {
+    const op = oneOp(w, 'v1'); w.state.videos.v1.snippet.description = op.after.description; // landed earlier (e.g. an interrupted run)
+    const r = await applyPlan({ ops: [op, oneOp(w, 'v2')] }, { ledgerDir: w.ledgerDir }, w.deps);
+    assert.equal(r.alreadyApplied, 1); assert.equal(r.stale, 0); assert.equal(r.done, 1); assert.equal(putCount(w), 1); assert.equal(w.state.puts[0].body.id, 'v2');
+    assert.ok(readLedger(w).lines.some((l) => l.status === 'already-applied' && l.id === 'v1'));
+  } finally { w.clean(); }
+});
+test('undo read-back retries too', async () => {
+  const w = world();
+  try {
+    const orig = w.state.videos.v1.snippet.description;
+    await applyPlan({ ops: [oneOp(w)] }, { ledgerDir: w.ledgerDir }, w.deps);
+    w.state.emptyPutResponse = true; w.state.lag = 2; w.state.sleeps = [];
+    const r = await undoLedger(readLedger(w).file, {}, w.deps);
+    assert.equal(r.undone, 1); assert.equal(w.state.videos.v1.snippet.description, orig); assert.deepEqual(w.state.sleeps, [5000, 5000]);
+    w.state.lag = 99; w.state.videos.v1.snippet.description = 'NEW v1'; w.state.lagLeft = 0;
+    const f = readLedger(w).file; const lines = readFileSync(f, 'utf8').split('\n').filter((l) => l && !l.includes('"undone"')); writeFileSync(f, lines.join('\n') + '\n');
+    await assert.rejects(() => undoLedger(f, {}, w.deps), /mismatch/i);
+  } finally { w.clean(); }
+});

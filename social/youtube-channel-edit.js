@@ -266,6 +266,26 @@ function differences(kind, sent, changed, prevLive, newLive) {
   return out;
 }
 
+// Verify a write. YouTube's read right after a write can lag, so: (1) check the PUT response body, (2) read back up to 6 times, 5 s apart.
+const READ_ATTEMPTS = 6, READ_GAP_MS = 5000;
+const defaultSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function verifyWrite(s, op, merged, changed, prevLive, putResp) {
+  const sleep = s.d.sleep || defaultSleep;
+  const part = op.kind === 'channel' ? putResp?.brandingSettings : putResp?.snippet;
+  if (part && typeof part === 'object') {
+    const fromPut = op.kind === 'channel' ? { ...putResp, id: prevLive.id } : { ...putResp, status: putResp.status || prevLive.status };
+    if (!differences(op.kind, merged, changed, prevLive, fromPut).length) return { ok: true, attempts: 0, via: 'put-response', live: fromPut };
+  }
+  let diffs = [], live;
+  for (let attempt = 1; attempt <= READ_ATTEMPTS; attempt++) {
+    if (attempt > 1) await sleep(READ_GAP_MS);
+    live = await readLive(s, op);
+    diffs = differences(op.kind, merged, changed, prevLive, live);
+    if (!diffs.length) return { ok: true, attempts: attempt, via: 'read-back', live };
+  }
+  return { ok: false, attempts: READ_ATTEMPTS, diffs, live };
+}
+
 function validateOp(op) {
   if (!op || !ALLOWED[op.kind]) throw new Error(`plan refused: unknown op kind "${op?.kind}"`);
   if (!CHANNELS[op.channel]) throw new Error(`plan refused: unknown channel "${op.channel}"`);
@@ -355,7 +375,7 @@ export async function applyPlan(plan, { only, maxUnits = 3000, ledgerDir } = {},
   for (const op of plan.ops) validateOp(op); // everything is checked before the first request
   const s = makeSession(deps, maxUnits); const d = s.d;
   const file = join(ledgerDir, `changes-${dayOf(deps)}.jsonl`);
-  const sum = { done: 0, stale: 0, skipped: 0, failed: 0, units: 0, ledger: file, stoppedReason: null };
+  const sum = { done: 0, stale: 0, alreadyApplied: 0, skipped: 0, failed: 0, units: 0, ledger: file, stoppedReason: null };
   const fin = () => { sum.units = s.units; return sum; };
   const log = (status, op, extra) => ledgerAppend(file, { ts: new Date().toISOString(), status, kind: op.kind, channel: op.channel, id: op.id, ...extra });
   for (const op of plan.ops) {
@@ -364,17 +384,17 @@ export async function applyPlan(plan, { only, maxUnits = 3000, ledgerDir } = {},
     await s.ownChannelId(op.channel);
     const live = await readLive(s, op);
     const sent = partOf(op.kind, live); const cur = fieldsOf(op.kind, sent);
+    if (Object.keys(op.after).every((k) => cur[k] === op.after[k])) { sum.alreadyApplied++; log('already-applied', op, { planned: op.after }); continue; }
     if (Object.keys(op.before).some((k) => cur[k] !== op.before[k])) { sum.stale++; continue; }
     if (s.units + 50 > s.maxUnits) { sum.stoppedReason = `stopped before writing ${op.kind} ${op.id}: the next write would pass maxUnits (${s.maxUnits}; ${s.units} used)`; return fin(); }
     log('pending', op, { before: sent, planned: op.after });
-    let after;
+    const merged = withFields(op.kind, sent, op.after); let v;
     try {
-      await s.call('PUT', putUrl(op.kind), op.channel, bodyOf(op.kind, op.kind === 'channel' ? live.id : op.id, withFields(op.kind, sent, op.after)));
-      after = await readLive(s, op);
+      const resp = await s.call('PUT', putUrl(op.kind), op.channel, bodyOf(op.kind, op.kind === 'channel' ? live.id : op.id, merged));
+      v = await verifyWrite(s, op, merged, op.after, live, resp);
     } catch (e) { sum.failed++; log('failed', op, { error: String(e.message || e) }); throw Object.assign(e, { summary: fin() }); }
-    const diffs = differences(op.kind, withFields(op.kind, sent, op.after), op.after, live, after);
-    if (diffs.length) { log('mismatch', op, { differences: diffs, after: partOf(op.kind, after) }); throw Object.assign(new Error(`read-back mismatch for ${op.kind} ${op.id}: ${diffs.join('; ')}. Run stopped.`), { summary: fin() }); }
-    log('done', op, { before: sent, after: partOf(op.kind, after), planned: op.after, verified: true });
+    if (!v.ok) { log('mismatch', op, { differences: v.diffs, attempts: v.attempts, after: partOf(op.kind, v.live) }); throw Object.assign(new Error(`read-back mismatch for ${op.kind} ${op.id} after ${v.attempts} reads: ${v.diffs.join('; ')}. Run stopped.`), { summary: fin() }); }
+    log('done', op, { before: sent, after: partOf(op.kind, v.live), planned: op.after, verified: true, attempts: v.attempts, via: v.via });
     sum.done++;
   }
   return fin();
@@ -399,10 +419,10 @@ export async function undoLedger(ledgerFile, { only, maxUnits = 3000 } = {}, dep
     if (s.units + 50 > s.maxUnits) { sum.stoppedReason = `stopped before undoing ${e.kind} ${e.id}: the next write would pass maxUnits (${s.maxUnits})`; break; }
     const restore = {}; for (const k of keys) restore[k] = bf[k];
     const merged = withFields(op.kind, sent, restore);
-    await s.call('PUT', putUrl(op.kind), op.channel, bodyOf(op.kind, op.kind === 'channel' ? live.id : op.id, merged));
-    const after = await readLive(s, op);
-    const diffs = differences(op.kind, merged, restore, live, after);
-    if (diffs.length) { ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'mismatch', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, differences: diffs }); throw new Error(`undo read-back mismatch for ${e.kind} ${e.id}: ${diffs.join('; ')}. Run stopped.`); }
+    const resp = await s.call('PUT', putUrl(op.kind), op.channel, bodyOf(op.kind, op.kind === 'channel' ? live.id : op.id, merged));
+    const v = await verifyWrite(s, op, merged, restore, live, resp);
+    if (!v.ok) { ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'mismatch', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, differences: v.diffs, attempts: v.attempts }); throw new Error(`undo read-back mismatch for ${e.kind} ${e.id} after ${v.attempts} reads: ${v.diffs.join('; ')}. Run stopped.`); }
+    const after = v.live;
     ledgerAppend(ledgerFile, { ts: new Date().toISOString(), status: 'undone', kind: e.kind, channel: e.channel, id: e.id, of: e.ts, after: partOf(op.kind, after), verified: true });
     sum.undone++;
   }
@@ -427,7 +447,7 @@ export async function main(argv, deps = {}) {
       const pf = val('--plan'), ledgerDir = val('--ledger'); if (!pf || !ledgerDir) { err(USAGE); return 2; }
       const only = val('--only')?.split(',').filter(Boolean); const mu = val('--max-units');
       const r = await applyPlan(JSON.parse(readFileSync(pf, 'utf8')), { only, ledgerDir, ...(mu ? { maxUnits: Number(mu) } : {}) }, { ...deps, out });
-      out(`done ${r.done} / stale ${r.stale} / skipped ${r.skipped} / failed ${r.failed}; units ${r.units}; ledger ${r.ledger}${r.stoppedReason ? `\n${r.stoppedReason}` : ''}`); return 0;
+      out(`done ${r.done} / already-applied ${r.alreadyApplied} / stale ${r.stale} / skipped ${r.skipped} / failed ${r.failed}; units ${r.units}; ledger ${r.ledger}${r.stoppedReason ? `\n${r.stoppedReason}` : ''}`); return 0;
     }
     const lf = val('--ledger'); if (!lf) { err(USAGE); return 2; }
     const r = await undoLedger(lf, { only: val('--only')?.split(',').filter(Boolean) }, { ...deps, out });
