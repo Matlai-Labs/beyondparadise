@@ -1,3 +1,4 @@
+import './test-env.js';
 // The vendored voice linter: drift against the shared original, the rules compared as data, and
 // fail-closed behaviour of the gate in lib.js. No network, no queue, no log written.
 import { test } from 'node:test';

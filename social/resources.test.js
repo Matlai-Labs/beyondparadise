@@ -1,3 +1,4 @@
+import './test-env.js';
 // Tests for social/resources.js — the single seam for everything outside this repo:
 // filesystem paths on Tim's Mac, third-party credential files, render assets, Graph API transport.
 // Audit 2026-11 findings 5 (CDN at render time), 6 (hard-coded /Users paths), 12 (token in URL).

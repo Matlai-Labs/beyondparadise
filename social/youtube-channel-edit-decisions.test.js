@@ -1,3 +1,4 @@
+import './test-env.js';
 // Tests for the explicit-decisions path of youtube-channel-edit.js. Mocked fetch only: nothing here can reach YouTube.
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, existsSync } from 'node:fs'; import { tmpdir } from 'node:os'; import { join } from 'node:path';
