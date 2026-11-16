@@ -1,3 +1,4 @@
+import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { chooseFormat, igPostDraftAny, CONFIG } from './lib.js';
 import { planCarousel } from './carousel.js';

@@ -1,3 +1,4 @@
+import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { claimGate, claimsIn, textHash, registrableDomain, validateSources, sourcesRecord } from './claim-gate.js';
 const src = (host, n = 1) => ({ claim: 'x', source: `Site ${n}`, url: `https://${host}/p`, line: 'exact line quoted from the page' });

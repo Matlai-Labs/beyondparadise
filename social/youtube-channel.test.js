@@ -1,3 +1,4 @@
+import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, readdirSync } from 'node:fs'; import { tmpdir } from 'node:os'; import { join, dirname } from 'node:path'; import { fileURLToPath } from 'node:url';
 import { accessToken, channelInfo, listVideos, listPlaylists, analytics, dump } from './youtube-channel.js';
