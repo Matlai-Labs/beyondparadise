@@ -44,7 +44,7 @@ export function engageStop({ env = process.env, flagPath = stopFlagPath(env), no
   if (cur.state === 'engaged') return `🛑 already stopped since ${cur.since}. Reply *bpa start* to resume.`;
   try { fs.mkdirSync(path.dirname(flagPath), { recursive: true }); fs.writeFileSync(flagPath, `${now.toISOString()}\n`); }
   catch (e) { return `⚠️ could not create the stop flag (${e.code || e.message}); publishing is NOT stopped by this command.`; }
-  return `🛑 stopped. Nothing will be published, scheduled or drafted until you reply *bpa start*.`;
+  return '🛑 Stopped. Nothing new will be published, scheduled or drafted until you reply *bpa start*.';
 }
 /** `bpa start`: remove the flag. Says so when the fleet-wide flag still holds. */
 export function releaseStop({ env = process.env, flagPath = stopFlagPath(env), fleetPath = fleetStopPath(env) } = {}) {

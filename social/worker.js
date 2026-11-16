@@ -4,8 +4,8 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { stuckIgPublishes, markStuckAlerted, loadQueue, saveQueue, withQueueLock, mergeQueue, claimIgPublish, STATUS, postStatus as metaPostStatus, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, igGate, QUEUE_PATH } from './lib.js';
-import { stopStatus } from './stop.js';
-import { reserveInstagramPublish, eatDay } from './ledger.js';
+import { stopStatus, StoppedError } from './stop.js';
+import { reserveInstagramPublish, releaseInstagramReservation, eatDay } from './ledger.js';
 import { recordWorkerRun, recordPost } from './health.js';
 
 const defaultApprovalHealth = async () => { const h = await fetch(`http://127.0.0.1:${CONFIG.approvalPort}/health`, { signal: AbortSignal.timeout(3000) }); return h.json(); };
@@ -15,16 +15,16 @@ export async function runWorker(deps = {}) {
   let r;
   try { r = await runWorkerInner(deps); }
   catch (e) { recordWorkerRun({ now: deps.now || new Date(), result: `error: ${String(e.message).slice(0, 200)}`, path: deps.runStatePath }); throw e; }
-  recordWorkerRun({ now: deps.now || new Date(), result: r.stopped ? 'stopped' : 'ok', path: deps.runStatePath });
+  recordWorkerRun({ now: deps.now || new Date(), result: r.stopped ? 'stopped' : r.publishFailed ? 'publish-failed' : 'ok', path: deps.runStatePath });
   return r;
 }
 async function runWorkerInner(deps) {
   const { now = new Date(), lastPostPath, queuePath = QUEUE_PATH, igOn = igEnabled, publishIg = igPostDraftAny, postStatus = metaPostStatus, notify = whatsapp, say = log,
-    approvalHealth = defaultApprovalHealth, reserve = reserveInstagramPublish, ledgerPath, config: capConfig = CONFIG, stopOpts, stop = () => stopStatus(stopOpts) } = deps;
+    approvalHealth = defaultApprovalHealth, reserve = reserveInstagramPublish, release = releaseInstagramReservation, ledgerPath, config: capConfig = CONFIG, stopOpts, stop = () => stopStatus(stopOpts) } = deps;
   const lockOpts = { lockPath: queuePath + '.lock' };
   // stop flag (own or fleet-wide): publish nothing, schedule nothing, touch nothing; one line; exit code stays 0
   { const st = stop(); if (st.stopped) { say(`worker: ${st.reason}`); return { exitCode: 0, stopped: true }; } }
-  const q = loadQueue(queuePath); const base = JSON.parse(JSON.stringify(q)); let changed = false; const problems = []; let stopNoted = false; const state = q.state || (q.state = {});
+  const q = loadQueue(queuePath); const base = JSON.parse(JSON.stringify(q)); let changed = false; const problems = []; let stopNoted = false; let publishFailed = false; const state = q.state || (q.state = {});
   for (const d of q.drafts) {
     if (d.status === STATUS.SCHEDULED && d.postId) {
       try { const s = await postStatus(d.postId); if (s.error) throw new Error(s.error.message); if (s.is_published) { d.status = STATUS.POSTED; d.permalink = s.permalink_url; d.postedAt = now.toISOString(); changed = true; say(`${d.id} posted ${s.permalink_url}`); recordPost({ now, id: d.id, path: lastPostPath }); } }
@@ -45,7 +45,12 @@ async function runWorkerInner(deps) {
       if (!claimed) { say(`${d.id} instagram claim failed after the reservation; reservation kept`); continue; } // another run took it, or it was changed meanwhile
       d.ig = claimed; base.drafts.find((x) => x.id === d.id).ig = JSON.parse(JSON.stringify(claimed));
       try { const r = await publishIg(d); d.ig = { status: 'posted', ...r, postedAt: now.toISOString() }; changed = true; say(`${d.id} instagram ${r.permalink}`); recordPost({ now, id: d.id, path: lastPostPath }); }
-      catch (e) { d.ig = { ...d.ig, status: 'failed', error: e.message }; changed = true; say(`${d.id} instagram publish failed; ledger reservation kept (safe direction): ${e.message.slice(0, 160)}`); problems.push(`${d.id} Instagram: ${e.message.slice(0, 100)}`); }
+      catch (e) {
+        if (e instanceof StoppedError) { // a stop arrived after the reservation: nothing reached the network, so give the slot back and requeue (no alert, not a failure)
+          d.ig = { status: 'queued', at: claimed.at }; changed = true; const rl = release({ id: d.id, at: now, path: ledgerPath });
+          say(`${d.id} instagram publish stopped before it started (${e.reason}); item queued again${rl.ok ? ', reservation released' : `, reservation kept (${rl.reason})`}`); continue;
+        }
+        d.ig = { ...d.ig, status: 'failed', error: e.message }; changed = true; say(`${d.id} instagram publish failed; ledger reservation kept (safe direction): ${e.message.slice(0, 160)}`); problems.push(`${d.id} Instagram: ${e.message.slice(0, 100)}`); publishFailed = true; }
     }
   }
   // Instagram on in config.json but off in practice: say so (log per post, one alert per state change) instead of skipping quietly
@@ -62,7 +67,7 @@ async function runWorkerInner(deps) {
   }
   state.lastRunOk = now.toISOString(); changed = true;
   if (changed) await withQueueLock(async () => saveQueue(mergeQueue(base, q, loadQueue(queuePath)), queuePath), lockOpts);
-  return { exitCode: 0, stopped: false };
+  return { exitCode: 0, stopped: false, publishFailed };
 }
 
 const isMain = process.argv[1] && (() => { try { return fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url)); } catch { return false; } })();

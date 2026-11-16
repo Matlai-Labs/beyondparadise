@@ -55,7 +55,7 @@ test('both conditions at once give two problems', () => {
 });
 test('state files are written atomically and hold time + id / time + result', () => {
   const p = P(); recordWorkerRun({ now: T0, result: 'ok', path: p.runStatePath }); recordPost({ now: T0, id: 'B9', path: p.lastPostPath });
-  assert.deepEqual(JSON.parse(fs.readFileSync(p.runStatePath, 'utf8')), { lastRunAt: T0.toISOString(), result: 'ok' }); assert.deepEqual(JSON.parse(fs.readFileSync(p.lastPostPath, 'utf8')), { at: T0.toISOString(), id: 'B9' });
+  assert.deepEqual(JSON.parse(fs.readFileSync(p.runStatePath, 'utf8')), { lastRunAt: T0.toISOString(), lastOkAt: T0.toISOString(), result: 'ok' }); assert.deepEqual(JSON.parse(fs.readFileSync(p.lastPostPath, 'utf8')), { at: T0.toISOString(), id: 'B9' });
   assert.deepEqual(fs.readdirSync(p.dir).filter((f) => f.endsWith('.tmp')), []);
 });
 
