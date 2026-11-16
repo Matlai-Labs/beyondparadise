@@ -8,6 +8,8 @@
   "postHourLocal": 9,
   "timezone": "Africa/Dar_es_Salaam",
   "draftTtlDays": 7,
+  "tourismStatsDrafts": false,
+  "tourismStatsDraftsNote": "Switch for the weekly drafts built from the tourism statistics briefs (signal and outlook drafts, Instagram and Facebook). false = no drafts from that source; key absent or true = old behaviour. Set to false 2026-11-17.",
   "approvalPort": 3028,
   "hashtags": {
     "always": [
@@ -40,6 +42,6 @@
       "signal": "carousel",
       "outlook": "reel"
     },
-    "formatNote": "Policy 2026-11-02: signal drafts (facts+sources, savable) = carousel; outlook drafts (thin, 4 slides) = reel; format = fallback. Insights scope missing so no own-data A/B yet. Thin carousel plans fall back to reel."
+    "formatNote": "Policy 2026-11-02: signal drafts (facts+sources, savable) = carousel; outlook drafts (thin, 4 slides) = reel; format = fallback. The insights (statistics) permission was read as granted on 16 Nov 2026. Thin carousel plans fall back to reel."
   }
 }
