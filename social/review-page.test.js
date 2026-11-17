@@ -18,7 +18,7 @@ test('static rules: no external request, no HTML injection, no inline handlers, 
   assert.doesNotMatch(html.match(/<style\b[^>]*>/)[0], /nonce/);
   for (const m of html.matchAll(/fetch\(([^)]*)\)/g)) assert.match(m[1], /^'(api\/(items|session|decide|posting)|\.\/)'/);
   assert.ok((html.match(/fetch\(/g) || []).length >= 1);
-  assert.ok((html.match(/method: 'POST'/g) || []).length <= 3, 'at most one POST per route: session, decide, posting (task 13 adds them; then this becomes equal to 3)');
+  assert.equal((html.match(/method: 'POST'/g) || []).length, 3, 'exactly one POST per route: session, decide, posting');
 });
 test('head: charset, viewport, title', () => {
   assert.match(html, /<meta charset=/i); assert.match(html, /<meta name="viewport"/); assert.match(html, /<title>Beyond Paradise: review<\/title>/);
@@ -232,3 +232,46 @@ test('decided line and stop button text', () => {
   assert.equal(pure.stopButtonText({ stopped: true, armed: false }), 'Allow posting again'); assert.equal(pure.stopButtonText({ stopped: true, armed: true }), 'Tap again to allow posting');
 });
 test('the Play button code is untouched: PLAY_TEXT, play-big and the failure sentence are still in the file', () => { for (const s of ["const PLAY_TEXT = 'Play video'", "'play-big'", 'VIDEO_FAILED_TEXT', 'videoFailureAction']) assert.ok(html.includes(s), s); });
+
+// ── task 13: the DOM part ────────────────────────────────────────────────────────
+const markup = html.split('<script')[0]; const script = html.slice(html.indexOf('<script'));
+test('13: the named elements exist; every button has type=button; the buttons are at least 44 px', () => {
+  for (const id of ['actions', 'act-approve', 'act-skip', 'act-edit', 'edit-box', 'edit-text', 'notice', 'decided', 'stop-all']) assert.ok(markup.includes(`id="${id}"`), id);
+  for (const m of markup.matchAll(/<button\b[^>]*>/g)) assert.match(m[0], /type="button"/, m[0]);
+  assert.ok((script.match(/el\('button'/g) || []).length <= (script.match(/\.type = 'button'/g) || []).length, 'every button made in script gets type=button');
+  assert.match(html, /\n  button \{[^}]*min-height: 44px/); assert.ok(!/(#actions|#edit-box|#decided|#stop-all)[^{]*\{[^}]*min-height: (\d|[1-3]\d|4[0-3])px/.test(html));
+});
+test('13: the action token and the page header: script variable only, one place each, no credentials option', () => {
+  assert.ok(!html.includes('localStorage')); assert.ok(!html.includes('bpa_token')); assert.ok(!/sessionStorage\.setItem\('(?!bpa_reloaded)/.test(html));
+  assert.equal((script.match(/X-Bpa-Action/g) || []).length, 1); assert.equal((script.match(/X-Bpa-Page/g) || []).length, 1);
+  assert.equal((script.match(/PAGE_HDR/g) || []).length, 3, 'defined once, used by the session call and the renewal');
+  assert.doesNotMatch(html, /credentials\s*:/); assert.doesNotMatch(html, /document\.cookie/);
+  assert.match(html, /fetch\('api\/session', \{ method: 'POST', headers: PAGE_HDR/); assert.match(html, /fetch\('\.\/', \{ headers: PAGE_HDR/);
+  assert.match(html, /fetch\('api\/decide', \{ method: 'POST', headers: actionHeaders\(\)/); assert.match(html, /fetch\('api\/posting', \{ method: 'POST', headers: actionHeaders\(\)/);
+  assert.match(html, /'Content-Type': 'application\/json'/);
+  for (const m of html.matchAll(/method: 'POST'(.{0,20})/g)) assert.match(m[1], /^, headers:/);
+});
+test('13: one renewal and one retry; the page is not reloaded for it', () => {
+  assert.equal((script.match(/renewSession\(\)/g) || []).length, 2, 'defined and called once');
+  assert.ok(html.includes("tokenStep({ status: res.status, retried })") && html.includes('refresh-and-retry') && html.includes('retried = true'));
+  assert.ok(html.includes('Your session ended. Reload the page.'));
+  const f = html.slice(html.indexOf('async function renewSession')); const body = f.slice(0, f.indexOf('\n}\n')); assert.ok(!body.includes('location.reload') && body.includes('429') && body.includes('3000') && body.includes('fetchToken()'));
+});
+test('13: the exact sentences of the notice, the edit box, the lists and the stop button', () => {
+  for (const s of ['Approved. You can undo it under What I decided.', 'Skipped. You can undo it under What I decided.', 'Saved and approved.', 'All clips that were ready are decided. From now on the automatic posting uses only the clips you approve.', 'New text for the video, at most 60 characters', 'Save and approve', 'Saving…', 'What I decided (', 'Nothing waits here.', 'Undo']) assert.ok(html.includes(s), s);
+  assert.match(markup, /<p id="notice"[^>]*aria-live="polite"/); assert.match(markup, /<details id="decided"/);
+});
+test('13: the lists, counts and keys use the pure functions', () => {
+  for (const w of ['waitingItems(state.items)', 'decidedItems(state.items)', 'decisionRequest(', 'refusalText(', 'afterRefusal(', 'keyAction(', 'decidedLine(', 'stopButtonText(', 'enforced']) assert.ok(html.includes(w), w);
+  assert.match(html, /function shownItems\(\) \{ return filterItems\(waitingItems\(state\.items\), state\.kind\)/); assert.match(html, /countKinds\(waitingItems\(state\.items\)\)/);
+  assert.ok(html.includes("getElementById('card-title').focus") || html.includes("$('card-title').focus"));
+});
+test('13: server text goes on the page by textContent only (no HTML assignment anywhere in the script)', () => {
+  assert.doesNotMatch(script, /\.(innerHTML|outerHTML)\s*=|insertAdjacentHTML|document\.write|eval\(|new Function|createContextualFragment|DOMParser/);
+  assert.ok((script.match(/textContent/g) || []).length >= 10);
+});
+test('13: typing in the edit box never moves the card or decides', () => {
+  const k = html.slice(html.indexOf("addEventListener('keydown'")); assert.ok(k.slice(0, k.indexOf('});')).includes('isTyping('), 'the old arrow listener also stands down while typing');
+  assert.ok(html.includes('typing: isTyping(e)'));
+});
+test('13: the Play button code is still byte for byte there', () => { for (const s of ["const btn = el('button', PLAY_TEXT, 'play-big'); btn.type = 'button';".replace('const btn', 'const wrap = el(\'div\', undefined, \'vwrap\'); const btn'), "btn.addEventListener('click', (e) => { e.stopPropagation(); start(); });"]) assert.ok(html.includes(s), s); });
