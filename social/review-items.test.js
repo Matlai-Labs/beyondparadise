@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { buildClipItems, fileInfoOf, clipVersion, mediaIdFor, hookVersion, buildItems, NOTE_PENDING } from './review-items.js';
+import { buildClipItems, clipReasonOf, fileInfoOf, clipVersion, mediaIdFor, hookVersion, buildItems, NOTE_PENDING } from './review-items.js';
 import { claimsSha256, readHooks } from './auto-hooks.js';
 import { eligibleClips } from './clip-library.js';
 import { laneVerdictFor } from './auto-lane.js';
@@ -223,4 +223,22 @@ test('change 2: within each kind the order is kept (clips by file time, texts ne
   const dir = mk(); for (const f of ['c1', 'c2']) fs.writeFileSync(path.join(dir, `${f}.mp4`), 'x'); const t = new Date(Date.now() + 9000); fs.utimesSync(path.join(dir, 'c2.mp4'), t, t);
   const r = await buildItems(base({ readManifest: () => ({ clips: [clip('c1'), clip('c2')] }), libraryDir: dir, info: fileInfoOf() }));
   assert.deepEqual(r.items.map((i) => i.id), ['c2', 'c1', 'idea_4', 'idea_9', 'idea_3', 'idea_2', 'idea_1']);
+});
+
+test('clipReasonOf gives the same state and reason as buildClipItems for every clip of a matrix manifest', async () => {
+  const dir = mk(); const mkf = (id) => fs.writeFileSync(path.join(dir, `${id}.mp4`), id);
+  for (const id of ['ok', 'used', 'nov', 'fail', 'flash', 'noflash', 'render', 'sub', 'sup', 'real']) mkf(id);
+  fs.symlinkSync(path.join(dir, 'real.mp4'), path.join(dir, 'link.mp4'));
+  const manifest = { clips: [clip('ok'), clip('used'), clip('nov', { verified: null }), clip('fail', { verified: { verdict: 'fail', singleSubject: 'yes' } }), clip('flash', { flash: { flash: true } }), clip('noflash', { flash: undefined }),
+    clip('render', { checks: { rendered: 'bad' } }), clip('gone'), clip('link'), clip('sup', { supersededBy: ['x'] }), clip('sub', { verified: { verdict: 'pass', singleSubject: 'no' } }), clip('real')] };
+  assert.equal(manifest.clips.length, 12);
+  for (const usage of [[{ clipId: 'used' }], null]) {
+    const info = fileInfoOf(); const { items } = await buildClipItems({ manifest, libraryDir: dir, info, secret: 's', usage });
+    assert.equal(items.length, 11); assert.ok(!items.some((i) => i.id === 'sup'));
+    for (const it of items) {
+      const c = manifest.clips.find((x) => x.id === it.id);
+      assert.deepEqual(clipReasonOf(manifest, usage, dir, c, { info }), { state: it.state, reason: it.reason }, it.id);
+    }
+  }
+  assert.equal(clipReasonOf(manifest, [], dir, manifest.clips.find((c) => c.id === 'link'), { info: fileInfoOf() }).reason, 'video-missing');
 });

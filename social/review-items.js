@@ -63,6 +63,22 @@ export const HOOK_REASONS = Object.freeze(['not-approved', 'stale', 'check-faile
 export function laneClipsOf(manifest, usage, libraryDir, exists = fs.existsSync) {
   return eligibleClips(manifest, usage, { dir: libraryDir, exists }).filter((c) => inside(libraryDir, c.file));
 }
+/** The state and reason of one clip, from sets built once. Pure. */
+function reasonFor(c, { hasFile, usageUnreadable, laneIds, freeIds }) {
+  if (!hasFile) return { state: NOTE_MISSING, reason: 'video-missing' };
+  if (usageUnreadable) return { state: 'not eligible: usage unreadable', reason: 'usage-unreadable' };
+  if (laneIds.has(c.id)) return { state: 'eligible', reason: null };
+  if (freeIds.has(c.id)) return { state: 'already used in a post', reason: 'already-used' };
+  const w = clipWhy(c); return { state: `not eligible: ${w.text}`, reason: w.reason };
+}
+/** The state and reason of ONE clip (builds the sets itself). A missing file, a folder and a symbolic link are "video missing". `usage` null = ledger unreadable. */
+export function clipReasonOf(manifest, usage, libraryDir, clip, { exists = fs.existsSync, info = null } = {}) {
+  let hasFile = false;
+  if (clip && typeof clip.file === 'string' && clip.file !== '' && inside(libraryDir, clip.file)) { const p = path.resolve(libraryDir, clip.file); hasFile = Boolean(exists(p) && (!info || info.peek(p))); }
+  const laneIds = usage === null ? new Set() : new Set(laneClipsOf(manifest, usage, libraryDir, exists).map((c) => c.id));
+  const freeIds = new Set(laneClipsOf(manifest, [], libraryDir, exists).map((c) => c.id));
+  return reasonFor(clip, { hasFile, usageUnreadable: usage === null, laneIds, freeIds });
+}
 export const HASH_BUDGET = 4; // new files hashed per items build; the rest show "being prepared" and are done by the next request
 export async function buildClipItems({ manifest, libraryDir, info, secret, exists = fs.existsSync, usage = [], hashBudget = HASH_BUDGET }) {
   const clips = manifest && Array.isArray(manifest.clips) ? manifest.clips : [];
@@ -87,12 +103,7 @@ export async function buildClipItems({ manifest, libraryDir, info, secret, exist
     const version = hashed ? clipVersion(pk.sha256, tags) : (abs && pk ? sha(JSON.stringify(['pending', pk.size, pk.mtimeMs, tags])) : clipVersion('file-missing', tags));
     const mediaId = hashed ? mediaIdFor(secret, c.id, version) : null;
     const v = c.verified && typeof c.verified === 'object' ? c.verified : null;
-    let state; let reason = null;
-    if (!abs) { state = NOTE_MISSING; reason = 'video-missing'; }
-    else if (usage === null) { state = 'not eligible: usage unreadable'; reason = 'usage-unreadable'; }
-    else if (laneIds.has(c.id)) state = 'eligible';
-    else if (freeIds.has(c.id)) { state = 'already used in a post'; reason = 'already-used'; }
-    else { const w = clipWhy(c); state = `not eligible: ${w.text}`; reason = w.reason; }
+    const { state, reason } = reasonFor(c, { hasFile: Boolean(abs), usageUnreadable: usage === null, laneIds, freeIds });
     const item = {
       kind: 'clip', id: c.id, version, title: c.id,
       preview: hashed ? { mediaId, note: null } : (abs ? { mediaId: null, note: NOTE_PENDING } : { mediaId: null, note: NOTE_MISSING }),
