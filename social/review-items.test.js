@@ -61,7 +61,8 @@ test('D7: two requests for the same unhashed file share one hashing run', async 
 test('D7: the real hasher streams and matches sha256 of the bytes', async () => {
   const f = path.join(mk(), 'big.mp4'); const buf = crypto.randomBytes(3 * 1024 * 1024 + 17); fs.writeFileSync(f, buf);
   const info = fileInfoOf(); assert.equal(await info.hash(f, info.peek(f)), crypto.createHash('sha256').update(buf).digest('hex'));
-  assert.ok(/createReadStream/.test(fs.readFileSync(new URL('./review-items.js', import.meta.url), 'utf8')) && !/readFileSync\(file\)|readFileSync\(abs\)/.test(fs.readFileSync(new URL('./review-items.js', import.meta.url), 'utf8')), 'streams, no whole-file read');
+  const both = ['./review-items.js', './clip-approvals.js'].map((f) => fs.readFileSync(new URL(f, import.meta.url), 'utf8')).join('\n'); // the hasher moved to clip-approvals.js
+  assert.ok(/createReadStream/.test(fs.readFileSync(new URL('./clip-approvals.js', import.meta.url), 'utf8')) && !/readFileSync\(file\)|readFileSync\(abs\)/.test(both), 'streams, no whole-file read');
 });
 test('D7: at most 4 new files are hashed per request; the rest are "being prepared" and filled in by the next request', async () => {
   const dir = mk(); const ids = ['a', 'b', 'c', 'd', 'e', 'f']; for (const id of ids) fs.writeFileSync(path.join(dir, `${id}.mp4`), id); const { info, calls } = counting();

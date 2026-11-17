@@ -7,18 +7,13 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { hookState, approvedHookFor, shownEntry } from './auto-hooks.js';
 import { eligibleClips } from './clip-library.js';
+import { clipVersion, tagsOf, hashFile as hashFileStream } from './clip-approvals.js';
+export { clipVersion };
 
 export const NOTE_PENDING = 'video is being prepared';
 const NOTE_MISSING = 'video missing';
 export const NOTE_NO_EXAMPLE = 'no example video yet'; // a video text has no example video in this step (they come later); nothing is being prepared
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
-
-function hashFileStream(file) {
-  return new Promise((resolve, reject) => {
-    const h = crypto.createHash('sha256'); const st = fs.createReadStream(file);
-    st.on('data', (c) => h.update(c)); st.on('error', reject); st.on('end', () => resolve(h.digest('hex')));
-  });
-}
 
 /** File identity and hash cache. peek(abs) is a cheap lstat that never hashes: { size, mtimeMs, ino, key, sha256 | null (not hashed yet) }, or null for a missing file, a folder or a SYMBOLIC LINK.
  *  hash(abs, pk) hashes by stream (never a whole-file read) and caches under path, size, mtime and inode; two callers for one file share one run. prune(keep) drops entries of paths that left the manifest. */
@@ -46,7 +41,6 @@ export function fileInfoOf({ lstat = fs.lstatSync, hashFile = hashFileStream } =
   return { peek, hash, prune, size: () => shaByKey.size };
 }
 
-export const clipVersion = (fileSha256, tags) => sha(JSON.stringify([fileSha256, [...tags].sort()]));
 export const mediaIdFor = (secret, itemId, version) => `m_${crypto.createHmac('sha256', secret).update(`${itemId}|${version}`).digest('hex').slice(0, 32)}`;
 
 const inside = (dir, f) => { const rel = path.relative(path.resolve(dir), path.resolve(dir, f)); return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel); };
@@ -88,7 +82,7 @@ export async function buildClipItems({ manifest, libraryDir, info, secret, exist
   const media = new Map(); const built = [];
   for (const r of rows) {
     const { c, abs, pk } = r;
-    const tags = Array.isArray(c.shows && c.shows.tags) ? c.shows.tags.filter((t) => typeof t === 'string') : [];
+    const tags = tagsOf(c);
     const hashed = Boolean(abs && pk && pk.sha256);
     const version = hashed ? clipVersion(pk.sha256, tags) : (abs && pk ? sha(JSON.stringify(['pending', pk.size, pk.mtimeMs, tags])) : clipVersion('file-missing', tags));
     const mediaId = hashed ? mediaIdFor(secret, c.id, version) : null;
