@@ -176,12 +176,10 @@ async function main(argv) {
     return;
   }
   const out = path.resolve(a.out || '/private/tmp/claude-501/-Users-tim-Desktop-AI-projects-MATLAI-VS-CODE-Agent-OS/7f63de80-63e3-4b56-b7f7-af941b2ae5ca/scratchpad/auto-rehearsal');
-  const tmpState = fs.mkdtempSync(path.join(os.tmpdir(), 'bpa-auto-rehearsal-')); // queue, state and log of the rehearsal live here, nothing real is written
-  const lines = []; const say = (m) => { lines.push(m); };
+  // prepareAutoPost writes no queue, state, ledger or log: its only output is the video in `out`; the real files are only read
   const manifest = readManifestReal(defaultLibraryDir()); const usage = readUsageReal(defaultUsagePath());
   fs.mkdirSync(out, { recursive: true });
-  const r = await prepareAutoPost({ pool, manifest, usage, history, config: CONFIG, now }, { outDir: out, libraryDir: defaultLibraryDir(), say });
-  fs.rmSync(tmpState, { recursive: true, force: true });
+  const r = await prepareAutoPost({ pool, manifest, usage, history, config: CONFIG, now }, { outDir: out, libraryDir: defaultLibraryDir() });
   for (const x of r.refused || []) console.log(`refused  ${x.ideaId}  ${x.reason}`);
   if (!r.ok) { console.log(`NOT PREPARED: ${describeRefusal(r)}`); process.exitCode = 1; return; }
   const txt = path.join(out, 'auto-caption.txt'); fs.writeFileSync(txt, `${r.draft.text}\n`);
