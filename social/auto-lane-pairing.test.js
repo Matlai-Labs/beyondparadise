@@ -180,3 +180,11 @@ test('supply numbers: surviving ideas, how many have a fitting unused clip, per 
   assert.deepEqual(r.refusals, { 'claim-too-long': 1 }); const txt = lines.join('\n'); assert.match(txt, /4 survive/); assert.match(txt, /2 of 4 surviving ideas have a fitting unused clip \(3 eligible/); assert.match(txt, /clip-b\s+tags: lion, elephant\s+fits 2 surviving ideas/); assert.match(txt, /clip-c\s+tags: none recorded\s+fits 0/);
   assert.match(txt, /elephant x1/); assert.match(txt, /\(no animal named\) x1/);
 });
+test('title-claim-differ: refused before pairing, also with an approved hook; supply counts it', async () => {
+  const bad = idea(1, 'Lion', { titleFromOtherField: true });
+  const k = kit({ input: { pool: [bad] }, hooks: [approved(bad, 'Lion fee')] });
+  const r = await prepareAutoPost(k.input, k.deps); assert.deepEqual([r.ok, r.reasons, r.refused], [false, ['no-eligible-idea'], [{ ideaId: 'idea_1', reason: 'title-claim-differ' }]]);
+  const k2 = kit({ input: { pool: [bad, idea(2, 'Lion')] } }); const r2 = await prepareAutoPost(k2.input, k2.deps); assert.equal(r2.draft.ideaId, 'idea_2');
+  const lines = []; await supplyReport({ ranked: [bad], top: 5, manifest: k.input.manifest, usage: [], config: {}, now: NOW, libraryDir: k.deps.libraryDir, log: (l) => lines.push(l) }, { hooksFile: k.hooksFile, exists: () => true, neverPromotePatterns: NP });
+  assert.ok(lines.some((l) => /title-claim-differ/.test(l)), lines.join('\n'));
+});
