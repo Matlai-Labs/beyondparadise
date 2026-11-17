@@ -255,7 +255,10 @@ function draftStateLine(item) {
     if (item.reason === 'approve-off') return 'Ready. Approving posts on this page is not switched on yet. You can skip or edit it.';
     return 'Waiting for your yes.' + (f.nextSlotText ? ' If you approve it, it is scheduled at Meta for ' + f.nextSlotText + '.' : '');
   }
-  if (typeof st === 'string' && st.indexOf('refused: ') === 0) return withReason('Not ready: ', item.reason);
+  if (typeof st === 'string' && st.indexOf('refused: ') === 0) {
+    if (item.reason === 'check-meta') return withReason('Not ready: ', item.reason) + ' A try to schedule this post did not finish cleanly. If no post is there, send "bpa approve ' + item.id + ' again" on WhatsApp.';
+    return withReason('Not ready: ', item.reason);
+  }
   if (st === 'blocked') return 'Blocked by the checks. It will not go out.';
   if (st === 'scheduled') return 'Scheduled at Meta' + (f.whenText ? ' for ' + f.whenText : '') + '. It goes out by itself.';
   if (st === 'automatic') return 'Automatic post' + (f.whenText ? ', scheduled for ' + f.whenText : '') + '. There is nothing to decide here. Stop all posting holds it.';
@@ -490,6 +493,7 @@ function doneText(item, action, data) {
 function confirmText(item, action) {
   if (!item || item.kind !== 'draft') return '';
   if (action === 'approve') { const f = item.facts || {}; return 'This schedules a real post at Meta for ' + (f.nextSlotText || 'the next free day') + '. It then goes out by itself. This page cannot take it back; only Meta can cancel it.' + (f.instagram ? ' It also goes on Instagram.' : ''); }
+  if (action === 'skip' && item.reason === 'check-meta') return 'Skip this post? A post may still exist at Meta, and skipping here does not cancel it. It does not come back on this page.';
   if (action === 'skip') return 'Skip this post? It does not come back on this page.';
   return '';
 }
@@ -622,7 +626,7 @@ function renderCard(moved) {
   $('counter').textContent = 'Card ' + (state.index + 1) + ' of ' + n;
   const key = item.id + '|' + item.version;
   if (state.key !== key) { showVideo(item); state.key = key; }
-  state.currentId = item.id; if (state.editing && state.editId !== item.id) closeEdit(); if (state.confirmKey && state.confirmKey !== key) closeConfirm(); // another card, or the card changed under the box
+  state.currentId = item.id; if (state.editing && state.editId !== item.id) closeEdit(); if (state.confirmKey && state.confirmKey !== confirmKeyOf(item)) closeConfirm(); // another card, or the card changed under the box
   showFacts(item); renderActions(item);
   if (moved) { closeEdit(); $('card-title').focus({ preventScroll: true }); }
 }
@@ -753,9 +757,11 @@ function openEdit() {
 function closeEdit() { $('edit-box').classList.add('hidden'); $('edit-error').textContent = ''; state.editing = false; }
 function countEdit() { const item = currentItem(); $('edit-count').textContent = $('edit-text').value.length + ' of ' + (item && item.kind === 'draft' ? EDIT_LIMITS.draft : EDIT_MAX); }
 // The confirm step for a real post. NO timer: nothing closes it but the owner, another card, or a changed card.
-function closeConfirm() { $('confirm-box').classList.add('hidden'); state.confirmKey = null; state.confirmAction = null; }
+// The box is bound to the card AND the day it showed: the key holds the id, the version and the day.
+function confirmKeyOf(item) { return item.id + '|' + item.version + '|' + String((item.facts && item.facts.nextSlot) || ''); }
+function closeConfirm() { $('confirm-box').classList.add('hidden'); state.confirmKey = null; state.confirmSlot = null; state.confirmAction = null; }
 function openConfirm(item, action) {
-  closeEdit(); state.confirmKey = item.id + '|' + item.version; state.confirmAction = action;
+  closeEdit(); state.confirmKey = confirmKeyOf(item); state.confirmSlot = item.facts && typeof item.facts.nextSlot === 'string' ? item.facts.nextSlot : null; state.confirmAction = action;
   $('confirm-text').textContent = confirmText(item, action); $('confirm-yes').textContent = action === 'approve' ? 'Schedule it' : 'Skip it';
   $('confirm-box').classList.remove('hidden'); $('confirm-no').focus();
 }
@@ -765,6 +771,7 @@ async function decide(action, text, fromList, confirmed) {
   const item = fromList || currentItem();
   if (item && item.kind === 'draft' && (action === 'approve' || action === 'skip') && !confirmed) { if (decisionRequest(item, action)) openConfirm(item, action); return; } // nothing is sent before the second step
   const req = decisionRequest(item, action, text);
+  if (req && confirmed && action === 'approve') { if (state.confirmSlot === null) { closeConfirm(); return; } req.slot = state.confirmSlot; } // the day the owner read is the day that is sent
   if (!req) {
     if (action === 'edit') { const problem = editProblem(item ? item.kind : 'hook', text); const t = problem ? EDIT_PROBLEM_TEXT[problem] : null; $('edit-error').textContent = typeof t === 'function' ? t(item ? item.kind : 'hook') : (t || refusalText('bad-request')); }
     return;
@@ -813,7 +820,7 @@ function renderStop() { $('stop-all').textContent = stopButtonText(stopUi); }
 $('act-approve').addEventListener('click', () => { decide('approve'); });
 $('act-skip').addEventListener('click', () => { decide('skip'); });
 $('act-edit').addEventListener('click', () => { openEdit(); });
-$('confirm-yes').addEventListener('click', () => { const item = currentItem(); const action = state.confirmAction; if (!item || !action) { closeConfirm(); return; } decide(action, undefined, undefined, true); });
+$('confirm-yes').addEventListener('click', () => { const item = currentItem(); const action = state.confirmAction; if (!item || !action || state.confirmKey !== confirmKeyOf(item)) { closeConfirm(); return; } decide(action, undefined, undefined, true); }); // a box that does not match the card in front of it sends nothing
 $('confirm-no').addEventListener('click', () => { closeConfirm(); });
 $('edit-save').addEventListener('click', () => { decide('edit', $('edit-text').value); });
 $('edit-cancel').addEventListener('click', () => { closeEdit(); });

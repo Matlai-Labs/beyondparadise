@@ -272,3 +272,23 @@ test('T13 a prepared post shows a Play button and no action buttons; a blocked d
 test('T13 nothing is sent while the page loads with drafts in the list', async () => {
   const p = await openPage(withDraft()); assert.equal(p.posts('api/decide').length, 0); assert.equal(p.posts('api/posting').length, 0);
 });
+
+// ── fix round (18 Nov): R1 page card, R2 the date in the confirm box ───────────────────────────────────────────────
+test('R1 a check-meta card says in plain words what to do, offers no Approve and no Edit, and its Skip warns that a post may still exist at Meta', async () => {
+  const p = await openPage(withDraft({ state: 'refused: check-meta', reason: 'check-meta', actions: ['skip'] }));
+  const t = p.$('state').textContent; assert.match(t, /did not finish cleanly/); assert.match(t, /Look in Meta/); assert.match(t, /send "bpa approve B1 again" on WhatsApp/);
+  assert.ok(p.$('act-approve').classList.contains('hidden')); assert.ok(p.$('act-edit').classList.contains('hidden')); assert.ok(!p.$('act-skip').classList.contains('hidden'));
+  p.$('act-skip').click(); await p.flush(); assert.ok(open(p, 'confirm-box')); assert.match(p.$('confirm-text').textContent, /post may still exist at Meta/); assert.match(p.$('confirm-text').textContent, /does not cancel/);
+  assert.equal(pureNames.confirmText(draftItem(), 'skip'), 'Skip this post? It does not come back on this page.', 'the ordinary skip text is unchanged');
+});
+const OTHER = '2026-11-20T09:00:00+03:00';
+test('R2 the slot changes while the confirm box is open: the box closes and nothing is sent', async () => {
+  const s = withDraft(); const p = await openPage(s); p.$('act-approve').click(); await p.flush(); assert.ok(open(p, 'confirm-box'));
+  s.list = [draftItem({ facts: { nextSlot: OTHER, nextSlotText: '20 Nov at 09:00 (East Africa time)' } }), decidedItem()]; p.$('refresh').click(); await p.flush();
+  assert.ok(!open(p, 'confirm-box'), 'closed by the changed card'); p.$('confirm-yes').click(); await p.flush(); assert.equal(p.posts('api/decide').length, 0);
+});
+test('R2 a card changed without a re-render: the stale box sends nothing and closes; the unchanged box still sends the date it showed', async () => {
+  const s = withDraft(); const p = await openPage(s); p.$('act-approve').click(); await p.flush();
+  s.list[0].facts.nextSlot = OTHER; p.$('confirm-yes').click(); await p.flush(); assert.equal(p.posts('api/decide').length, 0); assert.ok(!open(p, 'confirm-box'));
+  const q = await openPage(withDraft()); q.$('act-approve').click(); await q.flush(); q.$('confirm-yes').click(); await q.flush(); assert.equal(q.posts('api/decide')[0].body.slot, SLOT);
+});
