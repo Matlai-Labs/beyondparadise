@@ -226,14 +226,14 @@ export function loadNeverPatterns(file) {
   const list = Array.isArray(j) ? j : j.patterns; if (!Array.isArray(list)) throw new Error(`never-promote file ${file}: expected an array or { patterns: [] }`);
   return list.map(String);
 }
-export function loadInputs({ root, historyFile, queueFile, neverFile, regions, insightsFile } = {}) {
+export function loadInputs({ root, historyFile, queueFile, neverFile, regions, insightsFile, env = process.env } = {}) {
   const facts = readJson(path.join(root, 'data', 'facts', 'facts.json'), { facts: [] }).facts;
   const rules = readJson(path.join(root, 'data', 'rules', 'official-rules.json'), { rules: [] }).rules;
   const queue = readJson(queueFile || path.join(root, 'social', 'queue.json'), null);
   const history = [...historyFromQueue(queue), ...(historyFile ? historyFromAudit(readJson(historyFile, null)) : [])];
   const config = {}; if (regions) config.regions = regions;
   const never = neverFile ? loadNeverPatterns(neverFile) : null; if (never) config.neverPromotePatterns = never;
-  return { facts, pages: loadPages(root), rules, history, config, neverFileFound: never !== null, own: { state: readInsightsState(insightsFile || defaultInsightsPath()), queue } };
+  return { facts, pages: loadPages(root), rules, history, config, neverFileFound: never !== null, own: { state: readInsightsState(insightsFile || defaultInsightsPath(env)), queue } };
 }
 
 // ── command line ───────────────────────────────────────────────────────────────────────────────

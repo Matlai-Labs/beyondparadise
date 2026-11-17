@@ -7,7 +7,7 @@ import { fetchInsights, runFetch, summarise, median, eastAfricaDay, matchQueueId
 const TOKEN = 'TOKEN_SHOULD_NEVER_APPEAR_123'; const ACC = '1784'; const NOW = new Date('2026-11-17T10:00:00Z');
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bpa-ins-'));
 const ok = (j) => ({ ok: true, status: 200, json: async () => j });
-const m = (i, extra = {}) => ({ id: `m${i}`, permalink: `https://www.instagram.com/reel/P${i}/`, timestamp: '2026-11-10T08:00:00+0000', media_type: 'VIDEO', media_product_type: 'REELS', like_count: i, comments_count: 0, caption: `secret caption ${i}`, ...extra });
+const m = (i, extra = {}) => ({ id: `9${i}`, permalink: `https://www.instagram.com/reel/P${i}/`, timestamp: '2026-11-10T08:00:00+0000', media_type: 'VIDEO', media_product_type: 'REELS', like_count: i, comments_count: 0, caption: `secret caption ${i}`, ...extra });
 const VALUES = { reach: 100, saved: 2, shares: 1, total_interactions: 7, views: 150 };
 const insightsOf = (names) => ({ data: names.map((n) => ({ name: n, values: [{ value: VALUES[n] }] })) });
 /** A fake Graph API: media = list of media objects; insights(mediaId, names) => json. Records every call. */
@@ -20,7 +20,7 @@ function fake({ media = [], insights = (id, names) => insightsOf(names), mediaEr
       if (pages) return ok(pages(u.searchParams.get('after'), Number(u.searchParams.get('limit'))));
       const limit = Number(u.searchParams.get('limit')); return ok({ data: media.slice(0, limit) });
     }
-    const mm = /^(m\d+)\/insights$/.exec(p); if (mm) return ok(insights(mm[1], u.searchParams.get('metric').split(',')));
+    const mm = /^(\d+)\/insights$/.exec(p); if (mm) return ok(insights(mm[1], u.searchParams.get('metric').split(',')));
     return ok({ error: { code: 1, message: 'unexpected' } });
   };
   fn.calls = calls; return fn;
@@ -29,13 +29,13 @@ function fake({ media = [], insights = (id, names) => insightsOf(names), mediaEr
 test('fetchInsights returns the list fields and the five metrics for a reel', async () => {
   const r = await fetchInsights({ fetchFn: fake({ media: [m(1)] }), token: TOKEN, accountId: ACC, now: NOW });
   assert.equal(r.fetchedAt, NOW.toISOString()); assert.equal(r.media.length, 1);
-  const x = r.media[0]; assert.equal(x.id, 'm1'); assert.equal(x.type, 'VIDEO'); assert.equal(x.productType, 'REELS'); assert.equal(x.likes, 1); assert.equal(x.comments, 0);
+  const x = r.media[0]; assert.equal(x.id, '91'); assert.equal(x.type, 'VIDEO'); assert.equal(x.productType, 'REELS'); assert.equal(x.likes, 1); assert.equal(x.comments, 0);
   assert.deepEqual([x.reach, x.saved, x.shares, x.views, x.interactions], [100, 2, 1, 150, 7]); assert.deepEqual(x.metricsAbsent, []);
   assert.equal(x.captionSha256, createHash('sha256').update('secret caption 1').digest('hex')); assert.equal(x.queueId, null);
   assert.ok(!('caption' in x));
 });
 test('a metric the API refuses for one media is recorded as absent and does not fail the run', async () => {
-  const insights = (id, names) => (id === 'm2' && names.length > 1 ? { error: { code: 100, error_subcode: 2108006, message: 'Invalid parameter' } } : id === 'm2' && names[0] === 'views' ? { error: { code: 100, message: 'no' } } : insightsOf(names));
+  const insights = (id, names) => (id === '92' && names.length > 1 ? { error: { code: 100, error_subcode: 2108006, message: 'Invalid parameter' } } : id === '92' && names[0] === 'views' ? { error: { code: 100, message: 'no' } } : insightsOf(names));
   const r = await fetchInsights({ fetchFn: fake({ media: [m(1), m(2)], insights }), token: TOKEN, accountId: ACC, now: NOW });
   assert.equal(r.media[0].views, 150); assert.equal(r.media[1].views, null); assert.deepEqual(r.media[1].metricsAbsent, ['views']); assert.equal(r.media[1].reach, 100);
 });
@@ -99,7 +99,7 @@ test('at most one real fetch per East Africa day unless forced', async () => {
   assert.equal(eastAfricaDay(new Date('2026-11-17T21:30:00Z')), '2026-11-18'); assert.equal(eastAfricaDay(new Date('2026-11-17T20:59:00Z')), '2026-11-17');
 });
 test('summarise: counts and median reach by product type, weekday and month; ten best and ten weakest without caption text', () => {
-  const media = Array.from({ length: 25 }, (_, i) => ({ id: `m${i}`, permalink: `https://x/p${i}`, timestamp: i < 10 ? '2026-11-16T08:00:00+0000' : '2026-10-21T22:30:00+0000', type: i % 5 === 0 ? 'IMAGE' : 'VIDEO', productType: i % 5 === 0 ? 'FEED' : 'REELS', likes: i, comments: 0, reach: i === 24 ? null : (i + 1) * 10, saved: 0, shares: 0, views: 1, captionSha256: 'aa', queueId: i === 3 ? 'B3' : null }));
+  const media = Array.from({ length: 25 }, (_, i) => ({ id: `9${i}`, permalink: `https://x/p${i}`, timestamp: i < 10 ? '2026-11-16T08:00:00+0000' : '2026-10-21T22:30:00+0000', type: i % 5 === 0 ? 'IMAGE' : 'VIDEO', productType: i % 5 === 0 ? 'FEED' : 'REELS', likes: i, comments: 0, reach: i === 24 ? null : (i + 1) * 10, saved: 0, shares: 0, views: 1, captionSha256: 'aa', queueId: i === 3 ? 'B3' : null }));
   const queue = { drafts: [{ id: 'B3', ideaKind: 'fact', text: 'queue text must not leak' }] }; const before = JSON.stringify({ media, queue });
   const s = summarise({ fetchedAt: NOW.toISOString(), media }, queue); assert.equal(JSON.stringify({ media, queue }), before, 'pure: inputs unchanged');
   assert.equal(s.total, 25); assert.equal(s.withReach, 24); assert.equal(s.matchedQueue, 1);
