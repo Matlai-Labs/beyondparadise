@@ -5,6 +5,8 @@ import { STATUS, CONFIG, QUEUE_PATH, log } from './lib.js';
 import { engageStop, releaseStop } from './stop.js';
 import { REVIEW_BY, defaultHooksPath, readHooks, writeHooksAtomic, hookState, shownEntry, claimsSha256 } from './auto-hooks.js';
 import { localParts } from './plain-time.js';
+import { INVISIBLE } from './invisible-chars.js';
+import { DRAFT_REASONS } from './draft-version.js';
 import { withDecisionLock } from './decision-lock.js';
 import { CLIP_REASONS, HOOK_REASONS, hookVersion, clipReasonOf, laneClipsOf } from './review-items.js';
 import { defaultClipApprovalsPath, readClipApprovals, writeClipApprovals, clipVersion, tagsOf, decisionOf, setDecision, clearDecision, maybeEnforce, stockRightsProblem } from './clip-approvals.js';
@@ -29,10 +31,12 @@ export function startPosting({ stopOpts } = {}) { return { reply: releaseStop(st
 // ── review page decisions (step 2): approve, skip, undo, edit for video texts and clips ─────────────────────────────
 // Common order inside the decision lock: read state -> find the item -> compare the version with the one recomputed NOW -> state rules -> usable-now rules
 // -> record (ctx.record) -> write the state file atomically. A failed record means "not decided"; a failed state write voids the record line.
-export const ACTION_CODES = Object.freeze(['bad-request', 'bad-characters', 'not-found', 'version-changed', 'stale', 'already-approved', 'already-skipped', 'not-decided', 'already-used', 'rights-missing', 'version-pending', 'no-change', 'usage-unreadable', 'history-unreadable', 'check-failed', 'approvals-unreadable', 'hooks-unreadable', 'ideas-unavailable', 'library-unreadable', 'record-failed', 'write-failed', 'lock-busy', 'cannot-decide', 'still-stopped', 'could-not-stop', 'stop-changed']);
+export const ACTION_CODES = Object.freeze(['bad-request', 'bad-characters', 'not-found', 'version-changed', 'stale', 'already-approved', 'already-skipped', 'not-decided', 'already-used', 'rights-missing', 'version-pending', 'no-change', 'usage-unreadable', 'history-unreadable', 'check-failed', 'approvals-unreadable', 'hooks-unreadable', 'ideas-unavailable', 'library-unreadable', 'record-failed', 'write-failed', 'lock-busy', 'cannot-decide', 'still-stopped', 'could-not-stop', 'stop-changed',
+  // step 3: draft decisions
+  'queue-unreadable', 'already-scheduled', 'already-posted', 'expired', 'blocked', 'stopped', 'text-missing', 'sources-missing', 'sources-old', 'sources-outdated', 'sources-too-few', 'brand-rule', 'voice-rule', 'rules', 'number-not-in-facts', 'schedule-failed', 'schedule-not-saved', 'not-pending', 'check-meta', 'slot-changed']);
 // the BASE (before any ':') of every reason evaluateIdea and the checks behind it can return (auto-lane.js, fact-post.js, the final check)
 export const EVAL_REASONS = Object.freeze(['hook-number-not-in-claims', 'hook-subject-mismatch', 'hook-too-long', 'hook-invalid', 'idea-has-no-claims', 'title-missing', 'title-too-long', 'title-has-markup', 'title-claim-differ', 'claim-too-long', 'claim-multiline', 'no-subject', 'no-matching-clip', 'no-approved-hook', 'wrong-kind', 'in-history', 'bad-config', 'final-check', 'alt-text', 'judge']);
-const OPEN_SET = new Set([...ACTION_CODES, ...CLIP_REASONS, ...HOOK_REASONS, ...EVAL_REASONS]);
+const OPEN_SET = new Set([...ACTION_CODES, ...CLIP_REASONS, ...HOOK_REASONS, ...EVAL_REASONS, ...DRAFT_REASONS]);
 /** THE closed set (C1): only the base of a code that is in the set leaves; text built from data becomes 'check-failed'. */
 export function publicCode(code) {
   if (typeof code !== 'string' || !/^[a-z0-9:_-]{1,60}$/.test(code)) return 'check-failed';
@@ -40,7 +44,7 @@ export function publicCode(code) {
   return OPEN_SET.has(base) ? base : 'check-failed';
 }
 // SR2: refuse every control, format, private-use and unassigned character, line and paragraph separators, every space except the plain U+0020, variation selectors, and the fillers that draw nothing. The page (review-page.html BAD_EDIT_CHARS) holds the same set; review-test-chars.js tests both.
-const INVISIBLE = /[\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Cs}\p{Zl}\p{Zp}︀-️\u{E0100}-\u{E01EF}͏ᅟᅠ⠀ㅤﾠ]|(?! )\p{Zs}/u;
+
 const LINEBREAK = /[\r\n\u2028\u2029\u0085]/;
 const fail = (code) => ({ ok: false, code: publicCode(code) });
 const okOf = (kind, id, decision, extra = {}) => ({ ok: true, change: { kind, id, decision }, ...extra });

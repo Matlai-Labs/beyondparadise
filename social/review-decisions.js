@@ -7,7 +7,7 @@ import { log } from './lib.js';
 
 export const decisionsFilePath = (env = process.env) => path.join(stateDir(env), 'bpa-review-decisions.jsonl');
 
-const KINDS = new Set(['hook', 'clip', 'posting']);
+const KINDS = new Set(['hook', 'clip', 'posting', 'draft']);
 const WORDS = new Set(['approve', 'skip', 'edit', 'undo', 'stop', 'start', 'void']);
 const KEYS = new Set(['n', 'kind', 'id', 'version', 'decision', 'claimedLogin', 'at', 'ref']); // claimedLogin = the login the proxy header CLAIMED, not proof of who acted
 const FAIL = { ok: false, reason: 'record-failed' };

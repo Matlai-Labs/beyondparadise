@@ -330,3 +330,10 @@ test('race: a clip decision against Stop and Start records and a video text deci
   assert.deepEqual(lines.map((x) => `${x.kind}:${x.decision}`).sort(), ['clip:approve', 'clip:skip', 'hook:skip', 'posting:stop']);
   assert.equal(readDecisions(k.recordFile).records.length, 4);
 });
+
+test('step 3 codes: publicCode returns each new code unchanged and the base before a colon; free text and unknown words become check-failed', () => {
+  const codes = ['queue-unreadable', 'already-scheduled', 'already-posted', 'expired', 'blocked', 'stopped', 'text-missing', 'sources-missing', 'sources-old', 'sources-outdated', 'sources-too-few', 'brand-rule', 'voice-rule', 'rules', 'number-not-in-facts', 'schedule-failed', 'schedule-not-saved', 'not-pending', 'check-meta', 'slot-changed'];
+  for (const c of codes) { assert.equal(publicCode(c), c, c); assert.equal(publicCode(c + ':detail'), c, c + ':detail'); }
+  for (const w of ['approve-off', 'final-check', 'hidden-characters', 'video-missing', 'ready-file-changed']) assert.equal(publicCode(w), w, w);
+  for (const bad of ['two words', '', 'a'.repeat(61), '__proto__']) assert.equal(publicCode(bad), 'check-failed', bad);
+});
