@@ -155,3 +155,18 @@ test('engaged flags carry the time and which flag; the unreadable case has no ti
   const file = path.join(q.dir, 'afile'); fs.writeFileSync(file, ''); const u = stopStatus({ ...q, flagPath: path.join(file, 'x'), fleetPath: q.fleetPath + 'none' });
   assert.equal(u.stopped, true); assert.ok(!('since' in u) && !('by' in u));
 });
+
+test('the stop flag file: new is mode 600, an existing 644 flag is left alone, a flag after release is 600 again, the replies are unchanged', () => {
+  const p = paths(); const when = new Date('2026-11-18T10:00:00Z');
+  assert.equal(engageStop({ ...p, now: when }), '🛑 Stopped. Nothing new will be published, scheduled or drafted until you reply *bpa start*.');
+  assert.equal(fs.statSync(p.flagPath).mode & 0o777, 0o600, 'new flag');
+  // an existing 644 flag
+  const q = paths(); fs.mkdirSync(path.dirname(q.flagPath), { recursive: true }); fs.writeFileSync(q.flagPath, '2026-11-17T00:00:00.000Z\n', { mode: 0o644 }); fs.chmodSync(q.flagPath, 0o644);
+  const old = new Date('2026-11-17T00:00:00Z'); fs.utimesSync(q.flagPath, old, old); const before = fs.statSync(q.flagPath);
+  assert.match(engageStop({ ...q, now: when }), /^🛑 already stopped since 2026-11-17T00:00:00\.000Z\. Reply \*bpa start\* to resume\.$/);
+  const after = fs.statSync(q.flagPath); assert.equal(after.mode & 0o777, 0o644); assert.equal(after.mtimeMs, before.mtimeMs); assert.equal(fs.readFileSync(q.flagPath, 'utf8'), '2026-11-17T00:00:00.000Z\n');
+  // release, then stop again: created fresh with 600
+  releaseStop(q); assert.ok(!fs.existsSync(q.flagPath)); engageStop({ ...q, now: when }); assert.equal(fs.statSync(q.flagPath).mode & 0o777, 0o600);
+  // the reply texts
+  assert.match(engageStop({ ...p, now: when }), /^🛑 already stopped since /); assert.equal(typeof releaseStop(p), 'string'); assert.equal(typeof releaseStop(p), 'string');
+});

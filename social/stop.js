@@ -42,7 +42,7 @@ export function assertNotStopped(opts) { const s = stopStatus(opts); if (s.stopp
 export function engageStop({ env = process.env, flagPath = stopFlagPath(env), now = new Date() } = {}) {
   const cur = probe(flagPath);
   if (cur.state === 'engaged') return `🛑 already stopped since ${cur.since}. Reply *bpa start* to resume.`;
-  try { fs.mkdirSync(path.dirname(flagPath), { recursive: true }); fs.writeFileSync(flagPath, `${now.toISOString()}\n`); }
+  try { fs.mkdirSync(path.dirname(flagPath), { recursive: true }); fs.writeFileSync(flagPath, `${now.toISOString()}\n`, { mode: 0o600 }); }
   catch (e) { return `⚠️ could not create the stop flag (${e.code || e.message}); publishing is NOT stopped by this command.`; }
   return '🛑 Stopped. Nothing new will be published, scheduled or drafted until you reply *bpa start*.';
 }
