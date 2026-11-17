@@ -562,6 +562,7 @@ const stopUi = { stopped: false, reason: null, armed: false, timer: null };
 state.busy = false; state.editing = false;
 const SESSION_ENDED = 'Your session ended. Reload the page.';
 const ENFORCED_TEXT = 'All clips that were ready are decided. From now on the automatic posting uses only the clips you approve.';
+const ARM_EXPIRED_TEXT = 'The second tap came too late. Tap the button again if you still want to.';
 const DONE_TEXT = { approve: 'Approved. You can undo it under What I decided.', skip: 'Skipped. You can undo it under What I decided.', edit: 'Saved and approved.', undo: 'Undone. It is back in the waiting list.' };
 
 function isTyping(e) { const t = e.target; return !!t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' || t.isContentEditable === true); }
@@ -660,7 +661,7 @@ async function stopOrStart() {
     const was = stopUi.stopped; const wasReason = stopUi.reason; state.busy = true; setNotice('Checking…'); const fresh = await load(); state.busy = false;
     if (fresh !== true) { setNotice(CANNOT_LOAD); renderStop(); return; } // an outdated state is never armed on
     if (stopUi.stopped !== was || stopUi.reason !== wasReason) { setNotice(stopUi.stopped ? refusalText('stop-changed') : 'Posting is no longer stopped. Check and tap again.'); renderStop(); return; }
-    setNotice(''); stopUi.armed = true; renderStop(); stopUi.timer = setTimeout(() => { stopUi.armed = false; renderStop(); }, 5000); return;
+    setNotice(''); stopUi.armed = true; renderStop(); stopUi.timer = setTimeout(() => { if (stopUi.armed) { stopUi.armed = false; if ($('notice').textContent === '') setNotice(ARM_EXPIRED_TEXT); renderStop(); } }, 5000); return;
   }
   if (stopUi.timer) { clearTimeout(stopUi.timer); stopUi.timer = null; }
   stopUi.armed = false; const action = stopUi.stopped ? 'start' : 'stop';

@@ -150,3 +150,37 @@ test('DOM: a first tap on Stop while the status cannot be loaded arms nothing (t
   p.$('stop-all').click(); await p.flush();
   assert.equal(p.posts('api/posting').length, 0, 'no POST after two taps while the status fails'); assert.equal(p.$('stop-all').textContent, 'Stop all posting');
 });
+
+const ARM_EXPIRED = 'The second tap came too late. Tap the button again if you still want to.';
+const fireArmTimer = (p) => { const t = p.timers.filter((x) => x.ms === 5000); assert.equal(t.length, 1, 'exactly one 5 second timer'); t[0].fn(); };
+
+test('DOM: the arming of Stop runs out with a plain sentence', async () => {
+  const p = await openPage(serverOf());
+  p.$('stop-all').click(); await p.flush(); assert.equal(p.$('stop-all').textContent, 'Tap again to stop all posting');
+  fireArmTimer(p);
+  assert.equal(p.$('notice').textContent, ARM_EXPIRED); assert.equal(p.$('stop-all').textContent, 'Stop all posting'); assert.equal(p.posts('api/posting').length, 0);
+});
+
+test('DOM: the same for Start', async () => {
+  const s = serverOf(); s.status = status({ stopped: true, reason: 'stopped by flag since T1' }); const p = await openPage(s);
+  p.$('stop-all').click(); await p.flush(); assert.equal(p.$('stop-all').textContent, 'Tap again to allow posting');
+  fireArmTimer(p);
+  assert.equal(p.$('notice').textContent, ARM_EXPIRED); assert.equal(p.$('stop-all').textContent, 'Allow posting again'); assert.equal(p.posts('api/posting').length, 0);
+});
+
+test('DOM: a second tap in time sends the post and the timer does nothing later', async () => {
+  const p = await openPage(serverOf());
+  p.$('stop-all').click(); await p.flush(); p.$('stop-all').click(); await p.flush();
+  assert.equal(p.posts('api/posting').length, 1); const after = p.$('notice').textContent;
+  fireArmTimer(p);
+  assert.notEqual(p.$('notice').textContent, ARM_EXPIRED); assert.equal(p.$('notice').textContent, after);
+});
+
+test('DOM: the expiry sentence does not overwrite another notice', async () => {
+  const p = await openPage(serverOf({ decide: () => ({ ok: false, code: 'version-changed' }) }));
+  p.$('stop-all').click(); await p.flush();
+  p.$('act-approve').click(); await p.flush();
+  const other = p.$('notice').textContent; assert.notEqual(other, ''); assert.notEqual(other, ARM_EXPIRED);
+  fireArmTimer(p);
+  assert.equal(p.$('notice').textContent, other);
+});
