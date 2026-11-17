@@ -143,3 +143,12 @@ test('edit numbers: the WhatsApp line names the distinct numbers', async () => {
 test('edit numbers: a full-width digit counts as a number that is not in the claims', async () => {
   const r = await checkEdit(withClaims(LION), 'Lions sleep up to ２０ hours a day.', { neverPromotePatterns: NP }); assert.equal(r.ok, false); assert.equal(r.code, 'number-not-in-facts');
 });
+
+// ── fix round R11: a figure written with digits other than 0 to 9 is named in words, never as NaN ───────────────────────
+test('R11 edit numbers: a full-width digit is named in words in the WhatsApp line; the code is the same; plain numbers are unchanged', async () => {
+  const d = pend({ claims: [{ text: 'Lions sleep up to 20 hours a day.', sourceDate: '2026-11-01' }] });
+  const r = await checkEdit(d, 'Lions sleep １２ hours, and 7 minutes.', { neverPromotePatterns: NP });
+  assert.equal(r.code, 'number-not-in-facts'); assert.ok(!r.line.includes('NaN'), r.line);
+  assert.equal(r.line, '❌ B1: number-not-in-facts — 7, a number written with digits other than 0 to 9');
+  const two = await checkEdit(d, 'Lions sleep １２ hours and ９ minutes.', { neverPromotePatterns: NP }); assert.equal(two.line, '❌ B1: number-not-in-facts — a number written with digits other than 0 to 9');
+});

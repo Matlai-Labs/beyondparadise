@@ -233,7 +233,7 @@ test('T13 keys never approve or skip a draft; e opens the edit box; a hook is un
 });
 test('T13 the edit box for a draft takes several lines, sends one edit and never an approve; a refused edit keeps the text', async () => {
   const p = await openPage(withDraft()); p.$('act-edit').click(); await p.flush();
-  assert.equal(p.$('edit-text').value, 'Lions sleep.\nThey are gentle.'); assert.equal(p.$('edit-text').rows, 10); assert.equal(p.$('edit-save').textContent, 'Save'); assert.equal(p.$('edit-count').textContent, '29 of 2000'); assert.equal(p.$('edit-box').children.length >= 0, true);
+  assert.equal(p.$('edit-text').value, 'Lions sleep.\nThey are gentle.'); assert.equal(p.$('edit-text').rows, 10); assert.equal(p.$('edit-save').textContent, 'Save'); assert.equal(p.$('edit-count').textContent, '29 of about 1,900'); // the request is limited in bytes: the real ceiling, not 2000 assert.equal(p.$('edit-box').children.length >= 0, true);
   p.$('edit-text').value = 'New text.\nSecond line.'; p.$('edit-save').click(); await p.flush();
   assert.deepEqual(p.posts('api/decide').map((c) => c.body), [{ kind: 'draft', id: 'B1', version: V('d'), action: 'edit', text: 'New text.\nSecond line.' }]); assert.equal(p.$('notice').textContent, 'Saved. It is not scheduled yet. Look at the card again before you approve.');
   const r = await openPage(withDraft({}, { decide: () => ({ ok: false, code: 'rules' }) })); r.$('act-edit').click(); await r.flush(); r.$('edit-text').value = 'Keep my words\nplease.'; r.$('edit-save').click(); await r.flush();

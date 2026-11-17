@@ -17,7 +17,9 @@ const done = (id, decision) => ({ ok: true, change: { kind: 'draft', id, decisio
 /** No default for the queue file, the record file or the never-promote key: a caller that forgets one gets check-failed and nothing is read or written. */
 export function createDraftActions(options = {}) {
   const hasKey = Object.hasOwn(options, 'neverPromotePatterns'); // a destructured parameter cannot tell an absent key from undefined
-  const { env = process.env, queuePath, recordFile, now = () => new Date(), lockTimeoutMs = 5000, save = saveQueue, neverPromotePatterns, ttlDays = CONFIG.draftTtlDays, scheduleTimeoutMs = 70000, schedule, igOn, stop, notify, approveOn, finalCheck } = options;
+  const { env = process.env, queuePath, recordFile, now = () => new Date(), lockTimeoutMs = 5000, save = saveQueue, neverPromotePatterns, ttlDays = CONFIG.draftTtlDays, scheduleTimeoutMs = 70000, schedule, igOn, stop, notify, approveOn,
+    finalCheck, // test seam: review-routes.js never passes it (review-step3-guards.test.js, guard f); the real final check is the default
+  } = options;
   const approveReady = [schedule, igOn, stop, notify, approveOn].every((f) => typeof f === 'function'); // an igOn that is missing would be called AFTER the Meta call and read as a failure while the post exists
   /** The injected schedule with a time limit above the 60 second limit of the Meta call: a hanging call must not hold the queue lock for ever. The timeout is an error, so scheduleDraft answers schedule-failed. */
   const scheduleBounded = async (text, at) => {
@@ -46,7 +48,7 @@ export function createDraftActions(options = {}) {
   };
   /** Save; a failed save voids the record line so the record never says more than the queue. */
   const saveOrVoid = async (q, ctx, n) => {
-    try { save(q, queuePath); return null; } catch { await recordLocked(ctx, { void: n }); log('draft decision: queue not saved'); return fail('write-failed'); }
+    try { save(q, queuePath); return null; } catch { const v = await recordLocked(ctx, { void: n }); log('draft decision: queue not saved'); if (!v) log('review failed: void-record-failed'); return fail('write-failed'); } // the record then says more than the queue: say so
   };
 
   async function skipDraft(req, ctx) {

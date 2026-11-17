@@ -757,7 +757,9 @@ function openEdit() {
   $('edit-error').textContent = ''; $('edit-box').classList.remove('hidden'); state.editing = true; state.editId = item.id; countEdit(); $('edit-text').focus();
 }
 function closeEdit() { $('edit-box').classList.add('hidden'); $('edit-error').textContent = ''; state.editing = false; }
-function countEdit() { const item = currentItem(); $('edit-count').textContent = $('edit-text').value.length + ' of ' + (item && item.kind === 'draft' ? EDIT_LIMITS.draft : EDIT_MAX); }
+// The request is limited in bytes (2048), so the real ceiling for a post is about 1,900 plain characters, not the 2000 of the character check.
+function countEdit() { const item = currentItem(); $('edit-count').textContent = $('edit-text').value.length + ' of ' + (item && item.kind === 'draft' ? 'about ' + draftCeilingText() : EDIT_MAX); }
+function draftCeilingText() { const room = BODY_MAX_BYTES - utf8Length(JSON.stringify({ kind: 'draft', id: 'B000000', version: new Array(65).join('a'), action: 'edit', text: '' })); const n = Math.floor(room / 100) * 100; return String(n).replace(/\B(?=(\d{3})+$)/g, ','); }
 // The confirm step for a real post. NO timer: nothing closes it but the owner, another card, or a changed card.
 // The box is bound to the card AND the day it showed: the key holds the id, the version and the day.
 function confirmKeyOf(item) { return item.id + '|' + item.version + '|' + String((item.facts && item.facts.nextSlot) || ''); }

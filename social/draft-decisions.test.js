@@ -268,3 +268,13 @@ test('R3 approve of a text over 5000 characters is refused with text-too-long: n
   assert.deepEqual(await k.approve(), { ok: false, code: 'text-too-long' }); nothingHappened(k, b);
   const ok = ak([draft('B1', { text: 'Lions sleep most of the day on the plains. '.repeat(100).slice(0, 5000) })]); assert.notEqual((await ok.approve()).code, 'text-too-long', 'exactly 5000 is not this refusal (other rules may still apply)');
 });
+
+// ── fix round R4: a void line that cannot be written is logged, in closed words ────────────────────────────────────────
+test('R4 a failed save and a failed void line: write-failed, and the log says void-record-failed (no id, no text)', async () => {
+  const k = kit([draft('B1')], { save: () => { throw new Error('disk full: Lions'); } }); const ctx = { ...k.ctx, voidRecord: () => { throw new Error('no space'); } };
+  const was = fs.existsSync(LOGF) ? fs.readFileSync(LOGF, 'utf8').length : 0;
+  assert.deepEqual(await k.actions.skipDraft(skipReq(k), ctx), { ok: false, code: 'write-failed' });
+  const lines = fs.readFileSync(LOGF, 'utf8').slice(was).split('\n').filter(Boolean).join('\n'); assert.match(lines, /review failed: void-record-failed/); assert.ok(!lines.includes('B1')); assert.ok(!lines.includes('Lions')); assert.ok(!lines.includes('no space'));
+  const quiet = kit([draft('B1')], { save: () => { throw new Error('disk full'); } }); const was2 = fs.readFileSync(LOGF, 'utf8').length;
+  await quiet.actions.skipDraft(skipReq(quiet), quiet.ctx); assert.ok(!fs.readFileSync(LOGF, 'utf8').slice(was2).includes('void-record-failed'), 'a void that worked logs nothing extra');
+});

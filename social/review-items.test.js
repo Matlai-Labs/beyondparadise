@@ -212,8 +212,8 @@ test('B4: a claim carries the lane\'s own source line when a source name exists'
 });
 test('D7: the hook checks run together, not one after the other', async () => {
   let running = 0; let peak = 0; const slow = async (i, { hook }) => { running += 1; peak = Math.max(peak, running); await new Promise((r) => setTimeout(r, 15)); running -= 1; return { ok: true, draft: { hook, caption: 'c' } }; };
-  const t0 = Date.now(); const r = await buildItems(base({ evaluate: slow })); assert.ok(r.items.length >= 4); assert.ok(peak >= 3, `peak ${peak}`);
-  assert.deepEqual(r.items.map((i) => i.id), ['idea_4', 'idea_9', 'idea_3', 'idea_2', 'idea_1'], 'the order is kept'); assert.ok(Date.now() - t0 < 70);
+  const r = await buildItems(base({ evaluate: slow })); assert.ok(r.items.length >= 4); assert.ok(peak >= 3, `peak ${peak}`);
+  assert.deepEqual(r.items.map((i) => i.id), ['idea_4', 'idea_9', 'idea_3', 'idea_2', 'idea_1'], 'the order is kept'); // no time bound: peak >= 3 already shows the checks overlap, and a bound fails on a busy machine
 });
 
 test('change 1: a video text with no example video says so with its own note, not the clip note', async () => {
