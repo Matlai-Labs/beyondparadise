@@ -11,26 +11,21 @@
 //   Frames and stamps come from a working cut that starts at 0 and is at most 180 s long, so they share the
 //   timeline of the original video; a video longer than 180 s is covered only up to 180 s.
 //
-// The model is Ollama on this machine only. Every call goes through guardCall(), which refuses any other
-// host, a present stop flag, and a call over the per-run or per-day cap (fail closed). There is no code path
+// The model is the local one only. Every call goes through askLocal (local-model.js), the one guarded caller: it refuses any other
+// host, a present stop flag, and a call over the per-run or per-day cap (fail closed). There is no request code and no code path
 // to a cloud model in this file.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writeFileAtomic, assertOutsideRepo } from './media-catalog.js';
+import { askLocal, defaultCounterFile } from './local-model.js';
 
 export const FRAME_INTERVAL_SEC = 2;
 export const MODEL = 'qwen2.5vl:3b';
 export const MIN_WINDOW_SEC = 6;
-export const OLLAMA_PORT = '11434';
 export const DEFAULT_MAX_CALLS = 400;
-export const DEFAULT_DAILY_CAP = 1500;
 export const DEFAULT_FRAMES_PER_WINDOW = 8;
-
-export class GuardError extends Error {
-  constructor(message) { super(message); this.name = 'GuardError'; this.guard = true; }
-}
 
 const finite = (x) => typeof x === 'number' && Number.isFinite(x);
 
@@ -155,85 +150,21 @@ export function judgeWindow(win, verdicts) {
   return { startSec: win.startSec, endSec: win.endSec, frames: v.length, verdict: reasons.length === 0 ? 'clear' : 'not-clear', reasons, label };
 }
 
-// ---------------------------------------------------------------- the guard and the local model
-
-/** Throws unless the URL is exactly http://127.0.0.1:11434 or http://localhost:11434. Returns the host. */
-export function assertLocalOllama(baseUrl) {
-  let u;
-  try { u = new URL(String(baseUrl)); } catch { throw new GuardError(`refusing model host: not a URL (${String(baseUrl).slice(0, 60)})`); }
-  const ok = u.protocol === 'http:' && (u.hostname === '127.0.0.1' || u.hostname === 'localhost')
-    && u.port === OLLAMA_PORT && !u.username && !u.password;
-  if (!ok) throw new GuardError(`refusing model host ${u.host}: only http://127.0.0.1:${OLLAMA_PORT} or http://localhost:${OLLAMA_PORT} is allowed`);
-  return u.hostname;
-}
-
-/** Day key in East Africa Time (UTC+3). */
-export const eatDayKey = (d) => new Date(d.getTime() + 3 * 3600_000).toISOString().slice(0, 10);
+// ---------------------------------------------------------------- the local model
 
 const posInt = (x) => Number.isInteger(x) && x > 0;
+const homeOf = (env) => env.HOME || os.homedir();
 
 /**
- * The one guard in front of every model call. Order: host, stop flag, per-run cap, per-day cap (counter file,
- * written atomically before the call). Anything unverifiable throws a GuardError.
+ * The `ask(imagePath, prompt) -> string` the frame checks use. It only reads the image and calls askLocal (local-model.js),
+ * the one guarded caller: host check, stop flags, per-run and per-day caps with the shared counter file. No request code lives here.
+ * `askDeps` is passed straight to askLocal (baseUrl, fetchImpl, run, maxCalls, dailyCap, counterFile, stopOpts, now).
  */
-export function guardCall(cfg) {
-  const host = assertLocalOllama(cfg.baseUrl);
-  if (cfg.stopFlag && fs.existsSync(cfg.stopFlag)) throw new GuardError(`stop flag present (${path.basename(cfg.stopFlag)}): no model calls`);
-  if (!posInt(cfg.maxCalls) || !posInt(cfg.dailyCap)) throw new GuardError('refusing: call caps must be positive integers');
-  if (!cfg.run || !Number.isInteger(cfg.run.calls)) throw new GuardError('refusing: no per-run counter');
-  if (cfg.run.calls >= cfg.maxCalls) throw new GuardError(`per-run cap of ${cfg.maxCalls} calls reached`);
-  const day = eatDayKey((cfg.now || (() => new Date()))());
-  let count = 0;
-  let raw = null;
-  try { raw = fs.readFileSync(cfg.counterFile, 'utf8'); } catch (e) {
-    if (!e || e.code !== 'ENOENT') throw new GuardError(`daily counter unreadable (${e && e.code}): refusing`);
-  }
-  if (raw !== null) {
-    let o;
-    try { o = JSON.parse(raw); } catch { throw new GuardError('daily counter unreadable (not JSON): refusing'); }
-    if (!o || typeof o !== 'object' || typeof o.day !== 'string' || !Number.isInteger(o.count) || o.count < 0) {
-      throw new GuardError('daily counter unreadable (bad shape): refusing');
-    }
-    count = o.day === day ? o.count : 0;
-  }
-  if (count >= cfg.dailyCap) throw new GuardError(`per-day cap of ${cfg.dailyCap} calls reached for ${day}`);
-  try {
-    fs.mkdirSync(path.dirname(cfg.counterFile), { recursive: true, mode: 0o700 });
-    writeFileAtomic(cfg.counterFile, `${JSON.stringify({ day, count: count + 1 })}\n`);
-  } catch (e) { throw new GuardError(`daily counter not writable (${e && e.code}): refusing`); }
-  cfg.run.calls += 1;
-  return host;
-}
-
-const homeOf = (env) => env.HOME || os.homedir();
-const defaultCounter = (env) => env.BPA_SEGMENTS_COUNTER || path.join(homeOf(env), '.matlai', 'bpa-segments-calls.json');
-const defaultStop = (env) => env.BPA_STOP_FLAG || path.join(homeOf(env), '.matlai', 'bpa-social-stop');
-
-/** The real `ask(imagePath, prompt) -> string`. Guard first, then one POST to the local Ollama. */
-export function makeOllamaAsk({
-  baseUrl = `http://127.0.0.1:${OLLAMA_PORT}`, model = MODEL, fetchImpl = globalThis.fetch, timeoutMs = 60_000,
-  run = { calls: 0 }, maxCalls = DEFAULT_MAX_CALLS, dailyCap = DEFAULT_DAILY_CAP,
-  counterFile = defaultCounter(process.env), stopFlag = defaultStop(process.env), now,
-} = {}) {
-  const cfg = { baseUrl, run, maxCalls, dailyCap, counterFile, stopFlag, now };
+export function makeLocalAsk({ model = MODEL, timeoutMs = 60_000, askDeps = {} } = {}) {
+  const run = askDeps.run || { calls: 0 };
   const ask = async (imagePath, prompt) => {
-    const host = guardCall(cfg);
     const image = fs.readFileSync(imagePath).toString('base64');
-    const r = await fetchImpl(`http://${host}:${OLLAMA_PORT}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      redirect: 'error',
-      signal: AbortSignal.timeout(timeoutMs),
-      body: JSON.stringify({
-        model, stream: false, format: 'json', keep_alive: '2m', options: { temperature: 0 },
-        messages: [{ role: 'user', content: prompt, images: [image] }],
-      }),
-    });
-    if (!r.ok) throw new Error(`ollama HTTP ${r.status}`);
-    const j = await r.json();
-    const content = j && j.message && j.message.content;
-    if (typeof content !== 'string') throw new Error('ollama reply has no message content');
-    return content;
+    return askLocal({ model, prompt, images: [image], format: 'json', temperature: 0, timeoutMs }, { ...askDeps, run });
   };
   ask.run = run;
   return ask;
@@ -396,10 +327,10 @@ export async function main(argv, env = process.env, deps = {}) {
   if (args.summary) { log(summarise(catalog)); return 0; }
 
   const run = { calls: 0 };
-  const ask = makeOllamaAsk({
-    baseUrl: deps.ollamaUrl || `http://127.0.0.1:${OLLAMA_PORT}`, fetchImpl: deps.fetchImpl || globalThis.fetch, run, maxCalls: args.maxCalls,
-    counterFile: defaultCounter(env), stopFlag: defaultStop(env), now: deps.now,
-  });
+  const ask = makeLocalAsk({ askDeps: {
+    ...(deps.ollamaUrl ? { baseUrl: deps.ollamaUrl } : {}), ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}), run, maxCalls: args.maxCalls,
+    counterFile: defaultCounterFile(env), stopOpts: { env }, ...(deps.now ? { now: deps.now } : {}),
+  } });
   const candidates = asEntries(catalog).filter((e) => e && e.flags && e.flags.region === args.region && e.flags.otherPublisherMark !== true && !e.missing
     && (!args.only || e.id === args.only));
 

@@ -1,6 +1,6 @@
 // The one guarded caller for the local model (Ollama on this machine). Node built-ins only.
 //
-//   askLocal({ model, prompt, system, format, images, timeoutMs, keepAlive, numPredict }, deps) -> the answer text
+//   askLocal({ model, prompt, system, format, images, timeoutMs, keepAlive, numPredict, temperature }, deps) -> the answer text
 //
 // Free and local only. There is no code path to another host: the base URL must be exactly http://127.0.0.1:11434 or
 // http://localhost:11434 (assertLocalOllama), and the request URL is built from the host that check returns.
@@ -24,6 +24,7 @@ export const DEFAULT_DAILY_CAP = 1500;
 export const DEFAULT_TIMEOUT_MS = 120_000;
 export const DEFAULT_KEEP_ALIVE = '2m';
 export const DEFAULT_NUM_PREDICT = 4096;
+export const DEFAULT_TEMPERATURE = 0.3;
 
 export class GuardError extends Error { constructor(message) { super(message); this.name = 'GuardError'; this.guard = true; } }
 export class EmptyAnswerError extends Error { constructor(message) { super(message); this.name = 'EmptyAnswerError'; } }
@@ -82,8 +83,9 @@ export function guardCall(deps = {}) {
 }
 
 /** One local model call. deps (all optional, injected by tests): baseUrl, fetchImpl, run, maxCalls, dailyCap, counterFile, stopOpts, now. */
-export async function askLocal({ model, prompt, system, format, images, timeoutMs = DEFAULT_TIMEOUT_MS, keepAlive = DEFAULT_KEEP_ALIVE, numPredict = DEFAULT_NUM_PREDICT } = {}, deps = {}) {
+export async function askLocal({ model, prompt, system, format, images, timeoutMs = DEFAULT_TIMEOUT_MS, keepAlive = DEFAULT_KEEP_ALIVE, numPredict = DEFAULT_NUM_PREDICT, temperature = DEFAULT_TEMPERATURE } = {}, deps = {}) {
   if (typeof model !== 'string' || !model.trim()) throw new GuardError('refusing: no model named');
+  if (typeof temperature !== 'number' || !Number.isFinite(temperature) || temperature < 0 || temperature > 2) throw new GuardError('refusing: temperature must be a number from 0 to 2');
   const { fetchImpl = globalThis.fetch } = deps;
   const host = guardCall(deps);
   const messages = [];
@@ -91,7 +93,7 @@ export async function askLocal({ model, prompt, system, format, images, timeoutM
   messages.push({ role: 'user', content: String(prompt ?? ''), ...(Array.isArray(images) && images.length ? { images } : {}) });
   const r = await fetchImpl(`http://${host}:${OLLAMA_PORT}/api/chat`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
-    body: JSON.stringify({ model, stream: false, keep_alive: keepAlive, options: { temperature: 0.3, num_predict: numPredict }, messages, ...(format ? { format } : {}) }),
+    body: JSON.stringify({ model, stream: false, keep_alive: keepAlive, options: { temperature, num_predict: numPredict }, messages, ...(format ? { format } : {}) }),
   });
   if (!r.ok) throw new Error(`ollama HTTP ${r.status}`);
   const j = await r.json();

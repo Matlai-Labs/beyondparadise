@@ -133,3 +133,9 @@ test('three processes run at the same time on one counter file: the cap holds ex
   assert.equal(runs.reduce((n, r) => n + Number(r.out.trim()), 0), 20);
   assert.deepEqual(JSON.parse(fs.readFileSync(file, 'utf8')), { day: '2026-11-17', count: 20 });
 });
+
+test('temperature: 0.3 unless the caller names one; 0 is honoured (the judge and the image check ask for 0); a non-number is refused', async () => {
+  const a = fixture(); await askLocal({ model: 'm', prompt: 'P' }, a.deps); assert.equal(JSON.parse(a.calls[0].init.body).options.temperature, 0.3);
+  const b = fixture(); await askLocal({ model: 'm', prompt: 'P', temperature: 0 }, b.deps); assert.equal(JSON.parse(b.calls[0].init.body).options.temperature, 0);
+  const c = fixture(); await assert.rejects(askLocal({ model: 'm', prompt: 'P', temperature: 'hot' }, c.deps), (e) => e.guard === true); assert.equal(c.calls.length, 0);
+});
