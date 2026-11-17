@@ -8,7 +8,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './stop.js';
-import { loadAccess, checkAccess, setCookieHeader } from './review-auth.js';
+import { loadAccess, checkAccess, setCookieHeader, isPageLoad } from './review-auth.js';
 import { buildItems, fileInfoOf } from './review-items.js';
 import { readStatus } from './review-status.js';
 import { resolveMediaPath, serveMedia } from './review-media.js';
@@ -89,6 +89,7 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, log 
       // a request that already carries a valid cookie gets the page and no new cookie; a cookie-less one needs a new session, which is rate limited (429)
       const hasCookie = checkAccess(req, { access: loadAccess({ env }), sessions, needCookie: true }).ok;
       let cookieHeader = null;
+      if (!hasCookie && !isPageLoad(req)) { log('review refused: not-a-page-load page'); refuse(res, { code: 403 }); return; } // nothing is issued to an image tag or no-cors fetch from another site
       if (!hasCookie) { const tok = sessions.issue(); if (!tok) { log('review refused: rate-limited page'); return sessions.tooSoon() ? waitPage(res) : refuse(res, { code: 429 }); } cookieHeader = setCookieHeader(tok); }
       const nonce = crypto.randomBytes(16).toString('hex');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': CSP(nonce), 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY', 'Cache-Control': 'no-store', ...(cookieHeader ? { 'Set-Cookie': cookieHeader } : {}) });

@@ -1,6 +1,6 @@
 import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict'; import fs from 'node:fs';
-import { loadAccess, createSessions, setCookieHeader, checkAccess, checkHealthAccess, loopbackHost, hasProxyHeaders, COOKIE_NAME } from './review-auth.js';
+import { loadAccess, createSessions, setCookieHeader, checkAccess, checkHealthAccess, loopbackHost, hasProxyHeaders, isPageLoad, PAGE_HEADER, COOKIE_NAME } from './review-auth.js';
 import { writeAccess, fakeReq, goodHeaders, OWNER, HOST } from './review-test-kit.js';
 const A = { ok: true, ownerLogin: OWNER, host: HOST };
 test('loadAccess accepts the file with trailing newlines', () => { writeAccess({ raw: JSON.stringify({ ownerLogin: OWNER, host: HOST }) + '\n\n' }); assert.deepEqual(loadAccess(), A); });
@@ -57,4 +57,12 @@ test('loopbackHost is exact', () => { assert.equal(loopbackHost('127.0.0.1:3028'
 
 test('change 4: tooSoon is true only inside the 2 s gap after a new session', () => {
   let t = 1e6; const s = createSessions({ now: () => t }); assert.equal(s.tooSoon(), false); assert.ok(s.issue()); assert.equal(s.tooSoon(), true); assert.equal(s.issue(), null); t += 2000; assert.equal(s.tooSoon(), false);
+});
+
+test('isPageLoad: only a document navigation or the page header counts', () => {
+  const r = (h) => isPageLoad({ headers: h }); assert.equal(PAGE_HEADER, 'x-bpa-page');
+  for (const h of [{ 'sec-fetch-dest': 'document', 'sec-fetch-mode': 'navigate' }, { 'sec-fetch-dest': ' Document ', 'sec-fetch-mode': 'NAVIGATE' }, { 'x-bpa-page': '1' }, { 'x-bpa-page': '1', 'sec-fetch-dest': 'image' }]) assert.equal(r(h), true, JSON.stringify(h));
+  for (const h of [{ 'sec-fetch-dest': 'document', 'sec-fetch-mode': 'no-cors' }, { 'sec-fetch-dest': 'image', 'sec-fetch-mode': 'no-cors' }, { 'sec-fetch-dest': 'empty', 'sec-fetch-mode': 'cors' }, { 'sec-fetch-dest': 'iframe', 'sec-fetch-mode': 'navigate' }, { 'sec-fetch-dest': 'document' }, { 'sec-fetch-mode': 'navigate' }, {},
+    { 'x-bpa-page': '0' }, { 'x-bpa-page': 'true' }, { 'x-bpa-page': '11' }, { 'x-bpa-page': '' }, { 'x-bpa-page': ['1'] }, { 'x-bpa-page': ['1', '1'] }, { 'sec-fetch-dest': ['document'], 'sec-fetch-mode': 'navigate' }, { 'sec-fetch-dest': 'document', 'sec-fetch-mode': ['navigate'] }]) assert.equal(r(h), false, JSON.stringify(h));
+  assert.equal(isPageLoad(undefined), false); assert.equal(isPageLoad({}), false); assert.equal(isPageLoad(null), false);
 });
