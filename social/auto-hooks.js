@@ -5,7 +5,7 @@
 //   <state folder>/bpa-auto-hooks.json   { "hooks": [ { ideaId, sourceId, hook, claimsSha256, approvedBy, approvedAt, skipped? } ] }   the LANE file: private, mode 600, never committed
 //     (proposals and approvals do not belong in a public repository, and a tap on a phone must not leave uncommitted changes in the live checkout)
 //   auto-hooks.json   the committed file stays as the EMPTY default; it is no longer read by the lane. A fresh install runs `node auto-hooks.js --migrate auto-hooks.json` once.
-//     `skipped` is absent, null or { by, at }: "not this wording" (kept and validated here; the review page shows it from step 2 on)
+//     `skipped` is absent, null or { by, at }: "not this wording" (state `skipped`: never taken by the lane; the review page shows and sets it)
 //     an entry is bound to ONE idea: it matches on ideaId only (sourceId is kept for the reader), and `claimsSha256` is the hash of the idea's TITLE and its claim texts in order
 //   node auto-hooks.js --add <ideaId> "<hook>"       looks the idea up in the real pool (read only), checks the hook like the on-video text, writes it UNAPPROVED
 //   node auto-hooks.js --approve <ideaId> --by <text>   sets approvedBy and approvedAt (refused when the claims changed since --add)
@@ -18,6 +18,10 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './stop.js';
+import { withDecisionLock } from './decision-lock.js';
+
+/** The approval label the review page stores in the hooks file (the claimed login lives only in the private decision record). */
+export const REVIEW_BY = 'review page';
 
 export const defaultHooksPath = (env = process.env) => path.join(stateDir(env), 'bpa-auto-hooks.json');
 const SHA = /^[0-9a-f]{64}$/;
@@ -51,9 +55,10 @@ export function readHooks(file = defaultHooksPath()) {
   return { ok: true, hooks: j.hooks };
 }
 
-/** 'approved' | 'unapproved' | 'stale' (the claims differ from the ones the entry was made against, or the idea is gone). */
+/** 'approved' | 'unapproved' | 'stale' (the claims differ from the ones the entry was made against, or the idea is gone) | 'skipped' (the owner said "not this wording"; stale beats skipped). */
 export function hookState(entry, idea) {
   if (!idea || entry.claimsSha256 !== claimsSha256(idea)) return 'stale';
+  if (entry.skipped && typeof entry.skipped === 'object') return 'skipped';
   return text(entry.approvedBy) && typeof entry.approvedAt === 'string' ? 'approved' : 'unapproved';
 }
 
@@ -62,6 +67,12 @@ export function hookState(entry, idea) {
 export function approvedHookFor(idea, hooks, { includeUnapproved = false } = {}) {
   const ok = (e) => { const st = hookState(e, idea); return st === 'approved' || (includeUnapproved && st === 'unapproved'); };
   return (Array.isArray(hooks) ? hooks : []).find((e) => e.ideaId === idea.id && ok(e)) || null;
+}
+
+/** The entry shown for an idea: the one the lane would take (approvedHookFor), else the LAST entry of that idea in file order. null when the idea has none. `others` counts the rest. */
+export function shownEntry(hooks, idea) {
+  const group = (Array.isArray(hooks) ? hooks : []).filter((e) => idea && e.ideaId === idea.id); if (!group.length) return null;
+  return { entry: approvedHookFor(idea, group) || group[group.length - 1], others: group.length - 1 };
 }
 
 let tmpCounter = 0;
@@ -79,11 +90,12 @@ async function migrate(sourceFile, file, { deps, log, error, nowOf }) {
   const src = readHooks(sourceFile); if (!src.ok) { error(`refused: ${src.reason}`); return 3; }
   const loadPool = deps.loadPool || (async () => (await import('./idea-drafts.js')).loadIdeaPool({ now: nowOf() }));
   const pool = await loadPool(); if (!pool || !pool.ok) { error(`no pool: ${pool && pool.reason}`); return 3; }
+  const ideas = new Map((pool.ideas || []).map((i) => [i.id, i]));
+  const evaluate = deps.evaluate || (async (i, hook) => (await import('./auto-lane.js')).evaluateIdea(i, { now: nowOf(), hook, sourceNames: pool.sourceNames }));
+  return withDecisionLock(async () => { // the target is read INSIDE the lock, so a page write and this write never lose each other
   let target = { ok: true, hooks: [] };
   let exists = true; try { fs.lstatSync(file); } catch (e) { if (e.code === 'ENOENT') exists = false; }
   if (exists) { target = readHooks(file); if (!target.ok) { error(`refused: ${target.reason}`); return 3; } }
-  const ideas = new Map((pool.ideas || []).map((i) => [i.id, i]));
-  const evaluate = deps.evaluate || (async (i, hook) => (await import('./auto-lane.js')).evaluateIdea(i, { now: nowOf(), hook, sourceNames: pool.sourceNames }));
   const out = [...target.hooks]; const lines = [];
   for (const e of src.hooks) {
     if (out.some((x) => x.ideaId === e.ideaId)) { lines.push(`skipped ${e.ideaId}: already in the private file`); continue; }
@@ -92,6 +104,7 @@ async function migrate(sourceFile, file, { deps, log, error, nowOf }) {
     out.push(e); lines.push(line);
   }
   writeHooksAtomic(file, { hooks: out }); for (const l of lines) log(l); return 0;
+  });
 }
 
 export async function main(argv, deps = {}) {
@@ -119,18 +132,25 @@ export async function main(argv, deps = {}) {
     return 0;
   }
   if (a.approve !== null) {
-    const e = cur.hooks.find((x) => x.ideaId === a.approve); if (!e) { error(`unknown entry ${a.approve}`); return 4; }
-    const st = hookState(e, ideas.get(e.ideaId)); if (st === 'stale') { error(`refused: the claims of ${e.ideaId} changed since the hook was added (stale): add it again`); return 4; }
-    writeAtomic(file, { hooks: cur.hooks.map((x) => (x === e ? { ...x, approvedBy: a.by.trim(), approvedAt: nowOf().toISOString() } : x)) });
-    log(`approved: ${e.ideaId} by ${a.by.trim()}`); return 0;
+    return withDecisionLock(async () => { // re-read inside the lock and change that fresh read
+      const fresh = readHooks(file); if (!fresh.ok) { error(`refused: ${fresh.reason}`); return 3; }
+      const e = fresh.hooks.find((x) => x.ideaId === a.approve); if (!e) { error(`unknown entry ${a.approve}`); return 4; }
+      const st = hookState(e, ideas.get(e.ideaId)); if (st === 'stale') { error(`refused: the claims of ${e.ideaId} changed since the hook was added (stale): add it again`); return 4; }
+      if (st === 'skipped') { error('refused: skipped on the review page; undo it there first'); return 4; }
+      writeAtomic(file, { hooks: fresh.hooks.map((x) => (x === e ? { ...x, approvedBy: a.by.trim(), approvedAt: nowOf().toISOString() } : x)) });
+      log(`approved: ${e.ideaId} by ${a.by.trim()}`); return 0;
+    });
   }
   const idea = ideas.get(a.add); if (!idea) { error(`unknown idea ${a.add} (not in the real pool)`); return 4; }
   // the same checks the lane applies: length, figures only from the claims, the voice + rules final check, the deterministic judge checks (no clip needed here)
   const evaluate = deps.evaluate || (async (i, hook) => (await import('./auto-lane.js')).evaluateIdea(i, { now: nowOf(), hook, sourceNames: pool.sourceNames }));
   const r = await evaluate(idea, a.hook); if (!r.ok) { error(`refused: ${r.reason}`); return 4; }
   const entry = { ideaId: idea.id, sourceId: idea.sourceId ?? null, hook: r.draft.hook, claimsSha256: claimsSha256(idea), approvedBy: null, approvedAt: null };
-  writeAtomic(file, { hooks: [...cur.hooks.filter((x) => x.ideaId !== idea.id), entry] });
-  log(`added (UNAPPROVED): ${idea.id}  ${entry.hook}`); return 0;
+  return withDecisionLock(async () => { // the evaluation above runs outside the lock; the read-modify-write below is inside it
+    const fresh = readHooks(file); if (!fresh.ok) { error(`refused: ${fresh.reason}`); return 3; }
+    writeAtomic(file, { hooks: [...fresh.hooks.filter((x) => x.ideaId !== idea.id), entry] });
+    log(`added (UNAPPROVED): ${idea.id}  ${entry.hook}`); return 0;
+  });
 }
 
 const isMain = process.argv[1] && (() => { try { return fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url)); } catch { return false; } })();

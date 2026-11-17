@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { hookState, approvedHookFor } from './auto-hooks.js';
+import { hookState, approvedHookFor, shownEntry } from './auto-hooks.js';
 import { eligibleClips } from './clip-library.js';
 
 export const NOTE_PENDING = 'video is being prepared';
@@ -142,13 +142,12 @@ export async function buildItems({ readHooks, loadPool, readManifest, libraryDir
   };
   if (hooks && pool) {
     const ideas = new Map(pool.ideas.map((i) => [i.id, i]));
-    // one item per idea: the entry the lane would take (approvedHookFor), else the newest entry; the others are only counted
-    const byIdea = new Map(); for (const e of hooks) { if (!byIdea.has(e.ideaId)) byIdea.set(e.ideaId, []); byIdea.get(e.ideaId).push(e); }
-    const chosen = [];
+    // one item per idea: shownEntry (the entry the lane would take, else the newest entry); the others are only counted
+    const chosen = []; const seen = new Set();
     for (const e of [...hooks].reverse()) {
-      const group = byIdea.get(e.ideaId); if (group.done) continue; group.done = true;
-      const idea = ideas.get(e.ideaId); const taken = idea ? approvedHookFor(idea, group) : null;
-      chosen.push({ entry: taken || group[group.length - 1], others: group.length - 1 });
+      if (seen.has(e.ideaId)) continue; seen.add(e.ideaId);
+      const idea = ideas.get(e.ideaId); const group = hooks.filter((x) => x.ideaId === e.ideaId);
+      chosen.push(idea ? shownEntry(hooks, idea) : { entry: group[group.length - 1], others: group.length - 1 });
     }
     hookItems.push(...await Promise.all(chosen.map(async ({ entry: e, others }) => {
       const idea = ideas.get(e.ideaId); const hs = hookState(e, idea);
