@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { splitSentences } from './sentence-split.js';
 import { fileURLToPath } from 'node:url';
 import { CONFIG, brandGuard, sourceGate, voiceGate, rulesCheck } from './lib.js';
 
@@ -13,24 +14,12 @@ export const MAX_CAROUSEL_IMAGES = 10;
 export const MIN_SLIDES = 3; export const MAX_SLIDES = 7;
 const HOOK_WORDS = 8; const FACT_MAX_WORDS = 34;
 const words = (s) => s.split(/\s+/).filter(Boolean);
-const sentences = (s) => s.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
+const sentences = splitSentences;
 const labelled = (lines, label) => { const l = lines.find((x) => x.startsWith(label + ': ')); return l ? l.slice(label.length + 2).trim() : null; };
 
 const HOOK_WHOLE_WORDS = 16; // a "What changed" statement this short is the hook as written, on one slide
 const key = (t) => t.toLowerCase().replace(/\s+/g, ' ').replace(/[\s,;:–—]+$/, '').replace(/\.$/, '').replace(/[\s,;:–—]+$/, '');
-const ABBR = /^(dr|mr|mrs|ms|prof|st|mt|no|vs|approx|est|e\.g|i\.e|etc|a\.m|p\.m)\.$/i;
-/** Sentence split for signal sections: like sentences(), but a full stop after an abbreviation, an initial or a number like 2.5,
- *  or before a lowercase letter or digit, is not a border (a slide must never end on "Dr."). */
-const signalSentences = (s) => {
-  const out = [];
-  for (const piece of sentences(s)) {
-    const prev = out.at(-1);
-    const tok = prev ? prev.split(/\s+/).at(-1) : '';
-    const joins = prev && /[.]$/.test(prev) && (ABBR.test(tok) || /^[A-Z]\.$/.test(tok) || /^\d+\.\d+\.$/.test(tok) || /^[a-z0-9]/.test(piece));
-    if (joins) out[out.length - 1] = `${prev} ${piece}`; else out.push(piece);
-  }
-  return out;
-};
+const signalSentences = sentences; // one shared splitter (sentence-split.js): a slide never ends on "Dr." or on "No." before a number or code; "No." before a plain capitalised word is read as a real sentence end
 const TOO_LONG = 'a sentence is too long for a slide; the draft goes out as a short video instead';
 const NO_FIT = 'the section text does not fit on 5 slides; the draft goes out as a short video instead';
 /** Split one section's sentences into slide texts, never leaving a sentence out: the whole section if <= FACT_MAX_WORDS,

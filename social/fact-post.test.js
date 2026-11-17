@@ -2,7 +2,7 @@ import './test-env.js';
 // A: the verbatim draft. No model: hook = the idea's title cut cleanly, body = the claim sentences byte for byte, then the lines code adds.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { verbatimDraft, hookFrom, HOOK_MAX, CLAIM_MAX, CLAIMS_MAX, ALT_PREFIX } from './fact-post.js';
+import { verbatimDraft, hookFrom, HOOK_MAX, CLAIM_MAX, CLAIMS_MAX, ALT_PREFIX, LIBRARY_FOOTAGE_LINE } from './fact-post.js';
 import { sourceLine, hashtagsFor, FIXED_LINES, assembleParts } from './caption.js';
 
 const NOW = new Date('2026-11-17T09:00:00Z');
@@ -22,14 +22,14 @@ test('the text contains every claim sentence byte for byte and carries claims, i
 test('nothing else but hook, claims and the lines code adds: the text is rebuilt from those parts', () => {
   for (const link of ['/wildlife/migration/', null, 'https://example.invalid/x']) {
     const i = idea({ link }); const r = verbatimDraft(i, { now: NOW }); assert.equal(r.ok, true);
-    const codeLines = [sourceLine(i.claims)]; if (typeof link === 'string' && link.startsWith('/')) codeLines.push(FIXED_LINES.pointer);
+    const codeLines = [sourceLine(i.claims), LIBRARY_FOOTAGE_LINE]; if (typeof link === 'string' && link.startsWith('/')) codeLines.push(FIXED_LINES.pointer);
     const rebuilt = [r.draft.hook, '', ...i.claims.map((c) => c.text), ...codeLines, '', hashtagsFor(i).join(' ')].join('\n');
     assert.equal(r.draft.text, rebuilt);
   }
 });
 test('the code-added lines are the very ones caption.js adds (same functions, not a copy)', () => {
   const i = idea(); const a = assembleParts(i, { hook: 'H', caption: 'One sentence.' }); const r = verbatimDraft(i, { now: NOW });
-  const mine = r.draft.text.split('\n'); const theirs = a.text.split('\n');
+  const mine = r.draft.text.split('\n').filter((l) => l !== LIBRARY_FOOTAGE_LINE); const theirs = a.text.split('\n');
   assert.deepEqual(mine.slice(-4), theirs.slice(-4)); // source, pointer, blank, tags
 });
 
@@ -78,4 +78,18 @@ test('alt text is built by code from the hook, the clip label is not used', () =
   const r = verbatimDraft(idea(), { now: NOW }); assert.equal(r.draft.altText, `${ALT_PREFIX}${r.draft.hook}`);
   assert.equal(ALT_PREFIX, 'Short video of East African landscape or wildlife with the text: ');
   assert.equal(r.draft.videoText, r.draft.hook); // the final check sees the on-video text too
+});
+
+test('hook: a title with markup (asterisks, emphasis underscores, backticks, a link) is refused title-has-markup, short or long', () => {
+  assert.deepEqual(hookFrom('The Long-billed Forest Warbler (*Artisornis moreaui*) has only been found in two places'), { ok: false, reason: 'title-has-markup' });
+  for (const t of ['Lions are **big** cats', 'The _Panthera leo_ is a cat', 'Run `npm test` now', 'See [the page](https://example.org) here', '*Italic* start']) assert.deepEqual(hookFrom(t), { ok: false, reason: 'title-has-markup' }, t);
+  for (const t of ['The snake_case word stays plain', 'Entry fee 50 US dollars']) assert.equal(hookFrom(t).ok, true, t);
+});
+test('hook: a cut never ends on has, have, had, will, can, that, which or who', () => {
+  assert.deepEqual(hookFrom('The Serengeti National Park in northern Tanzania has conservation status for lions'), { ok: true, hook: 'The Serengeti National Park in northern Tanzania' });
+  for (const w of ['have', 'had', 'will', 'can', 'that', 'which', 'who']) { const h = hookFrom(`The Serengeti National Park in northern Tanzania ${w} conservation status for lions`); assert.ok(h.ok && !new RegExp(`\\b${w}$`).test(h.hook), `${w}: ${h.hook}`); }
+});
+test('the draft carries LIBRARY_FOOTAGE_LINE directly after the source line, before the pointer and the hashtags', () => {
+  assert.equal(LIBRARY_FOOTAGE_LINE, 'Video: library footage.');
+  const lines = verbatimDraft(idea(), { now: NOW }).draft.text.split('\n'); const at = lines.indexOf(LIBRARY_FOOTAGE_LINE); assert.ok(at > 0); assert.match(lines[at - 1], /^Source: /); assert.equal(lines.at(-1).startsWith('#'), true); assert.equal(lines.at(-2), '');
 });

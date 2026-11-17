@@ -31,7 +31,7 @@ test('the one queue push of auto-lane.js follows a successful prepareAutoPost, w
   const ens = between(s, 'export async function ensureDailyAuto', '/** After a SUCCESSFUL publish only'); before(ens, 'await prepare(', 'if (!res.ok)'); before(ens, 'if (!res.ok)', 'drafts.push(');
   const ev = between(s, 'export async function evaluateIdea', 'export async function prepareAutoPost');
   assert.equal(count(ev, /await check\(draft/g), 1); before(ev, 'verbatim(idea', 'await check(draft'); before(ev, 'await check(draft', 'await judgeChecks('); assert.match(ev, /check = finalCheck/);
-  const prep = between(s, 'export async function prepareAutoPost', 'export const defaultStatePath'); assert.equal(count(prep, /await evaluateIdea\(/g), 1); before(prep, 'await evaluateIdea(', 'eligibleClips('); before(prep, 'eligibleClips(', 'await compose({');
+  const prep = between(s, 'export async function prepareAutoPost', 'export const defaultStatePath'); assert.equal(count(prep, /await evaluateIdea\(/g), 1); before(prep, 'eligibleClips(', 'pairingFor('); before(prep, 'pairingFor(', 'await evaluateIdea('); before(prep, 'await evaluateIdea(', 'await compose({'); // C2: the cheap pairing test comes BEFORE the text checks, the clip work after
 });
 test('auto-lane.js and fact-post.js never call a publisher, a scheduler, a hosting function or the model caller', () => {
   for (const f of ['auto-lane.js', 'fact-post.js', 'overlay.js']) { const s = read(f); assert.doesNotMatch(s, /\b(schedulePost|publishNow|igPostDraft\w*|igPublish\w*|publishIg|hostVideo|hostImage\w*|createPost|askLocal|localAsk)\b/, f); assert.doesNotMatch(s, /\bfetch\(/, f); }
