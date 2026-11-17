@@ -7,11 +7,15 @@ import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { scoreDraft, renderScore } from './score.js';
 import { modulePath, resourcePath, requireResource, graphCall } from './resources.js';
+import { assertNotStopped } from './stop.js';
+import { rulesGate, loadNeverPromote } from './rules-gate.js';
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(modulePath(import.meta.url));
 export const CONFIG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
 export const QUEUE_PATH = path.join(HERE, 'queue.json');
-export const LOG_PATH = path.join(os.homedir(), 'Library', 'Logs', 'beyondparadise', 'social.log');
+export const DEFAULT_LOG_PATH = path.join(os.homedir(), 'Library', 'Logs', 'beyondparadise', 'social.log');
+/** BPA_LOG_PATH redirects the log (tests set it via test-env.js so they never write the real log). */
+export const LOG_PATH = process.env.BPA_LOG_PATH || DEFAULT_LOG_PATH;
 const BRIDGE = process.env.WHATSAPP_BRIDGE_URL || 'http://127.0.0.1:3002';
 /** meta-pages is loaded lazily: it is outside this repo and only needed when actually publishing. */
 const metaPublish = () => require(requireResource('metaPublish'));
@@ -86,7 +90,7 @@ export async function claimIgPublish(id, now = new Date(), p = QUEUE_PATH) {
   }, { lockPath: p + '.lock' });
 }
 export function nextId(q) { q.seq = (q.seq || 0) + 1; return `B${q.seq}`; }
-export const STATUS = { PENDING: 'pending_approval', SCHEDULED: 'scheduled', POSTED: 'posted', SKIPPED: 'skipped', EXPIRED: 'expired', FAILED: 'failed' };
+export const STATUS = { PENDING: 'pending_approval', SCHEDULED: 'scheduled', POSTED: 'posted', SKIPPED: 'skipped', EXPIRED: 'expired', FAILED: 'failed', BLOCKED: 'blocked' };
 
 // ── BPI input ───────────────────────────────────────────────────────────────
 export function readBriefs(dir = CONFIG.bpiOutDir, lookbackDays = CONFIG.lookbackDays, now = new Date()) {
@@ -165,6 +169,47 @@ export async function voiceGate(text) {
   if (!res || typeof res !== 'object') return { ok: false, reason: 'voice-lint returned no result (fail closed)' };
   return { ok: !!res.ok, reason: res.ok ? null : JSON.stringify(res).slice(0, 300) };
 }
+/** The owner's content rules (rules-gate.js) on one text. The private never-promote list is loaded here unless injected; unreadable = refused (fail closed). */
+export function rulesCheck(text, { claims, neverPromotePatterns } = {}) {
+  let patterns = neverPromotePatterns; let listReason = null;
+  if (patterns === undefined) { const l = loadNeverPromote(); patterns = l.ok ? l.patterns : null; if (!l.ok) listReason = l.reason; }
+  const r = rulesGate(text, { neverPromotePatterns: patterns, claims: claims || [] });
+  const ruleIds = [...new Set(r.violations.map((v) => v.rule))];
+  return { ...r, ruleIds, reason: r.ok ? null : ruleIds.join(', '), listReason };
+}
+const asTexts = (v) => (Array.isArray(v) ? v : [v]).flatMap((x) => (typeof x === 'string' ? [x] : x && typeof x === 'object' ? [x.text, x.recap] : [])).filter((x) => typeof x === 'string' && x.trim());
+/** Every text that will go out for this item: caption, carousel slides (carried by the item, plus the plan when the format is a carousel), on-video text. */
+async function outgoingTexts(d) {
+  const parts = [d.text, ...asTexts(d.slides ?? []), ...asTexts(d.videoText ?? [])];
+  if (chooseFormat(d) === 'carousel' && typeof d.text === 'string') { const { slidePlan } = await import('./carousel.js'); const p = slidePlan(d); parts.push(...asTexts(p.slides ?? [])); }
+  return [...new Set(parts.filter((x) => typeof x === 'string'))];
+}
+/** FINAL CHECK, immediately before any publish or schedule: re-runs the voice gate AND the rules check on the exact outgoing text
+ *  (so a direct edit of queue.json after the earlier gates cannot get through). Never throws: a crash is a blocking result. */
+export async function finalCheck(d, { neverPromotePatterns, voice = voiceGate } = {}) {
+  const ids = new Set(); let listReason = null;
+  try {
+    if (!d || typeof d.text !== 'string' || !d.text.trim()) return { ok: false, ruleIds: ['no-text'], violations: [{ rule: 'no-text', match: '' }], listReason };
+    let patterns = neverPromotePatterns;
+    if (patterns === undefined) { const l = loadNeverPromote(); patterns = l.ok ? l.patterns : null; if (!l.ok) listReason = l.reason; }
+    const violations = [];
+    for (const t of await outgoingTexts(d)) {
+      const v = await voice(t); if (!v?.ok) { ids.add('voice-lint'); violations.push({ rule: 'voice-lint', match: '' }); }
+      const r = rulesGate(t, { neverPromotePatterns: patterns, claims: d.claims || [] });
+      for (const x of r.violations) { ids.add(x.rule); violations.push(x); }
+    }
+    return { ok: ids.size === 0, ruleIds: [...ids], violations, listReason };
+  } catch (e) { return { ok: false, ruleIds: ['check-error'], violations: [{ rule: 'check-error', match: '' }], listReason }; }
+}
+/** A failed final check: the item becomes `blocked` (never retried automatically), one log line, one alert with rule ids only (never the text). */
+export async function blockDraft(d, check, { stage, now = new Date(), notify = whatsapp, say = log } = {}) {
+  const rules = check.ruleIds.join(', ');
+  d.blockedFrom = d.status; d.status = STATUS.BLOCKED; d.blocked = { at: now.toISOString(), stage, rules: check.ruleIds };
+  if (d.ig && d.ig.status === 'queued') d.ig = { ...d.ig, status: 'blocked' };
+  say(`${d.id} BLOCKED before ${stage}: ${rules}${check.listReason ? ` (${check.listReason})` : ''}`);
+  const meta = d.postId ? ' A Facebook post for it is already scheduled at Meta and will still go out; cancel it in Meta if needed.' : '';
+  try { await notify(`🚫 ${CONFIG.page} social: ${d.id} blocked before ${stage}: ${rules}. Nothing was published or scheduled by this step.${meta} Fix the text or the list, then draft it again.`); } catch { /* the log line stands */ }
+}
 export function outlookSignature(fc) {
   if (!fc) return null;
   return (fc.forecasts || []).map((f) => `${f.region}:${f.direction || f.outlook}:${(f.drivers || []).map((x) => clean(x).toLowerCase()).join('|')}`).sort().join(';');
@@ -176,7 +221,7 @@ export function outlookIsFresh(fc, existingDrafts, now = new Date(), minDays = 1
   const last = prev.map((d) => new Date(d.createdAt || 0).getTime()).sort().pop() || 0;
   return now.getTime() - last >= minDays * 86400e3;
 }
-export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [], config = CONFIG }) {
+export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [], config = CONFIG, neverPromotePatterns }) {
   if (config.tourismStatsDrafts === false) return []; // switch: no drafts from the tourism statistics source (absent/true = on)
   const items = pickItems(briefs); const drafts = items.map(draftFromItem);
   if (drafts.length < CONFIG.maxDraftsPerWeek) { const lf = latestForecasts(briefs); const fc = draftFromForecast(lf); if (fc && outlookIsFresh(lf, existingDrafts, now)) drafts.push({ ...fc, signature: outlookSignature(lf) }); }
@@ -184,6 +229,7 @@ export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [
   for (const d of drafts) {
     const bad = brandGuard(d.text) || sourceGate(d); if (bad) { out.push({ ...d, rejected: bad }); continue; }
     const v = await voiceGate(d.text); if (!v.ok) { out.push({ ...d, rejected: 'voice-lint: ' + v.reason }); continue; }
+    const rc = rulesCheck(d.text, { claims: d.claims, neverPromotePatterns }); if (!rc.ok) { out.push({ ...d, rejected: 'rules: ' + rc.reason }); continue; }
     out.push({ ...d, createdAt: now.toISOString() });
   }
   // advisory score (never blocks, never changes status); fail-open
@@ -204,8 +250,8 @@ export function nextSlots(q, count, now = new Date(), tz = CONFIG.timezone) {
 }
 
 // ── publishing (meta-pages) + WhatsApp ─────────────────────────────────────
-export async function schedulePost(text, at) { const { createPost } = metaPublish(); return createPost(CONFIG.page, { message: text, at }); }
-export async function publishNow(text) { const { createPost } = metaPublish(); return createPost(CONFIG.page, { message: text }); }
+export async function schedulePost(text, at) { assertNotStopped(); const { createPost } = metaPublish(); return createPost(CONFIG.page, { message: text, at }); }
+export async function publishNow(text) { assertNotStopped(); const { createPost } = metaPublish(); return createPost(CONFIG.page, { message: text }); }
 export async function postStatus(postId) {
   const { findPage } = metaPublish(); const p = findPage(CONFIG.page);
   return graphCall(`${postId}?fields=id,is_published,permalink_url,scheduled_publish_time`, { token: p.token, throwOnError: false });
@@ -221,14 +267,15 @@ export function alertNumber({ env = process.env, file = env.WHATSAPP_ALERT_TO_FI
   } catch { return null; }
 }
 let warnedAlertFile = false;
-export async function whatsapp(text) {
-  const WA_TO = alertNumber();
+export async function whatsapp(text, { fetchImpl = fetch, number } = {}) { // fetchImpl / number are injectable so tests never open the real bridge
+  const WA_TO = number !== undefined ? number : alertNumber();
   if (!WA_TO) { log('whatsapp skipped: no alert number (WHATSAPP_ALERT_TO unset and no valid ~/.matlai/whatsapp-alert-to) (fail closed)'); return false; }
-  if (!String(process.env.WHATSAPP_ALERT_TO || '').trim() && !warnedAlertFile) { warnedAlertFile = true; log('whatsapp: alert number read from the private file (WHATSAPP_ALERT_TO unset)'); }
+  if (number === undefined && !String(process.env.WHATSAPP_ALERT_TO || '').trim() && !warnedAlertFile) { warnedAlertFile = true; log('whatsapp: alert number read from the private file (WHATSAPP_ALERT_TO unset)'); }
   try {
-    const s = await fetch(`${BRIDGE}/status`, { signal: AbortSignal.timeout(2000) }); if (!(await s.json()).ready) { log('bridge not ready'); return false; }
-    const r = await fetch(`${BRIDGE}/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: WA_TO, text }), signal: AbortSignal.timeout(10000) });
-    const j = await r.json().catch(() => ({})); if (!r.ok || j.ok === false) { log(`whatsapp failed ${r.status} ${j.error || ''}`); return false; }
+    const s = await fetchImpl(`${BRIDGE}/status`, { signal: AbortSignal.timeout(2000) }); if (!(await s.json()).ready) { log('bridge not ready'); return false; }
+    const r = await fetchImpl(`${BRIDGE}/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: WA_TO, text }), signal: AbortSignal.timeout(10000) });
+    // Delivered only on HTTP ok AND body {ok:true} (bridge playbook: "only mark state when ok === true"). Anything else is a logged failure.
+    const j = await r.json().catch(() => ({})); if (!r.ok || j.ok !== true) { log(`whatsapp failed ${r.status} ${j.error || ''}`.trim()); return false; }
     return true;
   } catch (e) { log(`whatsapp error ${e.message}`); return false; }
 }
@@ -240,6 +287,8 @@ export function parseCommand(text) {
   if (/^status$/i.test(t)) return { cmd: 'status' };
   if (/^help$/i.test(t)) return { cmd: 'help' };
   let m;
+  if (/^stop$/i.test(t)) return { cmd: 'stop' };
+  if (/^start$/i.test(t)) return { cmd: 'start' };
   if ((m = t.match(/^approve\s+((?:b\d+[\s,]*)+)$/i))) return { cmd: 'approve', ids: m[1].toUpperCase().match(/B\d+/g) };
   if ((m = t.match(/^skip\s+((?:b\d+[\s,]*)+)$/i))) return { cmd: 'skip', ids: m[1].toUpperCase().match(/B\d+/g) };
   if ((m = t.match(/^post\s+(b\d+)\s+now$/i))) return { cmd: 'postnow', ids: [m[1].toUpperCase()] };
@@ -248,10 +297,12 @@ export function parseCommand(text) {
 }
 export function renderList(q) {
   const pend = q.drafts.filter((d) => d.status === STATUS.PENDING);
-  if (!pend.length) return '📭 No drafts waiting. Next drafting run: Monday 07:00.';
+  const blockedNote = q.drafts.filter((d) => d.status === STATUS.BLOCKED).map((d) => `\n🚫 *${d.id}* blocked: ${(d.blocked?.rules || []).join(', ') || 'unknown rule'} (never retried; the text is not shown)`).join('');
+  if (!pend.length) return `📭 No drafts waiting. Next drafting run: Monday 07:00.${blockedNote}`;
   const lines = [`📝 ${pend.length} draft(s) for ${CONFIG.page}:`];
   for (const d of pend) lines.push(`\n*${d.id}* (${d.kind}, ${d.sourceDate})\n${d.text.slice(0, 700)}${d.text.length > 700 ? '…' : ''}${d.score ? `\n_${renderScore(d.score)}_` : ''}${d.hookAdvice ? `\n_${d.hookAdvice}_` : ''}`);
-  lines.push('\nReply: *bpa approve B1 B2* · *bpa skip B3* · *bpa edit B1: new text* · *bpa post B1 now*');
+  if (blockedNote) lines.push(blockedNote);
+  lines.push('\nReply: *bpa approve B1 B2* · *bpa skip B3* · *bpa edit B1: new text* · *bpa post B1 now* · *bpa stop* / *bpa start*');
   return lines.join('\n');
 }
 
@@ -326,6 +377,7 @@ export async function hostImage(pngPath, name) {
   const j = await r.json(); if (!r.ok) throw new Error(`media upload ${r.status}: ${JSON.stringify(j).slice(0, 160)}`); return { id: j.id, url: j.source_url };
 }
 export async function igPublish(caption, imageUrl, { dryContainerOnly = false } = {}) {
+  if (!dryContainerOnly) assertNotStopped();
   const { findPage } = metaPublish(); const p = findPage(CONFIG.page); const ig = CONFIG.instagram.igUserId;
   const post = (pth, form) => graphCall(pth, { token: p.token, method: 'POST', form });
   const c = await post(`${ig}/media`, { image_url: imageUrl, caption: caption.slice(0, 2200) });
@@ -342,6 +394,7 @@ export async function igPostDraft(d) {
 
 // ── Instagram REELS (video) publish: container(REELS, video_url) → poll → publish ─────────
 export async function igPublishReel(caption, videoUrl, { dryContainerOnly = false } = {}) {
+  if (!dryContainerOnly) assertNotStopped();
   const { findPage } = metaPublish(); const p = findPage(CONFIG.page); const ig = CONFIG.instagram.igUserId;
   const post = (pth, form) => graphCall(pth, { token: p.token, method: 'POST', form });
   const c = await post(`${ig}/media`, { media_type: 'REELS', video_url: videoUrl, caption: caption.slice(0, 2200), share_to_feed: 'true' });
@@ -362,6 +415,7 @@ export async function hostVideo(mp4Path, name) {
 // POST /{ig}/media media_type=CAROUSEL children=<ids comma-joined> caption; POST /{ig}/media_publish creation_id=<parent>.
 // Meta's docs now say up to 20 items; we deliberately cap at 10 (the long-standing limit; plans are 3-7). `post`/`status` are injectable for tests.
 export async function igPublishCarousel(caption, imageUrls, { post, status, igUserId, sleep, info, dryContainerOnly = false } = {}) {
+  if (!dryContainerOnly) assertNotStopped();
   if (!Array.isArray(imageUrls) || imageUrls.length < 2 || imageUrls.length > 10) throw new Error(`carousel needs 2-10 images, got ${imageUrls?.length ?? 0}`);
   const ig = igUserId || CONFIG.instagram.igUserId; let token;
   if (!post || !status || !info) { const { findPage } = metaPublish(); token = findPage(CONFIG.page).token; }
@@ -396,6 +450,7 @@ async function postReel(d) {
 }
 /** Post a draft to Instagram in the format chosen for its kind (see chooseFormat). */
 export async function igPostDraftAny(d) {
+  assertNotStopped(); // before any rendering or upload, not only before the final publish call
   const fmt = chooseFormat(d);
   if (fmt === 'carousel') {
     const { planCarousel, renderCarousel } = await import('./carousel.js');

@@ -1,3 +1,4 @@
+import './test-env.js';
 // The tourism-statistics source (BPI briefs: signal and outlook drafts, which go to Instagram and Facebook)
 // can be switched off with config.tourismStatsDrafts === false. Absent or true = old behaviour.
 import { test } from 'node:test'; import assert from 'node:assert/strict';

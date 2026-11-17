@@ -22,6 +22,25 @@ is granted (re-run `meta-pages/connect.js`). Logs: `~/Library/Logs/beyondparadis
 Meta access: `shared_knowledge/scripts/meta-pages` (tokens in `~/.config/meta-pages/`).
 `igEnabled()` needs `instagram_content_publish` in `user.scopes` of that tokens file (written by `connect.js --exchange`; `connect.js --refresh-scopes` re-reads it from Meta without a new login). If `instagram.enabled` is true but that is missing, the worker (`igGate` in `lib.js`) logs one `… instagram NOT published, Facebook only: <reason>` line per affected post and sends ONE WhatsApp alert per state change (blocked, then back on) — state in `queue.json` → `state.igGate`. It no longer skips quietly.
 
+## Safety switches, cap and health alarm
+Config keys in `config.json` (all optional; the defaults below apply when the key is absent):
+
+| Key | Default | What |
+|---|---|---|
+| `maxInstagramPostsPerDay` | `1` | most Instagram publishes per East Africa Time calendar day; `0` = none; anything but a whole number >= 0 counts as 0 (fail closed). Counted from the ledger below. |
+| `autoPublish` | absent (false): **not active**, nothing in this pipeline publishes automatically | only READ by the health check. The "no post for N days" alarm exists but stays off until this is true. Do not turn it on without the owner. |
+| `alarmNoPostDays` | `4` | days without a successful post before the alarm, used only when `autoPublish` is true (so today: not active) |
+
+Files (folder `~/.matlai/`, override `BPA_STATE_DIR`): `bpa-social-stop` (stop flag; `BPA_STOP_FLAG`; `bpa stop` creates it, `bpa start` removes it; the fleet `stop-all.flag`, `STOP_ALL_FLAG_PATH`, also stops), `bpa-social-ig-ledger.jsonl` (`BPA_LEDGER_PATH`), `bpa-social-run.json`, `bpa-social-lastpost.json`, `bpa-social-alerts.json`. Log path override: `BPA_LOG_PATH` (tests set it; see `test-env.js`).
+`bpa stop` does not cancel Facebook posts already scheduled at Meta; the reply says how many and when.
+Health: `node health.js --check` exits 1 when the worker has not run for 45 minutes (`worker-stale`) or runs but fails (`worker-failing`: last result is an error, or no successful run for 45 minutes). The approval server runs the same check hourly and sends one WhatsApp alert per condition per 24 hours; for 20 minutes after it starts, a missing or old worker state is treated as unknown.
+
+## Content rules and the final check (`rules-gate.js`)
+`rulesGate(text, { neverPromotePatterns, claims })` is a pure check of the owner's content rules; each violation carries a rule id: `sea-conditions` (seaweed, sea state, waves, swim conditions), `seaweed-farming-place` (farming or harvesting only with Paje, Jambiani or Bwejuu named and none of Michamvi, Pingwe, Kae), `first-person-visit` ("we stayed", "our visit"), `never-promote`, `paid-link-wording` ("book now", "affiliate", "discount code" ...; a plain "more on the site, link in profile" is fine) and `unsourced-figure` (a money amount must appear in a claim `{ text, sourceDate }` that has a date; drafts without claims pass `[]`). Taste and hype stay with the voice linter.
+The never-promote list is private: `~/.matlai/bpa-never-promote.json` (`{ "patterns": [...] }`, override `BPA_NEVER_PROMOTE_FILE`), literal case-insensitive whole-word match, never printed, a violation names the pattern's index. A missing, unreadable, empty or malformed file refuses every text (`never-promote-list-unavailable`).
+It runs right after the voice gate on every path to the queue (drafting, `bpa edit`, carousel slides) and again as `finalCheck(draft)` (voice gate + rules on the caption, every slide and the on-video text) in the worker before the Instagram publish and in the approval server before `bpa approve` schedules and before `bpa post ... now`, always BEFORE the daily-cap reservation. A failing final check publishes and schedules nothing, sets the item to `blocked` (rule ids in `blocked.rules`; shown by `bpa` and `bpa status`; never retried automatically), writes one log line and sends one WhatsApp alert with the rule ids only. A Facebook post already scheduled at Meta is not cancelled by this; the alert says so.
+`node rules-gate.js --check-queue [queue.json]` is read-only: counts per state, and the ids and rule ids of unposted items that would be refused (no text).
+
 ## Draft score (advisory)
 `score.js` gives every new draft a `score` shown under it in `bpa` / `bpa approve` lists: `score 72/100 · hook 7/10 · rubric 6/9 ✗ cta, hashtags`.
 Total = 60% rubric pass-rate + 40% hook score. The 12-part rubric has 9 post-level checks (hook window, concrete hook, one ask, 3-5 hashtags,
