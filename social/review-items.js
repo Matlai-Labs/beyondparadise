@@ -10,6 +10,7 @@ import { eligibleClips } from './clip-library.js';
 
 export const NOTE_PENDING = 'video is being prepared';
 const NOTE_MISSING = 'video missing';
+export const NOTE_NO_EXAMPLE = 'no example video yet'; // a video text has no example video in this step (they come later); nothing is being prepared
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 
 function hashFileStream(file) {
@@ -162,7 +163,7 @@ export async function buildItems({ readHooks, loadPool, readManifest, libraryDir
         facts = { hook: e.hook, caption: draft ? (draft.caption ?? draft.text ?? null) : null, claims, link: idea.link ?? null, exampleClip: null };
       }
       if (others > 0) facts = { ...facts, otherEntries: others };
-      let preview = { mediaId: null, note: NOTE_PENDING };
+      let preview = { mediaId: null, note: NOTE_NO_EXAMPLE };
       let prev = null; try { prev = previewFor(e.ideaId, version); } catch { prev = null; }
       if (typeof prev === 'string' && prev !== '') { const mediaId = mediaIdFor(secret, e.ideaId, version); preview = { mediaId, note: NOTE_EXAMPLE }; media.set(mediaId, { path: prev, kind: 'preview' }); }
       return { kind: 'hook', id: e.ideaId, version, title: e.hook, preview, facts, state, reason, usableToday, actions: [] };
@@ -170,6 +171,6 @@ export async function buildItems({ readHooks, loadPool, readManifest, libraryDir
   }
   let clipItems = [];
   if (manifestOk && manifest) { try { const c = await buildClipItems({ manifest, libraryDir, info, secret, exists, usage }); clipItems = c.items; for (const [k, v] of c.media) media.set(k, v); } catch { problems.push('library-unreadable'); } }
-  const items = [...hookItems, ...clipItems];
+  const items = [...clipItems, ...hookItems]; // clips first: they have videos
   return { ok: true, items, counts: { all: items.length, hook: hookItems.length, clip: clipItems.length }, problems, media };
 }

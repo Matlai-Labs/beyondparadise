@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { buildClipItems, fileInfoOf, clipVersion, mediaIdFor, hookVersion, buildItems } from './review-items.js';
+import { buildClipItems, fileInfoOf, clipVersion, mediaIdFor, hookVersion, buildItems, NOTE_PENDING } from './review-items.js';
 import { claimsSha256, readHooks } from './auto-hooks.js';
 import { eligibleClips } from './clip-library.js';
 import { laneVerdictFor } from './auto-lane.js';
@@ -101,7 +101,7 @@ test('hook items: state per entry, newest (last in file) first', async () => { c
 test('hook item facts, preview and actions', async () => {
   const r = await buildItems(base()); const h = r.items.find((i) => i.id === 'idea_1');
   assert.deepEqual(h.facts, { hook: 'Hook 1', caption: 'Cap idea_1', claims: [{ text: 'Claim A1', sourceDate: '2026-10-01' }, { text: 'Claim B1', sourceDate: '2026-10-02' }], link: '/x/1/', exampleClip: null });
-  assert.deepEqual(h.preview, { mediaId: null, note: 'video is being prepared' }); assert.deepEqual(h.actions, []); assert.equal(h.kind, 'hook'); assert.equal(h.title, 'Hook 1'); assert.equal(h.version, hookVersion('Hook 1', idea(1)));
+  assert.deepEqual(h.preview, { mediaId: null, note: 'no example video yet' }); assert.deepEqual(h.actions, []); assert.equal(h.kind, 'hook'); assert.equal(h.title, 'Hook 1'); assert.equal(h.version, hookVersion('Hook 1', idea(1)));
   assert.deepEqual(r.items.find((i) => i.id === 'idea_9').facts, { hook: 'Hook 9' }, 'a stale item shows the hook only');
   assert.deepEqual(r.items.find((i) => i.id === 'idea_3').facts, { hook: 'Hook 3' });
 });
@@ -129,10 +129,10 @@ test('counts per kind; a preview file turns into a media entry', async () => {
   const r = await buildItems(base({ previewFor: (id) => (id === 'idea_1' ? '/p/a.mp4' : null) })); assert.deepEqual(r.counts, { all: 5, hook: 5, clip: 0 });
   const h = r.items.find((i) => i.id === 'idea_1'); assert.match(h.preview.mediaId, /^m_/); assert.equal(h.preview.note, 'Example footage. The real post may use other footage that fits.'); assert.deepEqual(r.media.get(h.preview.mediaId), { path: '/p/a.mp4', kind: 'preview' });
 });
-test('hooks come before clips; the media map carries clip files', async () => {
+test('clips come before hooks (clips have videos); the media map carries clip files', async () => {
   const dir = mk(); fs.writeFileSync(path.join(dir, 'c1.mp4'), 'x');
   const r = await buildItems(base({ readManifest: () => ({ clips: [clip('c1')] }), libraryDir: dir, info: fileInfoOf() }));
-  assert.deepEqual(r.items.map((i) => i.kind), ['hook', 'hook', 'hook', 'hook', 'hook', 'clip']); assert.deepEqual(r.counts, { all: 6, hook: 5, clip: 1 }); assert.equal(r.media.size, 1);
+  assert.deepEqual(r.items.map((i) => i.kind), ['clip', 'hook', 'hook', 'hook', 'hook', 'hook']); assert.deepEqual(r.counts, { all: 6, hook: 5, clip: 1 }); assert.equal(r.media.size, 1);
 });
 
 // ── truth of what the page says (fix round A) ────────────────────────────────────
@@ -213,4 +213,13 @@ test('D7: the hook checks run together, not one after the other', async () => {
   let running = 0; let peak = 0; const slow = async (i, { hook }) => { running += 1; peak = Math.max(peak, running); await new Promise((r) => setTimeout(r, 15)); running -= 1; return { ok: true, draft: { hook, caption: 'c' } }; };
   const t0 = Date.now(); const r = await buildItems(base({ evaluate: slow })); assert.ok(r.items.length >= 4); assert.ok(peak >= 3, `peak ${peak}`);
   assert.deepEqual(r.items.map((i) => i.id), ['idea_4', 'idea_9', 'idea_3', 'idea_2', 'idea_1'], 'the order is kept'); assert.ok(Date.now() - t0 < 70);
+});
+
+test('change 1: a video text with no example video says so with its own note, not the clip note', async () => {
+  const r = await buildItems(base()); for (const h of r.items.filter((i) => i.kind === 'hook')) { assert.equal(h.preview.note, 'no example video yet'); assert.notEqual(h.preview.note, NOTE_PENDING); assert.equal(NOTE_PENDING, 'video is being prepared', 'the clip note keeps its value'); }
+});
+test('change 2: within each kind the order is kept (clips by file time, texts newest first)', async () => {
+  const dir = mk(); for (const f of ['c1', 'c2']) fs.writeFileSync(path.join(dir, `${f}.mp4`), 'x'); const t = new Date(Date.now() + 9000); fs.utimesSync(path.join(dir, 'c2.mp4'), t, t);
+  const r = await buildItems(base({ readManifest: () => ({ clips: [clip('c1'), clip('c2')] }), libraryDir: dir, info: fileInfoOf() }));
+  assert.deepEqual(r.items.map((i) => i.id), ['c2', 'c1', 'idea_4', 'idea_9', 'idea_3', 'idea_2', 'idea_1']);
 });

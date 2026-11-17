@@ -38,6 +38,8 @@ export function createSessions({ ttlMs = SESSION_TTL_MS, now = Date.now, max = 5
       if (live.size >= max) { const oldest = live.entries().next().value; if (!oldest || t0 - oldest[1].issuedAt < minAgeMs) return null; live.delete(oldest[0]); }
       const t = crypto.randomBytes(32).toString('hex'); live.set(t, { issuedAt: t0, expiry: t0 + ttlMs }); lastIssue = t0; return t;
     },
+    /** true while a new session was issued less than issueGapMs ago (the only refusal that clears itself in seconds) */
+    tooSoon() { return now() - lastIssue < issueGapMs; },
     valid(token) {
       if (typeof token !== 'string') return false;
       prune();

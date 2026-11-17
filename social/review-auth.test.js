@@ -54,3 +54,7 @@ test('E9: health on a loopback Host with a proxy header falls under the login an
   assert.equal(run({ host: '127.0.0.1:3028' }).ok, true); assert.equal(run(goodHeaders({ cookie: `${COOKIE_NAME}=${tok}`, 'x-forwarded-for': '100.64.0.1' })).ok, true, 'the real published path still works');
 });
 test('loopbackHost is exact', () => { assert.equal(loopbackHost('127.0.0.1:3028', 3028), true); for (const h of ['[::1]:3028', '127.0.0.1', '127.0.0.1:3028.', undefined, '']) assert.equal(loopbackHost(h, 3028), false, String(h)); });
+
+test('change 4: tooSoon is true only inside the 2 s gap after a new session', () => {
+  let t = 1e6; const s = createSessions({ now: () => t }); assert.equal(s.tooSoon(), false); assert.ok(s.issue()); assert.equal(s.tooSoon(), true); assert.equal(s.issue(), null); t += 2000; assert.equal(s.tooSoon(), false);
+});
