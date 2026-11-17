@@ -117,6 +117,7 @@ export async function prepareAutoPost({ pool, manifest, usage = [], history = []
   const refuse = (idea, reason) => { refused.push({ ideaId: idea.id, reason }); say(`auto: idea ${idea.id} refused: ${reason}`); };
   for (const idea of ideas) {
     if (inHistory(idea, history, now, repeatDays)) { refuse(idea, 'in-history'); continue; }
+    if (idea.titleFromOtherField === true) { refuse(idea, 'title-claim-differ'); continue; } // title and caption text are different strings: the video could say the opposite of the caption, even with an approved hook
     const fit = pairingFor(idea, clips); if (!fit.clip) { refuse(idea, fit.reason); continue; } // the cheap test first: only ideas WITH a fitting clip count against the cap
     const hk = hookFor(idea, hooks.hooks, config, { preview: previewUnapproved === true }); if (hk.reason) { refuse(idea, hk.reason); continue; }
     if (tried >= MAX_IDEAS_PER_RUN) break; tried += 1;
@@ -216,6 +217,7 @@ export async function supplyReport({ ranked, top = 30, manifest, usage = [], con
   const slice = ranked.slice(0, top); const refusals = {}; const survivors = [];
   for (const idea of slice) {
     const hk = hookFor(idea, hooks.hooks, config); const bump = (key) => { refusals[key] = (refusals[key] || 0) + 1; };
+    if (idea.titleFromOtherField === true) { bump('title-claim-differ'); continue; }
     if (hk.reason) { bump(hk.reason); continue; }
     const r = await evaluateIdea(idea, { now, sourceNames, hook: hk.hook, neverPromotePatterns }); // without a clip: the alt text is clip-based later and does not change the verdict in practice
     if (r.ok) survivors.push(idea); else bump(r.reason.replace(/^(final-check|judge|alt-text):.*/, '$1:$&').replace(/^([^:]+):\1:/, '$1:'));
