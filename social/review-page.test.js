@@ -9,7 +9,7 @@ import { CLIP_REASONS, HOOK_REASONS } from './review-items.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(HERE, 'review-page.html'), 'utf8');
-const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS })`);
+const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS, videoFailureAction })`);
 
 test('static rules: no external request, no HTML injection, no inline handlers, nonce on every script', () => {
   assert.ok(html.length < 60000); assert.doesNotMatch(html, /https?:\/\//); assert.doesNotMatch(html, /<link|@import|<iframe/);
@@ -182,5 +182,20 @@ test('play: static - controls on, play() called with its rejection handled, butt
   assert.ok(html.includes("el('button', PLAY_TEXT, 'play-big')") && html.includes("btn.type = 'button'") && html.includes("setAttribute('aria-live', 'polite')"));
   assert.ok(html.includes('v.paused === before'), 'a click that the native controls already handled is not toggled twice');
   assert.ok(/\.play-big \{[^}]*min-height: 64px/.test(html));
-  assert.ok(html.includes('shouldAutoplay(reduce)') && html.includes("stopVideo(); slot.appendChild(el('p', VIDEO_FAILED_TEXT"));
+  assert.ok(html.includes('shouldAutoplay(reduce)') && html.includes("dead = true; stopVideo();"));
+});
+test('videoFailureAction: reload only for a lost session (403 or 503) and only once', () => {
+  const a = pure.videoFailureAction;
+  for (const s of [403, 503]) { assert.equal(a({ probeStatus: s, alreadyReloaded: false }), 'reload'); assert.equal(a({ probeStatus: s }), 'reload'); assert.equal(a({ probeStatus: s, alreadyReloaded: true }), 'sentence'); assert.equal(a({ probeStatus: s, alreadyReloaded: '1' }), 'sentence'); }
+  for (const s of [200, 404, 429, 500, null, undefined]) { assert.equal(a({ probeStatus: s, alreadyReloaded: false }), 'sentence', String(s)); assert.equal(a({ probeStatus: s, alreadyReloaded: true }), 'sentence', String(s)); }
+  assert.equal(a(), 'sentence'); assert.equal(a({}), 'sentence');
+});
+test('a failed clip checks the session before it gives up: one probe, one reload per recovery path, the sentence otherwise', () => {
+  const m = html.match(/if \(ui\.errorSentence\) \{[\s\S]*?\n      \}/);
+  assert.ok(m, 'failure branch found'); const b = m[0];
+  assert.ok(b.includes('dead = true; stopVideo();'), 'stops at once');
+  for (const w of ["fetch('api/items', { cache: 'no-store' })", 'videoFailureAction(', "sessionStorage.getItem('bpa_reloaded')", "sessionStorage.setItem('bpa_reloaded', '1')", 'location.reload()', "slot.appendChild(el('p', VIDEO_FAILED_TEXT, 'video-note'))"]) assert.ok(b.includes(w), w);
+  assert.equal((html.match(/location\.reload\(\)/g) || []).length, 2, 'load() and the clip failure: no other reload');
+  assert.equal((html.match(/bpa_reloaded/g) || []).length, 5, 'one storage key, no second key');
+  assert.ok(b.includes('videoSerial'), 'a card that is no longer shown gets nothing');
 });
