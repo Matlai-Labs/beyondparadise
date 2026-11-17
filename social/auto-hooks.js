@@ -3,6 +3,7 @@
 // second person-visible step approves it, and the lane uses it only while the idea's claims are exactly the ones it was written and approved against.
 //
 //   auto-hooks.json   { "hooks": [ { ideaId, sourceId, hook, claimsSha256, approvedBy, approvedAt } ] }   committed, starts EMPTY
+//     an entry is bound to ONE idea: it matches on ideaId only (sourceId is kept for the reader), and `claimsSha256` is the hash of the idea's TITLE and its claim texts in order
 //   node auto-hooks.js --add <ideaId> "<hook>"       looks the idea up in the real pool (read only), checks the hook like the on-video text, writes it UNAPPROVED
 //   node auto-hooks.js --approve <ideaId> --by <text>   sets approvedBy and approvedAt (refused when the claims changed since --add)
 //   node auto-hooks.js --list                         each entry with its state: approved, unapproved, stale
@@ -18,8 +19,8 @@ export const defaultHooksPath = () => path.join(HERE, 'auto-hooks.json');
 const SHA = /^[0-9a-f]{64}$/;
 const text = (v) => typeof v === 'string' && v.trim() !== '';
 
-/** The hash an entry is bound to: the claim texts of the idea, in order. A changed, added, removed or reordered claim makes every entry for the idea stale. */
-export const claimsSha256 = (idea) => crypto.createHash('sha256').update(JSON.stringify((Array.isArray(idea && idea.claims) ? idea.claims : []).map((c) => (c && typeof c.text === 'string' ? c.text : null)))).digest('hex');
+/** The hash an entry is bound to: the idea's TITLE and its claim texts, in order. A renamed idea, or a changed, added, removed or reordered claim, makes the entry stale. */
+export const claimsSha256 = (idea) => crypto.createHash('sha256').update(JSON.stringify([typeof (idea && idea.title) === 'string' ? idea.title : null, (Array.isArray(idea && idea.claims) ? idea.claims : []).map((c) => (c && typeof c.text === 'string' ? c.text : null))])).digest('hex');
 
 const entryProblem = (e) => {
   if (!e || typeof e !== 'object' || Array.isArray(e)) return 'an entry is not an object';
@@ -46,11 +47,11 @@ export function hookState(entry, idea) {
   return text(entry.approvedBy) && typeof entry.approvedAt === 'string' ? 'approved' : 'unapproved';
 }
 
-/** The approved, current entry for an idea: matched on ideaId, else on sourceId. Unapproved and stale entries are ignored. null when none. */
-export function approvedHookFor(idea, hooks) {
-  const list = Array.isArray(hooks) ? hooks : [];
-  const byId = list.filter((e) => e.ideaId === idea.id); const bySource = idea.sourceId != null ? list.filter((e) => e.sourceId != null && e.sourceId === idea.sourceId) : [];
-  return [...byId, ...bySource].find((e) => hookState(e, idea) === 'approved') || null;
+/** The approved, current entry for an idea, matched on ideaId ONLY. Unapproved and stale entries are ignored. null when none.
+ *  `includeUnapproved` (the rehearsal's preview, passed by nothing but auto-lane.js main) also accepts a current entry that is not approved yet; a stale one never. */
+export function approvedHookFor(idea, hooks, { includeUnapproved = false } = {}) {
+  const ok = (e) => { const st = hookState(e, idea); return st === 'approved' || (includeUnapproved && st === 'unapproved'); };
+  return (Array.isArray(hooks) ? hooks : []).find((e) => e.ideaId === idea.id && ok(e)) || null;
 }
 
 function writeAtomic(file, obj) { const tmp = `${file}.${process.pid}.tmp`; fs.writeFileSync(tmp, `${JSON.stringify(obj, null, 2)}\n`); fs.renameSync(tmp, file); }

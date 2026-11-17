@@ -24,9 +24,9 @@ test('the committed file starts EMPTY and is valid', () => {
   const r = readHooks(defaultHooksPath()); assert.deepEqual(r, { ok: true, hooks: [] });
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(HERE, 'auto-hooks.json'), 'utf8')), { hooks: [] });
 });
-test('claimsSha256 covers the claim texts in order: a changed, added, removed or reordered claim changes it; other fields do not', () => {
+test('claimsSha256 covers the idea TITLE and the claim texts in order: a changed title, changed, added, removed or reordered claim changes it; other fields do not', () => {
   const h = claimsSha256(IDEA); assert.match(h, /^[0-9a-f]{64}$/);
-  assert.equal(claimsSha256({ ...IDEA, title: 'other', score: 1, claims: IDEA.claims.map((c) => ({ ...c, sourceDate: 'x' })) }), h);
+  assert.equal(claimsSha256({ ...IDEA, score: 1, topic: 'other', claims: IDEA.claims.map((c) => ({ ...c, sourceDate: 'x' })) }), h); assert.notEqual(claimsSha256({ ...IDEA, title: 'Lion rule renamed' }), h, 'a renamed idea is stale');
   assert.notEqual(claimsSha256({ ...IDEA, claims: [claim('The listed fee for item 1 is 12 US dollars for most visitors.'), IDEA.claims[1]] }), h);
   assert.notEqual(claimsSha256({ ...IDEA, claims: [IDEA.claims[0]] }), h); assert.notEqual(claimsSha256({ ...IDEA, claims: [...IDEA.claims].reverse() }), h);
 });
@@ -38,7 +38,7 @@ test('--add: writes the entry UNAPPROVED with the claims hash, sourceId and a ho
 test('--add refuses: unknown idea, a hook over HOOK_MAX, a figure not in the claims, a failing final check, an empty hook; nothing is written', async () => {
   const s = setup(); const before = fs.readFileSync(s.file, 'utf8');
   for (const [argv, why] of [[['--add', 'idea_nope', 'Lions'], /unknown idea/], [['--add', 'idea_1', 'L'.repeat(HOOK_MAX + 1)], /hook-too-long/], [['--add', 'idea_1', 'Lions pay 99 dollars'], /hook-number-not-in-claims/],
-    [['--add', 'idea_1', 'Book now to see lions'], /final-check/], [['--add', 'idea_1', 'Seeing lions at examplehotel'], /final-check/], [['--add', 'idea_1', '   '], /hook/], [['--add', 'idea_1', 'Two\nlines'], /hook/]]) {
+    [['--add', 'idea_1', 'Book now to see lions'], /final-check/], [['--add', 'idea_1', 'Seeing lions at examplehotel'], /final-check/], [['--add', 'idea_1', 'Hippos pay 11 US dollars'], /hook-subject-mismatch/], [['--add', 'idea_1', '   '], /hook/], [['--add', 'idea_1', 'Two\nlines'], /hook/]]) {
     s.err.length = 0; assert.equal(await s.run(argv), 4, JSON.stringify(argv)); assert.match(s.err.join('\n'), why, JSON.stringify(argv)); assert.equal(fs.readFileSync(s.file, 'utf8'), before, JSON.stringify(argv));
   }
   assert.equal(await s.run(['--add', 'idea_1']), 2); assert.equal(await s.run(['--wat']), 2); assert.equal(await s.run([]), 2);
@@ -55,12 +55,13 @@ test('--approve sets approvedBy and approvedAt; needs --by; an unknown entry and
   assert.equal(await s.run(['--approve', 'idea_1', '--by', 'owner']), 0, s.err.join('\n')); const e = s.read().hooks[0]; assert.equal(e.approvedBy, 'owner'); assert.equal(e.approvedAt, NOW.toISOString());
   assert.equal(await s.run(['--list']), 0); assert.match(s.out.join('\n'), /idea_1.*\bapproved\b/);
 });
-test('hookState and approvedHookFor: approved only with a name, a date and a matching hash; unapproved and stale are ignored; ideaId first, then sourceId', () => {
+test('hookState and approvedHookFor: approved only with a name, a date and a matching hash; unapproved and stale are ignored; matched on ideaId only', () => {
   const e = { ideaId: 'idea_1', sourceId: 'rule:r1', hook: 'H', claimsSha256: claimsSha256(IDEA), approvedBy: 'o', approvedAt: NOW.toISOString() };
   assert.equal(hookState(e, IDEA), 'approved'); assert.equal(hookState({ ...e, approvedBy: null, approvedAt: null }, IDEA), 'unapproved'); assert.equal(hookState({ ...e, claimsSha256: 'a'.repeat(64) }, IDEA), 'stale');
   assert.equal(approvedHookFor(IDEA, [e]).hook, 'H'); assert.equal(approvedHookFor(IDEA, [{ ...e, approvedBy: null, approvedAt: null }]), null); assert.equal(approvedHookFor(IDEA, [{ ...e, claimsSha256: 'a'.repeat(64) }]), null);
-  assert.equal(approvedHookFor(IDEA, [{ ...e, ideaId: 'other' }]).hook, 'H', 'matches on sourceId when no ideaId matches'); assert.equal(approvedHookFor(IDEA, [{ ...e, ideaId: 'other', sourceId: 'zzz' }]), null);
-  assert.equal(approvedHookFor(IDEA, [{ ...e, hook: 'by source', ideaId: 'other' }, { ...e, hook: 'by id' }]).hook, 'by id', 'an ideaId match is preferred');
+  assert.equal(approvedHookFor(IDEA, [{ ...e, ideaId: 'other' }]), null, 'another idea\'s id with the same claims and the same sourceId is NOT used: ideaId only');
+  assert.equal(approvedHookFor(IDEA, [{ ...e, hook: 'other', ideaId: 'other' }, { ...e, hook: 'by id' }]).hook, 'by id');
+  const pre = { ...e, approvedBy: null, approvedAt: null }; assert.equal(approvedHookFor(IDEA, [pre], { includeUnapproved: true }).hook, 'H'); assert.equal(approvedHookFor(IDEA, [{ ...pre, claimsSha256: 'a'.repeat(64) }], { includeUnapproved: true }), null, 'a stale one is never previewed');
   assert.equal(approvedHookFor(IDEA, []), null);
 });
 test('readHooks fails closed: missing file, bad JSON, wrong shape, malformed entries', () => {

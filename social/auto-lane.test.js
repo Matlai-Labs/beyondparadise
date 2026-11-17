@@ -168,6 +168,11 @@ test('switch on: one item is queued for 18:00 EAT of the same day, in the state 
   assert.equal(fs.existsSync(d.deps.usagePath), false, 'the usage ledger is untouched until a successful publish');
   assert.equal(fs.existsSync(d.deps.ledgerPath), false, 'no cap reservation yet: that happens in the worker right before the publish');
 });
+test('ensureDailyAuto never passes the rehearsal-only preview switch on, whatever prepareDeps or config carry', async () => {
+  let seen = null; const d = daily({ config: { autoPublish: true, includeUnapproved: true, previewUnapproved: true }, prepare: async (input, deps) => { seen = { input, deps }; return { ok: false, reasons: ['x'], refused: [] }; } });
+  d.deps.prepareDeps = { ...d.deps.prepareDeps, previewUnapproved: true }; await ensureDailyAuto(d.deps);
+  assert.ok(seen); assert.equal(seen.deps.previewUnapproved, false); assert.equal('previewUnapproved' in seen.input, false);
+});
 test('the item is added next to the existing items; the sequence number continues; an existing draft is untouched', async () => {
   const d = daily(); saveQueue({ seq: 4, drafts: [{ id: 'B4', status: 'pending_approval', kind: 'outlook', text: 'x', sourceDate: '2026-11-01' }] }, d.deps.queuePath);
   await ensureDailyAuto(d.deps); const items = queued(d); assert.deepEqual(items.map((x) => x.id), ['B4', 'B5']); assert.equal(items[0].text, 'x');
