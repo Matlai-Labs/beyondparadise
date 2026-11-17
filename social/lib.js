@@ -12,7 +12,7 @@ import { rulesGate, loadNeverPromote } from './rules-gate.js';
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(modulePath(import.meta.url));
 export const CONFIG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
-export const QUEUE_PATH = path.join(HERE, 'queue.json');
+export const QUEUE_PATH = process.env.BPA_QUEUE_PATH || path.join(HERE, 'queue.json');
 export const DEFAULT_LOG_PATH = path.join(os.homedir(), 'Library', 'Logs', 'beyondparadise', 'social.log');
 /** BPA_LOG_PATH redirects the log (tests set it via test-env.js so they never write the real log). */
 export const LOG_PATH = process.env.BPA_LOG_PATH || DEFAULT_LOG_PATH;
@@ -195,7 +195,7 @@ export function autoTextIntact(d) {
 /** FINAL CHECK, immediately before any publish or schedule: re-runs the voice gate AND the rules check on the exact outgoing text
  *  (so a direct edit of queue.json after the earlier gates cannot get through). Never throws: a crash is a blocking result. */
 export async function finalCheck(d, { neverPromotePatterns, voice = voiceGate } = {}) {
-  const ids = new Set(); let listReason = null;
+  const ids = new Set(); let listReason = null; let voiceUnavailable = false;
   try {
     if (!d || typeof d.text !== 'string' || !d.text.trim()) return { ok: false, ruleIds: ['no-text'], violations: [{ rule: 'no-text', match: '' }], listReason };
     let patterns = neverPromotePatterns;
@@ -203,12 +203,12 @@ export async function finalCheck(d, { neverPromotePatterns, voice = voiceGate } 
     const violations = [];
     if (d.auto === true && !autoTextIntact(d)) { ids.add('auto-text-changed'); violations.push({ rule: 'auto-text-changed', match: '' }); }
     for (const t of await outgoingTexts(d)) {
-      const v = await voice(t); if (!v?.ok) { ids.add('voice-lint'); violations.push({ rule: 'voice-lint', match: '' }); }
+      const v = await voice(t); if (!v?.ok) { ids.add('voice-lint'); violations.push({ rule: 'voice-lint', match: '' }); if (typeof v?.reason === 'string' && /^voice-lint (unavailable|crashed|returned no result)/.test(v.reason)) voiceUnavailable = true; } // the linter itself could not run: transient, not a verdict on the text
       const r = rulesGate(t, { neverPromotePatterns: patterns, claims: d.claims || [] });
       for (const x of r.violations) { ids.add(x.rule); violations.push(x); }
     }
-    return { ok: ids.size === 0, ruleIds: [...ids], violations, listReason };
-  } catch (e) { return { ok: false, ruleIds: ['check-error'], violations: [{ rule: 'check-error', match: '' }], listReason }; }
+    return { ok: ids.size === 0, ruleIds: [...ids], violations, listReason, voiceUnavailable };
+  } catch (e) { return { ok: false, ruleIds: ['check-error'], violations: [{ rule: 'check-error', match: '' }], listReason, voiceUnavailable: false }; }
 }
 /** A failed final check: the item becomes `blocked` (never retried automatically), one log line, one alert with rule ids only (never the text). */
 export async function blockDraft(d, check, { stage, now = new Date(), notify = whatsapp, say = log } = {}) {
@@ -299,7 +299,9 @@ export function parseCommand(text) {
   if (/^stop$/i.test(t)) return { cmd: 'stop' };
   if (/^start$/i.test(t)) return { cmd: 'start' };
   if ((m = t.match(/^approve\s+((?:b\d+[\s,]*)+)$/i))) return { cmd: 'approve', ids: m[1].toUpperCase().match(/B\d+/g) };
+  if ((m = t.match(/^approve\s+(b\d+)\s+again$/i))) return { cmd: 'approveagain', ids: [m[1].toUpperCase()] };
   if ((m = t.match(/^skip\s+((?:b\d+[\s,]*)+)$/i))) return { cmd: 'skip', ids: m[1].toUpperCase().match(/B\d+/g) };
+  if ((m = t.match(/^post\s+(b\d+)\s+now\s+again$/i))) return { cmd: 'postnowagain', ids: [m[1].toUpperCase()] };
   if ((m = t.match(/^post\s+(b\d+)\s+now$/i))) return { cmd: 'postnow', ids: [m[1].toUpperCase()] };
   if ((m = t.match(/^edit\s+(b\d+)\s*:\s*([\s\S]+)$/i))) return { cmd: 'edit', ids: [m[1].toUpperCase()], text: m[2].trim() };
   return { cmd: 'unknown', raw: t };

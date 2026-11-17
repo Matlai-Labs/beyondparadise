@@ -35,8 +35,10 @@ test('(2) no config write, switch, network or model word in the new files', () =
 
 test('(3) review-decisions.js is imported only by review-decide.js, bpa-actions.js (and the routes for the file path)', () => {
   const importers = fs.readdirSync(HERE).filter((f) => f.endsWith('.js') && !f.endsWith('.test.js') && /from\s+'\.\/review-decisions\.js'/.test(read(f))).sort();
-  for (const f of importers) assert.ok(['review-decide.js', 'bpa-actions.js', 'review-routes.js'].includes(f), `unexpected importer ${f}`);
+  for (const f of importers) assert.ok(['review-decide.js', 'bpa-actions.js', 'review-routes.js', 'draft-decisions.js'].includes(f), `unexpected importer ${f}`);
   assert.ok(importers.includes('review-decide.js'));
+  // draft-decisions.js only READS the record (the no-second-approve check); it never imports the writer
+  assert.match(read('draft-decisions.js'), /import \{ readDecisions \} from '\.\/review-decisions\.js'/);
   // only review-decide.js may CALL appendDecision (the writer)
   for (const f of fs.readdirSync(HERE).filter((x) => x.endsWith('.js') && !x.endsWith('.test.js') && x !== 'review-decide.js' && x !== 'review-decisions.js')) assert.equal(count(read(f), /\bappendDecision\(/g), 0, f);
 });

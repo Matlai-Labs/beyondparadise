@@ -9,7 +9,7 @@ import { CLIP_REASONS, HOOK_REASONS } from './review-items.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(HERE, 'review-page.html'), 'utf8');
-const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS, videoFailureAction, EDIT_MAX, NET_TEXT, postingBody, REFUSAL_TEXT, refusalText, waitingItems, decidedItems, decisionRequest, afterRefusal, tokenStep, keyAction, decidedLine, stopButtonText })`);
+const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS, videoFailureAction, EDIT_MAX, NET_TEXT, postingBody, REFUSAL_TEXT, refusalText, waitingItems, decidedItems, decisionRequest, afterRefusal, tokenStep, keyAction, decidedLine, stopButtonText, EDIT_LIMITS, BODY_MAX_BYTES, utf8Length, editProblem, EDIT_PROBLEM_TEXT, hiddenInDraft, canUndo, doneText, confirmText, netText, DONE_TEXT, RELOAD_CODES })`);
 
 test('static rules: no external request, no HTML injection, no inline handlers, nonce on every script', () => {
   assert.ok(html.length < 60000); assert.doesNotMatch(html, /https?:\/\//); assert.doesNotMatch(html, /<link|@import|<iframe/);
@@ -24,20 +24,20 @@ test('head: charset, viewport, title', () => {
   assert.match(html, /<meta charset=/i); assert.match(html, /<meta name="viewport"/); assert.match(html, /<title>Beyond Paradise: review<\/title>/);
 });
 test('the step line, a muted looping inline video built in script, and no video in the markup', () => {
-  assert.ok(html.includes('Step 2: you can decide here. Approve, Skip and Edit are saved at once. Undo is under What I decided.')); assert.doesNotMatch(html.split('<script')[0], /<video/);
+  assert.ok(html.includes('Step 3: posts too. Approve schedules a real post and cannot be undone here. Skip is final. Edit does not approve. Undo for video texts and clips is under What I decided.')); assert.doesNotMatch(html.split('<script')[0], /<video/);
   for (const w of ["createElement('video')", 'muted = true', 'loop = true', 'playsInline = true', "'media/'"]) assert.ok(html.includes(w), w);
   assert.ok(html.includes('controls = true') && !/controls = (reduce|!reduce|false)/.test(html), 'native controls are on in every case');
 });
 test('the named elements and the only fetch exist', () => {
   for (const id of ['status', 'filters', 'list', 'card', 'video-slot', 'prev', 'next', 'refresh']) assert.ok(html.includes(`id="${id}"`), id);
-  for (const k of ['all', 'hook', 'clip']) assert.ok(html.includes(`data-kind="${k}"`), k);
+  for (const k of ['all', 'hook', 'clip', 'draft']) assert.ok(html.includes(`data-kind="${k}"`), k);
 });
 test('server text goes in through textContent only', () => { assert.ok(html.includes('textContent')); assert.ok(!/\.(innerText|srcdoc)\s*=/.test(html)); });
 test('plain English: no jargon in markup text or labels', () => {
   const text = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, '') + Object.values(pure.LABELS).join(' ');
   assert.doesNotMatch(text, /\b(sha\d*|hash|json|manifest|api|mediaId|version|null|undefined|token|nonce)\b/i);
 });
-test('filterItems and countKinds', () => { const it = [{ kind: 'hook' }, { kind: 'clip' }, { kind: 'hook' }]; assert.equal(pure.filterItems(it, 'hook').length, 2); assert.equal(pure.filterItems(it, 'all').length, 3); assert.deepEqual({ ...pure.countKinds(it) }, { all: 3, hook: 2, clip: 1 }); assert.deepEqual(pure.filterItems(it, 'clip'), [{ kind: 'clip' }]); });
+test('filterItems and countKinds', () => { const it = [{ kind: 'hook' }, { kind: 'clip' }, { kind: 'hook' }]; assert.equal(pure.filterItems(it, 'hook').length, 2); assert.equal(pure.filterItems(it, 'all').length, 3); assert.deepEqual({ ...pure.countKinds(it) }, { all: 3, hook: 2, clip: 1, draft: 0 }); assert.deepEqual(pure.filterItems(it, 'clip'), [{ kind: 'clip' }]); });
 test('moveIndex clamps and never wraps', () => { assert.equal(pure.moveIndex(0, -1, 5), 0); assert.equal(pure.moveIndex(4, 1, 5), 4); assert.equal(pure.moveIndex(2, 1, 5), 3); assert.equal(pure.moveIndex(0, 1, 0), 0); });
 test('windowOf keeps 300 items to 50 rows and contains the current index (focus 5)', () => {
   assert.equal(pure.LIST_PAGE, 50); for (const i of [0, 49, 50, 123, 299]) { const w = pure.windowOf(300, i, 50); assert.ok(w.to - w.from <= 50 && w.from <= i && i < w.to, String(i)); assert.equal(w.from % 50, 0); }
@@ -85,7 +85,7 @@ test('B: clip titles, states and facts in plain words', () => {
 test('B: status line wording', () => {
   const NOW = Date.parse('2026-11-17T10:00:00Z'); const base = { autoLane: 'off', stop: { stopped: false, reason: null }, lastPost: { at: '2026-11-12T10:00:00Z', id: 'B26' }, lastRun: { at: '2026-11-17T09:56:00Z', result: 'ok' } };
   assert.deepEqual([...pure.statusLines(base, NOW)], ['Posting: allowed', 'Automatic posting: OFF', 'Last post 12 Nov', 'Last check by the system 4 min ago']);
-  assert.equal(pure.statusLines({ ...base, stop: { stopped: true, reason: 'stopped by flag' } }, NOW)[0], 'Posting: stopped (stopped by flag)'); assert.equal(pure.statusLines({ ...base, autoLane: 'on' }, NOW)[1], 'Automatic posting: ON');
+  assert.equal(pure.statusLines({ ...base, stop: { stopped: true, reason: 'stopped by flag' } }, NOW)[0], 'Posting: stopped (a stop switch could not be read)'); assert.equal(pure.statusLines({ ...base, autoLane: 'on' }, NOW)[1], 'Automatic posting: ON');
   assert.equal(pure.statusLines({ ...base, lastPost: 'none' }, NOW)[2], 'No post recorded yet'); assert.equal(pure.statusLines({ ...base, lastPost: 'unknown' }, NOW)[2], 'Could not be read');
   const bad = [...pure.statusLines({ autoLane: 'unknown', stop: 'unknown', lastPost: 'unknown', lastRun: 'unknown' }, NOW)]; assert.deepEqual(bad, ['Posting: could not be read', 'Automatic posting: could not be read', 'Could not be read', 'Last check by the system: could not be read']);
 });
@@ -307,3 +307,94 @@ test('SR4: the posting body: Stop carries nothing else; Start carries the stop r
   assert.deepEqual({ ...pure.postingBody('start', { reason: null }) }, { action: 'start' }); assert.deepEqual({ ...pure.postingBody('start', {}) }, { action: 'start' });
 });
 test('SR4: the sentence for a stop that changed in between is exactly the agreed one', () => { assert.equal(pure.refusalText('stop-changed'), 'Posting was stopped again in the meantime. Check and tap again.'); });
+
+test('the stop line is a local time in words and never the raw reason', () => {
+  const NOW = Date.parse('2026-11-17T10:00:00Z'); const base = { autoLane: 'off', stop: { stopped: false, reason: null }, lastPost: { at: '2026-11-12T10:00:00Z', id: 'B26' }, lastRun: { at: '2026-11-17T09:56:00Z', result: 'ok' } };
+  const raw = 'stopped by flag since 2026-11-17T21:06:42.521Z'; const T = '18 Nov at 00:06 (East Africa time)';
+  const own = pure.statusLines({ ...base, stop: { stopped: true, reason: raw, since: '2026-11-17T21:06:42.521Z', sinceText: T, by: 'own' } }, NOW)[0];
+  const fleet = pure.statusLines({ ...base, stop: { stopped: true, reason: raw, sinceText: T, by: 'fleet' } }, NOW)[0];
+  const none = pure.statusLines({ ...base, stop: { stopped: true, reason: raw } }, NOW)[0];
+  assert.equal(own, 'Posting: stopped since ' + T); assert.equal(fleet, 'Posting: stopped by the fleet-wide stop switch since ' + T); assert.equal(none, 'Posting: stopped (a stop switch could not be read)');
+  for (const l of [own, fleet, none]) assert.doesNotMatch(l, /T21:06|\dZ/);
+  assert.equal(pure.statusLines({ ...base, stop: { stopped: false, reason: null } }, NOW)[0], 'Posting: allowed'); assert.equal(pure.statusLines({ ...base, stop: 'unknown' }, NOW)[0], 'Posting: could not be read');
+});
+
+// ══ Task 12: drafts on the page (pure functions and sentences) ═══════════════════════════════════════════════════
+import { EMOJI_OK_TEXTS, EMOJI_BAD_TEXTS, DRAFT_LINEBREAKS_REFUSED } from './review-test-chars.js';
+const dItem = (o = {}) => ({ kind: 'draft', id: 'B1', version: 'a'.repeat(64), title: 'Lions sleep', preview: { mediaId: null, note: 'picture is made when the post goes out' }, facts: { text: 'Lions sleep.', videoText: null, draftKind: 'outlook', sources: [], expiresText: '22 Nov at 11:00 (East Africa time)', whenText: null, nextSlot: '2026-11-19T09:00:00+03:00', nextSlotText: '19 Nov at 09:00 (East Africa time)', instagram: false, auto: false, blockedRules: [], lastTryFailed: false }, state: 'waiting', reason: null, usableToday: false, decision: null, actions: ['approve', 'skip', 'edit'], ...o });
+test('T12-1 counts and rows: drafts are counted; a row says Post or Automatic post; the Posts filter exists', () => {
+  assert.deepEqual({ ...pure.countKinds([{ kind: 'draft' }, { kind: 'hook' }, { kind: 'clip' }, { kind: 'draft' }]) }, { all: 4, hook: 1, clip: 1, draft: 2 });
+  assert.equal(pure.rowText(dItem()), 'Post: Lions sleep'); assert.equal(pure.rowText(dItem({ facts: { auto: true } })), 'Automatic post: Lions sleep'); assert.equal(pure.rowText({ kind: 'hook', title: 'T' }), 'Video text: T');
+  assert.match(html, /renderFilters\(\)[\s\S]{0,200}draft: 'Posts'/);
+});
+test('T12-2 state lines for drafts', () => {
+  const s = (o) => pure.stateLine(dItem(o));
+  assert.equal(s({}), 'Waiting for your yes. If you approve it, it is scheduled at Meta for 19 Nov at 09:00 (East Africa time).');
+  assert.equal(s({ facts: { nextSlotText: null } }), 'Waiting for your yes.');
+  assert.equal(s({ reason: 'approve-off' }), 'Ready. Approving posts on this page is not switched on yet. You can skip or edit it.');
+  assert.equal(s({ state: 'refused: sources-missing', reason: 'sources-missing' }), 'Not ready: The numbers or places in this post have no recorded source. Ask Claude to record them.');
+  assert.equal(s({ state: 'blocked', reason: 'blocked' }), 'Blocked by the checks. It will not go out.');
+  assert.equal(s({ state: 'scheduled', facts: { whenText: '19 Nov at 09:00 (East Africa time)' } }), 'Scheduled at Meta for 19 Nov at 09:00 (East Africa time). It goes out by itself.');
+  assert.equal(s({ state: 'automatic', facts: { whenText: '19 Nov at 09:00 (East Africa time)' } }), 'Automatic post, scheduled for 19 Nov at 09:00 (East Africa time). There is nothing to decide here. Stop all posting holds it.');
+  assert.equal(s({ state: 'skipped' }), 'You skipped it.'); assert.equal(s({ state: 'weird' }), pure.FALLBACK); assert.equal(s({ state: 'refused: nonsense-reason', reason: 'nonsense-reason' }), pure.FALLBACK);
+});
+test('T12-3 reasons and the label for an unreadable list', () => {
+  const want = { stopped: 'Posting is stopped right now.', 'text-missing': 'This post has no text.', 'sources-missing': 'The numbers or places in this post have no recorded source. Ask Claude to record them.', 'sources-old': 'The sources of this post were recorded the old way. Ask Claude to record them again.', 'sources-outdated': 'The text changed after its sources were recorded. Ask Claude to record them again.', 'sources-too-few': 'The numbers or places in this post need two sources on different sites.', blocked: 'The checks blocked this post.', 'hidden-characters': 'The text holds characters that cannot be seen. Use Edit and remove them.', 'check-meta': 'This post may already be scheduled at Meta. Look in Meta before you do anything here.', 'approve-off': 'Approving posts on this page is not switched on yet.', expired: 'The time to decide has passed. The system removes it soon.', 'ready-file-changed': 'The video file changed after it was checked.' };
+  for (const [k, v] of Object.entries(want)) assert.equal(pure.reasonText(k), v, k);
+  assert.match(pure.reasonText('queue-unreadable'), /^The list of posts cannot be read right now\./); assert.equal(pure.LABELS['queue-unreadable'], 'The list of posts cannot be read right now.');
+});
+test('T12-4 facts of a draft, in order; no raw time; the picture note', () => {
+  const it = dItem({ facts: { text: 'Whole text here.', videoText: 'On video', draftKind: 'outlook', sources: [{ claim: 'c1', source: 'Site 1', line: 'l1' }, { claim: 'c2', source: 'Site 2', line: 'l2' }], expiresText: '22 Nov at 11:00 (East Africa time)', whenText: '19 Nov at 09:00 (East Africa time)', instagram: true, auto: false, blockedRules: ['sea-conditions', 'paid-link-wording'], lastTryFailed: true } });
+  assert.deepEqual([...pure.factLines(it)].map((r) => [...r]), [['Post:', 'Whole text here.'], ['Text on the video:', 'On video'], ['Fact:', 'c1'], ['Source:', 'Site 1: l1'], ['Fact:', 'c2'], ['Source:', 'Site 2: l2'], ['Decide by:', '22 Nov at 11:00 (East Africa time)'], ['Scheduled for:', '19 Nov at 09:00 (East Africa time)'], ['Instagram:', 'The system also posts it on Instagram later.'], ['Rules that refused it:', 'sea conditions, paid link wording'], ['Last try:', 'Meta did not accept the last try.']]);
+  assert.deepEqual([...pure.factLines(dItem())].map((r) => [...r]).filter((r) => r[0] === 'Instagram:'), [['Instagram:', 'Not on Instagram.']]); assert.deepEqual([...pure.factLines(dItem({ state: 'scheduled' }))].map((r) => r[0]).filter((k) => k === 'Instagram:'), []);
+  const full = { ...dItem().facts, whenText: '19 Nov at 09:00 (East Africa time)', videoText: 'v', sources: [{ claim: 'c', source: 's', line: 'l' }], blockedRules: ['a-b'], lastTryFailed: true };
+  for (const i of [it, dItem(), dItem({ state: 'automatic' }), dItem({ facts: full }), dItem({ state: 'scheduled', facts: full }), dItem({ state: 'blocked', facts: full })]) for (const r of pure.factLines(i)) assert.doesNotMatch(r[1], /\d{4}-\d{2}-\d{2}T/, r[0]);
+  assert.equal(pure.noteText(dItem()), 'The picture or video is made when the post goes out. It is not shown here.');
+});
+test('T12-5 every code of the closed set has a refusal or reason sentence, read from the source of bpa-actions.js; cannot-decide is rewritten; the reload codes', () => {
+  const srcFile = fs.readFileSync(path.join(HERE, 'bpa-actions.js'), 'utf8'); const list = srcFile.match(/export const ACTION_CODES = Object\.freeze\(\[([\s\S]*?)\]\);/)[1]; const codes = [...list.matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]); assert.ok(codes.length > 40);
+  for (const c of codes) { const t = pure.refusalText(c); assert.notEqual(t, pure.FALLBACK, c); assert.match(t, /\.$/, c); }
+  assert.equal(pure.REFUSAL_TEXT['cannot-decide'], 'This cannot be decided here. If it is a post: approving posts on this page is not switched on yet.');
+  for (const c of ['already-scheduled', 'already-posted', 'expired', 'blocked', 'not-pending', 'slot-changed', 'check-meta']) assert.equal(pure.afterRefusal(c), 'reload', c); assert.equal(pure.afterRefusal('lock-busy'), 'stay');
+});
+test('T12-6 edit rules per kind: limits, hidden characters, the body size, the request', () => {
+  assert.deepEqual({ ...pure.EDIT_LIMITS }, { hook: 60, draft: 2000 }); assert.equal(pure.BODY_MAX_BYTES, 2048); assert.equal(pure.utf8Length('a\u00e9\u2014\u{1F981}'), 1 + 2 + 3 + 4);
+  for (const c of BAD_CHARS) assert.equal(pure.editProblem('draft', 'a' + c + 'b'), 'bad-characters', 'U+' + c.codePointAt(0).toString(16));
+  for (const c of DRAFT_LINEBREAKS_REFUSED) assert.equal(pure.editProblem('draft', 'a' + c + 'b'), 'bad-characters', 'break U+' + c.codePointAt(0).toString(16));
+  assert.equal(pure.editProblem('draft', 'line one\nline two'), null, 'a line feed is allowed in a draft'); assert.equal(pure.editProblem('hook', 'line one\nline two'), 'bad-characters', 'but not in a hook');
+  for (const t of GOOD_TEXTS) assert.equal(pure.editProblem('draft', t), null, t); for (const t of EMOJI_OK_TEXTS) assert.equal(pure.editProblem('draft', t), null, t); for (const t of EMOJI_BAD_TEXTS) assert.equal(pure.editProblem('draft', t), 'bad-characters', t);
+  assert.equal(pure.editProblem('draft', ''), 'empty'); assert.equal(pure.editProblem('draft', '   '), 'empty'); assert.equal(pure.editProblem('draft', 5), 'empty');
+  assert.equal(pure.editProblem('draft', 'x'.repeat(1900)), null); assert.equal(pure.editProblem('draft', 'x'.repeat(2001)), 'too-long'); assert.equal(pure.editProblem('draft', 'x'.repeat(2000)), 'too-big', '2000 plain characters fit the length rule but not the 2048 byte body');
+  assert.equal(pure.editProblem('draft', '\u2014'.repeat(700)), 'too-big'); assert.equal(pure.editProblem('hook', 'h'.repeat(61)), 'too-long'); assert.equal(pure.editProblem('hook', 'h'.repeat(60)), null);
+  assert.equal(pure.EDIT_PROBLEM_TEXT.empty, 'Write at least one character.'); assert.equal(pure.EDIT_PROBLEM_TEXT['too-big'], 'This text is too long to save from this page. Shorten it, or use WhatsApp.'); assert.equal(pure.EDIT_PROBLEM_TEXT['bad-characters'], pure.REFUSAL_TEXT['bad-characters']);
+  assert.equal(pure.EDIT_PROBLEM_TEXT['too-long']('draft'), 'Write between 1 and 2000 characters.'); assert.equal(pure.EDIT_PROBLEM_TEXT['too-long']('hook'), 'Write between 1 and 60 characters on one line.');
+  const it = dItem(); assert.deepEqual({ ...pure.decisionRequest(it, 'approve') }, { kind: 'draft', id: 'B1', version: 'a'.repeat(64), action: 'approve', slot: '2026-11-19T09:00:00+03:00' });
+  assert.equal(pure.decisionRequest(dItem({ facts: { nextSlot: null } }), 'approve'), null); assert.deepEqual({ ...pure.decisionRequest(it, 'skip') }, { kind: 'draft', id: 'B1', version: 'a'.repeat(64), action: 'skip' });
+  assert.deepEqual({ ...pure.decisionRequest(it, 'edit', 'New\ntext.') }, { kind: 'draft', id: 'B1', version: 'a'.repeat(64), action: 'edit', text: 'New\ntext.' }); assert.equal(pure.decisionRequest(it, 'edit', 'x'.repeat(2001)), null); assert.equal(pure.decisionRequest(it, 'edit', '\u2014'.repeat(700)), null);
+  assert.equal(pure.decisionRequest(dItem({ actions: ['skip'] }), 'approve'), null);
+});
+test('T12-7 keys: a draft is never approved or skipped by a key; a hook is unchanged', () => {
+  const k = (key, kind, c = {}) => pure.keyAction({ key, ctrlKey: false, metaKey: false, altKey: false, repeat: false }, { wide: true, typing: false, busy: false, editing: false, actions: ['approve', 'skip', 'edit'], kind, ...c });
+  assert.equal(k('a', 'draft'), null); assert.equal(k('s', 'draft'), null); assert.equal(k('e', 'draft'), 'edit'); assert.equal(k('Escape', 'draft', { editing: true }), 'cancel');
+  assert.equal(k('a', 'hook'), 'approve'); assert.equal(k('s', 'hook'), 'skip'); assert.equal(k('e', 'hook'), 'edit'); assert.equal(k('Escape', 'hook', { editing: true }), 'cancel'); assert.equal(k('a', undefined), 'approve');
+});
+test('T12-8 decided rows and Undo', () => {
+  assert.equal(pure.decidedLine(dItem({ state: 'scheduled', decision: { kind: 'scheduled', at: 'x' }, facts: { whenText: '19 Nov at 09:00 (East Africa time)' }, actions: [] })), 'You scheduled "Lions sleep" for 19 Nov at 09:00 (East Africa time).');
+  assert.equal(pure.decidedLine(dItem({ state: 'skipped', decision: { kind: 'skipped', at: 'x' }, actions: [] })), 'You skipped "Lions sleep".');
+  assert.equal(pure.canUndo(dItem({ decision: { kind: 'skipped' }, actions: [] })), false); assert.equal(pure.canUndo({ kind: 'hook', actions: ['undo'] }), true); assert.equal(pure.canUndo({}), false);
+});
+test('T12-9 done, confirm and connection sentences', () => {
+  const it = dItem({ facts: { nextSlotText: '19 Nov at 09:00 (East Africa time)', instagram: false } });
+  assert.equal(pure.doneText(it, 'approve', { scheduledForText: '19 Nov at 09:00 (East Africa time)' }), 'Scheduled at Meta for 19 Nov at 09:00 (East Africa time). It goes out by itself.'); assert.equal(pure.doneText(it, 'approve', {}), 'Scheduled at Meta.');
+  assert.equal(pure.doneText(it, 'skip', {}), 'Skipped. This cannot be undone here.'); assert.equal(pure.doneText(it, 'edit', {}), 'Saved. It is not scheduled yet. Look at the card again before you approve.');
+  assert.equal(pure.doneText({ kind: 'hook' }, 'approve', {}), 'Approved. You can undo it under What I decided.'); assert.equal(pure.doneText({ kind: 'clip' }, 'undo', {}), 'Undone. It is back in the waiting list.'); assert.equal(pure.DONE_TEXT.edit, 'Saved and approved.');
+  assert.equal(pure.confirmText(it, 'approve'), 'This schedules a real post at Meta for 19 Nov at 09:00 (East Africa time). It then goes out by itself. This page cannot take it back; only Meta can cancel it.');
+  assert.ok(pure.confirmText(dItem({ facts: { nextSlotText: 'x', instagram: true } }), 'approve').endsWith(' It also goes on Instagram.')); assert.equal(pure.confirmText(it, 'skip'), 'Skip this post? It does not come back on this page.');
+  assert.equal(pure.netText(it, 'approve'), 'The connection broke. The post may have been scheduled at Meta. Check Meta before you tap again.'); assert.equal(pure.netText(it, 'skip'), pure.NET_TEXT); assert.equal(pure.netText({ kind: 'hook' }, 'approve'), pure.NET_TEXT);
+});
+test('T12-11 jargon: the new sentences hold none of the forbidden words', () => {
+  const bad = /\b(sha\d*|hash|json|manifest|api|mediaId|version|null|undefined|token|nonce)\b/i; const all = [...Object.values(pure.REFUSAL_TEXT), ...Object.values(pure.REASON_TEXT), ...Object.values(pure.EDIT_PROBLEM_TEXT).map((v) => (typeof v === 'function' ? v('draft') + v('hook') : v))];
+  const items = [dItem(), dItem({ reason: 'approve-off' }), dItem({ state: 'scheduled', facts: { whenText: 'x', instagram: true } }), dItem({ state: 'automatic' }), dItem({ state: 'blocked' }), dItem({ state: 'skipped' }), dItem({ state: 'refused: expired', reason: 'expired' })];
+  for (const i of items) { all.push(pure.stateLine(i)); for (const a of ['approve', 'skip', 'edit']) all.push(pure.confirmText(i, a) || '', pure.doneText(i, a, { scheduledForText: 'x' }), pure.netText(i, a)); }
+  for (const t of all) assert.doesNotMatch(t, bad, t);
+});

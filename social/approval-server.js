@@ -4,13 +4,14 @@ import http from 'node:http';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { authorize } from './auth.js';
-import { claimGate } from './claim-gate.js';
-import { withQueueLock, loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, brandGuard, voiceGate, rulesCheck, finalCheck, blockDraft, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, QUEUE_PATH } from './lib.js';
+import { withQueueLock, loadQueue, saveQueue, STATUS, parseCommand, renderList, schedulePost, publishNow, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, QUEUE_PATH } from './lib.js';
 import { stopStatus, engageStop, releaseStop, StoppedError } from './stop.js';
+import { skipDraft, editDraft, approveGuards, scheduleDraft } from './draft-actions.js';
+import { readQueueStrict } from './draft-version.js';
 import { scheduledAtMetaNote, stopPosting, startPosting } from './bpa-actions.js';
 import { reserveInstagramPublish, releaseInstagramReservation } from './ledger.js';
 import { recordPost, healthTick } from './health.js';
-import { createReviewHandler, defaultInputs, refuse } from './review-routes.js';
+import { createReviewHandler, defaultInputs, defaultActions, refuse } from './review-routes.js';
 import { createSessions, loadAccess, checkHealthAccess, hasProxyHeaders } from './review-auth.js';
 const PORT = CONFIG.approvalPort;
 export { scheduledAtMetaNote };
@@ -22,29 +23,36 @@ export async function dispatch(text, deps = {}) {
 }
 export async function handle(text, deps = {}) {
   const { queuePath = QUEUE_PATH, stopOpts, stop = () => stopStatus(stopOpts), schedule = schedulePost, publish = publishNow, publishIg = igPostDraftAny, igOn = igEnabled, reserve = reserveInstagramPublish, release = releaseInstagramReservation, now: nowDep, ledgerPath, config: capConfig = CONFIG, lastPostPath, notify = whatsapp, neverPromotePatterns } = deps;
-  const c = parseCommand(text);
+  const parsed = parseCommand(text); const again = parsed.cmd === 'approveagain' || parsed.cmd === 'postnowagain'; const c = again ? { ...parsed, cmd: parsed.cmd === 'postnowagain' ? 'postnow' : 'approve' } : parsed; // `bpa approve B1 again` and `bpa post B1 now again` are the normal command after the "check Meta first" mark is cleared
+  const persist = (qq) => saveQueue(qq, queuePath); // write-ahead: the mark reaches the disk before any call to Meta
   // stop / start never wait for the queue lock (dispatch() below calls them outside it) and never need a readable queue.
   if (c.cmd === 'stop') return stopPosting({ queuePath, stopOpts, now: nowDep || new Date() }).reply;
   if (c.cmd === 'start') return startPosting({ stopOpts }).reply;
-  const q = loadQueue(queuePath); const find = (id) => q.drafts.find((d) => d.id === id);
+  // A command that SAVES never saves a queue it could not read (loadQueue would give an empty one and the save would wipe the real file). A MISSING file keeps the old behaviour: an empty queue, "not found".
+  let q;
+  if (['skip', 'edit', 'approve', 'postnow'].includes(c.cmd) && fs.existsSync(queuePath)) { const r = readQueueStrict(queuePath); if (!r.ok) return '⚠️ The queue file cannot be read, so nothing was changed. Tell Claude.'; q = r.q; } else q = loadQueue(queuePath);
+  const find = (id) => q.drafts.find((d) => d.id === id);
   if (c.cmd === 'help') return 'bpa · bpa list · bpa approve B1 B2 · bpa skip B1 · bpa edit B1: text · bpa post B1 now · bpa status · bpa stop · bpa start';
   if (c.cmd === 'list') return renderList(q);
   if (c.cmd === 'status') { const n = (s) => q.drafts.filter((d) => d.status === s).length; const up = q.drafts.filter((d) => d.status === STATUS.SCHEDULED).map((d) => `${d.id} ${d.scheduledFor.slice(0, 16)}`).join(', ') || 'none'; return `📊 pending ${n(STATUS.PENDING)} · scheduled ${n(STATUS.SCHEDULED)} (${up}) · posted ${n(STATUS.POSTED)} · skipped ${n(STATUS.SKIPPED)} · blocked ${n(STATUS.BLOCKED)}`; }
   if (c.cmd === 'unknown') return `❓ Didn't get "${c.raw}". ${await handle('help', deps)}`;
-  const out = [];
+  const out = []; const againMarks = [];
   for (const id of c.ids) {
     const d = find(id); if (!d) { out.push(`❌ ${id}: not found`); continue; }
-    if (c.cmd === 'skip') { if (d.status !== STATUS.PENDING) { out.push(`⚠️ ${id} is ${d.status}`); continue; } d.status = STATUS.SKIPPED; d.decidedAt = new Date().toISOString(); out.push(`🚫 ${id} skipped`); continue; }
-    if (c.cmd === 'edit') { if (d.status !== STATUS.PENDING) { out.push(`⚠️ ${id} is ${d.status}`); continue; } const bad = brandGuard(c.text); if (bad) { out.push(`❌ ${id}: ${bad}`); continue; } const v = await voiceGate(c.text); if (!v.ok) { out.push(`❌ ${id}: voice-lint — ${v.reason}`); continue; } const rg = rulesCheck(c.text, { claims: d.claims, neverPromotePatterns }); if (!rg.ok) { out.push(`❌ ${id}: rules — ${rg.reason}`); continue; } d.text = c.text; delete d.claimSources; delete d.claimSourcesHash; delete d.claimSourcesAt; d.editedAt = new Date().toISOString(); out.push(`✏️ ${id} updated (${c.text.length} chars). Reply *bpa approve ${id}* to schedule.`); continue; }
+    if (c.cmd === 'skip') { out.push(skipDraft(d).line); continue; }
+    if (c.cmd === 'edit') { out.push((await editDraft(d, c.text, { neverPromotePatterns })).line); continue; }
+    if (again) { // the way out of "check Meta first": the owner looked and no post is there. Same queue lock, then the normal approve with every guard.
+      if (!d.metaUnknown) { out.push(`❌ ${id}: nothing to repeat`); continue; }
+      const was = d.metaUnknown; delete d.metaUnknown; log(`${parsed.cmd === 'postnowagain' ? 'post now again' : 'approve again'} ${id}`);
+      againMarks.push(() => { if (d.status === STATUS.PENDING && !d.metaUnknown) d.metaUnknown = was; }); // a refusal before the call to Meta (stop, claim gate, a failed first save) must not leave the mark cleared
+    }
     if (c.cmd === 'approve' || c.cmd === 'postnow') {
-      if (d.status !== STATUS.PENDING) { out.push(`⚠️ ${id} is ${d.status}`); continue; }
-      { const st = stop(); if (st.stopped) { log(`${c.cmd} ${id} refused: ${st.reason}`); out.push(`⏸ ${id}: ${st.reason}. Reply *bpa start* to resume.`); continue; } }
-      { const g = claimGate(d); if (g) { log(`${c.cmd} ${id} refused: ${g}`); out.push(`❌ ${id}: ${g}`); continue; } }
-      // FINAL CHECK on the exact text that is about to go out (voice gate + rules), BEFORE any ledger reservation, schedule or publish call
-      { const fc = await finalCheck(d, { neverPromotePatterns }); if (!fc.ok) { await blockDraft(d, fc, { stage: c.cmd === 'postnow' ? 'posting now' : 'scheduling', notify, say: log }); out.push(`🚫 ${id} blocked: ${fc.ruleIds.join(', ')}. Nothing was posted or scheduled; it will not be retried.`); continue; } }
+      const g = await approveGuards(d, { cmd: c.cmd, stop, neverPromotePatterns, notify, say: log }); if (!g.ok) { out.push(g.line); continue; }
       try {
         if (c.cmd === 'postnow') {
-          const r = await publish(d.text); d.status = STATUS.POSTED; d.postId = r.id; d.permalink = r.permalink_url; d.postedAt = new Date().toISOString(); recordPost({ now: new Date(), id, path: lastPostPath }); out.push(`✅ ${id} posted now on the Page: ${r.permalink_url || r.id}`);
+          d.metaUnknown = { at: new Date().toISOString() }; // write-ahead: the post may exist at Meta from here on
+          try { persist(q); } catch { delete d.metaUnknown; log(`postnow ${id} not started: the queue could not be saved`); out.push(`❌ ${id}: the queue could not be saved, so nothing was posted.`); continue; }
+          const r = await publish(d.text); delete d.metaUnknown; d.status = STATUS.POSTED; d.postId = r.id; d.permalink = r.permalink_url; d.postedAt = new Date().toISOString(); recordPost({ now: new Date(), id, path: lastPostPath }); out.push(`✅ ${id} posted now on the Page: ${r.permalink_url || r.id}`);
           if (igOn()) {
             const rAt = new Date(); const rs = reserve({ id, now: rAt, config: capConfig, path: ledgerPath }); // daily cap: ledger line written before the network call
             if (!rs.ok) { d.ig = { status: 'queued', at: new Date().toISOString() }; log(`${id} instagram publish held, queued for the next free day: ${rs.reason}`); out.push(`📸 ${id} Instagram not posted: ${rs.reason}. It is queued; the worker will post it on the next free day.`); }
@@ -59,19 +67,18 @@ export async function handle(text, deps = {}) {
             }
           }
         } else {
-          const [at] = nextSlots(q, 1); const r = await schedule(d.text, at); d.status = STATUS.SCHEDULED; d.postId = r.id; d.scheduledFor = at; d.decidedAt = new Date().toISOString();
-          if (igOn()) d.ig = { status: 'queued', at };
-          out.push(`📅 ${id} scheduled for ${at.slice(0, 16)} on the Page${igOn() ? ' + Instagram' : ''} (${r.id})`);
+          out.push((await scheduleDraft(q, d, { cmd: c.cmd, schedule, igOn, persist, say: log })).line);
         }
       } catch (e) {
-        if (e instanceof StoppedError) { log(`${c.cmd} ${id} refused: ${e.reason}`); out.push(`⏸ ${id}: ${e.reason}. Nothing was posted. Reply *bpa start* to resume.`); continue; }
+        if (e instanceof StoppedError) { delete d.metaUnknown; try { persist(q); } catch { /* the mark stays on disk: fail closed */ } log(`${c.cmd} ${id} refused: ${e.reason}`); out.push(`⏸ ${id}: ${e.reason}. Nothing was posted. Reply *bpa start* to resume.`); continue; }
         d.lastError = e.message; log(`${c.cmd} ${id} failed: ${e.message}`); out.push(`❌ ${id}: ${e.message.slice(0, 160)}`); }
     }
   }
+  for (const restore of againMarks) restore();
   saveQueue(q, queuePath); return out.join('\n');
 }
 const reviewSessions = createSessions();
-const reviewHandler = createReviewHandler({ sessions: reviewSessions, loadInputs: defaultInputs, log });
+const reviewHandler = createReviewHandler({ sessions: reviewSessions, loadInputs: defaultInputs, loadActions: defaultActions, log });
 export const server = http.createServer(async (req, res) => {
   const send = (code, obj) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(obj)); };
   if (reviewHandler(req, res)) return; // /review/*: its own access rule (login + cookie), see review-routes.js

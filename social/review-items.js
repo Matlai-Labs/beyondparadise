@@ -151,7 +151,7 @@ export const hookVersion = (hook, idea) => sha(JSON.stringify([hook, idea.title,
 
 /** Never throws. A source that cannot be read adds a problem and the other kind is still built.
  *  Hook items also carry `usableToday` + `reason`: for an approved hook, whether the lane would take its idea today (laneVerdict = laneVerdictFor from auto-lane.js, injected). */
-export async function buildItems({ readHooks, loadPool, readManifest, libraryDir, info, secret, evaluate, previewFor = () => null, now = new Date(), exists = fs.existsSync, readUsage = () => [], readHistory = () => [], readConfig = () => ({}), laneVerdict = () => ({ ok: true }), sourceFor = () => null, readApprovals = () => ({ ok: true, data: emptyApprovals() }), decisionWindowMs = DECISION_WINDOW_MS }) {
+export async function buildItems({ readHooks, loadPool, readManifest, libraryDir, info, secret, evaluate, previewFor = () => null, now = new Date(), exists = fs.existsSync, readUsage = () => [], readHistory = () => [], readConfig = () => ({}), laneVerdict = () => ({ ok: true }), sourceFor = () => null, readApprovals = () => ({ ok: true, data: emptyApprovals() }), decisionWindowMs = DECISION_WINDOW_MS, buildDrafts }) {
   const problems = []; const media = new Map(); const hookItems = [];
   let hooks = null; try { const h = readHooks(); if (h && h.ok && Array.isArray(h.hooks)) hooks = h.hooks; } catch { /* a problem below */ }
   if (!hooks) problems.push('hooks-unreadable');
@@ -208,6 +208,9 @@ export async function buildItems({ readHooks, loadPool, readManifest, libraryDir
       return { item: { kind: 'hook', id: e.ideaId, version, title: e.hook, preview, facts, state, reason, usableToday, decision, actions }, decision, previewMedia };
     }))).filter((r) => !r.decision || inWindow(r.decision.at, now, decisionWindowMs)).map((r) => { if (r.previewMedia) media.set(r.previewMedia[0], r.previewMedia[1]); return r.item; }));
   }
-  const items = [...clipItems, ...hookItems]; // clips first: they have videos
-  return { ok: true, items, counts: { all: items.length, hook: hookItems.length, clip: clipItems.length }, problems, media };
+  // queue drafts and prepared posts (an optional input: absent means none); a throw adds one problem and the rest is still built
+  let draftItems = [];
+  if (typeof buildDrafts === 'function') { try { const d = await buildDrafts(); draftItems = Array.isArray(d?.items) ? d.items : []; for (const [k, v] of (d?.media instanceof Map ? d.media : [])) media.set(k, v); for (const p of (Array.isArray(d?.problems) ? d.problems : [])) problems.push(p); } catch { problems.push('queue-unreadable'); draftItems = []; } }
+  const items = [...draftItems, ...clipItems, ...hookItems]; // drafts first (they expire), then clips (they have videos)
+  return { ok: true, items, counts: { all: items.length, hook: hookItems.length, clip: clipItems.length, draft: draftItems.length }, problems, media };
 }

@@ -7,11 +7,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { stateDir } from './stop.js';
+import { stateDir, stopStatus } from './stop.js';
 import { loadAccess, checkAccess, checkAction, checkSameOrigin, cookieOf, setCookieHeader, isPageLoad, PAGE_HEADER } from './review-auth.js';
 import { createActions, publicCode } from './bpa-actions.js';
 import { parseDecisionBody, parsePostingBody, runDecision, runPosting } from './review-decide.js';
-import { decisionsFilePath } from './review-decisions.js';
+import { decisionsFilePath, readDecisions } from './review-decisions.js';
+import { buildDraftItems } from './review-draft-items.js';
+import { readQueueStrict, draftVersion } from './draft-version.js';
+import { approveSwitchOn } from './approve-switch.js';
 import { buildItems, fileInfoOf } from './review-items.js';
 import { readClipApprovals, defaultClipApprovalsPath } from './clip-approvals.js';
 import { readStatus } from './review-status.js';
@@ -21,7 +24,8 @@ import { loadIdeaPool } from './idea-drafts.js';
 import { libraryDir as libraryDirOf, readManifest } from './clip-library.js';
 import { readUsage, defaultUsagePath } from './reel-clip.js';
 import { historyFromQueue } from './ideas.js';
-import { loadQueue, QUEUE_PATH } from './lib.js';
+import { loadQueue, QUEUE_PATH, finalCheck, igEnabled, autoDir, CONFIG, schedulePost, whatsapp } from './lib.js';
+import { createDraftActions } from './draft-decisions.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MEDIA_ID = /^m_[0-9a-f]{32}$/;
@@ -50,9 +54,16 @@ export function ttlMemo(fn, { ttlMs, now = Date.now, key = () => '' } = {}) {
 
 export const CHECK_CACHE_MS = 60000; // the idea pool and the hook checks change slowly; the item list itself is cached shorter
 
+/** Ids of drafts with an un-voided approve line in the record. An unreadable record gives an empty set: the server-side check at Approve time is the guard. */
+function approvedDraftIds(env) {
+  const r = readDecisions(decisionsFilePath(env)); if (!r.ok) return new Set();
+  return new Set(r.records.filter((x) => x.kind === 'draft' && x.decision === 'approve' && typeof x.id === 'string').map((x) => x.id));
+}
+
 /** The inputs buildItems takes, from the real sources. The idea pool and the hook checks are cached for 60 s (this process also answers the WhatsApp commands and the worker's health call). */
 export function createDefaultInputs({ env = process.env, now = Date.now, loadPool = (o) => loadIdeaPool(o), evaluateImpl } = {}) {
   const dir = libraryDirOf(env);
+  const checkDraft = ttlMemo((d) => finalCheck(d), { ttlMs: CHECK_CACHE_MS, now, key: (d) => `${d.id}|${draftVersion(d)}` }); // the final check of a draft's exact text, 60 s per id and version
   const evalImpl = evaluateImpl || (async (idea, o) => { const { evaluateIdea } = await import('./auto-lane.js'); return evaluateIdea(idea, { now: o.now, hook: o.hook, sourceNames: o.sourceNames }); });
   return {
     readHooks: () => readHooks(defaultHooksPath(env)),
@@ -67,19 +78,28 @@ export function createDefaultInputs({ env = process.env, now = Date.now, loadPoo
     laneVerdict: async (idea, ctx) => (await import('./auto-lane.js')).laneVerdictFor(idea, ctx),
     sourceFor: async (claim, sourceNames) => { const { sourceLine } = await import('./caption.js'); return sourceLine([claim], { sourceNames }).replace(/^Source: /, ''); }, // the same words the post's own source line uses
     previewFor: () => null, // part 1b fills this in
+    autoFolder: autoDir(env), // the one folder a prepared post's video may be served from
+    buildDrafts: () => buildDraftItems({
+      readQueue: () => readQueueStrict(QUEUE_PATH), checkFor: checkDraft, stop: () => stopStatus({ env }), igOn: igEnabled, approveOn: () => approveSwitchOn(env),
+      approvedIds: approvedDraftIds(env), ttlDays: CONFIG.draftTtlDays, autoDir: autoDir(env), info: INFO, secret: SECRET, now: new Date(),
+    }),
   };
 }
 /** The decision actions, from the real sources: the same hash cache, a fresh pool and a fresh evaluation (no 60 s memo) on every decision. One per process. */
 export function createDefaultActions(env = process.env) {
   const dir = libraryDirOf(env);
-  return createActions({
+  return {
+    ...createActions({
     env, libraryDir: dir, info: INFO,
     loadPool: () => loadIdeaPool({ now: new Date(), env }),
     evaluate: async (idea, o) => { const { evaluateIdea } = await import('./auto-lane.js'); return evaluateIdea(idea, { now: o.now, hook: o.hook, sourceNames: o.sourceNames }); },
     readManifest: () => readManifest(dir),
     readUsage: () => readUsage(defaultUsagePath(env)),
     readHistory: () => historyFromQueue(loadQueue(QUEUE_PATH)),
-  });
+    }),
+    // the page's Skip, Edit and Approve of queue drafts. THE ONE PLACE in the page code that hands over the real scheduling function; every door is named here, none has a default.
+    ...createDraftActions({ env, queuePath: QUEUE_PATH, recordFile: decisionsFilePath(env), schedule: schedulePost, igOn: igEnabled, notify: whatsapp, stop: () => stopStatus({ env }), approveOn: () => approveSwitchOn(env), neverPromotePatterns: undefined }),
+  };
 }
 let DEFAULT_ACTIONS = null;
 export function defaultActions(env = process.env) { if (!DEFAULT_ACTIONS) DEFAULT_ACTIONS = createDefaultActions(env); return DEFAULT_ACTIONS; }
@@ -91,12 +111,12 @@ const BODY_WAIT_MS = 10000;
 // path -> { route, method }; a Map, so a hostile path such as /review/api/__proto__ is just a miss. /review/media/<id> is matched by prefix.
 const ROUTES = new Map([['/review/', { route: 'page', method: 'GET' }], ['/review/api/items', { route: 'items', method: 'GET' }], ['/review/api/session', { route: 'session', method: 'POST' }], ['/review/api/decide', { route: 'decide', method: 'POST' }], ['/review/api/posting', { route: 'posting', method: 'POST' }]]);
 
-export function createReviewHandler({ sessions, loadInputs = defaultInputs, loadActions = defaultActions, recordFile = decisionsFilePath(), postingOpts = {}, log = () => {}, env = process.env, cacheMs = 10000, now = Date.now, pageFile = path.join(HERE, 'review-page.html'), previewDir = path.join(stateDir(env), 'bpa-review-previews') } = {}) {
+export function createReviewHandler({ sessions, loadInputs = defaultInputs, loadActions = () => { throw new Error('no actions configured'); }, recordFile = decisionsFilePath(), postingOpts = {}, log = () => {}, env = process.env, cacheMs = 10000, now = Date.now, pageFile = path.join(HERE, 'review-page.html'), previewDir = path.join(stateDir(env), 'bpa-review-previews') } = {}) {
   let cache = null; // { at, built: Promise }
-  let lastMedia = new Map(); let lastLibraryDir = null; // the id to file map of the latest item build: media requests are answered from it, never by building a list
+  let lastMedia = new Map(); let lastLibraryDir = null; let lastAutoDir = null; // the id to file map of the latest item build: media requests are answered from it, never by building a list
   const built = () => {
     if (cache && now() - cache.at < cacheMs) return cache.built;
-    const p = (async () => { const inp = loadInputs(env); const b = await buildItems(inp); lastMedia = b.media; lastLibraryDir = inp.libraryDir; return b; })(); cache = { at: now(), built: p }; p.catch(() => { if (cache && cache.built === p) cache = null; });
+    const p = (async () => { const inp = loadInputs(env); const b = await buildItems(inp); lastMedia = b.media; lastLibraryDir = inp.libraryDir; lastAutoDir = inp.autoFolder; return b; })(); cache = { at: now(), built: p }; p.catch(() => { if (cache && cache.built === p) cache = null; });
     return p;
   };
   // The one refusal that clears itself: another new session was issued under 2 s ago. A tiny page, no script, that asks again in 3 s. Same headers and the same CSP as the real page.
@@ -138,7 +158,7 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, load
     if (route === 'decide') {
       const pr = parseDecisionBody(body); if (!pr.ok) { log('review refused: bad-request decide'); return json(res, 400, { ok: false, code: 'bad-request' }); }
       const r = await runDecision(pr.req, { actions: loadActions(env), recordFile, claimedLogin: access.ownerLogin });
-      if (r && r.ok === true) { cache = null; log(`review decision: ${pr.req.action} ${pr.req.kind} ok`); return json(res, 200, { ok: true, change: r.change, ...(r.enforced !== undefined ? { enforced: r.enforced } : {}) }); }
+      if (r && r.ok === true) { cache = null; log(`review decision: ${pr.req.action} ${pr.req.kind} ok`); return json(res, 200, { ok: true, change: r.change, ...(r.enforced !== undefined ? { enforced: r.enforced } : {}), ...(typeof r.scheduledFor === 'string' && typeof r.scheduledForText === 'string' ? { scheduledFor: r.scheduledFor, scheduledForText: r.scheduledForText } : {}) }); }
       const code = publicCode(r && r.code); log(`review decision: ${pr.req.action} ${pr.req.kind} refused ${code}`); return json(res, 409, { ok: false, code });
     }
     const pp = parsePostingBody(body); if (!pp.ok) { log('review refused: bad-request posting'); return json(res, 400, { ok: false, code: 'bad-request' }); }
@@ -172,7 +192,7 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, load
         let st; try { st = fs.lstatSync(entry.path); } catch { return text(res, 404); }
         if (st.isSymbolicLink() || !st.isFile() || st.size !== entry.size || st.mtimeMs !== entry.mtimeMs || st.ino !== entry.ino) return text(res, 404);
       }
-      const r = resolveMediaPath(entry.path, [lastLibraryDir, previewDir].filter(Boolean));
+      const r = resolveMediaPath(entry.path, [lastLibraryDir, lastAutoDir, previewDir].filter(Boolean));
       if (!r.ok) { log(`review media refused: ${r.reason}`); return text(res, 404); }
       res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
       return serveMedia(req, res, { path: r.path });

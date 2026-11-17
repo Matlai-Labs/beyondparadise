@@ -54,10 +54,10 @@ test('worker.js: an automatic item is held when the switch is off, BEFORE the st
   assert.ok(body.indexOf('const st = stop()', hold) < body.indexOf('await check(d', hold), 'and the existing order stop, final check, reserve, claim, publish is unchanged');
   before(body, 'await publishIg(d)', 'afterAutoPublish(d, r'); before(body, 'recordPost({ now, id: d.id, path: lastPostPath })', 'afterAutoPublish(d, r');
 });
-test('the set of files that call a publisher is unchanged: approval-server.js and worker.js only', () => {
+test('the set of files that call a publisher is unchanged: approval-server.js, draft-actions.js and draft-decisions.js (they receive schedule as a parameter) and worker.js only', () => {
   const callers = [];
-  for (const f of fs.readdirSync(HERE).filter((x) => x.endsWith('.js') && !x.endsWith('.test.js') && x !== 'lib.js')) { const s = read(f); if (/\b(?:await\s+)?(?:schedulePost|publishNow|igPostDraftAny|publishIg|publish|schedule)\(/.test(s) && /\b(schedulePost|publishNow|igPostDraftAny|igPostDraft|igPublish\w*|createPost)\b/.test(s)) callers.push(f); }
-  assert.deepEqual(callers.sort(), ['approval-server.js', 'worker.js']);
+  for (const f of fs.readdirSync(HERE).filter((x) => x.endsWith('.js') && !x.endsWith('.test.js') && x !== 'lib.js')) { const s = read(f); if (/\b(?:schedulePost|publishNow|igPostDraftAny|publishIg|publish|schedule|scheduleDraft)\(/.test(s)) callers.push(f); }
+  assert.deepEqual(callers.sort(), ['approval-server.js', 'draft-actions.js', 'draft-decisions.js', 'worker.js']);
 });
 
 // ── lib.js: the ready-file branch sits behind the stop check and every guard runs before anything is uploaded ──

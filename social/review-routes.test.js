@@ -61,7 +61,7 @@ test('settings file with group-readable mode gives 503', async () => { fs.chmodS
 test('items: shape, counts, private cache header, no captions in logs', async () => {
   const r = await call('/review/api/items', ck); assert.equal(r.status, 200); assert.equal(r.headers['cache-control'], 'private, no-store'); const j = JSON.parse(r.body); assert.deepEqual(Object.keys(j).sort(), ['counts', 'items', 'problems', 'status']);
   for (const i of j.items) assert.deepEqual(Object.keys(i).sort(), ['actions', 'decision', 'facts', 'id', 'kind', 'preview', 'reason', 'state', 'title', 'usableToday', 'version']);
-  assert.deepEqual(j.counts, { all: 3, hook: 1, clip: 2 }); assert.ok(!logs.join('\n').includes('SECRETCAPTION')); assert.ok(!r.body.toString().includes(dir), 'no path in the answer');
+  assert.deepEqual(j.counts, { all: 3, hook: 1, clip: 2, draft: 0 }); assert.ok(!logs.join('\n').includes('SECRETCAPTION')); assert.ok(!r.body.toString().includes(dir), 'no path in the answer');
 });
 test('items are cached for cacheMs, not longer', async () => {
   srv.close(); await start({ cacheMs: 60000 }); ck = { ...login, cookie: await cookie() }; loads = 0;

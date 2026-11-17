@@ -144,3 +144,9 @@ test('SR3: the file is opened with O_NOFOLLOW: a symbolic link in the file place
   assert.deepEqual(appendDecision(f, rec()), { ok: false, reason: 'record-failed' }); assert.equal(fs.readFileSync(target, 'utf8'), '');
   assert.ok(/O_NOFOLLOW/.test(fs.readFileSync(new URL('./review-decisions.js', import.meta.url), 'utf8')), 'the flag is in the code');
 });
+
+test('record kind draft: approve, skip, edit and void are accepted; kind drafts is still refused', () => {
+  const f = path.join(tmp(), 'd.jsonl');
+  for (const decision of ['approve', 'skip', 'edit', 'void']) assert.equal(appendDecision(f, rec({ kind: 'draft', id: 'B1', version: 'v', decision })).ok, true, decision);
+  assert.equal(appendDecision(f, rec({ kind: 'drafts' })).ok, false);
+});

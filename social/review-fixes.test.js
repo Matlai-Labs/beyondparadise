@@ -9,6 +9,8 @@ import { handle, dispatch } from './approval-server.js';
 import { StoppedError, engageStop, stopStatus } from './stop.js';
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bparev-'));
+// The worker's Instagram gate reads the tokens file for its scopes only. test-env.js closes the real one, so this file gives it a made-up one (scopes, no token values).
+{ const tf = path.join(tmp(), 'tokens.json'); fs.writeFileSync(tf, JSON.stringify({ user: { scopes: ['instagram_content_publish'] } })); process.env.META_TOKENS_PATH = tf; }
 const T0 = new Date('2026-11-17T10:00:00Z'); const at = (min) => new Date(T0.getTime() + min * 60e3);
 const rows = (p) => (fs.existsSync(p) ? fs.readFileSync(p, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
 const queued = (id, extra = {}) => ({ id, status: 'scheduled', kind: 'signal', text: 'x', sourceDate: '2026-11-01', scheduledFor: '2026-11-02T09:00:00+03:00', ig: { status: 'queued', at: '2026-11-02T09:00:00+03:00' }, ...extra });
