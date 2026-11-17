@@ -38,7 +38,8 @@ export function publicCode(code) {
   const base = code.split(':')[0];
   return OPEN_SET.has(base) ? base : 'check-failed';
 }
-const INVISIBLE = /[\u0000-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\u061C\uFEFF]/;
+// SR2: refuse every control, format, private-use and unassigned character, line and paragraph separators, every space except the plain U+0020, variation selectors, and the fillers that draw nothing. The page (review-page.html BAD_EDIT_CHARS) holds the same set; review-test-chars.js tests both.
+const INVISIBLE = /[\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Cs}\p{Zl}\p{Zp}︀-️\u{E0100}-\u{E01EF}͏ᅟᅠ⠀ㅤﾠ]|(?! )\p{Zs}/u;
 const LINEBREAK = /[\r\n\u2028\u2029\u0085]/;
 const fail = (code) => ({ ok: false, code: publicCode(code) });
 const okOf = (kind, id, decision, extra = {}) => ({ ok: true, change: { kind, id, decision }, ...extra });
@@ -69,12 +70,42 @@ export function createActions({ env = process.env, now = () => new Date(), hooks
     return { map: new Map(p.ideas.map((i) => [i.id, i])), sourceNames: p.sourceNames || {} };
   }
   const hookList = () => { const h = readHooks(hooksFile); return h.ok ? h.hooks : null; };
+  /** null = not used in any post; else the code. A history that cannot be read fails closed. */
+  const usedProblem = (idea) => { let h; try { h = readHistory(); } catch { return 'history-unreadable'; } if (!Array.isArray(h)) return 'history-unreadable'; return inHistoryAny(idea, h) ? 'already-used' : null; };
   async function runEvaluate(idea, hook, pool) {
     let r; try { r = await evaluate(idea, { hook, sourceNames: pool.sourceNames, now: now() }); } catch { r = null; }
     return r && typeof r === 'object' ? r : { ok: false, reason: 'check-failed' };
   }
 
   // ── video texts ──
+  /** What the decision rules need, read fresh: { code } | { hooks, pool, idea, entry, st, version } */
+  async function readHookState(req) {
+    const hooks = hookList(); if (!hooks) return { code: 'hooks-unreadable' };
+    const pool = await freshPool(); if (!pool) return { code: 'ideas-unavailable' };
+    const idea = pool.map.get(req.id); if (!idea) return { code: 'not-found' };
+    const sh = shownEntry(hooks, idea); if (!sh) return { code: 'not-found' };
+    return { hooks, pool, idea, entry: sh.entry, st: hookState(sh.entry, idea), version: hookVersion(sh.entry.hook, idea) };
+  }
+  // the state rules of approve, in the one order both phases use
+  const approveRule = (st) => (st === 'stale' ? 'stale' : st === 'skipped' ? 'already-skipped' : st === 'approved' ? 'already-approved' : null);
+  /** CR5: Approve checks OUTSIDE the lock, like edit: a slow check must not turn every other decision into lock-busy. Phase B re-reads under the lock and
+   *  re-applies the state rules and the version, and the claims must still hash the same, so the text the checks saw is the text that is approved. */
+  async function approveHookDecision(req, ctx) {
+    if (!validReq(req)) return fail('bad-request');
+    const a = await readHookState(req); if (a.code) return fail(a.code);
+    const rule = approveRule(a.st); if (rule) return fail(rule);
+    if (req.version !== a.version) return fail('version-changed');
+    const r = await runEvaluate(a.idea, a.entry.hook, a.pool); if (!r.ok) return fail(r.reason); // D7: the checks must pass right now
+    const seenClaims = claimsSha256(a.idea);
+    return locked(async () => {
+      const b = await readHookState(req); if (b.code) return fail(b.code);
+      const rule2 = approveRule(b.st); if (rule2) return fail(rule2);
+      if (req.version !== b.version || b.entry.hook !== a.entry.hook || claimsSha256(b.idea) !== seenClaims) return fail('version-changed');
+      const next = { ...b.entry, approvedBy: REVIEW_BY, approvedAt: stamp() };
+      const bad = commit(ctx, { kind: 'hook', id: req.id, version: b.version, decision: 'approve' }, () => writeHooksAtomic(hooksFile, { hooks: b.hooks.map((x) => (x === b.entry ? next : x)) }));
+      return bad ? fail(bad) : okOf('hook', req.id, 'approved');
+    });
+  }
   async function hookDecision(req, ctx, word) {
     if (!validReq(req)) return fail('bad-request');
     return locked(async () => {
@@ -84,12 +115,7 @@ export function createActions({ env = process.env, now = () => new Date(), hooks
       const sh = shownEntry(hooks, idea); if (!sh) return fail('not-found');
       const entry = sh.entry; const st = hookState(entry, idea); const version = hookVersion(entry.hook, idea);
       let next; let decision;
-      if (word === 'approve') {
-        if (st === 'stale') return fail('stale'); if (st === 'skipped') return fail('already-skipped'); if (st === 'approved') return fail('already-approved');
-        if (req.version !== version) return fail('version-changed');
-        const r = await runEvaluate(idea, entry.hook, pool); if (!r.ok) return fail(r.reason); // D7: the checks must pass right now
-        next = { ...entry, approvedBy: REVIEW_BY, approvedAt: stamp() }; decision = 'approved';
-      } else if (word === 'skip') {
+      if (word === 'skip') {
         if (st === 'stale') return fail('stale'); if (st === 'skipped') return fail('already-skipped');
         if (req.version !== version) return fail('version-changed');
         next = { ...entry, approvedBy: null, approvedAt: null, skipped: { by: REVIEW_BY, at: stamp() } }; decision = 'skipped';
@@ -116,6 +142,7 @@ export function createActions({ env = process.env, now = () => new Date(), hooks
     const idea = pool.map.get(req.id); if (!idea) return fail('not-found');
     const hooks = hookList(); if (!hooks) return fail('hooks-unreadable');
     const sh = shownEntry(hooks, idea); if (!sh) return fail('not-found');
+    const used = usedProblem(idea); if (used) return fail(used); // an idea already in a post is not edited any more (like undo)
     if (hookVersion(sh.entry.hook, idea) !== req.version) return fail('version-changed'); // a stale entry is allowed: editing is the fix
     if (text === sh.entry.hook) return fail('no-change');
     const r = await runEvaluate(idea, text, pool); if (!r.ok) return fail(r.reason);
@@ -126,6 +153,7 @@ export function createActions({ env = process.env, now = () => new Date(), hooks
       const hooks2 = hookList(); if (!hooks2) return fail('hooks-unreadable');
       const pool2 = await freshPool(); if (!pool2) return fail('ideas-unavailable');
       const idea2 = pool2.map.get(req.id); if (!idea2 || claimsSha256(idea2) !== seenClaims) return fail('version-changed');
+      const used2 = usedProblem(idea2); if (used2) return fail(used2);
       const sh2 = shownEntry(hooks2, idea2);
       if (!sh2 || JSON.stringify(sh2.entry) !== seenEntry || hookVersion(sh2.entry.hook, idea2) !== req.version) return fail('version-changed');
       const entry = { ideaId: idea2.id, sourceId: idea2.sourceId ?? null, hook: text, claimsSha256: seenClaims, approvedBy: REVIEW_BY, approvedAt: stamp() };
@@ -199,7 +227,7 @@ export function createActions({ env = process.env, now = () => new Date(), hooks
   }
 
   return {
-    approveHook: (req, ctx) => hookDecision(req, ctx, 'approve'), skipHook: (req, ctx) => hookDecision(req, ctx, 'skip'), unapproveHook: (req, ctx) => hookDecision(req, ctx, 'undo'), editHook,
+    approveHook: approveHookDecision, skipHook: (req, ctx) => hookDecision(req, ctx, 'skip'), unapproveHook: (req, ctx) => hookDecision(req, ctx, 'undo'), editHook,
     approveClip: (req, ctx) => clipDecision(req, ctx, 'approve'), skipClip: (req, ctx) => clipDecision(req, ctx, 'skip'), unapproveClip: (req, ctx) => clipDecision(req, ctx, 'undo'),
   };
 }

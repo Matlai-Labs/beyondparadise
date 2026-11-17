@@ -264,7 +264,7 @@ test('actions per state: hook unapproved, refused, stale, approved, skipped; cli
   const r = await buildItems(t7base(dir, { readHooks: () => ({ ok: true, hooks }), loadPool: () => ({ ok: true, ideas, sourceNames: {} }), readManifest: () => ({ clips }), readApprovals: () => approvals, evaluate: async (i, { hook }) => (i.id === 'idea_4' ? { ok: false, reason: 'hook-number-not-in-claims' } : { ok: true, draft: { hook, caption: 'c' } }) }));
   const by = byId(r);
   assert.deepEqual(by.idea_1.actions, ['undo']); assert.deepEqual(by.idea_2.actions, ['approve', 'skip', 'edit']); assert.deepEqual(by.idea_4.actions, ['skip', 'edit']);
-  assert.deepEqual(by.idea_3.actions, ['skip', 'edit'], 'stale with the idea present'); assert.deepEqual(by.idea_9.actions, [], 'stale, idea gone'); assert.deepEqual(by.idea_5.actions, ['undo']);
+  assert.deepEqual(by.idea_3.actions, ['edit'], 'CR1: stale with the idea present offers Edit only (Skip on a stale entry always fails)'); assert.deepEqual(by.idea_9.actions, [], 'stale, idea gone'); assert.deepEqual(by.idea_5.actions, ['undo']);
   assert.deepEqual(by.c1.actions, ['approve', 'skip']); assert.deepEqual(by.c2.actions, ['skip']); assert.deepEqual(by.c3.actions, ['undo']);
   assert.equal(by.c4.preview.note, NOTE_PENDING); assert.deepEqual(by.c4.actions, [], 'hash pending');
 });
@@ -335,4 +335,12 @@ test('ids __proto__ and constructor as clip or hook ids do not break the build a
   const by = Object.fromEntries(r.items.filter((i) => i.kind === 'clip').map((i) => [i.id, i]));
   for (const id of ['__proto__', 'constructor']) { assert.equal(by[id].decision, null); assert.deepEqual(by[id].actions, ['approve', 'skip']); }
   assert.deepEqual(by.c1.decision, { kind: 'approved', at: '2026-11-17T08:00:00Z' });
+});
+
+test('low: a skipped hook whose check now refuses still shows skipped (and keeps Undo), not refused', async () => {
+  const dir = t7dir(['c1']);
+  const hooks = [ent(5, { skipped: { by: 't', at: '2026-11-17T08:00:00Z' } })];
+  const r = await buildItems(t7base(dir, { readHooks: () => ({ ok: true, hooks }), loadPool: () => ({ ok: true, ideas: [idea(5)], sourceNames: {} }), readManifest: () => ({ clips: [clip('c1')] }), evaluate: async () => ({ ok: false, reason: 'hook-number-not-in-claims' }) }));
+  const it = byId(r).idea_5;
+  assert.equal(it.state, 'skipped'); assert.deepEqual(it.decision, { kind: 'skipped', at: '2026-11-17T08:00:00Z' }); assert.deepEqual(it.actions, ['undo']);
 });

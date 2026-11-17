@@ -91,3 +91,30 @@ test('start with the fleet flag held answers still-stopped', async () => {
   const p = posting(); fs.writeFileSync(p.stopOpts.fleetPath, 'x');
   const r = await runPosting('start', p); assert.deepEqual({ ok: r.ok, code: r.code }, { ok: false, code: 'still-stopped' });
 });
+
+// ── review fixes: CR3, the posting record is written under the decision lock ─────────────────────────────────────────
+import { withDecisionLock } from './decision-lock.js';
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+test('CR3: a Stop record waits for the decision lock (the stop itself happens at once), and is written when the lock is free', async () => {
+  const p = posting(); let release; const held = withDecisionLock(() => new Promise((r) => { release = r; })); await sleep(30);
+  const run = runPosting('stop', p); await sleep(150);
+  assert.equal(fs.existsSync(p.stopOpts.flagPath), true, 'the stop is not held back by the lock');
+  assert.equal(fs.existsSync(p.recordFile), false, 'the record waits for the lock');
+  release(); await held; const r = await run; assert.equal(r.ok, true);
+  assert.deepEqual(readDecisions(p.recordFile).records.map((x) => x.decision), ['stop']);
+});
+test('CR3: a Start record also waits for the lock, and a lock that stays busy answers record-failed without releasing the stop', async () => {
+  const p = posting(); await runPosting('stop', p); let release; const held = withDecisionLock(() => new Promise((r) => { release = r; })); await sleep(30);
+  const r = await runPosting('start', { ...p, lockTimeoutMs: 60 }); assert.deepEqual({ ok: r.ok, code: r.code }, { ok: false, code: 'record-failed' });
+  assert.equal(fs.existsSync(p.stopOpts.flagPath), true, 'still stopped'); release(); await held;
+});
+test('CR3: a Stop arriving while a clip decision commits gets its own number, after the clip decision and its void line, and survives the void', async () => {
+  const p = posting(); let n1 = null;
+  const actions = { approveClip: (req, ctx) => withDecisionLock(async () => { const r = ctx.record({ kind: 'clip', id: 'c1', version: V, decision: 'approve' }); n1 = r.n; await sleep(150); ctx.voidRecord(r.n); return { ok: false, code: 'write-failed' }; }) };
+  const clip = runDecision({ kind: 'clip', id: 'c1', version: V, action: 'approve' }, { actions, recordFile: p.recordFile, claimedLogin: 'owner@example.com' });
+  await sleep(40); const stop = runPosting('stop', p); const [a, b] = await Promise.all([clip, stop]);
+  assert.equal(a.code, 'write-failed'); assert.equal(b.ok, true);
+  const lines = fs.readFileSync(p.recordFile, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  assert.deepEqual(lines.map((x) => x.decision), ['approve', 'void', 'stop']); assert.deepEqual(lines.map((x) => x.n), [1, 2, 3]); assert.equal(lines[1].ref, n1);
+  assert.deepEqual(readDecisions(p.recordFile).records.map((x) => x.decision), ['stop'], 'the stop is still in the audit list');
+});

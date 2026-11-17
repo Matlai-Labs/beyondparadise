@@ -9,7 +9,7 @@ import { CLIP_REASONS, HOOK_REASONS } from './review-items.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(HERE, 'review-page.html'), 'utf8');
-const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS, videoFailureAction, EDIT_MAX, REFUSAL_TEXT, refusalText, waitingItems, decidedItems, decisionRequest, afterRefusal, tokenStep, keyAction, decidedLine, stopButtonText })`);
+const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS, videoFailureAction, EDIT_MAX, NET_TEXT, REFUSAL_TEXT, refusalText, waitingItems, decidedItems, decisionRequest, afterRefusal, tokenStep, keyAction, decidedLine, stopButtonText })`);
 
 test('static rules: no external request, no HTML injection, no inline handlers, nonce on every script', () => {
   assert.ok(html.length < 60000); assert.doesNotMatch(html, /https?:\/\//); assert.doesNotMatch(html, /<link|@import|<iframe/);
@@ -275,3 +275,15 @@ test('13: typing in the edit box never moves the card or decides', () => {
   assert.ok(html.includes('typing: isTyping(e)'));
 });
 test('13: the Play button code is still byte for byte there', () => { for (const s of ["const btn = el('button', PLAY_TEXT, 'play-big'); btn.type = 'button';".replace('const btn', 'const wrap = el(\'div\', undefined, \'vwrap\'); const btn'), "btn.addEventListener('click', (e) => { e.stopPropagation(); start(); });"]) assert.ok(html.includes(s), s); });
+
+// ── review fixes: low items on the page ────────────────────────────────────────────────────────────────────────────
+test('low: Shift+A, Shift+S and Shift+E do nothing (the arrow handler already stood down on Shift); the plain keys still work', () => {
+  const ctx = { wide: true, typing: false, busy: false, editing: false, actions: ['approve', 'skip', 'edit'] };
+  for (const key of ['a', 's', 'e', 'A', 'S', 'E']) assert.equal(pure.keyAction({ key, shiftKey: true }, ctx), null, `shift+${key}`);
+  assert.equal(pure.keyAction({ key: 'a' }, ctx), 'approve'); assert.equal(pure.keyAction({ key: 's', shiftKey: false }, ctx), 'skip');
+  assert.equal(pure.keyAction({ key: 'Escape', shiftKey: true }, { ...ctx, editing: true }), 'cancel', 'Escape still closes the edit box');
+});
+test('low: a network error on a decision has its own sentence that says the decision may have been saved', () => {
+  assert.match(pure.NET_TEXT, /may have been saved/); assert.match(pure.NET_TEXT, /Reload the page/); assert.notEqual(pure.NET_TEXT, 'That did not work. Reload the page.');
+  assert.doesNotMatch(pure.NET_TEXT, /\b(sha\d*|hash|json|manifest|api|mediaId|version|null|undefined|token|nonce|network)\b/i);
+});

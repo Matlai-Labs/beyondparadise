@@ -7,7 +7,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { hookState, approvedHookFor, shownEntry } from './auto-hooks.js';
 import { eligibleClips } from './clip-library.js';
-import { clipVersion, tagsOf, hashFile as hashFileStream, emptyApprovals, decisionOf, laneAllows } from './clip-approvals.js';
+import { clipVersion, tagsOf, hashFile as hashFileStream, emptyApprovals, decisionOf, laneAllows, linkedOrNotFile } from './clip-approvals.js';
 export { clipVersion };
 
 export const NOTE_PENDING = 'video is being prepared';
@@ -62,7 +62,7 @@ export const HOOK_REASONS = Object.freeze(['not-approved', 'stale', 'check-faile
 
 /** `usage`: the ledger the lane reads (array), or null when it cannot be read (then nothing is eligible). "Eligible" is membership in the lane's own eligibleClips, never a second opinion. */
 export function laneClipsOf(manifest, usage, libraryDir, exists = fs.existsSync, decisions = null) {
-  const own = eligibleClips(manifest, usage, { dir: libraryDir, exists }).filter((c) => inside(libraryDir, c.file));
+  const own = eligibleClips(manifest, usage, { dir: libraryDir, exists }).filter((c) => inside(libraryDir, c.file) && !linkedOrNotFile(path.resolve(libraryDir, c.file))); // a symbolic link is never usable (CR4)
   return decisions ? own.filter((c) => laneAllows(decisions.data, c.id, decisions.versionOf(c))) : own;
 }
 /** The clip version from the cache only (never hashes): null when the file is missing, a link, not hashed yet, or outside the library. */
@@ -191,7 +191,7 @@ export async function buildItems({ readHooks, loadPool, readManifest, libraryDir
       if (hs !== 'stale') {
         let r; try { r = await evaluate(idea, { hook: e.hook, sourceNames: pool.sourceNames || {}, now }); } catch { r = { ok: false, reason: 'check-failed' }; }
         const draft = r && r.ok && r.draft ? r.draft : null;
-        if (!draft) { reason = r && r.reason ? r.reason : 'check-failed'; state = `refused: ${reason}`; }
+        if (!draft) { if (hs !== 'skipped') { reason = r && r.reason ? r.reason : 'check-failed'; state = `refused: ${reason}`; } } // a skipped hook keeps its skipped state on the card
         else if (hs === 'approved') { const g = await gate(idea); usableToday = g.ok === true; reason = g.ok ? null : (g.reason || 'check-failed'); }
         const claims = []; for (const c of Array.isArray(idea.claims) ? idea.claims : []) { let src = null; try { src = await sourceFor(c, pool.sourceNames || {}); } catch { src = null; } claims.push({ text: c.text, sourceDate: c.sourceDate ?? null, ...(typeof src === 'string' && src ? { source: src } : {}) }); }
         facts = { hook: e.hook, caption: draft ? (draft.caption ?? draft.text ?? null) : null, claims, link: idea.link ?? null, exampleClip: null };
@@ -203,7 +203,7 @@ export async function buildItems({ readHooks, loadPool, readManifest, libraryDir
       let decision = null; if (hs === 'approved') decision = { kind: 'approved', at: e.approvedAt }; else if (hs === 'skipped') decision = { kind: 'skipped', at: e.skipped.at };
       let actions;
       if (hs === 'unapproved') actions = state.startsWith('refused') ? ['skip', 'edit'] : ['approve', 'skip', 'edit'];
-      else if (hs === 'stale') actions = idea ? ['skip', 'edit'] : [];
+      else if (hs === 'stale') actions = idea ? ['edit'] : []; // Skip on a stale entry always answers stale (CR1)
       else actions = history !== null && !inHistoryAny(idea, history) ? ['undo'] : []; // approved or skipped; a used or unverifiable one cannot be undone
       return { item: { kind: 'hook', id: e.ideaId, version, title: e.hook, preview, facts, state, reason, usableToday, decision, actions }, decision, previewMedia };
     }))).filter((r) => !r.decision || inWindow(r.decision.at, now, decisionWindowMs)).map((r) => { if (r.previewMedia) media.set(r.previewMedia[0], r.previewMedia[1]); return r.item; }));

@@ -339,6 +339,7 @@ const REFUSAL_TEXT = {
   'still-stopped': 'Posting is still stopped by another stop switch.',
   'could-not-stop': 'Posting could not be stopped from here. Use the stop command in WhatsApp.',
 };
+const NET_TEXT = 'The connection broke. Your decision may have been saved. Reload the page to see what is saved.';
 function refusalText(code) {
   if (typeof code !== 'string' || code === '') return FALLBACK;
   if (Object.prototype.hasOwnProperty.call(REFUSAL_TEXT, code)) return REFUSAL_TEXT[code];
@@ -363,7 +364,7 @@ function afterRefusal(code) { return RELOAD_CODES.indexOf(code) >= 0 ? 'reload' 
 function tokenStep(o) { o = o || {}; if (o.status === 200 || o.status === 409) return 'done'; if (o.status === 403 && !o.retried) return 'refresh-and-retry'; return 'give-up'; }
 function keyAction(e, ctx) {
   if (ctx.editing && e.key === 'Escape') return 'cancel';
-  if (!ctx.wide || ctx.typing || ctx.busy || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return null;
+  if (!ctx.wide || ctx.typing || ctx.busy || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return null;
   const m = { a: 'approve', s: 'skip', e: 'edit' }[String(e.key).toLowerCase()];
   return m && ctx.actions.indexOf(m) >= 0 ? m : null;
 }
@@ -636,6 +637,7 @@ async function decide(action, text, fromList) {
   const r = await callServer(postDecide, req);
   setBusy(false);
   if (r.expired) { setNotice(SESSION_ENDED); return; }
+  if (r.net) { setNotice(NET_TEXT); return; } // the server may have committed before the connection broke
   const d = r.data;
   if (!d || typeof d !== 'object') { setNotice(refusalText('bad-request')); return; }
   if (d.ok === true) {
@@ -656,8 +658,9 @@ async function stopOrStart() {
   const r = await callServer(postPosting, { action });
   setBusy(false);
   if (r.expired) { setNotice(SESSION_ENDED); renderStop(); return; }
-  const d = r.data;
-  if (!d || typeof d !== 'object') setNotice(refusalText('bad-request'));
+  const d = r.net ? null : r.data;
+  if (r.net) setNotice(NET_TEXT);
+  else if (!d || typeof d !== 'object') setNotice(refusalText('bad-request'));
   else if (d.ok === true) setNotice(action === 'stop' ? 'Posting is stopped.' : 'Posting is allowed again.');
   else setNotice(refusalText(d.code));
   await load(); renderStop();

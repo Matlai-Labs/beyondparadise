@@ -251,3 +251,57 @@ test('ids __proto__ and constructor: every action answers not-found, nothing is 
 test('no action function touches config.json or mentions autoPublish', () => {
   for (const f of ['bpa-actions.js', 'clip-approvals.js']) { const s = fs.readFileSync(path.join(HERE, f), 'utf8'); assert.ok(!s.includes('config.json'), f); assert.ok(!s.includes('autoPublish'), f); }
 });
+
+// ── review fixes: CR2 / SR2 (the shared list of test characters, also used by the page test) ─────────────────────────
+import { BAD_CHARS, LINEBREAK_CHARS, GOOD_TEXTS } from './review-test-chars.js';
+test('CR2/SR2: every character of the shared list is refused with bad-characters, in the middle of an edit; evaluate is never called and nothing is written', async () => {
+  const k = akit(); const before = k.hooksBytes(); const missed = [];
+  for (const ch of BAD_CHARS) { const r = await k.actions.editHook({ id: 'idea_1', version: k.hv(1), text: `Lions at${ch}dawn` }, k.ctx); if (r.ok !== false || r.code !== 'bad-characters') missed.push(`U+${ch.codePointAt(0).toString(16).toUpperCase()}`); }
+  assert.deepEqual(missed, []); assert.ok(BAD_CHARS.length > 300, `the shared list has ${BAD_CHARS.length} characters`);
+  assert.equal(k.state.calls.length, 0); assert.equal(k.hooksBytes(), before); assert.equal(k.records.length, 0);
+});
+test('CR2/SR2: line breaks stay bad-request; ordinary text (space, composed accents, umlaut, digits, curly apostrophe, punctuation) still passes', async () => {
+  const k = akit();
+  for (const ch of LINEBREAK_CHARS) assert.deepEqual(await k.actions.editHook({ id: 'idea_1', version: k.hv(1), text: `Lions${ch}dawn` }, k.ctx), { ok: false, code: 'bad-request' }, JSON.stringify(ch));
+  for (const text of GOOD_TEXTS) { const r = await k.actions.editHook({ id: 'idea_1', version: k.hv(1), text }, k.ctx); assert.equal(r.ok, true, JSON.stringify(text)); assert.equal(readHooks(k.hooksFile).hooks.find((x) => x.ideaId === 'idea_1').hook, text); assert.equal(k.state.calls.at(-1), text); const e = readHooks(k.hooksFile).hooks.find((x) => x.ideaId === 'idea_1'); assert.equal(e.hook, text); k.hv = (n, hook) => hookVersion(hook ?? text, k.ideas[n - 1]); }
+});
+
+// ── review fixes: CR4, a linked clip must not block the one-way switch ───────────────────────────────────────────────
+test('CR4: a clip whose file is a real symbolic link does not keep the lane open: deciding the only real clip flips the one-way switch', async () => {
+  const k = akit(); const linked = path.join(k.lib, 'c1.mp4'); const outside = path.join(k.dir, 'outside.mp4'); fs.writeFileSync(outside, 'x'.repeat(1000));
+  fs.rmSync(linked); fs.symlinkSync(outside, linked);
+  const res = await k.actions.approveClip({ id: 'c2', version: k.cv('c2') }, k.ctx);
+  assert.deepEqual(res, { ok: true, change: { kind: 'clip', id: 'c2', decision: 'approved' }, enforced: true });
+  assert.ok(readClipApprovals(k.approvalsFile).data.enforcedAt, 'the switch is set');
+});
+
+// ── review fixes: CR5, Approve runs its check outside the lock ─────────────────────────────────────────────────────────
+test('CR5: a slow check on one Approve does not make another decision lock-busy; the slow one still approves, with its check seen before and the state rules applied again under the lock', async () => {
+  const k = akit({ lockTimeoutMs: 80 }); let release; k.state.gate = { hook: 'Hook for idea_1', wait: new Promise((r) => { release = r; }) };
+  const slow = k.actions.approveHook({ id: 'idea_1', version: k.hv(1) }, k.ctx); await new Promise((r) => setTimeout(r, 40));
+  const other = await k.actions.skipHook({ id: 'idea_2', version: k.hv(2) }, k.ctx); assert.equal(other.ok, true, JSON.stringify(other));
+  await new Promise((r) => setTimeout(r, 120)); // longer than the lock timeout
+  const clip = await k.actions.approveClip({ id: 'c1', version: k.cv('c1') }, k.ctx); assert.equal(clip.ok, true, JSON.stringify(clip));
+  release(); assert.deepEqual(await slow, { ok: true, change: { kind: 'hook', id: 'idea_1', decision: 'approved' } });
+  assert.equal(readHooks(k.hooksFile).hooks[0].approvedBy, 'review page'); assert.equal(readHooks(k.hooksFile).hooks[1].skipped.by, 'review page');
+});
+test('CR5: the claims changed while the check ran: nothing is approved (the entry is now stale), nothing recorded', async () => {
+  const k = akit(); let release; k.state.gate = { hook: 'Hook for idea_1', wait: new Promise((r) => { release = r; }) };
+  const slow = k.actions.approveHook({ id: 'idea_1', version: k.hv(1) }, k.ctx); await new Promise((r) => setTimeout(r, 30));
+  k.ideas[0].claims = [{ text: 'Claim 1 now says 99 hours.' }]; release();
+  assert.deepEqual(await slow, { ok: false, code: 'stale' }); assert.equal(k.records.length, 0); assert.equal(readHooks(k.hooksFile).hooks[0].approvedBy, null);
+});
+test('CR5: two Skips and an Approve of the same hook while the check runs: the Skip wins, the Approve answers already-skipped', async () => {
+  const k = akit(); let release; k.state.gate = { hook: 'Hook for idea_1', wait: new Promise((r) => { release = r; }) };
+  const slow = k.actions.approveHook({ id: 'idea_1', version: k.hv(1) }, k.ctx); await new Promise((r) => setTimeout(r, 30));
+  assert.equal((await k.actions.skipHook({ id: 'idea_1', version: k.hv(1) }, k.ctx)).ok, true); release();
+  assert.deepEqual(await slow, { ok: false, code: 'already-skipped' }); assert.equal(k.records.length, 1);
+});
+
+test('low: editHook of an idea already used in a post answers already-used (like undo), history unreadable answers history-unreadable; nothing is checked or written', async () => {
+  const k = akit({ history: [{ ideaId: 'idea_1' }] }); const before = k.hooksBytes();
+  assert.deepEqual(await k.actions.editHook({ id: 'idea_1', version: k.hv(1), text: 'Lions at dawn' }, k.ctx), { ok: false, code: 'already-used' });
+  assert.equal(k.state.calls.length, 0); assert.equal(k.hooksBytes(), before); assert.equal(k.records.length, 0);
+  assert.equal((await k.actions.editHook({ id: 'idea_2', version: k.hv(2), text: 'Lions at dusk' }, k.ctx)).ok, true, 'an unused idea is still editable');
+  k.state.history = null; assert.deepEqual(await k.actions.editHook({ id: 'idea_1', version: k.hv(1), text: 'Lions at noon' }, k.ctx), { ok: false, code: 'history-unreadable' });
+});

@@ -74,9 +74,15 @@ export function laneAllows(data, clipId, version) {
   if (d === 'skipped') return false;
   return data.enforcedAt ? d === 'approved' : true;
 }
+/** CR4: true when the path is there but is a symbolic link or not a regular file (the page's peek rejects both). A path that does not exist is NOT judged here: eligibleClips' exists check owns that. */
+export function linkedOrNotFile(abs) {
+  let st; try { st = fs.lstatSync(abs); } catch { return false; }
+  return st.isSymbolicLink() || !st.isFile();
+}
 export async function clipsForLane(eligible, data, { dir, hash = hashFile }) {
   const out = [];
   for (const c of eligible) {
+    if (linkedOrNotFile(path.resolve(dir, c.file))) continue; // a linked clip is not usable and must not keep the one-way switch open
     if (!data.enforcedAt && !has(data.clips, c.id)) { if (laneAllows(data, c.id, null)) out.push(c); continue; }
     let version; try { version = clipVersion(await hash(path.resolve(dir, c.file)), tagsOf(c)); } catch { continue; } // fail closed
     if (laneAllows(data, c.id, version)) out.push(c);

@@ -81,3 +81,29 @@ test('the rehearsal goes through prepareAutoPost, so it obeys the same filter', 
   const res = await rehearse({ pool: k.input.pool, manifest: k.input.manifest, usage: [], history: [], config: {}, now: NOW, count: 1, out: path.join(k.dir, 'rehearsal'), libraryDir: k.deps.libraryDir, log: (l) => lines.push(l) }, k.deps);
   assert.equal(res.made, 0); assert.ok(lines.some((l) => /NOT PREPARED/.test(l)));
 });
+
+// ── review fixes: CR4, a clip file that is a symbolic link is not usable for the lane ─────────────────────────────────
+import { clipsForLane } from './clip-approvals.js';
+import { eligibleClips } from './clip-library.js';
+import { laneClipsOf } from './review-items.js';
+function linkedLib() {
+  const lib = path.join(tmp(), 'library'); fs.mkdirSync(lib); const outside = path.join(tmp(), 'outside.mp4'); fs.writeFileSync(outside, 'outside-bytes');
+  fs.symlinkSync(outside, path.join(lib, 'clip-a.mp4')); fs.writeFileSync(path.join(lib, 'clip-b.mp4'), 'real-bytes'); return lib;
+}
+test('CR4: with a real symbolic link in the library, the lane never picks the linked clip (before and after the one-way switch)', async () => {
+  const lib = linkedLib(); const manifest = { version: 1, clips: [clipEntry('clip-a', ['lion']), clipEntry('clip-b', ['lion'])] };
+  const only = { version: 1, clips: [clipEntry('clip-a', ['lion'])] };
+  const k = kit({ input: { manifest: only } }); const r = await prepareAutoPost(k.input, { ...k.deps, libraryDir: lib, exists: fs.existsSync });
+  assert.deepEqual([r.ok, r.reasons], [false, ['no-eligible-clip']]); assert.equal(k.composeLog.length, 0);
+  const k2 = kit({ input: { manifest } }); const r2 = await prepareAutoPost(k2.input, { ...k2.deps, libraryDir: lib, exists: fs.existsSync });
+  assert.equal(r2.ok, true, JSON.stringify(r2)); assert.equal(r2.clip.id, 'clip-b');
+  const k3 = kit({ approvals: { enforcedAt: '2026-11-17T08:30:00Z', clips: { 'clip-a': dec('clip-a', 'approved', ['lion']) } }, input: { manifest: only } });
+  const r3 = await prepareAutoPost(k3.input, { ...k3.deps, libraryDir: lib, exists: fs.existsSync }); assert.deepEqual(r3.reasons, ['no-eligible-clip']);
+});
+test('CR4: clipsForLane and laneClipsOf drop a linked clip and a folder, keep a real file; a file that does not exist is left to the injected exists check', async () => {
+  const lib = linkedLib(); fs.mkdirSync(path.join(lib, 'clip-d.mp4'));
+  const clips = [clipEntry('clip-a', ['lion']), clipEntry('clip-b', ['lion']), clipEntry('clip-d', ['lion'])]; const empty = { version: 1, enforcedAt: null, clips: Object.create(null) };
+  assert.deepEqual((await clipsForLane(clips, empty, { dir: lib, hash: hashClip })).map((c) => c.id), ['clip-b']);
+  assert.deepEqual(laneClipsOf({ clips }, [], lib).map((c) => c.id), ['clip-b']);
+  assert.deepEqual(laneClipsOf({ clips: [clipEntry('clip-z', ['lion'])] }, [], lib, () => true).map((c) => c.id), ['clip-z'], 'missing is the exists check, as before');
+});

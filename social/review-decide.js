@@ -2,6 +2,7 @@
 import { stopStatus } from './stop.js';
 import { stopPosting, startPosting, publicCode } from './bpa-actions.js';
 import { appendDecision } from './review-decisions.js';
+import { withDecisionLock } from './decision-lock.js';
 
 const NO = Object.freeze({ ok: false });
 const KINDS = new Set(['hook', 'clip']);
@@ -57,16 +58,20 @@ export async function runDecision(req, { actions, recordFile, claimedLogin, now 
   return r;
 }
 
-export async function runPosting(action, { recordFile, claimedLogin, now = () => new Date(), queuePath, stopOpts, readStatus = () => ({ stop: stopStatus(stopOpts) }), stop = stopPosting, start = startPosting }) {
-  const rec = (decision) => appendDecision(recordFile, { kind: 'posting', id: 'posting', version: null, decision, claimedLogin, at: now().toISOString() });
+export async function runPosting(action, { recordFile, claimedLogin, now = () => new Date(), queuePath, stopOpts, readStatus = () => ({ stop: stopStatus(stopOpts) }), stop = stopPosting, start = startPosting, lockTimeoutMs = 5000 }) {
+  // CR3: the record line is written under the decision lock like every other writer of the record, or two writers could read the same last number
+  // (the stop itself never waits for the lock: it happens first, and a busy lock only costs the audit line)
+  const rec = async (decision) => {
+    try { return await withDecisionLock(() => appendDecision(recordFile, { kind: 'posting', id: 'posting', version: null, decision, claimedLogin, at: now().toISOString() }), { timeoutMs: lockTimeoutMs }); } catch { return { ok: false }; }
+  };
   if (action === 'stop') {
     let note; try { note = stop({ queuePath, stopOpts, now: now() })?.note; } catch { /* the read-back below decides */ }
-    try { rec('stop'); } catch { /* best effort (D6) */ }
+    try { await rec('stop'); } catch { /* best effort (D6) */ }
     const stopped = readStatus()?.stop?.stopped === true;
     return stopped ? { ok: true, ...(note ? { note } : {}) } : { ok: false, code: 'could-not-stop' };
   }
   if (action === 'start') {
-    const r = rec('start'); if (!r || r.ok !== true) return { ok: false, code: 'record-failed' };
+    const r = await rec('start'); if (!r || r.ok !== true) return { ok: false, code: 'record-failed' };
     try { start({ stopOpts }); } catch { /* the read-back below decides */ }
     return readStatus()?.stop?.stopped === false ? { ok: true } : { ok: false, code: 'still-stopped' };
   }

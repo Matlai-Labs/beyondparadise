@@ -44,8 +44,16 @@ test('(3) review-decisions.js is imported only by review-decide.js, bpa-actions.
 test('(4) every lock section of bpa-actions.js goes through the one locked() helper, which holds the one withDecisionLock( call', () => {
   const s = read('bpa-actions.js');
   assert.equal(count(s, /\bwithDecisionLock\(/g), 1);
-  assert.equal(count(s, /\breturn locked\(/g), 3, 'hook decision, edit and clip decision: three lock sections');
-  assert.equal(count(s, /\blocked\(/g), 4, 'the definition plus the three call sites');
+  assert.equal(count(s, /\breturn locked\(/g), 4, 'hook decision (skip, undo), approve (CR5: its check runs outside, the decision inside), edit and clip decision: four lock sections');
+  assert.equal(count(s, /\blocked\(/g), 5, 'the definition plus the four call sites');
+});
+
+test('(4b) CR3: the posting record in review-decide.js is written inside withDecisionLock; the two ctx writers are only handed to bpa-actions, which calls them under its lock', () => {
+  const s = read('review-decide.js');
+  assert.equal(count(s, /\bwithDecisionLock\(/g), 1); assert.equal(count(s, /\bappendDecision\(/g), 3, 'record, voidRecord (both run inside bpa-actions locked()) and the posting record');
+  const posting = s.split('\n').filter((l) => /kind: 'posting'/.test(l)); assert.equal(posting.length, 1);
+  assert.match(posting[0], /withDecisionLock\(\(\) => appendDecision\(/, 'the posting record sits inside the lock call');
+  assert.match(s, /import \{ withDecisionLock \} from '\.\/decision-lock\.js'/);
 });
 
 test('(5) no request or body id is used as a plain object key', () => {
