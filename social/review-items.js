@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { hookState } from './auto-hooks.js';
 
 export const NOTE_PENDING = 'video is being prepared';
 const NOTE_MISSING = 'video missing';
@@ -74,3 +75,41 @@ export function buildClipItems({ manifest, libraryDir, info, secret, exists = fs
 
 /** The media route uses this alone: it is computed fresh per request, so an id for something that left the list or changed is simply absent. */
 export function listMedia(args) { return buildClipItems(args).media; }
+
+// ── hooks ────────────────────────────────────────────────────────────────────────
+const NOTE_EXAMPLE = 'example clip; the lane may use another fitting clip';
+/** What a hook approval will bind to: the hook text plus the idea's title and claim texts. */
+export const hookVersion = (hook, idea) => sha(JSON.stringify([hook, idea.title, (Array.isArray(idea.claims) ? idea.claims : []).map((c) => c.text)]));
+
+/** Never throws. A source that cannot be read adds a problem and the other kind is still built. */
+export async function buildItems({ readHooks, loadPool, readManifest, libraryDir, info, secret, evaluate, previewFor = () => null, now = new Date(), exists = fs.existsSync }) {
+  const problems = []; const media = new Map(); const hookItems = [];
+  let hooks = null; try { const h = readHooks(); if (h && h.ok && Array.isArray(h.hooks)) hooks = h.hooks; } catch { /* a problem below */ }
+  if (!hooks) problems.push('hooks-unreadable');
+  let pool = null; try { const p = loadPool(); if (p && p.ok && Array.isArray(p.ideas)) pool = p; } catch { /* a problem below */ }
+  if (!pool) problems.push('ideas-unavailable');
+  if (hooks && pool) {
+    const ideas = new Map(pool.ideas.map((i) => [i.id, i]));
+    for (const e of [...hooks].reverse()) {
+      const idea = ideas.get(e.ideaId); const hs = hookState(e, idea);
+      const version = hookVersion(e.hook, idea || { title: null, claims: [] });
+      let state = hs; let facts = { hook: e.hook };
+      if (hs !== 'stale') {
+        let r; try { r = await evaluate(idea, { hook: e.hook, sourceNames: pool.sourceNames || {}, now }); } catch { r = { ok: false, reason: 'check-failed' }; }
+        const draft = r && r.ok && r.draft ? r.draft : null;
+        if (!draft) state = `refused: ${r && r.reason ? r.reason : 'check-failed'}`;
+        facts = { hook: e.hook, caption: draft ? (draft.caption ?? draft.text ?? null) : null, claims: (Array.isArray(idea.claims) ? idea.claims : []).map((c) => ({ text: c.text, sourceDate: c.sourceDate ?? null })), link: idea.link ?? null, exampleClip: null };
+      }
+      let preview = { mediaId: null, note: NOTE_PENDING };
+      let prev = null; try { prev = previewFor(e.ideaId, version); } catch { prev = null; }
+      if (typeof prev === 'string' && prev !== '') { const mediaId = mediaIdFor(secret, e.ideaId, version); preview = { mediaId, note: NOTE_EXAMPLE }; media.set(mediaId, { path: prev, kind: 'preview' }); }
+      hookItems.push({ kind: 'hook', id: e.ideaId, version, title: e.hook, preview, facts, state, actions: [] });
+    }
+  }
+  let clipItems = [];
+  let manifest; let manifestOk = true; try { manifest = readManifest(); } catch { manifestOk = false; problems.push('library-unreadable'); }
+  if (manifestOk && manifest == null) problems.push('library-missing');
+  else if (manifestOk) { try { const c = buildClipItems({ manifest, libraryDir, info, secret, exists }); clipItems = c.items; for (const [k, v] of c.media) media.set(k, v); } catch { problems.push('library-unreadable'); } }
+  const items = [...hookItems, ...clipItems];
+  return { ok: true, items, counts: { all: items.length, hook: hookItems.length, clip: clipItems.length }, problems, media };
+}

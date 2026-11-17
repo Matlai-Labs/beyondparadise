@@ -6,7 +6,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { buildClipItems, listMedia, fileInfoOf, clipVersion, mediaIdFor } from './review-items.js';
+import { buildClipItems, listMedia, fileInfoOf, clipVersion, mediaIdFor, hookVersion, buildItems } from './review-items.js';
+import { claimsSha256, readHooks } from './auto-hooks.js';
 
 const mk = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bpa-rev-'));
 const clip = (id, over = {}) => ({ id, file: `${id}.mp4`, durationSec: 7, source: [{ videoId: 'v1', startSec: 1, endSec: 8 }], checks: { rendered: 'ok' }, flash: { flash: false }, verified: { verdict: 'pass', singleSubject: 'yes', notes: 'a lion' }, shows: { tags: ['lion', 'savanna'] }, ...over });
@@ -58,4 +59,46 @@ test('300 clips: built fast, response small (focus 5)', () => {
   const manifest = { clips: Array.from({ length: 300 }, (_, n) => clip(`c${n}`)) }; const t0 = Date.now();
   const { items } = buildClipItems({ manifest, libraryDir: '/x', info: () => ({ sha256: 'a'.repeat(64), mtimeMs: 1 }), secret: 's', exists: () => true });
   assert.equal(items.length, 300); assert.ok(Date.now() - t0 < 2000); assert.ok(JSON.stringify(items).length < 400000);
+});
+
+// ── hook items and buildItems ────────────────────────────────────────────────────
+const idea = (n, over = {}) => ({ id: `idea_${n}`, title: `Lion fact ${n}`, link: `/x/${n}/`, claims: [{ text: `Claim A${n}`, sourceDate: '2026-10-01' }, { text: `Claim B${n}`, sourceDate: '2026-10-02' }], ...over });
+const ent = (n, over = {}) => ({ ideaId: `idea_${n}`, sourceId: null, hook: `Hook ${n}`, claimsSha256: claimsSha256(idea(n)), approvedBy: null, approvedAt: null, ...over });
+const base = (over = {}) => ({ readHooks: () => ({ ok: true, hooks: [ent(1, { approvedBy: 't', approvedAt: '2026-11-17T09:00:00Z' }), ent(2), ent(3, { claimsSha256: 'a'.repeat(64) }), ent(9), ent(4)] }), loadPool: () => ({ ok: true, ideas: [1, 2, 3, 4].map((n) => idea(n)), sourceNames: {} }), readManifest: () => ({ clips: [] }), libraryDir: '/x', info: () => null, secret: 's', evaluate: async (i, { hook }) => (i.id === 'idea_4' ? { ok: false, reason: 'hook-number-not-in-claims' } : { ok: true, draft: { hook, caption: `Cap ${i.id}` } }), ...over });
+test('hook items: state per entry, newest (last in file) first', async () => { const r = await buildItems(base()); assert.deepEqual(r.items.map((i) => [i.id, i.state]), [['idea_4', 'refused: hook-number-not-in-claims'], ['idea_9', 'stale'], ['idea_3', 'stale'], ['idea_2', 'unapproved'], ['idea_1', 'approved']]); });
+test('hook item facts, preview and actions', async () => {
+  const r = await buildItems(base()); const h = r.items.find((i) => i.id === 'idea_1');
+  assert.deepEqual(h.facts, { hook: 'Hook 1', caption: 'Cap idea_1', claims: [{ text: 'Claim A1', sourceDate: '2026-10-01' }, { text: 'Claim B1', sourceDate: '2026-10-02' }], link: '/x/1/', exampleClip: null });
+  assert.deepEqual(h.preview, { mediaId: null, note: 'video is being prepared' }); assert.deepEqual(h.actions, []); assert.equal(h.kind, 'hook'); assert.equal(h.title, 'Hook 1'); assert.equal(h.version, hookVersion('Hook 1', idea(1)));
+  assert.deepEqual(r.items.find((i) => i.id === 'idea_9').facts, { hook: 'Hook 9' }, 'a stale item shows the hook only');
+  assert.deepEqual(r.items.find((i) => i.id === 'idea_3').facts, { hook: 'Hook 3' });
+});
+test('hookVersion pins the algorithm and changes with hook text, title and each claim', () => {
+  const i = idea(1); assert.equal(hookVersion('H', i), crypto.createHash('sha256').update(JSON.stringify(['H', i.title, ['Claim A1', 'Claim B1']])).digest('hex'));
+  for (const o of [hookVersion('H2', i), hookVersion('H', { ...i, title: 'T' }), hookVersion('H', { ...i, claims: [i.claims[1], i.claims[0]] }), hookVersion('H', { ...i, claims: [{ text: 'changed' }, i.claims[1]] })]) assert.notEqual(o, hookVersion('H', i));
+});
+test('unreadable hooks (truncated file, focus 3) degrade, clips remain, nothing throws', async () => {
+  const dir = mk(); const f = path.join(dir, 'h.json'); fs.writeFileSync(f, '{"hooks": ['); fs.writeFileSync(path.join(dir, 'c1.mp4'), 'x');
+  const r = await buildItems(base({ readHooks: () => readHooks(f), readManifest: () => ({ clips: [clip('c1')] }), libraryDir: dir, info: fileInfoOf() }));
+  assert.ok(r.problems.includes('hooks-unreadable')); assert.deepEqual(r.items.map((i) => i.kind), ['clip']); assert.equal(r.ok, true);
+  const r2 = await buildItems(base({ readHooks: () => { throw new Error('boom'); } })); assert.ok(r2.problems.includes('hooks-unreadable'), 'a throwing reader degrades too');
+});
+test('other problems: pool missing, library missing, library throws', async () => {
+  assert.ok((await buildItems(base({ loadPool: () => ({ ok: false, reason: 'x' }) }))).problems.includes('ideas-unavailable'));
+  assert.equal((await buildItems(base({ loadPool: () => ({ ok: false, reason: 'x' }) }))).items.length, 0, 'no pool, no hook items');
+  assert.ok((await buildItems(base({ readManifest: () => null }))).problems.includes('library-missing'));
+  assert.ok((await buildItems(base({ readManifest: () => { throw new Error('boom'); } }))).problems.includes('library-unreadable'));
+  assert.equal((await buildItems(base({ readManifest: () => { throw new Error('boom'); } }))).items.length, 5, 'hooks still built');
+});
+test('a throwing evaluate does not throw out of buildItems; the item is refused', async () => {
+  const r = await buildItems(base({ evaluate: async () => { throw new Error('boom'); } })); const h = r.items.find((i) => i.id === 'idea_1'); assert.match(h.state, /^refused: /);
+});
+test('counts per kind; a preview file turns into a media entry', async () => {
+  const r = await buildItems(base({ previewFor: (id) => (id === 'idea_1' ? '/p/a.mp4' : null) })); assert.deepEqual(r.counts, { all: 5, hook: 5, clip: 0 });
+  const h = r.items.find((i) => i.id === 'idea_1'); assert.match(h.preview.mediaId, /^m_/); assert.equal(h.preview.note, 'example clip; the lane may use another fitting clip'); assert.deepEqual(r.media.get(h.preview.mediaId), { path: '/p/a.mp4', kind: 'preview' });
+});
+test('hooks come before clips; the media map carries clip files', async () => {
+  const dir = mk(); fs.writeFileSync(path.join(dir, 'c1.mp4'), 'x');
+  const r = await buildItems(base({ readManifest: () => ({ clips: [clip('c1')] }), libraryDir: dir, info: fileInfoOf() }));
+  assert.deepEqual(r.items.map((i) => i.kind), ['hook', 'hook', 'hook', 'hook', 'hook', 'clip']); assert.deepEqual(r.counts, { all: 6, hook: 5, clip: 1 }); assert.equal(r.media.size, 1);
 });
