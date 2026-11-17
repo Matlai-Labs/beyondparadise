@@ -24,7 +24,8 @@ import { loadIdeaPool } from './idea-drafts.js';
 import { libraryDir as libraryDirOf, readManifest } from './clip-library.js';
 import { readUsage, defaultUsagePath } from './reel-clip.js';
 import { historyFromQueue } from './ideas.js';
-import { loadQueue, QUEUE_PATH, finalCheck, igEnabled, autoDir, CONFIG } from './lib.js';
+import { loadQueue, QUEUE_PATH, finalCheck, igEnabled, autoDir, CONFIG, schedulePost, whatsapp } from './lib.js';
+import { createDraftActions } from './draft-decisions.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MEDIA_ID = /^m_[0-9a-f]{32}$/;
@@ -87,14 +88,18 @@ export function createDefaultInputs({ env = process.env, now = Date.now, loadPoo
 /** The decision actions, from the real sources: the same hash cache, a fresh pool and a fresh evaluation (no 60 s memo) on every decision. One per process. */
 export function createDefaultActions(env = process.env) {
   const dir = libraryDirOf(env);
-  return createActions({
+  return {
+    ...createActions({
     env, libraryDir: dir, info: INFO,
     loadPool: () => loadIdeaPool({ now: new Date(), env }),
     evaluate: async (idea, o) => { const { evaluateIdea } = await import('./auto-lane.js'); return evaluateIdea(idea, { now: o.now, hook: o.hook, sourceNames: o.sourceNames }); },
     readManifest: () => readManifest(dir),
     readUsage: () => readUsage(defaultUsagePath(env)),
     readHistory: () => historyFromQueue(loadQueue(QUEUE_PATH)),
-  });
+    }),
+    // the page's Skip, Edit and Approve of queue drafts. THE ONE PLACE in the page code that hands over the real scheduling function; every door is named here, none has a default.
+    ...createDraftActions({ env, queuePath: QUEUE_PATH, recordFile: decisionsFilePath(env), schedule: schedulePost, igOn: igEnabled, notify: whatsapp, stop: () => stopStatus({ env }), approveOn: () => approveSwitchOn(env), neverPromotePatterns: undefined }),
+  };
 }
 let DEFAULT_ACTIONS = null;
 export function defaultActions(env = process.env) { if (!DEFAULT_ACTIONS) DEFAULT_ACTIONS = createDefaultActions(env); return DEFAULT_ACTIONS; }
@@ -106,7 +111,7 @@ const BODY_WAIT_MS = 10000;
 // path -> { route, method }; a Map, so a hostile path such as /review/api/__proto__ is just a miss. /review/media/<id> is matched by prefix.
 const ROUTES = new Map([['/review/', { route: 'page', method: 'GET' }], ['/review/api/items', { route: 'items', method: 'GET' }], ['/review/api/session', { route: 'session', method: 'POST' }], ['/review/api/decide', { route: 'decide', method: 'POST' }], ['/review/api/posting', { route: 'posting', method: 'POST' }]]);
 
-export function createReviewHandler({ sessions, loadInputs = defaultInputs, loadActions = defaultActions, recordFile = decisionsFilePath(), postingOpts = {}, log = () => {}, env = process.env, cacheMs = 10000, now = Date.now, pageFile = path.join(HERE, 'review-page.html'), previewDir = path.join(stateDir(env), 'bpa-review-previews') } = {}) {
+export function createReviewHandler({ sessions, loadInputs = defaultInputs, loadActions = () => { throw new Error('no actions configured'); }, recordFile = decisionsFilePath(), postingOpts = {}, log = () => {}, env = process.env, cacheMs = 10000, now = Date.now, pageFile = path.join(HERE, 'review-page.html'), previewDir = path.join(stateDir(env), 'bpa-review-previews') } = {}) {
   let cache = null; // { at, built: Promise }
   let lastMedia = new Map(); let lastLibraryDir = null; let lastAutoDir = null; // the id to file map of the latest item build: media requests are answered from it, never by building a list
   const built = () => {
@@ -153,7 +158,7 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, load
     if (route === 'decide') {
       const pr = parseDecisionBody(body); if (!pr.ok) { log('review refused: bad-request decide'); return json(res, 400, { ok: false, code: 'bad-request' }); }
       const r = await runDecision(pr.req, { actions: loadActions(env), recordFile, claimedLogin: access.ownerLogin });
-      if (r && r.ok === true) { cache = null; log(`review decision: ${pr.req.action} ${pr.req.kind} ok`); return json(res, 200, { ok: true, change: r.change, ...(r.enforced !== undefined ? { enforced: r.enforced } : {}) }); }
+      if (r && r.ok === true) { cache = null; log(`review decision: ${pr.req.action} ${pr.req.kind} ok`); return json(res, 200, { ok: true, change: r.change, ...(r.enforced !== undefined ? { enforced: r.enforced } : {}), ...(typeof r.scheduledFor === 'string' && typeof r.scheduledForText === 'string' ? { scheduledFor: r.scheduledFor, scheduledForText: r.scheduledForText } : {}) }); }
       const code = publicCode(r && r.code); log(`review decision: ${pr.req.action} ${pr.req.kind} refused ${code}`); return json(res, 409, { ok: false, code });
     }
     const pp = parsePostingBody(body); if (!pp.ok) { log('review refused: bad-request posting'); return json(res, 400, { ok: false, code: 'bad-request' }); }

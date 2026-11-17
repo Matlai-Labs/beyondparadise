@@ -169,3 +169,27 @@ test('a Stop whose record cannot be written (lock busy, or the write fails) stil
   const b = await runPosting('stop', { ...q, log: (m) => logs2.push(m) }); assert.equal(b.ok, true); assert.equal(fs.existsSync(q.stopOpts.flagPath), true); assert.deepEqual(logs2, ['review failed: stop-record-failed']);
   const c = posting(); const logs3 = []; await runPosting('stop', { ...c, log: (m) => logs3.push(m) }); assert.deepEqual(logs3, [], 'nothing logged when the record is written');
 });
+
+// ── drafts (step 3) ──────────────────────────────────────────────────────────────────
+const SLOT = '2026-11-19T09:00:00+03:00'; const draftBase = (o = {}) => ({ kind: 'draft', id: 'B26', version: V, action: 'approve', slot: SLOT, ...o });
+test('draft: approve (with its slot), skip and edit parse; undo is not a draft decision', () => {
+  assert.deepEqual(parseDecisionBody(J(draftBase())), { ok: true, req: { kind: 'draft', id: 'B26', version: V, action: 'approve', slot: SLOT } });
+  assert.deepEqual(parseDecisionBody(J(draftBase({ action: 'skip', slot: undefined }))), { ok: true, req: { kind: 'draft', id: 'B26', version: V, action: 'skip' } });
+  assert.deepEqual(parseDecisionBody(J(draftBase({ action: 'edit', slot: undefined, text: 'New text.' }))), { ok: true, req: { kind: 'draft', id: 'B26', version: V, action: 'edit', text: 'New text.' } });
+  assert.deepEqual(parseDecisionBody(J(draftBase({ action: 'undo', slot: undefined }))), { ok: false });
+});
+test('draft: the slot is required for approve and allowed nowhere else', () => {
+  assert.deepEqual(parseDecisionBody(J(draftBase({ slot: undefined }))), { ok: false });
+  for (const b of [{ ...base, slot: SLOT }, { kind: 'clip', id: 'c1', version: V, action: 'approve', slot: SLOT }, draftBase({ action: 'skip' }), draftBase({ action: 'edit', text: 'x' })]) assert.deepEqual(parseDecisionBody(J(b)), { ok: false }, J(b).slice(0, 60));
+  for (const slot of ['2026-11-19', '2026-11-19T09:00:00Z', '2026-11-19T09:00:00+03:00 ', 5, null, '2026-11-19T09:30:00+03:00']) assert.deepEqual(parseDecisionBody(J(draftBase({ slot }))), { ok: false }, String(slot));
+  assert.equal(parseDecisionBody(J(draftBase({ slot: '2026-12-01T09:00:00+03:00' }))).ok, true);
+});
+test('draft: the id is B and 1 to 6 digits; the edit text is 1 to 2000 (hooks stay at 200); text on an approve is refused', () => {
+  for (const id of ['B26', 'B1', 'B123456']) assert.equal(parseDecisionBody(J(draftBase({ id }))).ok, true, id);
+  for (const id of ['b26', 'B', 'B1234567', '__proto__', 'B1\n', 'B1 ', 'X1']) assert.deepEqual(parseDecisionBody(J(draftBase({ id }))), { ok: false }, JSON.stringify(id));
+  const ed = (text) => J(draftBase({ action: 'edit', slot: undefined, text }));
+  assert.equal(parseDecisionBody(ed('x'.repeat(2000))).ok, true); assert.deepEqual(parseDecisionBody(ed('x'.repeat(2001))), { ok: false }); assert.deepEqual(parseDecisionBody(ed('')), { ok: false });
+  assert.equal(parseDecisionBody(J({ kind: 'hook', id: 'idea-1', version: V, action: 'edit', text: 'h'.repeat(61) })).ok, true, 'a hook edit of 61 characters still parses at this layer');
+  assert.deepEqual(parseDecisionBody(J({ kind: 'hook', id: 'idea-1', version: V, action: 'edit', text: 'h'.repeat(201) })), { ok: false });
+  assert.deepEqual(parseDecisionBody(J(draftBase({ text: 'x' }))), { ok: false });
+});

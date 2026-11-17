@@ -11,7 +11,7 @@ import { readQueueStrict } from './draft-version.js';
 import { scheduledAtMetaNote, stopPosting, startPosting } from './bpa-actions.js';
 import { reserveInstagramPublish, releaseInstagramReservation } from './ledger.js';
 import { recordPost, healthTick } from './health.js';
-import { createReviewHandler, defaultInputs, refuse } from './review-routes.js';
+import { createReviewHandler, defaultInputs, defaultActions, refuse } from './review-routes.js';
 import { createSessions, loadAccess, checkHealthAccess, hasProxyHeaders } from './review-auth.js';
 const PORT = CONFIG.approvalPort;
 export { scheduledAtMetaNote };
@@ -69,7 +69,7 @@ export async function handle(text, deps = {}) {
   saveQueue(q, queuePath); return out.join('\n');
 }
 const reviewSessions = createSessions();
-const reviewHandler = createReviewHandler({ sessions: reviewSessions, loadInputs: defaultInputs, log });
+const reviewHandler = createReviewHandler({ sessions: reviewSessions, loadInputs: defaultInputs, loadActions: defaultActions, log });
 export const server = http.createServer(async (req, res) => {
   const send = (code, obj) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(obj)); };
   if (reviewHandler(req, res)) return; // /review/*: its own access rule (login + cookie), see review-routes.js

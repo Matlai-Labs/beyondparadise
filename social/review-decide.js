@@ -6,7 +6,7 @@ import { withDecisionLock } from './decision-lock.js';
 import { log as defaultLog } from './lib.js';
 
 const NO = Object.freeze({ ok: false });
-const KINDS = new Set(['hook', 'clip']);
+const KINDS = new Set(['hook', 'clip', 'draft']);
 const ACTIONS = new Set(['approve', 'skip', 'undo', 'edit']);
 const BASE_KEYS = new Set(['kind', 'id', 'version', 'action']);
 const CONTROL = /[\u0000-\u001F\u007F-\u009F\u2028\u2029]/;
@@ -14,7 +14,10 @@ const CONTROL = /[\u0000-\u001F\u007F-\u009F\u2028\u2029]/;
 const FUNCTIONS = new Map([
   ['hook:approve', 'approveHook'], ['hook:skip', 'skipHook'], ['hook:undo', 'unapproveHook'], ['hook:edit', 'editHook'],
   ['clip:approve', 'approveClip'], ['clip:skip', 'skipClip'], ['clip:undo', 'unapproveClip'],
+  ['draft:approve', 'approveDraft'], ['draft:skip', 'skipDraft'], ['draft:edit', 'editDraft'], // a draft has no undo: the engine has none
 ]);
+const DRAFT_ID = /^B\d{1,6}$/;
+const SLOT = /^\d{4}-\d{2}-\d{2}T\d{2}:00:00\+03:00$/; // the day the card showed; only a draft approve carries it
 
 function parseObject(text) {
   if (typeof text !== 'string') return null;
@@ -25,19 +28,23 @@ function parseObject(text) {
 export function parseDecisionBody(text) {
   const j = parseObject(text); if (!j) return NO;
   const keys = Object.keys(j);
-  for (const k of keys) if (!BASE_KEYS.has(k) && k !== 'text') return NO;
+  for (const k of keys) if (!BASE_KEYS.has(k) && k !== 'text' && k !== 'slot') return NO;
   const { kind, id, version, action } = j;
   if (typeof kind !== 'string' || !KINDS.has(kind) || typeof action !== 'string' || !ACTIONS.has(action)) return NO;
   if (!FUNCTIONS.has(`${kind}:${action}`)) return NO;
   if (typeof id !== 'string' || id.length < 1 || id.length > 200 || CONTROL.test(id)) return NO;
   if (typeof version !== 'string' || !/^[0-9a-f]{64}$/.test(version)) return NO;
+  if (kind === 'draft' && !DRAFT_ID.test(id)) return NO;
+  const wantSlot = kind === 'draft' && action === 'approve'; // required there, refused on every other pair
+  if (Object.hasOwn(j, 'slot') !== wantSlot) return NO;
+  if (wantSlot && !(typeof j.slot === 'string' && SLOT.test(j.slot))) return NO;
   const hasText = Object.hasOwn(j, 'text');
   if (action === 'edit') {
-    if (!hasText || typeof j.text !== 'string' || j.text.length < 1 || j.text.length > 200) return NO;
+    if (!hasText || typeof j.text !== 'string' || j.text.length < 1 || j.text.length > (kind === 'draft' ? 2000 : 200)) return NO;
     return { ok: true, req: { kind, id, version, action, text: j.text } };
   }
   if (hasText) return NO;
-  return { ok: true, req: { kind, id, version, action } };
+  return { ok: true, req: { kind, id, version, action, ...(wantSlot ? { slot: j.slot } : {}) } };
 }
 
 export function parsePostingBody(text) {
