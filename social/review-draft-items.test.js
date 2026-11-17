@@ -114,3 +114,7 @@ test('R3 a text over 5000 characters: reason text-too-long, only Skip, the final
   const ok = await one(draft('B1', { text: 'x'.repeat(5000) })); assert.equal(ok.item.reason, null); assert.deepEqual(ok.item.actions, ['approve', 'skip', 'edit']);
   const emoji = await one(draft('B1', { text: '😀'.repeat(5000) })); assert.equal(emoji.item.reason, null, 'counted by character, not by UTF-16 unit');
 });
+
+test('R6 a draft with an unreadable creation time shows the expired reason and no actions (as for any expired draft)', async () => {
+  for (const createdAt of ['not a time', undefined]) { const { item, r } = await one(draft('B1', { createdAt })); assert.equal(item.reason, 'expired'); assert.deepEqual(item.actions, []); assert.equal(r.calls.check, 0); }
+});

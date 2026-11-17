@@ -278,3 +278,12 @@ test('R4 a failed save and a failed void line: write-failed, and the log says vo
   const quiet = kit([draft('B1')], { save: () => { throw new Error('disk full'); } }); const was2 = fs.readFileSync(LOGF, 'utf8').length;
   await quiet.actions.skipDraft(skipReq(quiet), quiet.ctx); assert.ok(!fs.readFileSync(LOGF, 'utf8').slice(was2).includes('void-record-failed'), 'a void that worked logs nothing extra');
 });
+
+// ── fix round R6: a draft whose creation time cannot be read counts as expired on the page ─────────────────────────────
+test('R6 approve on a draft with an unreadable or missing creation time: expired, nothing scheduled; a readable one is unchanged', async () => {
+  for (const createdAt of ['not a time', '', undefined, 12]) {
+    const k = ak([draft('B1', { createdAt })]); if (createdAt === undefined) { const q = k.q(); delete q.drafts[0].createdAt; fs.writeFileSync(k.queuePath, JSON.stringify(q)); }
+    const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'expired' }, String(createdAt)); nothingHappened(k, b);
+  }
+  assert.equal((await ak().approve()).ok, true);
+});

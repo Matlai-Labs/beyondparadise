@@ -85,7 +85,7 @@ export function createDraftActions(options = {}) {
       const o = open(req); if (o.fail) return o.fail;
       const { q, d } = o;
       if (draftVersion(d) !== req.version) return fail('version-changed');
-      const exp = draftExpiresAt(d, ttlDays); if (exp !== null && now().getTime() > exp) return fail('expired'); // the worker expires drafts only while posting is not stopped
+      const exp = draftExpiresAt(d, ttlDays); if (exp === null || now().getTime() > exp) return fail('expired'); // a creation time that cannot be read counts as expired on the page (the WhatsApp route is unchanged) // the worker expires drafts only while posting is not stopped
       if (textTooLong(d)) return fail('text-too-long'); // the card shows at most 5000 characters: what was read must be all that goes out
       if (hiddenCharsIn(d.text) || hiddenCharsIn(String(d.videoText ?? ''))) return fail('bad-characters');
       // An earlier approve may already exist at Meta (its record line is written BEFORE the call and survives a crash): never a second one.

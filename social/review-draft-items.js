@@ -32,7 +32,7 @@ function factsOf(d, { q, now, ttlDays, igOn, pending }) {
 /** The first reason a pending draft cannot be approved now (null = ready), in a fixed order. checkFor (the final check) runs only when nothing earlier applies. */
 async function pendingReason(d, { claimWhy, checkFor, stop, approveOn, approvedIds, ttlDays, now }) {
   if (d.metaUnknown || approvedIds.has(d.id)) return 'check-meta'; // an earlier Approve may already exist at Meta
-  const exp = draftExpiresAt(d, ttlDays); if (exp !== null && now.getTime() > exp) return 'expired';
+  const exp = draftExpiresAt(d, ttlDays); if (exp === null || now.getTime() > exp) return 'expired'; // an unreadable creation time counts as expired
   if (!nonEmpty(typeof d.text === 'string' ? d.text.trim() : '')) return 'text-missing';
   if (textTooLong(d)) return 'text-too-long';
   if (hiddenCharsIn(d.text) || hiddenCharsIn(String(d.videoText ?? ''))) return 'hidden-characters';
