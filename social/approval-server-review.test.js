@@ -45,3 +45,33 @@ test('E9: /health on a loopback Host with a proxy header falls under the login a
   for (const h of FWD) { const r = await call('GET', '/health', { ...loop, [h]: '100.64.0.1' }); assert.equal(r.status, 403, h); assert.equal(r.body, 'not available'); }
   assert.equal((await call('GET', '/health', loop)).status, 200, 'the worker, no proxy header'); assert.equal((await call('GET', '/health', { host: HOST, 'tailscale-user-login': OWNER, cookie: ck, 'x-forwarded-for': '100.64.0.1' })).status, 200, 'the published path with login and cookie');
 });
+
+// ── step 2: the new routes through the REAL server, and the stop/start parity with WhatsApp ──────────────
+const { handle } = await import('./approval-server.js');
+const PAGE = { 'x-bpa-page': '1' };
+const who = { host: HOST, 'tailscale-user-login': OWNER };
+const tokenOf = async () => JSON.parse((await call('POST', '/review/api/session', { ...who, cookie: ck, ...PAGE })).body).token;
+const act = (route, tok, obj) => call('POST', `/review/api/${route}`, { ...who, cookie: ck, 'x-bpa-action': tok, 'content-type': 'application/json' }, JSON.stringify(obj));
+
+test('old route still refuses the tailnet Host and proxy headers after step 2', async () => {
+  const base = { 'content-type': 'application/json', 'x-bpa-token': 'test-token' };
+  const a = await call('POST', '/bpa/action', { ...base, host: HOST }, '{"text":"bpa help"}'); assert.equal(a.status, 403);
+  const b = await call('POST', '/bpa/action', { ...base, ...loop, 'x-forwarded-for': '100.64.0.1' }, '{"text":"bpa help"}'); assert.equal(b.status, 403); assert.equal(b.body, 'not available');
+});
+test('POST /review/api/decide through the real server without the token is 403 not available, with login and cookie only', async () => {
+  const r = await call('POST', '/review/api/decide', { ...who, cookie: ck, 'content-type': 'application/json' }, JSON.stringify({ action: 'approve', kind: 'clip', id: 'x', version: 'y' }));
+  assert.equal(r.status, 403); assert.equal(r.body, 'not available');
+});
+test('POST /review/api/session through the real server without a cookie is 403 not available and sets no cookie; with the cookie it returns a token', async () => {
+  const no = await call('POST', '/review/api/session', { ...who, ...PAGE }); assert.equal(no.status, 403); assert.equal(no.body, 'not available'); assert.equal(no.headers['set-cookie'], undefined);
+  const yes = await call('POST', '/review/api/session', { ...who, cookie: ck, ...PAGE }); assert.equal(yes.status, 200); assert.equal(yes.headers['set-cookie'], undefined);
+  const j = JSON.parse(yes.body); assert.equal(j.ok, true); assert.equal(typeof j.token, 'string'); assert.ok(j.token.length >= 16);
+});
+test('page stop and WhatsApp start see one state: stop through /review/api/posting, then handle(bpa start) answers the pinned release text; and the other way round', async () => {
+  const tok = await tokenOf();
+  const s = await act('posting', tok, { action: 'stop' }); assert.equal(s.status, 200, s.body); assert.equal(JSON.parse(s.body).ok, true);
+  assert.equal(await handle('bpa start', {}), '▶️ started. Publishing, scheduling and drafting are allowed again.');
+  assert.match(await handle('bpa stop', {}), /^🛑 Stopped\./);
+  const st = await act('posting', tok, { action: 'start' }); assert.equal(st.status, 200, st.body); assert.equal(JSON.parse(st.body).ok, true);
+  assert.equal(await handle('bpa start', {}), 'ℹ️ it was not stopped.');
+});

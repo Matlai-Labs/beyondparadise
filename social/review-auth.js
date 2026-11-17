@@ -28,7 +28,7 @@ export const SESSION_MIN_AGE_MS = 60e3;   // a session younger than this is neve
 export const SESSION_ISSUE_GAP_MS = 2e3;  // at most one new session per this time, per process
 /** issue() returns a token, or null when it is too soon after the last one or the table is full of young sessions (nothing is evicted then). */
 export function createSessions({ ttlMs = SESSION_TTL_MS, now = Date.now, max = 50, minAgeMs = SESSION_MIN_AGE_MS, issueGapMs = SESSION_ISSUE_GAP_MS } = {}) {
-  const live = new Map(); // token -> { issuedAt, expiry } (insertion order = age)
+  const live = new Map(); // token -> { issuedAt, expiry, action } (insertion order = age)
   let lastIssue = -Infinity;
   const prune = () => { for (const [t, v] of live) if (v.expiry <= now()) live.delete(t); };
   return {
@@ -36,7 +36,7 @@ export function createSessions({ ttlMs = SESSION_TTL_MS, now = Date.now, max = 5
       prune(); const t0 = now();
       if (t0 - lastIssue < issueGapMs) return null;
       if (live.size >= max) { const oldest = live.entries().next().value; if (!oldest || t0 - oldest[1].issuedAt < minAgeMs) return null; live.delete(oldest[0]); }
-      const t = crypto.randomBytes(32).toString('hex'); live.set(t, { issuedAt: t0, expiry: t0 + ttlMs }); lastIssue = t0; return t;
+      const t = crypto.randomBytes(32).toString('hex'); live.set(t, { issuedAt: t0, expiry: t0 + ttlMs, action: crypto.randomBytes(32).toString('hex') }); lastIssue = t0; return t;
     },
     /** true while a new session was issued less than issueGapMs ago (the only refusal that clears itself in seconds) */
     tooSoon() { return now() - lastIssue < issueGapMs; },
@@ -46,6 +46,12 @@ export function createSessions({ ttlMs = SESSION_TTL_MS, now = Date.now, max = 5
       return live.has(token);
     },
     count() { prune(); return live.size; },
+    /** The action token of the session this cookie belongs to (created with the session, gone with it), or null. */
+    actionToken(cookieToken) { if (typeof cookieToken !== 'string') return null; prune(); const v = live.get(cookieToken); return v ? v.action : null; },
+    actionValid(cookieToken, token) {
+      const a = this.actionToken(cookieToken); if (a === null || typeof token !== 'string') return false;
+      const x = Buffer.from(a), y = Buffer.from(token); return x.length === y.length && crypto.timingSafeEqual(x, y);
+    },
   };
 }
 
@@ -63,6 +69,24 @@ const refuse = (code, reason) => ({ ok: false, code, reason });
 function cookieValues(header) {
   if (typeof header !== 'string') return [];
   return header.split(';').map((p) => p.trim()).filter((p) => p.startsWith(`${COOKIE_NAME}=`)).map((p) => p.slice(COOKIE_NAME.length + 1));
+}
+
+/** The value of the single bpa_review cookie; null when absent, empty, malformed or present more than once. */
+export function cookieOf(req) { const v = cookieValues(req && req.headers && req.headers.cookie); return v.length === 1 && v[0] !== '' ? v[0] : null; }
+
+/** The cookie must already have passed checkAccess. The header x-bpa-action must be one value equal to the session's token. */
+export function checkAction(req, { sessions }) {
+  const h = req && req.headers && req.headers['x-bpa-action'];
+  if (typeof h !== 'string' || h === '') return refuse(403, 'no-token');
+  const c = cookieOf(req);
+  return c !== null && sessions.actionValid(c, h) ? { ok: true } : refuse(403, 'bad-token');
+}
+
+/** SR1: a state-changing request must come from this page's own origin. `SameSite=Strict` only means same SITE: a page on another port of the same host carries the cookie.
+ *  Sec-Fetch-Site absent (an older browser, a non-browser caller) is accepted: the custom headers and the refused preflight still stand. NOT used for the page load: a link opened from a chat app is cross-site. */
+export function checkSameOrigin(req) {
+  const v = req && req.headers ? req.headers['sec-fetch-site'] : undefined;
+  return v === undefined || v === 'same-origin' ? { ok: true } : refuse(403, 'cross-site');
 }
 
 export function checkAccess(req, { access, sessions, needCookie }) {

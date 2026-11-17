@@ -7,21 +7,13 @@ import { authorize } from './auth.js';
 import { claimGate } from './claim-gate.js';
 import { withQueueLock, loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, brandGuard, voiceGate, rulesCheck, finalCheck, blockDraft, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, QUEUE_PATH } from './lib.js';
 import { stopStatus, engageStop, releaseStop, StoppedError } from './stop.js';
+import { scheduledAtMetaNote, stopPosting, startPosting } from './bpa-actions.js';
 import { reserveInstagramPublish, releaseInstagramReservation } from './ledger.js';
 import { recordPost, healthTick } from './health.js';
 import { createReviewHandler, defaultInputs, refuse } from './review-routes.js';
 import { createSessions, loadAccess, checkHealthAccess, hasProxyHeaders } from './review-auth.js';
 const PORT = CONFIG.approvalPort;
-/** One plain sentence about Facebook posts already scheduled at Meta (stop does not cancel them). Reads the queue WITHOUT the lock; a parse error leaves the sentence out. */
-export function scheduledAtMetaNote(queuePath, now = new Date(), tz = CONFIG.timezone) {
-  let q; try { q = JSON.parse(fs.readFileSync(queuePath, 'utf8')); } catch { return ''; }
-  const times = (Array.isArray(q?.drafts) ? q.drafts : []).filter((d) => d?.status === STATUS.SCHEDULED && Date.parse(d.scheduledFor) > now.getTime()).map((d) => Date.parse(d.scheduledFor)).sort((x, y) => x - y);
-  if (!times.length) return '';
-  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(times[0])).map((x) => [x.type, x.value]));
-  const when = `${p.day} ${p.month} ${p.hour}:${p.minute}`;
-  return times.length === 1 ? `1 Facebook post is already scheduled at Meta for ${when} and will still go out; cancel it in Meta if needed.`
-    : `${times.length} Facebook posts are already scheduled at Meta, the next for ${when}, and will still go out; cancel them in Meta if needed.`;
-}
+export { scheduledAtMetaNote };
 /** Entry used by the HTTP handler: stop/start run OUTSIDE the queue lock (a long `post ... now` holds it for minutes and the bridge gives up after 45 s). */
 export async function dispatch(text, deps = {}) {
   const cmd = parseCommand(text).cmd;
@@ -32,8 +24,8 @@ export async function handle(text, deps = {}) {
   const { queuePath = QUEUE_PATH, stopOpts, stop = () => stopStatus(stopOpts), schedule = schedulePost, publish = publishNow, publishIg = igPostDraftAny, igOn = igEnabled, reserve = reserveInstagramPublish, release = releaseInstagramReservation, now: nowDep, ledgerPath, config: capConfig = CONFIG, lastPostPath, notify = whatsapp, neverPromotePatterns } = deps;
   const c = parseCommand(text);
   // stop / start never wait for the queue lock (dispatch() below calls them outside it) and never need a readable queue.
-  if (c.cmd === 'stop') { const note = scheduledAtMetaNote(queuePath, nowDep || new Date()); return engageStop(stopOpts) + (note ? ` ${note}` : ''); }
-  if (c.cmd === 'start') return releaseStop(stopOpts);
+  if (c.cmd === 'stop') return stopPosting({ queuePath, stopOpts, now: nowDep || new Date() }).reply;
+  if (c.cmd === 'start') return startPosting({ stopOpts }).reply;
   const q = loadQueue(queuePath); const find = (id) => q.drafts.find((d) => d.id === id);
   if (c.cmd === 'help') return 'bpa · bpa list · bpa approve B1 B2 · bpa skip B1 · bpa edit B1: text · bpa post B1 now · bpa status · bpa stop · bpa start';
   if (c.cmd === 'list') return renderList(q);

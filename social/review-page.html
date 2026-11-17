@@ -47,6 +47,22 @@
   #nav { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; }
   #counter { color: var(--muted); }
   #empty, #unavailable { padding: 24px 0; }
+  #stop-all { margin: 6px 0 0; }
+  #actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+  #actions button { min-width: 96px; }
+  #act-approve { border-color: var(--accent); background: var(--accent); color: var(--accent-fg); }
+  #notice { margin: 10px 0 0; font-weight: 600; min-height: 1.4em; }
+  #edit-box { margin: 12px 0 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; }
+  #edit-box label { display: block; font-size: 0.9rem; margin-bottom: 6px; }
+  #edit-text { width: 100%; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+  #edit-count { margin: 4px 0 8px; font-size: 0.85rem; color: var(--muted); }
+  #edit-error { margin: 8px 0 0; color: var(--warn); }
+  #edit-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  #decided { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 10px 14px; }
+  #decided summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+  #decided-list { list-style: none; margin: 0; padding: 0; }
+  #decided-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
+  #decided-list .when { color: var(--muted); font-size: 0.85rem; display: block; }
   .hidden { display: none !important; }
   @media (max-width: 899px) {
     #nav { position: sticky; bottom: 0; background: var(--card); padding: 8px 0 4px; border-top: 1px solid var(--line); }
@@ -69,8 +85,9 @@
 <body>
 <header>
   <h1>Beyond Paradise: review</h1>
-  <p id="step-note">Step 1: look only. Approve and Skip arrive with the next step.</p>
+  <p id="step-note">Step 2: you can decide here. Approve, Skip and Edit are saved at once. Undo is under What I decided.</p>
   <div id="status" aria-live="polite"></div>
+  <button type="button" id="stop-all">Stop all posting</button>
   <ul id="problems"></ul>
 </header>
 <div id="filters">
@@ -85,6 +102,7 @@
     <ul id="list"></ul>
     <button type="button" id="more" class="hidden">Show more</button>
   </div>
+  <div id="side">
   <section id="card" aria-label="Current card">
     <p id="card-kind"></p>
     <h2 id="card-title" tabindex="-1"></h2>
@@ -93,6 +111,22 @@
     <div id="video-slot"></div>
     <div id="facts"></div>
     <p id="idline"></p>
+    <div id="actions" class="hidden">
+      <button type="button" id="act-approve">Approve</button>
+      <button type="button" id="act-skip">Skip</button>
+      <button type="button" id="act-edit">Edit</button>
+    </div>
+    <div id="edit-box" class="hidden">
+      <label for="edit-text">New text for the video, at most 60 characters</label>
+      <textarea id="edit-text" rows="2"></textarea>
+      <p id="edit-count">0 of 60</p>
+      <div id="edit-buttons">
+        <button type="button" id="edit-save">Save and approve</button>
+        <button type="button" id="edit-cancel">Cancel</button>
+      </div>
+      <p id="edit-error" aria-live="polite"></p>
+    </div>
+    <p id="notice" aria-live="polite"></p>
     <p id="swipe-hint">Swipe left or right, or use the buttons.</p>
     <div id="nav">
       <button type="button" id="prev">Back</button>
@@ -100,6 +134,11 @@
       <button type="button" id="next">Next</button>
     </div>
   </section>
+  <details id="decided">
+    <summary id="decided-summary">What I decided (0)</summary>
+    <ul id="decided-list"></ul>
+  </details>
+  </div>
 </main>
 <script nonce="__NONCE__">
 'use strict';
@@ -111,6 +150,7 @@ const LABELS = {
   'library-missing': 'There is no clip library yet.',
   'library-unreadable': 'The clips cannot be read right now.',
   'usage-unreadable': 'The list of clips already used cannot be read right now.',
+  'approvals-unreadable': 'The list of your clip decisions cannot be read right now.',
   'history-unreadable': 'The list of earlier posts cannot be read right now.',
 };
 const FALLBACK = 'The checks refuse it today.';
@@ -132,6 +172,8 @@ const REASON_TEXT = {
   'no-claims': 'The idea has no facts to rest on.',
   'check-failed': 'The checks could not be run today.',
   'bad-hooks-file': 'The list of video texts cannot be read right now.',
+  'bad-approvals-file': 'The list of your clip decisions cannot be read right now.',
+  'final-check': 'The wording fails the voice or rules check.',
   'no-approved-hook': 'The automatic posting needs an approved video text for this idea.',
   'no-subject': 'The idea does not name an animal, so no clip can be matched.',
   'no-matching-clip': 'No approved, unused clip shows this animal.',
@@ -142,6 +184,7 @@ const REASON_TEXT = {
   'in-history': 'This idea was posted recently.',
   'wrong-kind': 'The automatic posting does not use this kind of idea.',
   'not-approved': 'It is not approved yet.',
+  'skipped': 'You skipped it.',
   'stale': 'The facts changed since it was written.',
   'usage-unreadable': 'The list of clips already used cannot be read right now.',
   'video-missing': 'The video file is missing.',
@@ -160,6 +203,7 @@ const REASON_PREFIX = [
   ['alt-text:', 'The picture description fails a check.'],
   ['bad-config:', 'A setting for the automatic posting is wrong.'],
   ['bad-hooks-file', 'The list of video texts cannot be read right now.'],
+  ['bad-approvals-file', 'The list of clip decisions cannot be read right now.'],
 ];
 function reasonText(code) {
   if (typeof code !== 'string' || code === '') return FALLBACK;
@@ -266,6 +310,76 @@ function videoFailureAction(o) {
 }
 // Reduced motion: the page never starts the video by itself.
 function shouldAutoplay(reduce) { return !reduce; }
+// ── step 2: decision logic (no DOM) ──
+const EDIT_MAX = 60;
+const REFUSAL_TEXT = {
+  'version-changed': 'This changed after you looked at it. The card is loaded again. Please look at it once more.',
+  'stale': 'The facts behind this text changed. Use Edit to write it again.',
+  'not-found': 'This is gone. The list is loaded again.',
+  'already-approved': 'You already approved this.',
+  'already-skipped': 'You already skipped this.',
+  'not-decided': 'There is nothing to undo here.',
+  'already-used': 'It was already used in a post, so it cannot be undone.',
+  'rights-missing': 'This stock clip has no complete record of where it came from, who made it, its licence and the day it was downloaded.',
+  'version-pending': 'The video is still being prepared. Try again in a moment.',
+  'no-change': 'That is the same text as before. Change it first.',
+  'bad-request': 'That did not work. Reload the page.',
+  'bad-characters': 'The text has characters that cannot be seen. Remove them and try again.',
+  'cannot-decide': 'This card cannot be decided.',
+  'check-failed': 'The checks could not be run now. Nothing was changed.',
+  'usage-unreadable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'history-unreadable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'approvals-unreadable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'hooks-unreadable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'ideas-unavailable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'library-unreadable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'record-failed': 'Nothing was changed. The decision could not be written down. Try again; if it stays like this, tell Claude.',
+  'write-failed': 'Nothing was changed. The decision could not be saved. Try again; if it stays like this, tell Claude.',
+  'lock-busy': 'The system is busy. Try again in a moment.',
+  'still-stopped': 'Posting is still stopped by another stop switch.',
+  'could-not-stop': 'Posting could not be stopped from here. Use the stop command in WhatsApp.',
+  'stop-changed': 'Posting was stopped again in the meantime. Check and tap again.',
+};
+const NET_TEXT = 'The connection broke. Your decision may have been saved. Reload the page to see what is saved.';
+function postingBody(action, ui) { const b = { action: action }; if (action === 'start' && ui && typeof ui.reason === 'string' && ui.reason !== '') b.seen = ui.reason; return b; }
+function refusalText(code) {
+  if (typeof code !== 'string' || code === '') return FALLBACK;
+  if (Object.prototype.hasOwnProperty.call(REFUSAL_TEXT, code)) return REFUSAL_TEXT[code];
+  let t = reasonText(code);
+  if (t === FALLBACK && code.indexOf(':') > 0) t = reasonText(code.slice(0, code.indexOf(':')));
+  return t === FALLBACK ? FALLBACK : 'Not saved: ' + t;
+}
+function waitingItems(items) { return items.filter((i) => i.decision === null || i.decision === undefined); }
+function decidedItems(items) { return items.filter((i) => i.decision !== null && i.decision !== undefined).sort((a, b) => Date.parse(b.decision.at) - Date.parse(a.decision.at)); }
+// the same set the server refuses (bpa-actions.js INVISIBLE): control, format, private-use, unassigned, line and paragraph separators, every space but U+0020, variation selectors, fillers
+const BAD_EDIT_CHARS = /[\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Cs}\p{Zl}\p{Zp}︀-️\u{E0100}-\u{E01EF}͏ᅟᅠ⠀ㅤﾠ]|(?! )\p{Zs}/u;
+function decisionRequest(item, action, text) {
+  if (!item || !Array.isArray(item.actions) || item.actions.indexOf(action) < 0) return null;
+  const req = { kind: item.kind, id: item.id, version: item.version, action };
+  if (action === 'edit') {
+    if (typeof text !== 'string' || text.trim() === '' || text.length > EDIT_MAX || BAD_EDIT_CHARS.test(text)) return null;
+    req.text = text;
+  }
+  return req;
+}
+const RELOAD_CODES = ['version-changed', 'not-found', 'stale', 'not-decided', 'already-approved', 'already-skipped'];
+function afterRefusal(code) { return RELOAD_CODES.indexOf(code) >= 0 ? 'reload' : 'stay'; }
+function tokenStep(o) { o = o || {}; if (o.status === 200 || o.status === 409) return 'done'; if (o.status === 403 && !o.retried) return 'refresh-and-retry'; return 'give-up'; }
+function keyAction(e, ctx) {
+  if (ctx.editing && e.key === 'Escape') return 'cancel';
+  if (!ctx.wide || ctx.typing || ctx.busy || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return null;
+  const m = { a: 'approve', s: 'skip', e: 'edit' }[String(e.key).toLowerCase()];
+  return m && ctx.actions.indexOf(m) >= 0 ? m : null;
+}
+function decidedLine(item) {
+  const title = item.kind === 'clip' ? clipTitle(item) : item.title;
+  return 'You ' + (item.decision && item.decision.kind === 'skipped' ? 'skipped' : 'approved') + ' "' + title + '".';
+}
+function stopButtonText(o) {
+  o = o || {};
+  if (o.stopped) return o.armed ? 'Tap again to allow posting' : 'Allow posting again';
+  return o.armed ? 'Tap again to stop all posting' : 'Stop all posting';
+}
 // END PURE
 
 const $ = (id) => document.getElementById(id);
@@ -290,7 +404,7 @@ function showStatus(s, problems) {
   for (const p of problems || []) pl.appendChild(el('li', LABELS[p] || 'Something could not be read.'));
 }
 
-function shownItems() { return filterItems(state.items, state.kind); }
+function shownItems() { return filterItems(waitingItems(state.items), state.kind); }
 
 let videoTimer = null; let videoSerial = 0;
 function stopVideo() {
@@ -371,14 +485,14 @@ function renderList() {
 }
 
 function renderFilters() {
-  const c = countKinds(state.items); const names = { all: 'All', clip: 'Clips', hook: 'Video texts' };
+  const c = countKinds(waitingItems(state.items)); const names = { all: 'All', clip: 'Clips', hook: 'Video texts' };
   for (const b of document.querySelectorAll('#filters button[data-kind]')) { const k = b.getAttribute('data-kind'); b.textContent = names[k] + ' ' + c[k]; b.setAttribute('aria-pressed', k === state.kind ? 'true' : 'false'); }
 }
 
 function renderCard(moved) {
   const items = shownItems(); const n = items.length;
   if (n === 0) {
-    stopVideo(); $('video-quiet').classList.add('hidden'); $('card-kind').textContent = ''; $('card-title').textContent = ''; $('state').textContent = 'Nothing waits here. Pick another filter.'; clear($('facts')); $('idline').textContent = ''; $('counter').textContent = '';
+    stopVideo(); $('video-quiet').classList.add('hidden'); $('card-kind').textContent = ''; $('card-title').textContent = ''; $('state').textContent = 'Nothing waits here. Pick another filter.'; $('actions').classList.add('hidden'); closeEdit(); clear($('facts')); $('idline').textContent = ''; $('counter').textContent = '';
     $('prev').disabled = true; $('next').disabled = true; state.currentId = null; state.key = null; return;
   }
   state.index = moveIndex(state.index, 0, n); const item = items[state.index];
@@ -389,12 +503,12 @@ function renderCard(moved) {
   $('counter').textContent = 'Card ' + (state.index + 1) + ' of ' + n;
   const key = item.id + '|' + item.version;
   if (state.key !== key) { showVideo(item); state.key = key; }
-  state.currentId = item.id;
-  showFacts(item);
-  if (moved) $('card-title').focus({ preventScroll: true });
+  state.currentId = item.id; if (state.editing && state.editId !== item.id) closeEdit();
+  showFacts(item); renderActions(item);
+  if (moved) { closeEdit(); $('card-title').focus({ preventScroll: true }); }
 }
 
-function renderAll() { renderFilters(); renderList(); renderCard(false); }
+function renderAll() { renderFilters(); renderList(); renderCard(false); renderDecided(); }
 
 function move(delta) { const n = shownItems().length; const next = moveIndex(state.index, delta, n); if (next === state.index) return; state.index = next; renderCard(true); renderList(); }
 
@@ -406,20 +520,23 @@ const CANNOT_LOAD = 'The page cannot load. Open it again from your own device wi
 async function load() {
   if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
   let res;
-  try { res = await fetch('api/items', { cache: 'no-store' }); } catch (e) { showUnavailable(CANNOT_LOAD); return; }
+  try { res = await fetch('api/items', { cache: 'no-store' }); } catch (e) { showUnavailable(CANNOT_LOAD); return false; }
   if (res.status === 403 || res.status === 503 || !res.ok) {
-    if (!sessionStorage.getItem('bpa_reloaded')) { sessionStorage.setItem('bpa_reloaded', '1'); location.reload(); return; }
-    showUnavailable(CANNOT_LOAD); return;
+    if (!sessionStorage.getItem('bpa_reloaded')) { sessionStorage.setItem('bpa_reloaded', '1'); location.reload(); return false; }
+    showUnavailable(CANNOT_LOAD); return false;
   }
   sessionStorage.removeItem('bpa_reloaded');
-  let data; try { data = await res.json(); } catch (e) { showUnavailable(CANNOT_LOAD); return; }
+  let data; try { data = await res.json(); } catch (e) { showUnavailable(CANNOT_LOAD); return false; }
   $('unavailable').classList.add('hidden'); $('main').classList.remove('hidden'); $('filters').classList.remove('hidden');
   const keep = state.currentId; state.items = Array.isArray(data.items) ? data.items : [];
   showStatus(data.status, data.problems);
   const items = shownItems(); const at = keep ? items.findIndex((i) => i.id === keep) : -1;
-  state.index = at >= 0 ? at : 0; if (at < 0) { state.currentId = null; state.key = null; }
+  state.index = at >= 0 ? at : (keep ? state.index : 0); if (at < 0) { state.currentId = null; state.key = null; }
+  stopUi.stopped = !!(data.status && data.status.stop && data.status.stop.stopped === true); stopUi.reason = stopUi.stopped && typeof data.status.stop.reason === 'string' ? data.status.stop.reason : null; renderStop();
   renderAll();
+  if (actionToken === null && !tokenAsked) { tokenAsked = true; fetchToken(); }
   if (anyPending(state.items)) retryTimer = setTimeout(load, 5000);
+  return true; // fresh status was applied
 }
 
 for (const b of document.querySelectorAll('#filters button[data-kind]')) b.addEventListener('click', () => { state.kind = b.getAttribute('data-kind'); state.index = 0; state.shown = LIST_PAGE; state.currentId = null; state.key = null; renderAll(); });
@@ -428,6 +545,7 @@ $('next').addEventListener('click', () => move(1));
 $('refresh').addEventListener('click', () => { load(); });
 $('more').addEventListener('click', () => { state.shown += LIST_PAGE; renderList(); });
 document.addEventListener('keydown', (e) => {
+  if (isTyping(e)) return;
   if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
   if (!window.matchMedia('(min-width: 900px)').matches) return;
   if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); move(-1); }
@@ -436,6 +554,145 @@ document.addEventListener('keydown', (e) => {
 let touchX = 0; let touchY = 0;
 $('card').addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; touchX = t.clientX; touchY = t.clientY; }, { passive: true });
 $('card').addEventListener('touchend', (e) => { const t = e.changedTouches[0]; const dx = t.clientX - touchX; const dy = t.clientY - touchY; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) move(dx < 0 ? 1 : -1); }, { passive: true });
+
+// ── step 2: decide, edit, undo, stop (DOM part) ──
+const PAGE_HDR = { 'X-Bpa-Page': '1' };
+let actionToken = null; let tokenAsked = false;
+const stopUi = { stopped: false, reason: null, armed: false, timer: null };
+state.busy = false; state.editing = false;
+const SESSION_ENDED = 'Your session ended. Reload the page.';
+const ENFORCED_TEXT = 'All clips that were ready are decided. From now on the automatic posting uses only the clips you approve.';
+const DONE_TEXT = { approve: 'Approved. You can undo it under What I decided.', skip: 'Skipped. You can undo it under What I decided.', edit: 'Saved and approved.', undo: 'Undone. It is back in the waiting list.' };
+
+function isTyping(e) { const t = e.target; return !!t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' || t.isContentEditable === true); }
+function setNotice(text) { $('notice').textContent = text; }
+function actionHeaders() { return { 'Content-Type': 'application/json', 'X-Bpa-Action': actionToken || '' }; }
+function postDecide(body) { return fetch('api/decide', { method: 'POST', headers: actionHeaders(), body: JSON.stringify(body) }); }
+function postPosting(body) { return fetch('api/posting', { method: 'POST', headers: actionHeaders(), body: JSON.stringify(body) }); }
+
+async function fetchToken() {
+  try {
+    const res = await fetch('api/session', { method: 'POST', headers: PAGE_HDR });
+    if (!res.ok) { actionToken = null; return false; }
+    const j = await res.json(); actionToken = j && typeof j.token === 'string' ? j.token : null; return actionToken !== null;
+  } catch (e) { actionToken = null; return false; }
+}
+// A lost session (server restarted): ask the page address again, marked as a page request, so the browser gets a new cookie. The page is not reloaded, so the open card and the typed text stay.
+async function renewSession() {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let res; try { res = await fetch('./', { headers: PAGE_HDR, cache: 'no-store' }); } catch (e) { return false; }
+    if (res.status === 429 && attempt === 0) { await new Promise((r) => setTimeout(r, 3000)); continue; }
+    if (!res.ok) return false;
+    break;
+  }
+  return fetchToken();
+}
+// One send, and after a 403 one renewal and one retry of the same body.
+async function callServer(send, body) {
+  let retried = false;
+  for (;;) {
+    let res; try { res = await send(body); } catch (e) { return { net: true }; }
+    const step = tokenStep({ status: res.status, retried });
+    if (step === 'refresh-and-retry') { retried = true; if (!(await renewSession())) return { expired: true }; continue; }
+    if (step === 'give-up') return { expired: res.status === 403 };
+    let data = null; try { data = await res.json(); } catch (e) { data = null; }
+    return { data };
+  }
+}
+
+function setBusy(on) {
+  state.busy = on;
+  for (const id of ['act-approve', 'act-skip', 'act-edit', 'edit-save', 'edit-cancel', 'stop-all']) $(id).disabled = on;
+  for (const b of $('decided-list').querySelectorAll('button')) b.disabled = on;
+  if (on) setNotice('Saving…');
+}
+function currentItem() { return shownItems()[state.index] || null; }
+function renderActions(item) {
+  const have = item && Array.isArray(item.actions) ? item.actions : [];
+  for (const a of ['approve', 'skip', 'edit']) $('act-' + a).classList.toggle('hidden', have.indexOf(a) < 0);
+  $('actions').classList.toggle('hidden', !(have.indexOf('approve') >= 0 || have.indexOf('skip') >= 0 || have.indexOf('edit') >= 0));
+}
+function renderDecided() {
+  const rows = decidedItems(state.items); const list = $('decided-list'); clear(list);
+  $('decided-summary').textContent = 'What I decided (' + rows.length + ')';
+  for (const it of rows) {
+    const li = el('li'); const left = el('span'); left.appendChild(document.createTextNode(decidedLine(it)));
+    const d = dateText(it.decision.at); if (d) left.appendChild(el('span', d, 'when'));
+    const b = el('button', 'Undo'); b.type = 'button'; b.disabled = state.busy;
+    b.addEventListener('click', () => { decide('undo', undefined, it); });
+    li.appendChild(left); li.appendChild(b); list.appendChild(li);
+  }
+}
+function openEdit() {
+  const item = currentItem(); if (!item || !Array.isArray(item.actions) || item.actions.indexOf('edit') < 0) return;
+  $('edit-text').value = item.title; $('edit-error').textContent = ''; $('edit-box').classList.remove('hidden'); state.editing = true; state.editId = item.id; countEdit(); $('edit-text').focus();
+}
+function closeEdit() { $('edit-box').classList.add('hidden'); $('edit-error').textContent = ''; state.editing = false; }
+function countEdit() { $('edit-count').textContent = $('edit-text').value.length + ' of ' + EDIT_MAX; }
+
+async function decide(action, text, fromList) {
+  if (state.busy) return;
+  const item = fromList || currentItem(); const req = decisionRequest(item, action, text);
+  if (!req) {
+    if (action === 'edit') $('edit-error').textContent = BAD_EDIT_CHARS.test(String(text)) ? refusalText('bad-characters') : 'Write between 1 and ' + EDIT_MAX + ' characters on one line.';
+    return;
+  }
+  setBusy(true); $('edit-error').textContent = '';
+  const r = await callServer(postDecide, req);
+  setBusy(false);
+  if (r.expired) { setNotice(SESSION_ENDED); return; }
+  if (r.net) { setNotice(NET_TEXT); return; } // the server may have committed before the connection broke
+  const d = r.data;
+  if (!d || typeof d !== 'object') { setNotice(refusalText('bad-request')); return; }
+  if (d.ok === true) {
+    closeEdit(); setNotice(DONE_TEXT[action] + (d.enforced === true ? ' ' + ENFORCED_TEXT : ''));
+    await load(); $('card-title').focus({ preventScroll: true }); return;
+  }
+  const sentence = refusalText(d.code); setNotice(sentence);
+  if (action === 'edit') $('edit-error').textContent = sentence;
+  if (afterRefusal(d.code) === 'reload') await load();
+}
+
+async function stopOrStart() {
+  if (state.busy) return;
+  if (!stopUi.armed) {
+    // SR4: the first tap reads the real state first; if it is not the state the button showed, nothing is armed (the owner looks again)
+    const was = stopUi.stopped; const wasReason = stopUi.reason; state.busy = true; setNotice('Checking…'); const fresh = await load(); state.busy = false;
+    if (fresh !== true) { setNotice(CANNOT_LOAD); renderStop(); return; } // an outdated state is never armed on
+    if (stopUi.stopped !== was || stopUi.reason !== wasReason) { setNotice(stopUi.stopped ? refusalText('stop-changed') : 'Posting is no longer stopped. Check and tap again.'); renderStop(); return; }
+    setNotice(''); stopUi.armed = true; renderStop(); stopUi.timer = setTimeout(() => { stopUi.armed = false; renderStop(); }, 5000); return;
+  }
+  if (stopUi.timer) { clearTimeout(stopUi.timer); stopUi.timer = null; }
+  stopUi.armed = false; const action = stopUi.stopped ? 'start' : 'stop';
+  setBusy(true);
+  const r = await callServer(postPosting, postingBody(action, stopUi));
+  setBusy(false);
+  if (r.expired) { setNotice(SESSION_ENDED); renderStop(); return; }
+  const d = r.net ? null : r.data;
+  if (r.net) setNotice(NET_TEXT);
+  else if (!d || typeof d !== 'object') setNotice(refusalText('bad-request'));
+  else if (d.ok === true) setNotice(action === 'stop' ? 'Posting is stopped.' : 'Posting is allowed again.');
+  else setNotice(refusalText(d.code));
+  await load(); renderStop();
+}
+function renderStop() { $('stop-all').textContent = stopButtonText(stopUi); }
+
+$('act-approve').addEventListener('click', () => { decide('approve'); });
+$('act-skip').addEventListener('click', () => { decide('skip'); });
+$('act-edit').addEventListener('click', () => { openEdit(); });
+$('edit-save').addEventListener('click', () => { decide('edit', $('edit-text').value); });
+$('edit-cancel').addEventListener('click', () => { closeEdit(); });
+$('edit-text').addEventListener('input', countEdit);
+$('stop-all').addEventListener('click', () => { stopOrStart(); });
+document.addEventListener('keydown', (e) => {
+  const item = currentItem();
+  const act = keyAction(e, { wide: window.matchMedia('(min-width: 900px)').matches, typing: isTyping(e), busy: state.busy, editing: state.editing, actions: item && Array.isArray(item.actions) ? item.actions : [] });
+  if (!act || (state.editing && act !== 'cancel')) return;
+  e.preventDefault();
+  if (act === 'cancel') closeEdit(); else if (act === 'edit') openEdit(); else decide(act);
+});
+$('decided').open = window.matchMedia('(min-width: 900px)').matches;
+renderStop();
 load();
 </script>
 </body>

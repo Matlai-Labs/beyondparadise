@@ -50,7 +50,7 @@ test('skipped field: null, absent and {by,at} are readable; text is refused', ()
   assert.equal(readHooks(tmpFile({ hooks: [entry(1, { skipped: { by: 't', at: '2026-11-17T09:00:00Z' } })] })).ok, true);
   assert.equal(readHooks(tmpFile({ hooks: [entry(1, { skipped: null }), entry(2)] })).ok, true);
   assert.equal(readHooks(tmpFile({ hooks: [entry(1, { skipped: 'yes' })] })).ok, false);
-  assert.equal(hookState(entry(1, { skipped: { by: 't', at: '2026-11-17T09:00:00Z' } }), idea(1)), 'unapproved', 'step 1 does not change the lane states');
+  assert.equal(hookState(entry(1, { skipped: { by: 't', at: '2026-11-17T09:00:00Z' } }), idea(1)), 'skipped', 'step 2: skipped is its own state');
 });
 test('--add and --approve now write the private file with mode 600', async () => {
   const f = path.join(tmp(), 'sub', 'h.json'); writeHooksAtomic(f, { hooks: [] });

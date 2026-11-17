@@ -1,6 +1,6 @@
 import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict'; import fs from 'node:fs';
-import { loadAccess, createSessions, setCookieHeader, checkAccess, checkHealthAccess, loopbackHost, hasProxyHeaders, isPageLoad, PAGE_HEADER, COOKIE_NAME } from './review-auth.js';
+import { loadAccess, createSessions, setCookieHeader, checkAccess, checkHealthAccess, loopbackHost, hasProxyHeaders, isPageLoad, PAGE_HEADER, COOKIE_NAME, cookieOf, checkAction } from './review-auth.js';
 import { writeAccess, fakeReq, goodHeaders, OWNER, HOST } from './review-test-kit.js';
 const A = { ok: true, ownerLogin: OWNER, host: HOST };
 test('loadAccess accepts the file with trailing newlines', () => { writeAccess({ raw: JSON.stringify({ ownerLogin: OWNER, host: HOST }) + '\n\n' }); assert.deepEqual(loadAccess(), A); });
@@ -66,3 +66,28 @@ test('isPageLoad: only a document navigation or the page header counts', () => {
     { 'x-bpa-page': '0' }, { 'x-bpa-page': 'true' }, { 'x-bpa-page': '11' }, { 'x-bpa-page': '' }, { 'x-bpa-page': ['1'] }, { 'x-bpa-page': ['1', '1'] }, { 'sec-fetch-dest': ['document'], 'sec-fetch-mode': 'navigate' }, { 'sec-fetch-dest': 'document', 'sec-fetch-mode': ['navigate'] }]) assert.equal(r(h), false, JSON.stringify(h));
   assert.equal(isPageLoad(undefined), false); assert.equal(isPageLoad({}), false); assert.equal(isPageLoad(null), false);
 });
+
+test('action token: distinct from the cookie, 64 hex, stable for the session, null for unknown, gone with the session', () => { let t = 0; const s = createSessions({ now: () => t, ttlMs: 1000 }); const c = s.issue(); const a = s.actionToken(c); assert.match(a, /^[0-9a-f]{64}$/); assert.notEqual(a, c); assert.equal(s.actionToken(c), a); assert.equal(s.actionToken('nope'), null); t = 1001; assert.equal(s.actionToken(c), null); });
+test('an evicted session loses its token (the table of 50 is full)', () => {
+  let t = 0; const s = createSessions({ now: () => t }); const first = s.issue(); const tok = s.actionToken(first); assert.ok(tok);
+  for (let i = 1; i <= 50; i++) { t = i * 2000 + 60000; assert.ok(s.issue(), `issue ${i}`); }
+  assert.equal(s.valid(first), false); assert.equal(s.actionToken(first), null); assert.equal(s.actionValid(first, tok), false);
+});
+const actReq = (cookie, token) => fakeReq(goodHeaders({ ...(cookie ? { cookie: `${COOKIE_NAME}=${cookie}` } : {}), ...(token === undefined ? {} : { 'x-bpa-action': token }) }));
+test('checkAction: missing, wrong, the cookie value, another session\'s token, a duplicated header all refuse; the right one passes', () => {
+  let t = 0; const s = createSessions({ now: () => t }); const c1 = s.issue(); t = 2000; const c2 = s.issue(); const a1 = s.actionToken(c1), a2 = s.actionToken(c2);
+  const run = (c, h) => checkAction(actReq(c, h), { sessions: s });
+  assert.deepEqual(run(c1, a1), { ok: true });
+  assert.deepEqual([run(c1, undefined).ok, run(c1, undefined).reason, run(c1, undefined).code], [false, 'no-token', 403]);
+  for (const bad of ['', 'zzz', a1.slice(0, 63), a1.toUpperCase() + '0', c1, a2, `${a1}, ${a1}`, `${a1}, ${a2}`]) { const r = run(c1, bad); assert.equal(r.ok, false, bad); assert.equal(r.code, 403); assert.ok(['no-token', 'bad-token'].includes(r.reason), bad); }
+  assert.equal(run(c1, a2).reason, 'bad-token'); assert.equal(run(c1, c1).reason, 'bad-token');
+  assert.equal(run(undefined, a1).ok, false); assert.equal(run('unknowncookie', a1).ok, false);
+  assert.equal(checkAction(fakeReq(goodHeaders({ cookie: `${COOKIE_NAME}=${c1}; ${COOKIE_NAME}=${c2}`, 'x-bpa-action': a1 })), { sessions: s }).ok, false);
+});
+test('cookieOf: one cookie gives its value; two bpa_review cookies, none, or a malformed header give null', () => {
+  assert.equal(cookieOf(fakeReq({ cookie: `${COOKIE_NAME}=abc` })), 'abc'); assert.equal(cookieOf(fakeReq({ cookie: `a=b; ${COOKIE_NAME}=abc; c=d` })), 'abc');
+  for (const c of [undefined, '', `${COOKIE_NAME}=a; ${COOKIE_NAME}=b`, 'garbage', `${COOKIE_NAME}=`, 42]) assert.equal(cookieOf(fakeReq(c === undefined ? {} : { cookie: c })), null, String(c));
+  assert.equal(cookieOf(null), null);
+});
+test('a refusal never carries the token', () => { const s = createSessions(); const c = s.issue(); const a = s.actionToken(c); const r = checkAction(actReq(c, 'x'.repeat(64)), { sessions: s }); assert.ok(!JSON.stringify(r).includes(a)); const r2 = checkAction(actReq(c, c), { sessions: s }); assert.ok(!JSON.stringify(r2).includes(a)); assert.ok(!JSON.stringify(r2).includes(c)); });
+test('no function of this file issues a session except createSessions().issue; the module exports no checkPageHeader', async () => { const m = await import('./review-auth.js'); assert.equal(m.checkPageHeader, undefined); });

@@ -9,21 +9,22 @@ import { CLIP_REASONS, HOOK_REASONS } from './review-items.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(HERE, 'review-page.html'), 'utf8');
-const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS, videoFailureAction })`);
+const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS, videoFailureAction, EDIT_MAX, NET_TEXT, postingBody, REFUSAL_TEXT, refusalText, waitingItems, decidedItems, decisionRequest, afterRefusal, tokenStep, keyAction, decidedLine, stopButtonText })`);
 
 test('static rules: no external request, no HTML injection, no inline handlers, nonce on every script', () => {
   assert.ok(html.length < 60000); assert.doesNotMatch(html, /https?:\/\//); assert.doesNotMatch(html, /<link|@import|<iframe/);
   for (const bad of ['innerHTML', 'outerHTML', 'insertAdjacentHTML', 'document.write', 'eval(', 'new Function']) assert.ok(!html.includes(bad), bad);
   assert.doesNotMatch(html, /\son[a-z]+\s*=/); const scripts = html.match(/<script\b[^>]*>/g) || []; assert.ok(scripts.length >= 1); for (const s of scripts) assert.match(s, /nonce="__NONCE__"/);
   assert.doesNotMatch(html.match(/<style\b[^>]*>/)[0], /nonce/);
-  for (const m of html.matchAll(/fetch\(([^)]*)\)/g)) assert.match(m[1], /^'api\/items'/);
+  for (const m of html.matchAll(/fetch\(([^)]*)\)/g)) assert.match(m[1], /^'(api\/(items|session|decide|posting)|\.\/)'/);
   assert.ok((html.match(/fetch\(/g) || []).length >= 1);
+  assert.equal((html.match(/method: 'POST'/g) || []).length, 3, 'exactly one POST per route: session, decide, posting');
 });
 test('head: charset, viewport, title', () => {
   assert.match(html, /<meta charset=/i); assert.match(html, /<meta name="viewport"/); assert.match(html, /<title>Beyond Paradise: review<\/title>/);
 });
 test('the step line, a muted looping inline video built in script, and no video in the markup', () => {
-  assert.ok(html.includes('Step 1: look only. Approve and Skip arrive with the next step.')); assert.doesNotMatch(html.split('<script')[0], /<video/);
+  assert.ok(html.includes('Step 2: you can decide here. Approve, Skip and Edit are saved at once. Undo is under What I decided.')); assert.doesNotMatch(html.split('<script')[0], /<video/);
   for (const w of ["createElement('video')", 'muted = true', 'loop = true', 'playsInline = true', "'media/'"]) assert.ok(html.includes(w), w);
   assert.ok(html.includes('controls = true') && !/controls = (reduce|!reduce|false)/.test(html), 'native controls are on in every case');
 });
@@ -199,3 +200,110 @@ test('a failed clip checks the session before it gives up: one probe, one reload
   assert.equal((html.match(/bpa_reloaded/g) || []).length, 5, 'one storage key, no second key');
   assert.ok(b.includes('videoSerial'), 'a card that is no longer shown gets nothing');
 });
+
+// ── task 12: decision logic (pure part) ──────────────────────────────────────────
+test('EDIT_MAX equals HOOK_MAX of the real check', async () => { const { HOOK_MAX } = await import('./fact-post.js'); assert.equal(pure.EDIT_MAX, HOOK_MAX); });
+test('every code the server can answer has a plain sentence; none is the fallback; none has jargon', async () => { const { ACTION_CODES } = await import('./bpa-actions.js'); for (const c of ACTION_CODES) { const t = pure.refusalText(c); assert.notEqual(t, pure.FALLBACK, c); assert.match(t, /\.$/, c); assert.doesNotMatch(t, /\b(sha\d*|hash|json|manifest|api|mediaId|version|null|undefined|token|nonce|ledger)\b/i, c); } });
+test('every clip and hook reason code has a REASON_TEXT sentence', async () => { const { CLIP_REASONS, HOOK_REASONS } = await import('./review-items.js'); for (const c of [...CLIP_REASONS, ...HOOK_REASONS]) assert.notEqual(pure.reasonText(c), pure.FALLBACK, c); });
+test('edit refusals reuse the check sentences with a prefix; an unknown code never shows the code', () => { assert.equal(pure.refusalText('hook-number-not-in-claims'), 'Not saved: The text has a number that is not in the facts.'); assert.equal(pure.refusalText('final-check'), 'Not saved: The wording fails the voice or rules check.'); assert.equal(pure.refusalText('final-check:xyz'), 'Not saved: The wording fails the voice or rules check.'); assert.equal(pure.refusalText('weird-new-code'), pure.FALLBACK); });
+test('prototype keys are never codes: __proto__, constructor, toString, hasOwnProperty give the fallback (a string), not a function or an object', () => { for (const c of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) assert.equal(pure.refusalText(c), pure.FALLBACK, c); });
+test('decisionRequest: only offered actions; edit text rules', () => {
+  const it = { kind: 'hook', id: 'idea_1', version: 'a'.repeat(64), actions: ['approve', 'skip', 'edit'] };
+  assert.deepEqual({ ...pure.decisionRequest(it, 'approve') }, { kind: 'hook', id: 'idea_1', version: 'a'.repeat(64), action: 'approve' });
+  assert.equal(pure.decisionRequest(it, 'undo'), null); assert.equal(pure.decisionRequest(it, 'edit', ''), null); assert.equal(pure.decisionRequest(it, 'edit', 'x'.repeat(61)), null); assert.equal(pure.decisionRequest(it, 'edit', 'a\nb'), null);
+  assert.equal(pure.decisionRequest(it, 'edit', 'a\u200bb'), null); assert.equal(pure.decisionRequest(it, 'edit', 'a\u202eb'), null); assert.equal(pure.decisionRequest(it, 'edit', 'a\u0007b'), null); assert.equal(pure.decisionRequest(it, 'edit', 'a\u007fb'), null);
+  assert.equal(pure.decisionRequest(it, 'edit', 'Lions at dawn').text, 'Lions at dawn'); assert.equal(pure.decisionRequest(it, 'edit', 'x'.repeat(60)).text.length, 60);
+});
+test('waiting and decided lists; decided newest first', () => {
+  const items = [{ id: 'a', decision: null }, { id: 'b', decision: { at: '2026-11-10T10:00:00.000Z' } }, { id: 'c', decision: null }, { id: 'd', decision: { at: '2026-11-12T10:00:00.000Z' } }];
+  assert.deepEqual(pure.waitingItems(items).map((i) => i.id), ['a', 'c']); assert.deepEqual(pure.decidedItems(items).map((i) => i.id), ['d', 'b']);
+});
+test('afterRefusal and tokenStep tables', () => { for (const c of ['version-changed', 'stale', 'not-found', 'not-decided', 'already-approved', 'already-skipped']) assert.equal(pure.afterRefusal(c), 'reload'); assert.equal(pure.afterRefusal('lock-busy'), 'stay'); assert.equal(pure.tokenStep({ status: 403, retried: false }), 'refresh-and-retry'); assert.equal(pure.tokenStep({ status: 403, retried: true }), 'give-up'); assert.equal(pure.tokenStep({ status: 409, retried: false }), 'done'); assert.equal(pure.tokenStep({ status: 200, retried: false }), 'done'); assert.equal(pure.tokenStep({ status: 500, retried: false }), 'give-up'); });
+test('keys: A S E on a wide screen only, never while typing, busy or repeating; Escape cancels the edit; arrows are not touched here', () => {
+  const base = { wide: true, typing: false, busy: false, editing: false, actions: ['approve', 'skip', 'edit'] }; const k = (key, o = {}, c = {}) => pure.keyAction({ key, ctrlKey: false, metaKey: false, altKey: false, repeat: false, ...o }, { ...base, ...c });
+  assert.equal(k('a'), 'approve'); assert.equal(k('S'), 'skip'); assert.equal(k('e'), 'edit'); assert.equal(k('a', {}, { wide: false }), null); assert.equal(k('a', {}, { typing: true }), null); assert.equal(k('a', {}, { busy: true }), null); assert.equal(k('a', { repeat: true }), null); assert.equal(k('a', { ctrlKey: true }), null); assert.equal(k('a', { metaKey: true }), null); assert.equal(k('a', { altKey: true }), null);
+  assert.equal(k('e', {}, { actions: ['approve', 'skip'] }), null); assert.equal(k('Escape', {}, { editing: true, typing: true }), 'cancel'); assert.equal(k('Escape'), null); assert.equal(k('ArrowLeft'), null);
+});
+test('decided line and stop button text', () => {
+  assert.equal(pure.decidedLine({ kind: 'hook', title: 'Lions at dawn', decision: { kind: 'approved' } }), 'You approved "Lions at dawn".');
+  assert.equal(pure.decidedLine({ kind: 'hook', title: 'Lions at dawn', decision: { kind: 'skipped' } }), 'You skipped "Lions at dawn".');
+  assert.equal(pure.decidedLine({ kind: 'clip', facts: { durationSec: 4, tags: ['lion'] }, decision: { kind: 'skipped' } }), 'You skipped "Clip, 4 s, shows lion".');
+  assert.equal(pure.stopButtonText({ stopped: false, armed: false }), 'Stop all posting'); assert.equal(pure.stopButtonText({ stopped: false, armed: true }), 'Tap again to stop all posting');
+  assert.equal(pure.stopButtonText({ stopped: true, armed: false }), 'Allow posting again'); assert.equal(pure.stopButtonText({ stopped: true, armed: true }), 'Tap again to allow posting');
+});
+test('the Play button code is untouched: PLAY_TEXT, play-big and the failure sentence are still in the file', () => { for (const s of ["const PLAY_TEXT = 'Play video'", "'play-big'", 'VIDEO_FAILED_TEXT', 'videoFailureAction']) assert.ok(html.includes(s), s); });
+
+// ── task 13: the DOM part ────────────────────────────────────────────────────────
+const markup = html.split('<script')[0]; const script = html.slice(html.indexOf('<script'));
+test('13: the named elements exist; every button has type=button; the buttons are at least 44 px', () => {
+  for (const id of ['actions', 'act-approve', 'act-skip', 'act-edit', 'edit-box', 'edit-text', 'notice', 'decided', 'stop-all']) assert.ok(markup.includes(`id="${id}"`), id);
+  for (const m of markup.matchAll(/<button\b[^>]*>/g)) assert.match(m[0], /type="button"/, m[0]);
+  assert.ok((script.match(/el\('button'/g) || []).length <= (script.match(/\.type = 'button'/g) || []).length, 'every button made in script gets type=button');
+  assert.match(html, /\n  button \{[^}]*min-height: 44px/); assert.ok(!/(#actions|#edit-box|#decided|#stop-all)[^{]*\{[^}]*min-height: (\d|[1-3]\d|4[0-3])px/.test(html));
+});
+test('13: the action token and the page header: script variable only, one place each, no credentials option', () => {
+  assert.ok(!html.includes('localStorage')); assert.ok(!html.includes('bpa_token')); assert.ok(!/sessionStorage\.setItem\('(?!bpa_reloaded)/.test(html));
+  assert.equal((script.match(/X-Bpa-Action/g) || []).length, 1); assert.equal((script.match(/X-Bpa-Page/g) || []).length, 1);
+  assert.equal((script.match(/PAGE_HDR/g) || []).length, 3, 'defined once, used by the session call and the renewal');
+  assert.doesNotMatch(html, /credentials\s*:/); assert.doesNotMatch(html, /document\.cookie/);
+  assert.match(html, /fetch\('api\/session', \{ method: 'POST', headers: PAGE_HDR/); assert.match(html, /fetch\('\.\/', \{ headers: PAGE_HDR/);
+  assert.match(html, /fetch\('api\/decide', \{ method: 'POST', headers: actionHeaders\(\)/); assert.match(html, /fetch\('api\/posting', \{ method: 'POST', headers: actionHeaders\(\)/);
+  assert.match(html, /'Content-Type': 'application\/json'/);
+  for (const m of html.matchAll(/method: 'POST'(.{0,20})/g)) assert.match(m[1], /^, headers:/);
+});
+test('13: one renewal and one retry; the page is not reloaded for it', () => {
+  assert.equal((script.match(/renewSession\(\)/g) || []).length, 2, 'defined and called once');
+  assert.ok(html.includes("tokenStep({ status: res.status, retried })") && html.includes('refresh-and-retry') && html.includes('retried = true'));
+  assert.ok(html.includes('Your session ended. Reload the page.'));
+  const f = html.slice(html.indexOf('async function renewSession')); const body = f.slice(0, f.indexOf('\n}\n')); assert.ok(!body.includes('location.reload') && body.includes('429') && body.includes('3000') && body.includes('fetchToken()'));
+});
+test('13: the exact sentences of the notice, the edit box, the lists and the stop button', () => {
+  for (const s of ['Approved. You can undo it under What I decided.', 'Skipped. You can undo it under What I decided.', 'Saved and approved.', 'All clips that were ready are decided. From now on the automatic posting uses only the clips you approve.', 'New text for the video, at most 60 characters', 'Save and approve', 'Saving…', 'What I decided (', 'Nothing waits here.', 'Undo']) assert.ok(html.includes(s), s);
+  assert.match(markup, /<p id="notice"[^>]*aria-live="polite"/); assert.match(markup, /<details id="decided"/);
+});
+test('13: the lists, counts and keys use the pure functions', () => {
+  for (const w of ['waitingItems(state.items)', 'decidedItems(state.items)', 'decisionRequest(', 'refusalText(', 'afterRefusal(', 'keyAction(', 'decidedLine(', 'stopButtonText(', 'enforced']) assert.ok(html.includes(w), w);
+  assert.match(html, /function shownItems\(\) \{ return filterItems\(waitingItems\(state\.items\), state\.kind\)/); assert.match(html, /countKinds\(waitingItems\(state\.items\)\)/);
+  assert.ok(html.includes("getElementById('card-title').focus") || html.includes("$('card-title').focus"));
+});
+test('13: server text goes on the page by textContent only (no HTML assignment anywhere in the script)', () => {
+  assert.doesNotMatch(script, /\.(innerHTML|outerHTML)\s*=|insertAdjacentHTML|document\.write|eval\(|new Function|createContextualFragment|DOMParser/);
+  assert.ok((script.match(/textContent/g) || []).length >= 10);
+});
+test('13: typing in the edit box never moves the card or decides', () => {
+  const k = html.slice(html.indexOf("addEventListener('keydown'")); assert.ok(k.slice(0, k.indexOf('});')).includes('isTyping('), 'the old arrow listener also stands down while typing');
+  assert.ok(html.includes('typing: isTyping(e)'));
+});
+test('13: the Play button code is still byte for byte there', () => { for (const s of ["const btn = el('button', PLAY_TEXT, 'play-big'); btn.type = 'button';".replace('const btn', 'const wrap = el(\'div\', undefined, \'vwrap\'); const btn'), "btn.addEventListener('click', (e) => { e.stopPropagation(); start(); });"]) assert.ok(html.includes(s), s); });
+
+// ── review fixes: low items on the page ────────────────────────────────────────────────────────────────────────────
+test('low: Shift+A, Shift+S and Shift+E do nothing (the arrow handler already stood down on Shift); the plain keys still work', () => {
+  const ctx = { wide: true, typing: false, busy: false, editing: false, actions: ['approve', 'skip', 'edit'] };
+  for (const key of ['a', 's', 'e', 'A', 'S', 'E']) assert.equal(pure.keyAction({ key, shiftKey: true }, ctx), null, `shift+${key}`);
+  assert.equal(pure.keyAction({ key: 'a' }, ctx), 'approve'); assert.equal(pure.keyAction({ key: 's', shiftKey: false }, ctx), 'skip');
+  assert.equal(pure.keyAction({ key: 'Escape', shiftKey: true }, { ...ctx, editing: true }), 'cancel', 'Escape still closes the edit box');
+});
+test('low: a network error on a decision has its own sentence that says the decision may have been saved', () => {
+  assert.match(pure.NET_TEXT, /may have been saved/); assert.match(pure.NET_TEXT, /Reload the page/); assert.notEqual(pure.NET_TEXT, 'That did not work. Reload the page.');
+  assert.doesNotMatch(pure.NET_TEXT, /\b(sha\d*|hash|json|manifest|api|mediaId|version|null|undefined|token|nonce|network)\b/i);
+});
+
+// ── review fixes: SR2, the page refuses the same characters as the server (one shared list) ─────────────────────────────
+import { BAD_CHARS, LINEBREAK_CHARS, GOOD_TEXTS } from './review-test-chars.js';
+test('SR2: the page refuses every character of the shared list (the same list the server test uses), line breaks too; ordinary text passes', () => {
+  const item = { kind: 'hook', id: 'idea_1', version: 'a'.repeat(64), actions: ['edit'] }; const missed = [];
+  for (const ch of [...BAD_CHARS, ...LINEBREAK_CHARS]) if (pure.decisionRequest(item, 'edit', `Lions at${ch}dawn`) !== null) missed.push(`U+${ch.codePointAt(0).toString(16).toUpperCase()}`);
+  assert.deepEqual(missed, []);
+  for (const text of GOOD_TEXTS) assert.deepEqual({ ...pure.decisionRequest(item, 'edit', text) }, { kind: 'hook', id: 'idea_1', version: 'a'.repeat(64), action: 'edit', text }, JSON.stringify(text));
+});
+test('SR2: the page source holds its refusal set as plain escapes with the u flag (no literal invisible characters in the file)', () => {
+  const line = html.split('\n').find((l) => l.startsWith('const BAD_EDIT_CHARS')); assert.ok(line); assert.match(line, /\\p\{Cc\}/); assert.match(line, /\/u;/);
+  assert.doesNotMatch(html, /[​-‏‪-‮⁠-⁤⁦-⁩﻿؜]/, 'no literal invisible character anywhere in the page file');
+});
+
+test('SR4: the posting body: Stop carries nothing else; Start carries the stop reason the page saw (and nothing when the page has none)', () => {
+  assert.deepEqual({ ...pure.postingBody('stop', { reason: 'stopped by flag since T' }) }, { action: 'stop' });
+  assert.deepEqual({ ...pure.postingBody('start', { reason: 'stopped by flag since T' }) }, { action: 'start', seen: 'stopped by flag since T' });
+  assert.deepEqual({ ...pure.postingBody('start', { reason: null }) }, { action: 'start' }); assert.deepEqual({ ...pure.postingBody('start', {}) }, { action: 'start' });
+});
+test('SR4: the sentence for a stop that changed in between is exactly the agreed one', () => { assert.equal(pure.refusalText('stop-changed'), 'Posting was stopped again in the meantime. Check and tap again.'); });
