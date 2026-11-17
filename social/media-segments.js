@@ -9,7 +9,11 @@
 //   <root>/analysis/<folder>/<id>.onscreen.txt        one line per reading, "[12s] text", FIRST occurrence only
 //   <root>/analysis/<folder>/frames/<id>/NNN.jpg      frame N is the sample at second (N-1)*2, 90 frames at most
 //   Frames and stamps come from a working cut that starts at 0 and is at most 180 s long, so they share the
-//   timeline of the original video; a video longer than 180 s is covered only up to 180 s.
+//   timeline of the original video.
+//   Later parts of a longer video (optional, produced by the same local steps run on a later cut) sit beside it:
+//   <root>/analysis/<folder>/parts/<offsetSec>/<id>.onscreen.txt and parts/<offsetSec>/frames/<id>/NNN.jpg. The folder
+//   name IS the offset: stamps and frame numbers inside are local to the part (frame N = offset + (N-1)*2 s) and are
+//   moved onto the original timeline here. A part counts only when the one before it is complete up to its offset.
 //
 // The model is the local one only. Every call goes through askLocal (local-model.js), the one guarded caller: it refuses any other
 // host, a present stop flag, and a call over the per-run or per-day cap (fail closed). There is no request code and no code path
@@ -26,6 +30,7 @@ export const MODEL = 'qwen2.5vl:3b';
 export const MIN_WINDOW_SEC = 6;
 export const DEFAULT_MAX_CALLS = 400;
 export const DEFAULT_FRAMES_PER_WINDOW = 8;
+export const PART_SEC = 180;
 
 const finite = (x) => typeof x === 'number' && Number.isFinite(x);
 
@@ -186,36 +191,99 @@ const pad = (n) => String(n).padStart(3, '0');
 const analysisDir = (root, folder) => path.join(root, 'analysis', folder);
 const frameIndex = (sec, I) => Math.round(sec / I) + 1;
 
-function listFrames(root, entry) {
-  const dir = path.join(analysisDir(root, entry.folder), 'frames', entry.id);
-  let names = [];
-  try { names = fs.readdirSync(dir).filter((f) => /^\d+\.jpg$/.test(f)); } catch { /* none */ }
-  return { dir, count: names.length };
+function countFrames(dir) {
+  try { return fs.readdirSync(dir).filter((f) => /^\d+\.jpg$/.test(f)).length; } catch { return 0; }
 }
 
-/** Windows and verdicts for one video. `skipped` says why nothing was done; text of unknown extent is never treated as none. */
+/**
+ * Every analysed part of one video, on the original timeline. Part 0 is the original layout; later parts live in
+ * parts/<offsetSec>/. A later part is used only when the part before it is complete (its frames reach the offset) and it
+ * has both a stamp file and frames: a gap, or a part of unknown text, ends the coverage there (nothing beyond is claimed).
+ * Stamps are moved onto the original timeline. The first sample of every later part also counts as a reading, because a
+ * caption that began before the boundary and is still on screen would not be stamped again in a later cut that carries
+ * its de-duplication over; the cost is at most one interval on each side of the boundary.
+ */
+export function loadCoverage(root, entry, interval = FRAME_INTERVAL_SEC) {
+  const base = analysisDir(root, entry.folder);
+  let text0;
+  try { text0 = fs.readFileSync(path.join(base, `${entry.id}.onscreen.txt`), 'utf8'); } catch { return { skipped: 'no on-screen text file' }; }
+  const dir0 = path.join(base, 'frames', entry.id);
+  const count0 = countFrames(dir0);
+  if (count0 === 0) return { skipped: 'no frames' };
+  const parts = [{ offsetSec: 0, dir: dir0, count: count0 }];
+  const stamps = parseStamps(text0);
+  let covered = count0 * interval;
+  let offsets = [];
+  try { offsets = fs.readdirSync(path.join(base, 'parts')).filter((d) => /^\d+$/.test(d)).map(Number).sort((a, b) => a - b); } catch { /* no parts */ }
+  for (const off of offsets) {
+    if (off <= 0 || off > covered) break; // gap: the previous part does not reach this offset
+    if (off < covered) continue; // overlaps what is already covered: not used, the earlier part wins
+    const pdir = path.join(base, 'parts', String(off));
+    let ptext;
+    try { ptext = fs.readFileSync(path.join(pdir, `${entry.id}.onscreen.txt`), 'utf8'); } catch { break; }
+    const dir = path.join(pdir, 'frames', entry.id);
+    const count = countFrames(dir);
+    if (count === 0) break;
+    parts.push({ offsetSec: off, dir, count });
+    for (const t of parseStamps(ptext)) stamps.push(off + t);
+    stamps.push(off);
+    covered = off + count * interval;
+  }
+  const frameFor = (sec) => {
+    for (let i = parts.length - 1; i >= 0; i -= 1) {
+      const p = parts[i];
+      if (sec >= p.offsetSec) {
+        const idx = frameIndex(sec - p.offsetSec, interval);
+        return idx <= p.count ? path.join(p.dir, `${pad(idx)}.jpg`) : null;
+      }
+    }
+    return null;
+  };
+  return { stamps: [...new Set(stamps)], covered, parts, frameFor };
+}
+
+/** The pieces of [a,b] not inside any of the `taken` ranges, each at least minLen long. */
+export function subtractRanges(win, taken, minLen = MIN_WINDOW_SEC) {
+  let pieces = [{ startSec: win.startSec, endSec: win.endSec }];
+  for (const t of taken) {
+    pieces = pieces.flatMap((p) => {
+      if (t.endSec <= p.startSec || t.startSec >= p.endSec) return [p];
+      const out = [];
+      if (t.startSec > p.startSec) out.push({ startSec: p.startSec, endSec: t.startSec });
+      if (t.endSec < p.endSec) out.push({ startSec: t.endSec, endSec: p.endSec });
+      return out;
+    });
+  }
+  return pieces.filter((p) => p.endSec - p.startSec >= minLen);
+}
+
+/**
+ * Windows and verdicts for one video. `skipped` says why nothing was done; text of unknown extent is never treated as none.
+ * Segments already in the catalogue are kept exactly as they are (times, verdicts, any later review) and are not asked about
+ * again: only the parts of new windows that lie outside them are judged, and `segments` is the old ones plus the new ones.
+ */
 export async function processVideo({ entry, root, ask, interval = FRAME_INTERVAL_SEC, maxFramesPerWindow = DEFAULT_FRAMES_PER_WINDOW, minLenSec = MIN_WINDOW_SEC, model = MODEL, now = () => new Date() }) {
-  let stampsText;
-  try { stampsText = fs.readFileSync(path.join(analysisDir(root, entry.folder), `${entry.id}.onscreen.txt`), 'utf8'); } catch { return { segments: null, calls: 0, skipped: 'no on-screen text file' }; }
-  const { dir, count } = listFrames(root, entry);
-  if (count === 0) return { segments: null, calls: 0, skipped: 'no frames' };
+  const cov = loadCoverage(root, entry, interval);
+  if (cov.skipped) return { segments: null, calls: 0, skipped: cov.skipped };
   if (!finite(entry.durationSec) || entry.durationSec <= 0) return { segments: null, calls: 0, skipped: 'duration unknown' };
-  const covered = Math.min(entry.durationSec, count * interval);
-  const windows = findCleanWindows({ durationSec: entry.durationSec, textStamps: parseStamps(stampsText), sampleIntervalSec: interval, coveredUntilSec: covered, minLenSec });
+  const covered = Math.min(entry.durationSec, cov.covered);
+  const existing = Array.isArray(entry.segments) ? entry.segments : [];
+  const windows = findCleanWindows({ durationSec: entry.durationSec, textStamps: cov.stamps, sampleIntervalSec: interval, coveredUntilSec: covered, minLenSec })
+    .flatMap((w) => subtractRanges(w, existing, minLenSec));
   const segments = [];
   let calls = 0;
   for (const w of windows) {
     const verdicts = [];
     for (const s of windowFrameSeconds(w, interval, maxFramesPerWindow)) {
-      const idx = frameIndex(s, interval);
-      if (idx > count) continue;
+      const file = cov.frameFor(s);
+      if (!file) continue;
       calls += 1;
-      verdicts.push(await checkFrame(path.join(dir, `${pad(idx)}.jpg`), { ask }));
+      verdicts.push(await checkFrame(file, { ask }));
     }
     const j = judgeWindow(w, verdicts);
     segments.push({ startSec: j.startSec, endSec: j.endSec, frames: j.frames, verdict: j.verdict, reasons: j.reasons, label: j.label, checkedAt: now().toISOString(), model });
   }
-  return { segments, calls, skipped: null };
+  return { segments: [...existing, ...segments].sort((a, b) => a.startSec - b.startSec), calls, skipped: null };
 }
 
 // ---------------------------------------------------------------- selftest
@@ -235,15 +303,13 @@ function roundRobin(lists, n) {
 export async function selftest({ entries, root, ask, interval = FRAME_INTERVAL_SEC, perSet = 30, spotFalse = 8, spotTrue = 4, now = () => Date.now() }) {
   const pos = []; const neg = [];
   for (const e of entries) {
-    let stamps;
-    try { stamps = parseStamps(fs.readFileSync(path.join(analysisDir(root, e.folder), `${e.id}.onscreen.txt`), 'utf8')); } catch { continue; }
-    const { dir, count } = listFrames(root, e);
-    if (!count || !finite(e.durationSec)) continue;
-    const covered = Math.min(e.durationSec, count * interval);
-    const f = (s) => path.join(dir, `${pad(frameIndex(s, interval))}.jpg`);
-    pos.push(spread([...new Set(stamps)].filter((s) => frameIndex(s, interval) <= count).map(f), perSet));
-    const wins = findCleanWindows({ durationSec: e.durationSec, textStamps: stamps, sampleIntervalSec: interval, coveredUntilSec: covered });
-    neg.push(spread(wins.flatMap((w) => windowFrameSeconds(w, interval, 99)).filter((s) => frameIndex(s, interval) <= count).map(f), perSet));
+    const cov = loadCoverage(root, e, interval);
+    if (cov.skipped || !finite(e.durationSec)) continue;
+    const covered = Math.min(e.durationSec, cov.covered);
+    const f = (s) => cov.frameFor(s);
+    pos.push(spread(cov.stamps.map(f).filter(Boolean), perSet));
+    const wins = findCleanWindows({ durationSec: e.durationSec, textStamps: cov.stamps, sampleIntervalSec: interval, coveredUntilSec: covered });
+    neg.push(spread(wins.flatMap((w) => windowFrameSeconds(w, interval, 99)).map(f).filter(Boolean), perSet));
   }
   const posFiles = roundRobin(pos, perSet); const negFiles = roundRobin(neg, perSet);
   let calls = 0; let ms = 0;
