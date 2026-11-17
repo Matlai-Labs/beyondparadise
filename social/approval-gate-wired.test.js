@@ -6,8 +6,10 @@ test('approval-server calls claimGate once, inside the approve/postnow branch be
   assert.ok(s.indexOf('claimGate(d)') < s.indexOf('schedule(d.text'));
   assert.ok(s.indexOf('claimGate(d)') < s.indexOf('publish(d.text'));
 });
-test('edit branch clears claimSources, the hash and the record time', () => {
-  const edit = s.split("c.cmd === 'edit'")[1].split("c.cmd === 'approve'")[0];
+test('the edit (applyEdit in draft-actions.js) clears claimSources, the hash and the record time', () => {
+  const da = fs.readFileSync(new URL('./draft-actions.js', import.meta.url), 'utf8');
+  const edit = da.split('export function applyEdit')[1].split('export async function editDraft')[0];
   for (const k of ['claimSources', 'claimSourcesHash', 'claimSourcesAt']) assert.match(edit, new RegExp(`delete d\\.${k}\\b`));
-  assert.ok(edit.indexOf('delete d.claimSourcesHash') < edit.indexOf('d.text = c.text') + 400);
+  assert.ok(edit.indexOf('delete d.claimSourcesHash') < edit.indexOf('d.text = text') + 400);
+  assert.match(s, /editDraft\(d, c\.text/, 'the WhatsApp edit goes through editDraft');
 });

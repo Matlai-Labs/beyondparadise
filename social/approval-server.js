@@ -5,8 +5,9 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { authorize } from './auth.js';
 import { claimGate } from './claim-gate.js';
-import { withQueueLock, loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, brandGuard, voiceGate, rulesCheck, finalCheck, blockDraft, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, QUEUE_PATH } from './lib.js';
+import { withQueueLock, loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, finalCheck, blockDraft, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, QUEUE_PATH } from './lib.js';
 import { stopStatus, engageStop, releaseStop, StoppedError } from './stop.js';
+import { skipDraft, editDraft } from './draft-actions.js';
 import { scheduledAtMetaNote, stopPosting, startPosting } from './bpa-actions.js';
 import { reserveInstagramPublish, releaseInstagramReservation } from './ledger.js';
 import { recordPost, healthTick } from './health.js';
@@ -34,8 +35,8 @@ export async function handle(text, deps = {}) {
   const out = [];
   for (const id of c.ids) {
     const d = find(id); if (!d) { out.push(`❌ ${id}: not found`); continue; }
-    if (c.cmd === 'skip') { if (d.status !== STATUS.PENDING) { out.push(`⚠️ ${id} is ${d.status}`); continue; } d.status = STATUS.SKIPPED; d.decidedAt = new Date().toISOString(); out.push(`🚫 ${id} skipped`); continue; }
-    if (c.cmd === 'edit') { if (d.status !== STATUS.PENDING) { out.push(`⚠️ ${id} is ${d.status}`); continue; } const bad = brandGuard(c.text); if (bad) { out.push(`❌ ${id}: ${bad}`); continue; } const v = await voiceGate(c.text); if (!v.ok) { out.push(`❌ ${id}: voice-lint — ${v.reason}`); continue; } const rg = rulesCheck(c.text, { claims: d.claims, neverPromotePatterns }); if (!rg.ok) { out.push(`❌ ${id}: rules — ${rg.reason}`); continue; } d.text = c.text; delete d.claimSources; delete d.claimSourcesHash; delete d.claimSourcesAt; d.editedAt = new Date().toISOString(); out.push(`✏️ ${id} updated (${c.text.length} chars). Reply *bpa approve ${id}* to schedule.`); continue; }
+    if (c.cmd === 'skip') { out.push(skipDraft(d).line); continue; }
+    if (c.cmd === 'edit') { out.push((await editDraft(d, c.text, { neverPromotePatterns })).line); continue; }
     if (c.cmd === 'approve' || c.cmd === 'postnow') {
       if (d.status !== STATUS.PENDING) { out.push(`⚠️ ${id} is ${d.status}`); continue; }
       { const st = stop(); if (st.stopped) { log(`${c.cmd} ${id} refused: ${st.reason}`); out.push(`⏸ ${id}: ${st.reason}. Reply *bpa start* to resume.`); continue; } }

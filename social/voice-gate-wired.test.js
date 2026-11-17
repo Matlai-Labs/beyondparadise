@@ -22,11 +22,14 @@ test('call site 1: buildDrafts runs the gate once per candidate, before the draf
   assert.match(body, /if \(!v\.ok\) \{ out\.push\(\{ \.\.\.d, rejected:/, 'a failing gate must mark the draft rejected');
 });
 
-test('call site 2: the approval-server edit branch gates the new text before it replaces the draft text', () => {
-  const edit = between(read('approval-server.js'), "c.cmd === 'edit'", "c.cmd === 'approve'");
-  assert.equal(count(edit, /await voiceGate\(c\.text\)/g), 1);
-  assert.ok(edit.indexOf('await voiceGate(c.text)') < edit.indexOf('d.text = c.text'), 'gate must run before d.text is assigned');
-  assert.equal(count(read('approval-server.js'), /\.text\s*=[^=]/g), 1, 'the approval server may assign draft text in exactly one place (the edit branch)');
+test('call site 2: the edit (draft-actions.js) gates the new text before it replaces the draft text; the approval server assigns no draft text', () => {
+  const da = read('draft-actions.js');
+  const check = between(da, 'export async function checkEdit', 'export function applyEdit'); const edit = between(da, 'export async function editDraft', null);
+  assert.equal(count(check, /await voiceGate\(text\)/g), 1);
+  assert.equal(count(edit, /await checkEdit\(/g), 1); assert.equal(count(edit, /applyEdit\(/g), 1);
+  assert.ok(edit.indexOf('await checkEdit(') < edit.indexOf('applyEdit('), 'the check must run before the apply');
+  assert.equal(count(da, /\.text\s*=[^=]/g), 1, 'draft-actions.js assigns draft text in exactly one place (applyEdit)');
+  assert.equal(count(read('approval-server.js'), /\.text\s*=[^=]/g), 0, 'the approval server assigns no draft text itself');
 });
 
 test('call site 3: carousel slides each pass the gate (default gate is voiceGate, called once per slide in the loop)', () => {
@@ -44,7 +47,7 @@ test('draft.js only queues what buildDrafts returned, and never a rejected draft
 });
 
 test('no other file writes draft text to the queue without being declared here', () => {
-  const declared = new Set(['lib.js', 'draft.js', 'approval-server.js', 'auto-lane.js']); // the three paths above, and the automatic lane (proved in auto-lane-wired.test.js: its one queue push follows the voice + rules final check)
+  const declared = new Set(['lib.js', 'draft.js', 'approval-server.js', 'auto-lane.js', 'draft-actions.js']); // the three paths above, and the automatic lane (proved in auto-lane-wired.test.js: its one queue push follows the voice + rules final check)
   const offenders = [];
   for (const f of fs.readdirSync(HERE).filter((f) => f.endsWith('.js') && !f.endsWith('.test.js') && !declared.has(f))) {
     const s = read(f);

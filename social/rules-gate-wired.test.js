@@ -28,10 +28,10 @@ test('queue path 1: buildDrafts runs the rules check right after the voice gate,
   assert.ok(body.indexOf('rulesCheck(') < body.indexOf('createdAt: now.toISOString()'), 'and runs before the accepted draft is built');
   assert.match(body, /rejected: 'rules: '/);
 });
-test('queue path 2: the approval-server edit branch runs the rules check after the voice gate and before d.text is assigned', () => {
-  const edit = between(read('approval-server.js'), "c.cmd === 'edit'", "c.cmd === 'approve'");
-  assert.equal(count(edit, /rulesCheck\(c\.text/g), 1);
-  assert.ok(edit.indexOf('await voiceGate(c.text)') < edit.indexOf('rulesCheck(c.text') && edit.indexOf('rulesCheck(c.text') < edit.indexOf('d.text = c.text'));
+test('queue path 2: checkEdit (draft-actions.js) runs the rules check after the voice gate, inside the check that runs before the text is assigned', () => {
+  const check = between(read('draft-actions.js'), 'export async function checkEdit', 'export function applyEdit');
+  assert.equal(count(check, /rulesCheck\(text/g), 1);
+  assert.ok(check.indexOf('await voiceGate(text)') < check.indexOf('rulesCheck(text'));
 });
 test('queue path 3: planCarousel runs the rules check on every slide, inside the slide loop, after the voice gate', () => {
   const body = between(read('carousel.js'), 'export async function planCarousel', null);
