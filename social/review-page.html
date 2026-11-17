@@ -259,6 +259,11 @@ function videoUi(s) {
   if (s.playing) return { button: false, errorSentence: false, playingLine: true, pausedLine: false };
   return { button: true, errorSentence: false, playingLine: false, pausedLine: true };
 }
+// A clip that fails may only mean the session is gone (server restarted): 403 or 503 on the list means reload once; anything else, or a second time, means the sentence.
+function videoFailureAction(o) {
+  o = o || {};
+  return (o.probeStatus === 403 || o.probeStatus === 503) && !o.alreadyReloaded ? 'reload' : 'sentence';
+}
 // Reduced motion: the page never starts the video by itself.
 function shouldAutoplay(reduce) { return !reduce; }
 // END PURE
@@ -287,8 +292,9 @@ function showStatus(s, problems) {
 
 function shownItems() { return filterItems(state.items, state.kind); }
 
-let videoTimer = null;
+let videoTimer = null; let videoSerial = 0;
 function stopVideo() {
+  videoSerial++;
   if (videoTimer) { clearTimeout(videoTimer); videoTimer = null; }
   const slot = $('video-slot');
   for (const v of Array.from(slot.querySelectorAll('video'))) { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); }
@@ -311,7 +317,15 @@ function showVideo(item) {
     const refresh = () => {
       if (dead) return;
       const ui = videoUi(st);
-      if (ui.errorSentence) { dead = true; stopVideo(); slot.appendChild(el('p', VIDEO_FAILED_TEXT, 'video-note')); return; }
+      if (ui.errorSentence) {
+        dead = true; stopVideo(); const mine = videoSerial;
+        fetch('api/items', { cache: 'no-store' }).then((res) => res.status, () => null).then((probeStatus) => {
+          if (mine !== videoSerial) return; // another card is shown now
+          if (videoFailureAction({ probeStatus, alreadyReloaded: !!sessionStorage.getItem('bpa_reloaded') }) === 'reload') { sessionStorage.setItem('bpa_reloaded', '1'); location.reload(); return; }
+          slot.appendChild(el('p', VIDEO_FAILED_TEXT, 'video-note'));
+        });
+        return;
+      }
       btn.classList.toggle('hidden', !ui.button);
       line.textContent = ui.playingLine ? PLAYING_LINE : (ui.pausedLine ? PAUSED_LINE : '');
     };
