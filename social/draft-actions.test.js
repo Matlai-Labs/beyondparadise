@@ -112,3 +112,34 @@ test('scheduleDraft: a stop during the call and an ordinary failure answer as pi
   const b = gk(); await approveGuards(b.d, b.opts); const rb = await scheduleDraft({ drafts: [] }, b.d, { ...b.sched, schedule: () => Promise.reject(new Error('boom')) });
   assert.deepEqual(rb, { ok: false, code: 'schedule-failed', line: '❌ B1: boom' }); assert.equal(b.d.lastError, 'boom'); assert.deepEqual(b.log, [['approve B1 failed: boom', 'schedule-failed']]);
 });
+
+// ── Task 6: a draft edit may only use numbers that are in the draft's claims ─────────────────────────────────────────
+const withClaims = (claims) => pend({ claims });
+const LION = [{ text: 'Lions sleep up to 20 hours a day' }];
+test('edit numbers: a number that is not in the claims is refused with its code and the draft is unchanged', async () => {
+  const d = withClaims(LION); const before = structuredClone(d);
+  const r = await checkEdit(d, 'Lions sleep about 22 hours a day.', { neverPromotePatterns: NP });
+  assert.equal(r.ok, false); assert.equal(r.code, 'number-not-in-facts'); assert.deepEqual(d, before);
+  const e = await editDraft(d, 'Lions sleep about 22 hours a day.', { neverPromotePatterns: NP }); assert.equal(e.code, 'number-not-in-facts'); assert.deepEqual(d, before);
+});
+test('edit numbers: a number that is in the claims passes, and 1,200 equals 1200', async () => {
+  assert.deepEqual(await checkEdit(withClaims(LION), 'Lions sleep up to 20 hours a day.', { neverPromotePatterns: NP }), { ok: true });
+  for (const [claim, text] of [['The hill has 1,200 steps', 'The hill has 1200 steps.'], ['The hill has 1200 steps', 'The hill has 1,200 steps.']]) assert.deepEqual(await checkEdit(withClaims([{ text: claim }]), text, { neverPromotePatterns: NP }), { ok: true }, text);
+});
+test('edit numbers: a draft with no claims, or an empty claims list, is unchanged (a new number passes)', async () => {
+  for (const d of [pend(), withClaims([])]) assert.deepEqual(await checkEdit(d, 'Lions sleep about 22 hours a day.', { neverPromotePatterns: NP }), { ok: true });
+});
+test('edit numbers: the brand, voice and rules refusals come before the number check', async () => {
+  const d = withClaims(LION);
+  assert.equal((await checkEdit(d, 'Book now for big waves today at the beach, 99 seats.', { neverPromotePatterns: NP })).code, 'rules');
+  assert.equal((await checkEdit(d, 'Beyond Paradise has 99 lions.', { neverPromotePatterns: NP })).code, 'brand-rule');
+  assert.equal((await checkEdit(d, 'Let us delve into a rich tapestry of seamless synergy, 99 times. It is a game-changer!', { neverPromotePatterns: NP })).code, 'voice-rule');
+});
+test('edit numbers: the WhatsApp line names the distinct numbers', async () => {
+  const r = await checkEdit(withClaims(LION), 'Lions sleep 22 hours, then 22 more, and 7 minutes.', { neverPromotePatterns: NP });
+  assert.equal(r.line, '❌ B1: number-not-in-facts — 22, 7');
+  assert.equal((await checkEdit(withClaims(LION), 'Lions sleep 22 hours a day.', { neverPromotePatterns: NP })).line, '❌ B1: number-not-in-facts — 22');
+});
+test('edit numbers: a full-width digit counts as a number that is not in the claims', async () => {
+  const r = await checkEdit(withClaims(LION), 'Lions sleep up to ２０ hours a day.', { neverPromotePatterns: NP }); assert.equal(r.ok, false); assert.equal(r.code, 'number-not-in-facts');
+});

@@ -3,6 +3,7 @@
 // No network function is imported here: `schedule` is a parameter, never a default, and this file never names a publisher.
 import { STATUS, brandGuard, voiceGate, rulesCheck, finalCheck as realFinalCheck, blockDraft, nextSlots, log } from './lib.js';
 import { claimGateWhy } from './claim-gate.js';
+import { numberFidelity } from './caption.js';
 import { StoppedError } from './stop.js';
 
 export const STATUS_CODE = new Map([[STATUS.SCHEDULED, 'already-scheduled'], [STATUS.SKIPPED, 'already-skipped'], [STATUS.POSTED, 'already-posted'], [STATUS.EXPIRED, 'expired'], [STATUS.BLOCKED, 'blocked'], [STATUS.FAILED, 'not-pending']]);
@@ -19,6 +20,8 @@ export async function checkEdit(d, text, { neverPromotePatterns } = {}) {
   const bad = brandGuard(text); if (bad) return { ok: false, code: 'brand-rule', line: `❌ ${d.id}: ${bad}` };
   const v = await voiceGate(text); if (!v.ok) return { ok: false, code: 'voice-rule', line: `❌ ${d.id}: voice-lint — ${v.reason}` };
   const rg = rulesCheck(text, { claims: d.claims, neverPromotePatterns }); if (!rg.ok) return { ok: false, code: 'rules', line: `❌ ${d.id}: rules — ${rg.reason}` };
+  // numbers: where the draft has claims, a figure in the new text must be one of the claim figures (the line may name the numbers: WhatsApp only, the page shows the code)
+  if (Array.isArray(d.claims) && d.claims.length) { const bad = numberFidelity([text], d.claims); if (bad.length) return { ok: false, code: 'number-not-in-facts', line: `❌ ${d.id}: number-not-in-facts — ${[...new Set(bad)].join(', ')}` }; }
   return { ok: true };
 }
 export function applyEdit(d, text, { now = () => new Date() } = {}) {
