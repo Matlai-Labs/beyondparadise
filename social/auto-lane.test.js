@@ -28,8 +28,9 @@ const okOverlay = async ({ out }) => { fs.writeFileSync(out, 'png'); return { ok
 
 function kit(over = {}) {
   const dir = tmp(); const libraryDir = path.join(dir, 'library'); const outDir = path.join(dir, 'out'); const lines = []; const composeLog = [];
+  const hooksFile = path.join(dir, 'auto-hooks.json'); fs.writeFileSync(hooksFile, JSON.stringify({ hooks: [] })); // the lane's hooks file is private now (state folder); these tests use an empty one, as the committed default used to be
   const input = { pool: [idea(1), idea(2), idea(3)], manifest: manifestOf(clipEntry('clip-a'), clipEntry('clip-b')), usage: [], history: [], config: {}, now: NOW, ...over.input };
-  const deps = { ask: THROW_ASK, outDir, libraryDir, exists: () => true, neverPromotePatterns: NP, say: (m) => lines.push(m), overlay: okOverlay, compose: okCompose(composeLog), ...over.deps };
+  const deps = { ask: THROW_ASK, outDir, libraryDir, hooksFile, exists: () => true, neverPromotePatterns: NP, say: (m) => lines.push(m), overlay: okOverlay, compose: okCompose(composeLog), ...over.deps };
   return { dir, libraryDir, outDir, lines, composeLog, input, deps };
 }
 
@@ -140,11 +141,11 @@ test('reservationsOnDay: counts the East Africa day of `now`; a missing file is 
 // ── ensureDailyAuto ──────────────────────────────────────────────────────────────
 function daily(over = {}) {
   const dir = tmp(); const calls = { pool: 0, manifest: 0, usage: 0 }; const sent = []; const lines = []; const composeLog = [];
-  const p = (n) => path.join(dir, n);
+  const p = (n) => path.join(dir, n); const hooksFile = path.join(tmp(), 'auto-hooks.json'); fs.writeFileSync(hooksFile, JSON.stringify({ hooks: [] })); // the lane file is private in production; an empty one here, outside the folder the tests list
   const deps = { config: { autoPublish: true }, now: NOW, queuePath: p('queue.json'), statePath: p('auto-state.json'), ledgerPath: p('ledger.jsonl'), usagePath: p('usage.jsonl'),
     stopOpts: { flagPath: p('stop'), fleetPath: p('fleet') }, igOn: () => true, notify: async (m) => { sent.push(m); return true; }, say: (m) => lines.push(m),
     loadPool: async () => { calls.pool++; return { ok: true, ideas: [idea(1), idea(2)], sourceNames: {} }; }, readManifest: () => { calls.manifest++; return manifestOf(clipEntry('clip-a'), clipEntry('clip-b')); }, readUsage: () => { calls.usage++; return []; },
-    libraryDir: p('library'), outDir: p('out'), prepareDeps: { ask: THROW_ASK, exists: () => true, neverPromotePatterns: NP, overlay: okOverlay, compose: okCompose(composeLog) }, ...over };
+    libraryDir: p('library'), outDir: p('out'), prepareDeps: { ask: THROW_ASK, hooksFile, exists: () => true, neverPromotePatterns: NP, overlay: okOverlay, compose: okCompose(composeLog) }, ...over };
   return { dir, p, deps, calls, sent, lines, composeLog };
 }
 const queued = (d) => loadQueue(d.deps.queuePath).drafts;
