@@ -28,7 +28,7 @@ class El {
   focus() { this.focused += 1; }
   descendants(tag) { const out = []; const walk = (n) => { for (const c of n.children) { if (!tag || c.tagName === tag.toUpperCase()) out.push(c); walk(c); } }; walk(this); return out; }
   querySelectorAll(sel) { return this.descendants(sel); }
-  pause() {} load() {}
+  pause() {} load() {} play() { return Promise.resolve(); }
   click() { const e = { target: this, stopPropagation() {}, preventDefault() {} }; for (const fn of this.listeners.click || []) fn(e); }
 }
 
@@ -190,4 +190,85 @@ test('DOM: the status line shows the time in words while Start still sends the r
   assert.match(p.$('status').textContent || JSON.stringify(p.$('status').children.map((c) => c.textContent)), /stopped since 18 Nov at 00:06/);
   p.$('stop-all').click(); await p.flush(); p.$('stop-all').click(); await p.flush();
   assert.deepEqual(p.posts('api/posting').map((c) => c.body), [{ action: 'start', seen: raw }]);
+});
+
+// ══ Task 13: drafts on the page ══════════════════════════════════════════════════════════════════════════════
+const pureNames = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ REFUSAL_TEXT, EDIT_PROBLEM_TEXT, confirmText, doneText, netText, stateLine })`);
+const SLOT = '2026-11-19T09:00:00+03:00'; const SLOT_TEXT = '19 Nov at 09:00 (East Africa time)';
+const draftItem = (over = {}) => ({ kind: 'draft', id: 'B1', version: V('d'), title: 'Lions sleep', preview: { mediaId: null, note: 'picture is made when the post goes out' }, usableToday: false, decision: null, state: 'waiting', reason: null, actions: ['approve', 'skip', 'edit'],
+  facts: { text: 'Lions sleep.\nThey are gentle.', videoText: null, draftKind: 'outlook', sources: [], expiresText: '22 Nov at 11:00 (East Africa time)', whenText: null, nextSlot: SLOT, nextSlotText: SLOT_TEXT, instagram: false, auto: false, blockedRules: [], lastTryFailed: false, ...(over.facts || {}) }, ...over, ...(over.facts ? { facts: { text: 'Lions sleep.\nThey are gentle.', videoText: null, draftKind: 'outlook', sources: [], expiresText: '22 Nov at 11:00 (East Africa time)', whenText: null, nextSlot: SLOT, nextSlotText: SLOT_TEXT, instagram: false, auto: false, blockedRules: [], lastTryFailed: false, ...over.facts } } : {}) });
+const withDraft = (over = {}, serverOver = {}) => serverOf({ list: [draftItem(over), decidedItem()], decide: () => ({ ok: true, change: { kind: 'draft', id: 'B1', decision: 'scheduled' }, scheduledForText: SLOT_TEXT }), ...serverOver });
+const fireTimers = (p) => { for (const t of [...p.timers]) { if (t.ms !== 5000 && t.ms !== 8000) t.fn(); } };
+const open = (p, id) => !p.$(id).classList.contains('hidden');
+
+test('T13 a ready draft with approve-off shows no Approve button and the plain sentence; a check-meta card has only Skip', async () => {
+  const a = await openPage(withDraft({ reason: 'approve-off', actions: ['skip', 'edit'] }));
+  assert.ok(a.$('act-approve').classList.contains('hidden')); assert.ok(!a.$('act-skip').classList.contains('hidden')); assert.ok(!a.$('act-edit').classList.contains('hidden'));
+  assert.equal(a.$('state').textContent, 'Ready. Approving posts on this page is not switched on yet. You can skip or edit it.'); assert.equal(a.$('card-kind').textContent, 'Post waiting for your yes'); assert.equal(a.$('idline').textContent, 'Post number B1');
+  const m = await openPage(withDraft({ state: 'refused: check-meta', reason: 'check-meta', actions: ['skip'] }));
+  assert.ok(m.$('act-approve').classList.contains('hidden')); assert.ok(m.$('act-edit').classList.contains('hidden')); assert.ok(!m.$('act-skip').classList.contains('hidden')); assert.match(m.$('state').textContent, /^Not ready: This post may already be scheduled at Meta/);
+});
+test('T13 Approve on a draft shows the warning and sends nothing; no timer closes it; Cancel closes it and sends nothing', async () => {
+  const p = await openPage(withDraft()); assert.ok(!open(p, 'confirm-box'), 'closed on load');
+  p.$('act-approve').click(); await p.flush();
+  assert.ok(open(p, 'confirm-box')); assert.equal(p.$('confirm-text').textContent, pureNames.confirmText(draftItem(), 'approve')); assert.match(p.$('confirm-text').textContent, /real post at Meta for 19 Nov at 09:00/); assert.equal(p.$('confirm-yes').textContent, 'Schedule it'); assert.ok(p.$('confirm-no').focused > 0, 'the safe button has the focus'); assert.equal(p.posts('api/decide').length, 0);
+  fireTimers(p); await p.flush(); assert.ok(open(p, 'confirm-box'), 'no timer closes the box'); assert.equal(p.posts('api/decide').length, 0);
+  p.$('confirm-no').click(); await p.flush(); assert.ok(!open(p, 'confirm-box')); assert.equal(p.posts('api/decide').length, 0);
+  p.$('act-approve').click(); await p.flush(); p.key('Escape'); await p.flush(); assert.ok(!open(p, 'confirm-box'), 'Escape closes it'); assert.equal(p.posts('api/decide').length, 0);
+});
+test('T13 Schedule it sends exactly one decision with the card id, version and slot; a second click while saving sends none; the notice names the time; the list is reloaded', async () => {
+  const s = withDraft(); const p = await openPage(s); const loads = () => p.calls.filter((c) => c.url === 'api/items').length; const before = loads();
+  p.$('act-approve').click(); await p.flush(); p.$('confirm-yes').click(); p.$('confirm-yes').click(); await p.flush();
+  assert.deepEqual(p.posts('api/decide').map((c) => c.body), [{ kind: 'draft', id: 'B1', version: V('d'), action: 'approve', slot: SLOT }]);
+  assert.equal(p.$('notice').textContent, `Scheduled at Meta for ${SLOT_TEXT}. It goes out by itself.`); assert.ok(loads() > before, 'reloaded'); assert.ok(!open(p, 'confirm-box'));
+});
+test('T13 Skip on a draft needs the same second step and is not approved', async () => {
+  const p = await openPage(withDraft()); p.$('act-skip').click(); await p.flush(); assert.ok(open(p, 'confirm-box')); assert.equal(p.$('confirm-text').textContent, 'Skip this post? It does not come back on this page.'); assert.equal(p.$('confirm-yes').textContent, 'Skip it'); assert.equal(p.posts('api/decide').length, 0);
+  fireTimers(p); assert.ok(open(p, 'confirm-box')); p.$('confirm-yes').click(); await p.flush();
+  assert.deepEqual(p.posts('api/decide').map((c) => c.body), [{ kind: 'draft', id: 'B1', version: V('d'), action: 'skip' }]); assert.equal(p.$('notice').textContent, 'Skipped. This cannot be undone here.');
+});
+test('T13 keys never approve or skip a draft; e opens the edit box; a hook is unchanged', async () => {
+  const p = await openPage(withDraft()); p.key('a'); p.key('s'); await p.flush(); assert.equal(p.posts('api/decide').length, 0); assert.ok(!open(p, 'confirm-box')); p.key('e'); await p.flush(); assert.ok(open(p, 'edit-box'));
+  const h = await openPage(serverOf()); h.key('a'); await h.flush(); assert.equal(h.posts('api/decide').length, 1); assert.equal(h.posts('api/decide')[0].body.action, 'approve');
+});
+test('T13 the edit box for a draft takes several lines, sends one edit and never an approve; a refused edit keeps the text', async () => {
+  const p = await openPage(withDraft()); p.$('act-edit').click(); await p.flush();
+  assert.equal(p.$('edit-text').value, 'Lions sleep.\nThey are gentle.'); assert.equal(p.$('edit-text').rows, 10); assert.equal(p.$('edit-save').textContent, 'Save'); assert.equal(p.$('edit-count').textContent, '29 of 2000'); assert.equal(p.$('edit-box').children.length >= 0, true);
+  p.$('edit-text').value = 'New text.\nSecond line.'; p.$('edit-save').click(); await p.flush();
+  assert.deepEqual(p.posts('api/decide').map((c) => c.body), [{ kind: 'draft', id: 'B1', version: V('d'), action: 'edit', text: 'New text.\nSecond line.' }]); assert.equal(p.$('notice').textContent, 'Saved. It is not scheduled yet. Look at the card again before you approve.');
+  const r = await openPage(withDraft({}, { decide: () => ({ ok: false, code: 'rules' }) })); r.$('act-edit').click(); await r.flush(); r.$('edit-text').value = 'Keep my words\nplease.'; r.$('edit-save').click(); await r.flush();
+  assert.equal(r.$('edit-text').value, 'Keep my words\nplease.'); assert.equal(r.$('edit-error').textContent, pureNames.REFUSAL_TEXT.rules); assert.ok(open(r, 'edit-box'));
+});
+test('T13 a draft edit that breaks a rule is refused before sending, each with its sentence', async () => {
+  const p = await openPage(withDraft()); p.$('act-edit').click(); await p.flush();
+  const rows = [['a\rb', 'bad-characters'], ['a​b', 'bad-characters'], ['x'.repeat(2001), 'too-long'], ['—'.repeat(700), 'too-big'], ['   ', 'empty']];
+  for (const [text, problem] of rows) { p.$('edit-text').value = text; p.$('edit-save').click(); await p.flush(); const want = pureNames.EDIT_PROBLEM_TEXT[problem]; assert.equal(p.$('edit-error').textContent, typeof want === 'function' ? want('draft') : want, problem); assert.equal(p.$('edit-text').value, text); }
+  assert.equal(p.posts('api/decide').length, 0);
+});
+test('T13 every new refusal code shows its own sentence; the codes that change the card also reload the list', async () => {
+  const codes = ['queue-unreadable', 'already-scheduled', 'already-posted', 'expired', 'blocked', 'stopped', 'text-missing', 'sources-missing', 'sources-old', 'sources-outdated', 'sources-too-few', 'brand-rule', 'voice-rule', 'rules', 'number-not-in-facts', 'schedule-failed', 'schedule-not-saved', 'not-pending', 'check-meta', 'slot-changed', 'cannot-decide', 'version-changed'];
+  const reload = new Set(['already-scheduled', 'already-posted', 'blocked', 'expired', 'not-pending', 'version-changed', 'slot-changed', 'check-meta']); // the reload list of the pure block
+  for (const code of codes) {
+    const p = await openPage(withDraft({}, { decide: () => ({ ok: false, code }) })); const loads = () => p.calls.filter((c) => c.url === 'api/items').length; const before = loads();
+    p.$('act-approve').click(); await p.flush(); p.$('confirm-yes').click(); await p.flush();
+    assert.equal(p.$('notice').textContent, pureNames.REFUSAL_TEXT[code], code); assert.equal(loads() > before, reload.has(code), `${code} reload`);
+  }
+});
+test('T13 a network error on a draft approval says the post may have been scheduled', async () => {
+  const p = await openPage(withDraft({}, { decide: () => new Error('offline') })); p.$('act-approve').click(); await p.flush(); p.$('confirm-yes').click(); await p.flush();
+  assert.equal(p.$('notice').textContent, 'The connection broke. The post may have been scheduled at Meta. Check Meta before you tap again.');
+});
+test('T13 decided drafts have no Undo button; a decided hook still has one that sends the undo', async () => {
+  const done = draftItem({ id: 'B2', state: 'scheduled', actions: [], decision: { kind: 'scheduled', at: '2026-11-17T08:00:00Z' }, facts: { whenText: SLOT_TEXT } });
+  const p = await openPage(serverOf({ list: [done, decidedItem()] })); const undo = p.$('decided-list').descendants('button'); assert.equal(undo.length, 1);
+  assert.match(p.$('decided-list').textContent, /You scheduled "Lions sleep" for 19 Nov at 09:00 \(East Africa time\)\./); undo[0].click(); await p.flush(); assert.equal(p.posts('api/decide')[0].body.action, 'undo'); assert.equal(p.posts('api/decide')[0].body.kind, 'hook');
+});
+test('T13 a prepared post shows a Play button and no action buttons; a blocked draft shows the rules and no buttons', async () => {
+  const auto = draftItem({ state: 'automatic', actions: [], preview: { mediaId: 'm_' + 'a'.repeat(32), note: null }, facts: { auto: true, whenText: SLOT_TEXT, nextSlot: null } });
+  const p = await openPage(serverOf({ list: [auto] })); assert.ok(p.$('video-slot').descendants('button').some((b) => b.textContent === 'Play video')); assert.ok(p.$('actions').classList.contains('hidden'));
+  assert.equal(p.$('state').textContent, `Automatic post, scheduled for ${SLOT_TEXT}. There is nothing to decide here. Stop all posting holds it.`); assert.equal(p.$('card-kind').textContent, 'Automatic post');
+  const b = await openPage(serverOf({ list: [draftItem({ state: 'blocked', reason: 'blocked', actions: [], facts: { blockedRules: ['sea-conditions'] } })] })); assert.ok(b.$('actions').classList.contains('hidden')); assert.match(b.$('facts').textContent, /Rules that refused it: sea conditions/);
+});
+test('T13 nothing is sent while the page loads with drafts in the list', async () => {
+  const p = await openPage(withDraft()); assert.equal(p.posts('api/decide').length, 0); assert.equal(p.posts('api/posting').length, 0);
 });

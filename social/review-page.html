@@ -41,6 +41,9 @@
   #status span[tabindex] { text-decoration: underline dotted; cursor: help; }
   .video-note { padding: 16px; margin: 0; color: #ddd; text-align: center; }
   #facts p, #facts li { margin: 4px 0; }
+  #facts p { white-space: pre-wrap; overflow-wrap: anywhere; }
+  #confirm-box { margin: 12px 0 0; padding: 10px; border: 2px solid var(--line); border-radius: 10px; }
+  #confirm-box button { min-width: 120px; min-height: 52px; margin-right: 8px; }
   #facts ul { margin: 4px 0; padding-left: 20px; }
   #idline { margin: 12px 0 0; font-size: 0.75rem; color: var(--muted); }
   #swipe-hint { margin: 8px 0 0; font-size: 0.8rem; color: var(--muted); }
@@ -117,8 +120,13 @@
       <button type="button" id="act-skip">Skip</button>
       <button type="button" id="act-edit">Edit</button>
     </div>
+    <div id="confirm-box" class="hidden">
+      <p id="confirm-text"></p>
+      <button type="button" id="confirm-yes"></button>
+      <button type="button" id="confirm-no">Cancel</button>
+    </div>
     <div id="edit-box" class="hidden">
-      <label for="edit-text">New text for the video, at most 60 characters</label>
+      <label for="edit-text" id="edit-label">New text for the video, at most 60 characters</label>
       <textarea id="edit-text" rows="2"></textarea>
       <p id="edit-count">0 of 60</p>
       <div id="edit-buttons">
@@ -579,7 +587,7 @@ function showVideo(item) {
 function showFacts(item) {
   const box = $('facts'); clear(box);
   for (const row of factLines(item)) { const p = el('p'); p.appendChild(el('strong', row[0] + ' ')); p.appendChild(document.createTextNode(String(row[1]))); box.appendChild(p); }
-  $('idline').textContent = item.kind === 'clip' ? 'Clip number ' + item.id : '';
+  $('idline').textContent = item.kind === 'clip' ? 'Clip number ' + item.id : (item.kind === 'draft' ? 'Post number ' + item.id : '');
 }
 
 function renderList() {
@@ -603,18 +611,18 @@ function renderFilters() {
 function renderCard(moved) {
   const items = shownItems(); const n = items.length;
   if (n === 0) {
-    stopVideo(); $('video-quiet').classList.add('hidden'); $('card-kind').textContent = ''; $('card-title').textContent = ''; $('state').textContent = 'Nothing waits here. Pick another filter.'; $('actions').classList.add('hidden'); closeEdit(); clear($('facts')); $('idline').textContent = ''; $('counter').textContent = '';
+    stopVideo(); $('video-quiet').classList.add('hidden'); $('card-kind').textContent = ''; $('card-title').textContent = ''; $('state').textContent = 'Nothing waits here. Pick another filter.'; $('actions').classList.add('hidden'); closeEdit(); closeConfirm(); clear($('facts')); $('idline').textContent = ''; $('counter').textContent = '';
     $('prev').disabled = true; $('next').disabled = true; state.currentId = null; state.key = null; return;
   }
   state.index = moveIndex(state.index, 0, n); const item = items[state.index];
   $('prev').disabled = state.index <= 0; $('next').disabled = state.index >= n - 1;
-  $('card-kind').textContent = item.kind === 'hook' ? 'Proposed video text' : 'Clip';
-  $('card-title').textContent = item.kind === 'hook' ? item.title : clipTitle(item);
+  $('card-kind').textContent = item.kind === 'draft' ? (item.state === 'automatic' ? 'Automatic post' : (item.state === 'waiting' ? 'Post waiting for your yes' : 'Post')) : (item.kind === 'hook' ? 'Proposed video text' : 'Clip');
+  $('card-title').textContent = item.kind === 'clip' ? clipTitle(item) : item.title;
   $('state').textContent = stateLine(item);
   $('counter').textContent = 'Card ' + (state.index + 1) + ' of ' + n;
   const key = item.id + '|' + item.version;
   if (state.key !== key) { showVideo(item); state.key = key; }
-  state.currentId = item.id; if (state.editing && state.editId !== item.id) closeEdit();
+  state.currentId = item.id; if (state.editing && state.editId !== item.id) closeEdit(); if (state.confirmKey && state.confirmKey !== key) closeConfirm(); // another card, or the card changed under the box
   showFacts(item); renderActions(item);
   if (moved) { closeEdit(); $('card-title').focus({ preventScroll: true }); }
 }
@@ -713,7 +721,7 @@ async function callServer(send, body) {
 
 function setBusy(on) {
   state.busy = on;
-  for (const id of ['act-approve', 'act-skip', 'act-edit', 'edit-save', 'edit-cancel', 'stop-all']) $(id).disabled = on;
+  for (const id of ['act-approve', 'act-skip', 'act-edit', 'edit-save', 'edit-cancel', 'confirm-yes', 'confirm-no', 'stop-all']) $(id).disabled = on;
   for (const b of $('decided-list').querySelectorAll('button')) b.disabled = on;
   if (on) setNotice('Saving…');
 }
@@ -729,34 +737,48 @@ function renderDecided() {
   for (const it of rows) {
     const li = el('li'); const left = el('span'); left.appendChild(document.createTextNode(decidedLine(it)));
     const d = dateText(it.decision.at); if (d) left.appendChild(el('span', d, 'when'));
-    const b = el('button', 'Undo'); b.type = 'button'; b.disabled = state.busy;
-    b.addEventListener('click', () => { decide('undo', undefined, it); });
-    li.appendChild(left); li.appendChild(b); list.appendChild(li);
+    li.appendChild(left);
+    if (canUndo(it)) { const b = el('button', 'Undo'); b.type = 'button'; b.disabled = state.busy; b.addEventListener('click', () => { decide('undo', undefined, it); }); li.appendChild(b); } // a draft has no Undo: the post is at Meta
+    list.appendChild(li);
   }
 }
 function openEdit() {
   const item = currentItem(); if (!item || !Array.isArray(item.actions) || item.actions.indexOf('edit') < 0) return;
-  $('edit-text').value = item.title; $('edit-error').textContent = ''; $('edit-box').classList.remove('hidden'); state.editing = true; state.editId = item.id; countEdit(); $('edit-text').focus();
+  closeConfirm(); const draft = item.kind === 'draft';
+  $('edit-text').value = draft ? String((item.facts && item.facts.text) || '') : item.title; $('edit-text').rows = draft ? 10 : 2;
+  $('edit-label').textContent = draft ? 'New text for the post. Several lines are fine.' : 'New text for the video, at most 60 characters';
+  $('edit-save').textContent = draft ? 'Save' : 'Save and approve';
+  $('edit-error').textContent = ''; $('edit-box').classList.remove('hidden'); state.editing = true; state.editId = item.id; countEdit(); $('edit-text').focus();
 }
 function closeEdit() { $('edit-box').classList.add('hidden'); $('edit-error').textContent = ''; state.editing = false; }
-function countEdit() { $('edit-count').textContent = $('edit-text').value.length + ' of ' + EDIT_MAX; }
+function countEdit() { const item = currentItem(); $('edit-count').textContent = $('edit-text').value.length + ' of ' + (item && item.kind === 'draft' ? EDIT_LIMITS.draft : EDIT_MAX); }
+// The confirm step for a real post. NO timer: nothing closes it but the owner, another card, or a changed card.
+function closeConfirm() { $('confirm-box').classList.add('hidden'); state.confirmKey = null; state.confirmAction = null; }
+function openConfirm(item, action) {
+  closeEdit(); state.confirmKey = item.id + '|' + item.version; state.confirmAction = action;
+  $('confirm-text').textContent = confirmText(item, action); $('confirm-yes').textContent = action === 'approve' ? 'Schedule it' : 'Skip it';
+  $('confirm-box').classList.remove('hidden'); $('confirm-no').focus();
+}
 
-async function decide(action, text, fromList) {
+async function decide(action, text, fromList, confirmed) {
   if (state.busy) return;
-  const item = fromList || currentItem(); const req = decisionRequest(item, action, text);
+  const item = fromList || currentItem();
+  if (item && item.kind === 'draft' && (action === 'approve' || action === 'skip') && !confirmed) { if (decisionRequest(item, action)) openConfirm(item, action); return; } // nothing is sent before the second step
+  const req = decisionRequest(item, action, text);
   if (!req) {
-    if (action === 'edit') $('edit-error').textContent = BAD_EDIT_CHARS.test(String(text)) ? refusalText('bad-characters') : 'Write between 1 and ' + EDIT_MAX + ' characters on one line.';
+    if (action === 'edit') { const problem = editProblem(item ? item.kind : 'hook', text); const t = problem ? EDIT_PROBLEM_TEXT[problem] : null; $('edit-error').textContent = typeof t === 'function' ? t(item ? item.kind : 'hook') : (t || refusalText('bad-request')); }
     return;
   }
   setBusy(true); $('edit-error').textContent = '';
   const r = await callServer(postDecide, req);
   setBusy(false);
   if (r.expired) { setNotice(SESSION_ENDED); return; }
-  if (r.net) { setNotice(NET_TEXT); return; } // the server may have committed before the connection broke
+  if (r.net) { setNotice(netText(item, action)); return; } // the server may have committed before the connection broke
   const d = r.data;
   if (!d || typeof d !== 'object') { setNotice(refusalText('bad-request')); return; }
+  closeConfirm();
   if (d.ok === true) {
-    closeEdit(); setNotice(DONE_TEXT[action] + (d.enforced === true ? ' ' + ENFORCED_TEXT : ''));
+    closeEdit(); setNotice(doneText(item, action, d) + (d.enforced === true ? ' ' + ENFORCED_TEXT : ''));
     await load(); $('card-title').focus({ preventScroll: true }); return;
   }
   const sentence = refusalText(d.code); setNotice(sentence);
@@ -791,18 +813,22 @@ function renderStop() { $('stop-all').textContent = stopButtonText(stopUi); }
 $('act-approve').addEventListener('click', () => { decide('approve'); });
 $('act-skip').addEventListener('click', () => { decide('skip'); });
 $('act-edit').addEventListener('click', () => { openEdit(); });
+$('confirm-yes').addEventListener('click', () => { const item = currentItem(); const action = state.confirmAction; if (!item || !action) { closeConfirm(); return; } decide(action, undefined, undefined, true); });
+$('confirm-no').addEventListener('click', () => { closeConfirm(); });
 $('edit-save').addEventListener('click', () => { decide('edit', $('edit-text').value); });
 $('edit-cancel').addEventListener('click', () => { closeEdit(); });
 $('edit-text').addEventListener('input', countEdit);
 $('stop-all').addEventListener('click', () => { stopOrStart(); });
 document.addEventListener('keydown', (e) => {
   const item = currentItem();
-  const act = keyAction(e, { wide: window.matchMedia('(min-width: 900px)').matches, typing: isTyping(e), busy: state.busy, editing: state.editing, actions: item && Array.isArray(item.actions) ? item.actions : [] });
+  if (e.key === 'Escape' && state.confirmKey) { e.preventDefault(); closeConfirm(); return; }
+  const act = keyAction(e, { kind: item ? item.kind : undefined, wide: window.matchMedia('(min-width: 900px)').matches, typing: isTyping(e), busy: state.busy, editing: state.editing, actions: item && Array.isArray(item.actions) ? item.actions : [] });
   if (!act || (state.editing && act !== 'cancel')) return;
   e.preventDefault();
   if (act === 'cancel') closeEdit(); else if (act === 'edit') openEdit(); else decide(act);
 });
 $('decided').open = window.matchMedia('(min-width: 900px)').matches;
+closeConfirm();
 renderStop();
 load();
 </script>
