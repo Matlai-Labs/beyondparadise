@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   findCleanWindows, parseStamps, parseVerdict, checkFrame, judgeWindow, windowFrameSeconds,
-  assertLocalOllama, guardCall, eatDayKey, makeOllamaAsk, applySegments, processVideo, selftest, main,
+  makeLocalAsk, applySegments, processVideo, selftest, main,
 } from './media-segments.js';
 
 const tmp = () => fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ms-test-')));
@@ -132,95 +132,46 @@ test('windowFrameSeconds: multiples of the interval inside the window, evenly th
   assert.equal(s.length, 5); assert.equal(s[0], 0); assert.equal(s[4], 100);
 });
 
-// ---------- guards ----------
-test('host guard: only 127.0.0.1 / localhost on 11434 over http', () => {
-  for (const ok of ['http://127.0.0.1:11434', 'http://localhost:11434', 'http://127.0.0.1:11434/']) assert.doesNotThrow(() => assertLocalOllama(ok), ok);
-  for (const bad of [
-    'https://api.example.com', 'http://example.com:11434', 'http://127.0.0.1:8080', 'http://127.0.0.1', 'https://127.0.0.1:11434',
-    'http://127.0.0.1.evil.example:11434', 'http://localhost.evil.example:11434', 'http://user@127.0.0.1:11434', 'http://[::1]:11434',
-    'http://0.0.0.0:11434', 'http://192.168.1.5:11434', 'not a url', '', null, undefined,
-  ]) assert.throws(() => assertLocalOllama(bad), /refus/i, String(bad));
+// ---------- the model call: one guarded caller (local-model.js); its guard tests live in local-model.test.js ----------
+const askDeps = (dir, o = {}) => ({
+  run: { calls: 0 }, counterFile: path.join(dir, 'c.json'), stopOpts: { flagPath: path.join(dir, 'stop'), fleetPath: path.join(dir, 'fleet') },
+  now: () => new Date('2026-11-17T10:00:00Z'), ...o,
 });
-test('host guard: a config pointing elsewhere is refused BEFORE any request', async () => {
-  let called = 0;
-  const dir = tmp();
-  const ask = makeOllamaAsk({ baseUrl: 'https://api.example.com', fetchImpl: async () => { called += 1; return {}; }, counterFile: path.join(dir, 'c.json'), stopFlag: path.join(dir, 'stop') });
-  fs.writeFileSync(path.join(dir, 'f.jpg'), 'x');
-  await assert.rejects(ask(path.join(dir, 'f.jpg'), 'q'), /refus/i);
-  assert.equal(called, 0);
-});
-
-const gcfg = (dir, o = {}) => ({
-  baseUrl: 'http://127.0.0.1:11434', run: { calls: 0 }, maxCalls: 400, dailyCap: 1500,
-  counterFile: path.join(dir, 'counter.json'), stopFlag: path.join(dir, 'stop'), now: () => new Date('2026-11-17T10:00:00Z'), ...o,
-});
-test('eatDayKey: East Africa Time is UTC+3', () => {
-  assert.equal(eatDayKey(new Date('2026-11-17T20:59:59Z')), '2026-11-17');
-  assert.equal(eatDayKey(new Date('2026-11-17T21:00:00Z')), '2026-11-18');
-});
-test('per-run cap: the call at the limit passes, the one after it is refused', () => {
-  const dir = tmp(); const c = gcfg(dir, { maxCalls: 3 });
-  guardCall(c); guardCall(c); guardCall(c);
-  assert.equal(c.run.calls, 3);
-  assert.throws(() => guardCall(c), (e) => e.guard === true && /per-run cap/.test(e.message));
-  assert.equal(c.run.calls, 3);
-});
-test('per-day cap: below the limit passes, at the limit refused, counter file is 0600 and counts', () => {
-  const dir = tmp(); const c = gcfg(dir, { dailyCap: 2 });
-  guardCall(c); guardCall(c);
-  assert.equal(JSON.parse(fs.readFileSync(c.counterFile, 'utf8')).count, 2);
-  assert.equal(fs.statSync(c.counterFile).mode & 0o777, 0o600);
-  assert.throws(() => guardCall(c), (e) => e.guard === true && /per-day cap/.test(e.message));
-  assert.equal(JSON.parse(fs.readFileSync(c.counterFile, 'utf8')).count, 2);
-});
-test('per-day cap: a counter from yesterday starts again at zero; pre-set count one below the cap passes once', () => {
-  const dir = tmp(); const c = gcfg(dir, { dailyCap: 5 });
-  fs.writeFileSync(c.counterFile, JSON.stringify({ day: '2026-11-16', count: 5 }));
-  guardCall(c);
-  assert.equal(JSON.parse(fs.readFileSync(c.counterFile, 'utf8')).count, 1);
-  fs.writeFileSync(c.counterFile, JSON.stringify({ day: '2026-11-17', count: 4 }));
-  guardCall(c);
-  assert.throws(() => guardCall(c), /per-day cap/);
-});
-test('counter: unreadable or malformed counter refuses (fail closed); a missing one is a fresh day', () => {
-  for (const body of ['{garbage', '[]', '{"day":"2026-11-17","count":"many"}', '{"day":"2026-11-17","count":-1}', '']) {
-    const dir = tmp(); const c = gcfg(dir);
-    fs.writeFileSync(c.counterFile, body);
-    assert.throws(() => guardCall(c), (e) => e.guard === true && /counter/.test(e.message), body);
-  }
-  const dir = tmp();
-  assert.doesNotThrow(() => guardCall(gcfg(dir)));
-});
-test('stop flag: if the file exists, refuse, and count nothing', () => {
-  const dir = tmp(); const c = gcfg(dir);
-  fs.writeFileSync(c.stopFlag, '');
-  assert.throws(() => guardCall(c), (e) => e.guard === true && /stop flag/.test(e.message));
-  assert.equal(c.run.calls, 0); assert.equal(fs.existsSync(c.counterFile), false);
-});
-test('guardCall checks the host too (one function for every call)', () => {
-  const dir = tmp();
-  assert.throws(() => guardCall(gcfg(dir, { baseUrl: 'http://example.com:11434' })), /refus/i);
-});
-test('makeOllamaAsk: posts to the local chat endpoint with image, temperature 0, no stream, short keep_alive, a timeout signal', async () => {
+test('makeLocalAsk: posts through askLocal to the local chat endpoint with the image, temperature 0, no stream, short keep_alive, a timeout signal', async () => {
   const dir = tmp(); const img = path.join(dir, 'a.jpg'); fs.writeFileSync(img, 'abc');
   let req;
-  const ask = makeOllamaAsk({
-    baseUrl: 'http://127.0.0.1:11434', counterFile: path.join(dir, 'c.json'), stopFlag: path.join(dir, 'stop'),
-    fetchImpl: async (url, o) => { req = { url, o }; return { ok: true, status: 200, json: async () => ({ message: { content: '{"text":false}' } }) }; },
-  });
+  const ask = makeLocalAsk({ askDeps: askDeps(dir, { fetchImpl: async (url, o) => { req = { url, o }; return { ok: true, status: 200, json: async () => ({ message: { content: '{"text":false}' } }) }; } }) });
   assert.equal(await ask(img, 'Q?'), '{"text":false}');
   assert.equal(req.url, 'http://127.0.0.1:11434/api/chat');
   const b = JSON.parse(req.o.body);
-  assert.equal(b.model, 'qwen2.5vl:3b'); assert.equal(b.stream, false); assert.equal(b.keep_alive, '2m');
-  assert.equal(b.options.temperature, 0); assert.deepEqual(b.messages[0].images, [Buffer.from('abc').toString('base64')]);
+  assert.equal(b.model, 'qwen2.5vl:3b'); assert.equal(b.stream, false); assert.equal(b.keep_alive, '2m'); assert.equal(b.format, 'json');
+  assert.equal(b.options.temperature, 0); assert.deepEqual(b.messages[0].images, [Buffer.from('abc').toString('base64')]); assert.equal(b.messages[0].content, 'Q?');
   assert.ok(req.o.signal); assert.equal(req.o.redirect, 'error');
 });
-test('makeOllamaAsk: an HTTP error throws (so the frame becomes null), a blocked guard throws with guard=true', async () => {
-  const dir = tmp(); const img = path.join(dir, 'a.jpg'); fs.writeFileSync(img, 'abc');
-  const ask = makeOllamaAsk({ baseUrl: 'http://127.0.0.1:11434', counterFile: path.join(dir, 'c.json'), stopFlag: path.join(dir, 'stop'), fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
-  await assert.rejects(ask(img, 'Q'), (e) => !e.guard && /500/.test(e.message));
+test('makeLocalAsk: one shared counter file with the text caller (reserved before the call, same shape), the per-run cap holds', async () => {
+  const dir = tmp(); const img = path.join(dir, 'a.jpg'); fs.writeFileSync(img, 'abc'); let sent = 0;
+  const d = askDeps(dir, { maxCalls: 2, fetchImpl: async () => { sent += 1; return { ok: true, status: 200, json: async () => ({ message: { content: '{}' } }) }; } });
+  const ask = makeLocalAsk({ askDeps: d });
+  await ask(img, 'Q'); await ask(img, 'Q');
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir, 'c.json'), 'utf8')), { day: '2026-11-17', count: 2 });
+  await assert.rejects(ask(img, 'Q'), (e) => e.guard === true && /per-run cap/.test(e.message)); assert.equal(sent, 2); assert.equal(ask.run.calls, 2);
+});
+test('makeLocalAsk: a host elsewhere, a stop flag or an unreadable counter refuse BEFORE any request (guard=true); an HTTP error is a plain error', async () => {
+  const dir = tmp(); const img = path.join(dir, 'a.jpg'); fs.writeFileSync(img, 'abc'); let sent = 0;
+  const fetchImpl = async () => { sent += 1; return { ok: true, status: 200, json: async () => ({ message: { content: '{}' } }) }; };
+  await assert.rejects(makeLocalAsk({ askDeps: askDeps(dir, { fetchImpl, baseUrl: 'https://api.example.com' }) })(img, 'Q'), (e) => e.guard === true && /refus/i.test(e.message));
   fs.writeFileSync(path.join(dir, 'stop'), '');
-  await assert.rejects(ask(img, 'Q'), (e) => e.guard === true);
+  await assert.rejects(makeLocalAsk({ askDeps: askDeps(dir, { fetchImpl }) })(img, 'Q'), (e) => e.guard === true);
+  fs.unlinkSync(path.join(dir, 'stop')); fs.writeFileSync(path.join(dir, 'c.json'), 'not json');
+  await assert.rejects(makeLocalAsk({ askDeps: askDeps(dir, { fetchImpl }) })(img, 'Q'), (e) => e.guard === true && /counter/.test(e.message));
+  assert.equal(sent, 0);
+  fs.unlinkSync(path.join(dir, 'c.json'));
+  await assert.rejects(makeLocalAsk({ askDeps: askDeps(dir, { fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) }) })(img, 'Q'), (e) => !e.guard && /500/.test(e.message));
+});
+test('media-segments.js has no guard, counter or request code of its own', () => {
+  const src = fs.readFileSync(new URL('./media-segments.js', import.meta.url), 'utf8');
+  for (const gone of ['export function guardCall', 'export function assertLocalOllama', 'export class GuardError', 'fetchImpl(', 'fetch(', 'counterFile)', 'readFileSync(cfg']) assert.ok(!src.includes(gone), gone);
+  assert.ok(/from '\.\/local-model\.js'/.test(src));
 });
 
 // ---------- catalogue write ----------
@@ -253,7 +204,7 @@ function tree({ id = 'AAA', stamps = '', frames = 20, folder = 'africa', duratio
   if (stamps !== null) fs.writeFileSync(path.join(root, 'analysis', folder, `${id}.onscreen.txt`), stamps);
   const catPath = path.join(home, 'cat.json');
   fs.writeFileSync(catPath, JSON.stringify({ version: 1, entries: [entry(id, { folder, durationSec: duration, ...catalogExtra }), ...other] }));
-  const env = { BPA_MEDIA_ROOT: root, BPA_MEDIA_CATALOG: catPath, BPA_SEGMENTS_COUNTER: path.join(home, 'counter.json'), BPA_STOP_FLAG: path.join(home, 'stop'), HOME: home };
+  const env = { BPA_MEDIA_ROOT: root, BPA_MEDIA_CATALOG: catPath, BPA_SEGMENTS_COUNTER: path.join(home, 'counter.json'), BPA_STOP_FLAG: path.join(home, 'stop'), STOP_ALL_FLAG_PATH: path.join(home, 'fleet'), HOME: home };
   return { root, home, catPath, env };
 }
 const fakeFetch = (fn) => async (_u, o) => {
@@ -323,7 +274,7 @@ test('main --run: the stop flag refuses the whole run', async () => {
   fs.writeFileSync(t.env.BPA_STOP_FLAG, '');
   const { err, log, error } = io();
   const code = await main(['--run'], t.env, { fetchImpl: fakeFetch(() => clearJson), log, error });
-  assert.notEqual(code, 0); assert.match(err.join('\n'), /stop flag/);
+  assert.notEqual(code, 0); assert.match(err.join('\n'), /stopped by flag/);
 });
 test('main --run: refuses a catalogue path inside the repository', async () => {
   const t = tree({ stamps: '', frames: 4, duration: 8 });

@@ -24,8 +24,8 @@ export const MIN_FREE_PERCENT = 15;
 export const BRAND = 'Beyond Paradise Adventures';
 export const FIXED_LINES = { pointer: 'More on the site, link in profile.' };
 
-/** The system text of every request. The model sees nothing else about the account. */
-export const CAPTION_PROMPT = [
+/** The first system text (B5), kept unchanged for the comparison with the second. */
+export const PROMPT_V1 = [
   'You write one short Instagram post for a travel information account about Tanzania and Zanzibar.',
   'You get a title and one or more claims. Use ONLY the title and the claims. Add no other fact, number, name, date or place.',
   'Never write in the first person about having been there (no "we", no "I", no "our visit").',
@@ -37,6 +37,27 @@ export const CAPTION_PROMPT = [
   'caption: 120 to 700 characters, two to five short sentences.',
   'altText: 20 to 200 characters, one sentence that describes the plain text card showing the hook.',
 ].join('\n');
+
+/** The second system text (B6): every sentence restates a given claim; no added events, causes, judgements, advice or praise. */
+export const PROMPT_V2 = [
+  'You write one short Instagram post for a travel information account about Tanzania and Zanzibar.',
+  'You get a title and one or more claims. Use ONLY the title and the claims. Add no other fact, number, name, date or place.',
+  'Every sentence must restate one of the given claims in plain words. A sentence that restates no claim is not allowed.',
+  'Add no events, no causes, no judgements, no advice and no praise. Never write "announced", "make sure" or "keep in mind". Never call anything beautiful, stunning or a gem.',
+  'The hook starts with the most concrete fact or figure from the claims.',
+  'If the claims are few, keep the caption short: two plain sentences are enough. Do not pad it.',
+  'Never write in the first person about having been there (no "we", no "I", no "our visit").',
+  'Say nothing about sea conditions, seaweed, waves or swimming conditions.',
+  'Do not sell and never tell anyone to book. Plain, short sentences. No hype words.',
+  'No URL, no @mention, no hashtag, no emoji.',
+  'Return JSON only, exactly this shape and nothing before or after it: {"hook": "...", "caption": "...", "altText": "..."}.',
+  'hook: at most 90 characters, states the point.',
+  'caption: 120 to 700 characters, two to five short sentences.',
+  'altText: 20 to 200 characters, one sentence that describes the plain text card showing the hook.',
+].join('\n');
+
+/** The system text of every request unless the caller names another: the second prompt. The model sees nothing else about the account. */
+export const CAPTION_PROMPT = PROMPT_V2;
 
 // Fixed hashtag vocabulary: a topic maps to a theme, a theme to 3 to 6 tags. The model never invents a tag.
 export const TOPIC_TAGS = {
@@ -97,6 +118,12 @@ const URL_RE = new RegExp(String.raw`https?://|\bwww\.|\b[a-z0-9-]+(?:\.[a-z0-9-
 const len = (s) => [...s].length;
 const text = (v) => typeof v === 'string' && v.trim() !== '';
 
+/** The numbers in `texts` (strings; anything else is ignored) that occur in no claim text, in order. [] = every figure is a claim figure. */
+export function numberFidelity(texts, claims) {
+  const allowed = new Set((Array.isArray(claims) ? claims : []).flatMap((c) => numbersIn(c && c.text)));
+  return (texts || []).filter((t) => typeof t === 'string').flatMap((t) => numbersIn(t)).filter((n) => !allowed.has(n));
+}
+
 /** Structural, number and no-URL/mention/hashtag checks on the model's { hook, caption, altText }. Returns reason names (no gates here). */
 export function checkAnswer(ans, idea) {
   const r = []; const a = ans && typeof ans === 'object' ? ans : {};
@@ -104,8 +131,7 @@ export function checkAnswer(ans, idea) {
   if (!text(a.caption)) r.push('caption-missing'); else { const n = len(a.caption.trim()); if (n < LIMITS.captionMin) r.push('caption-too-short'); else if (n > LIMITS.captionMax) r.push('caption-too-long'); }
   if (!text(a.altText)) r.push('alt-missing'); else { const n = len(a.altText.trim()); if (n < LIMITS.altMin) r.push('alt-too-short'); else if (n > LIMITS.altMax) r.push('alt-too-long'); }
   const fields = [a.hook, a.caption, a.altText].filter(text);
-  const allowed = new Set((idea.claims || []).flatMap((c) => numbersIn(c.text)));
-  if (fields.some((f) => numbersIn(f).some((n) => !allowed.has(n)))) r.push('number-not-in-claims');
+  if (numberFidelity(fields, idea.claims).length) r.push('number-not-in-claims');
   if (fields.some((f) => URL_RE.test(f))) r.push('url-in-text');
   if (fields.some((f) => /@\w/.test(f))) r.push('mention-in-text');
   if (fields.some((f) => /#\w/.test(f))) r.push('hashtag-in-text');
@@ -133,14 +159,17 @@ export function sourceLine(claims, { sourceNames } = {}) {
   return `Source: ${parts.join('; ')}`;
 }
 /** Hook, one sentence per line (the carousel planner turns each line into a slide), source line, pointer (only for a path on our own site), tags. */
-export function assembleText(idea, ans, opts = {}) {
+export function assembleParts(idea, ans, opts = {}) {
   const hook = ans.hook.replace(/\s+/g, ' ').trim();
   const sentences = ans.caption.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+/).filter(Boolean);
-  const lines = [hook, '', ...sentences, sourceLine(idea.claims, opts)];
-  if (typeof idea.link === 'string' && idea.link.startsWith('/')) lines.push(FIXED_LINES.pointer);
-  lines.push('', hashtagsFor(idea).join(' '));
-  return lines.join('\n');
+  const codeLines = [sourceLine(idea.claims, opts)];
+  if (typeof idea.link === 'string' && idea.link.startsWith('/')) codeLines.push(FIXED_LINES.pointer);
+  const tags = hashtagsFor(idea).join(' '); codeLines.push(tags);
+  const lines = [hook, '', ...sentences, ...codeLines.slice(0, -1), '', tags];
+  return { hook, sentences, codeLines, text: lines.join('\n') };
 }
+/** The assembled post text. The model wrote `hook` and `sentences` (assembleParts); code added `codeLines`. */
+export const assembleText = (idea, ans, opts = {}) => assembleParts(idea, ans, opts).text;
 
 const defaultClock = () => Number(process.hrtime.bigint()) / 1e9;
 const uniq = (a) => [...new Set(a)];
@@ -155,7 +184,7 @@ async function gateReasons(idea, full, ans, { voice, rules }) {
   return uniq(out);
 }
 
-export async function draftFromIdea(idea, { ask, voice = voiceGate, rules = rulesCheck, now = new Date(), config = CONFIG, model = config.captionModel, sourceNames, clock = defaultClock } = {}) {
+export async function draftFromIdea(idea, { ask, voice = voiceGate, rules = rulesCheck, now = new Date(), config = CONFIG, model = config.captionModel, sourceNames, clock = defaultClock, prompt = CAPTION_PROMPT } = {}) {
   const t0 = clock(); const attemptReasons = []; const callSeconds = [];
   const done = (extra) => ({ attempts: attemptReasons.length, attemptReasons, callSeconds, seconds: clock() - t0, ...extra });
   const good = Array.isArray(idea?.claims) && idea.claims.length > 0 && idea.claims.every((c) => c && text(c.text));
@@ -163,7 +192,7 @@ export async function draftFromIdea(idea, { ask, voice = voiceGate, rules = rule
   let failed = [];
   for (let attempt = 1; attempt <= 1 + LIMITS.retries; attempt++) {
     const c0 = clock(); let raw; let reasons = [];
-    try { raw = await ask({ prompt: buildPrompt(idea, failed), system: CAPTION_PROMPT, model }); }
+    try { raw = await ask({ prompt: buildPrompt(idea, failed), system: prompt, model }); }
     catch (e) { if (e && e.guard) throw e; reasons = [e instanceof EmptyAnswerError ? 'empty-answer' : 'model-error']; }
     callSeconds.push(clock() - c0);
     let ans = null;
@@ -199,7 +228,7 @@ export function pickBakeoffIdeas(ideas, n = 10) {
   return ideas.filter((i) => chosen.has(i));
 }
 
-export async function runBakeoff({ ideas, models, installed, askFor, voice = voiceGate, rules = rulesCheck, memoryFree, unload, clock = defaultClock, now = new Date(), config = CONFIG, sourceNames }) {
+export async function runBakeoff({ ideas, models, installed, askFor, voice = voiceGate, rules = rulesCheck, memoryFree, unload, clock = defaultClock, now = new Date(), config = CONFIG, sourceNames, prompt = CAPTION_PROMPT }) {
   const rows = [];
   for (const model of models) {
     if (!installed.includes(model)) { rows.push({ model, total: 0, skipped: 'not installed' }); continue; }
@@ -210,11 +239,11 @@ export async function runBakeoff({ ideas, models, installed, askFor, voice = voi
     try {
       for (const idea of ideas) {
         let r;
-        try { r = await draftFromIdea(idea, { ask: askFor(model), voice, rules, now, config, model, sourceNames, clock }); }
+        try { r = await draftFromIdea(idea, { ask: askFor(model), voice, rules, now, config, model, sourceNames, clock, prompt }); }
         catch (e) { if (e && e.guard) { row.stopped = e.message; stopped = true; break; } throw e; }
         row.total++; row.calls.push(...r.callSeconds);
         for (const rs of r.attemptReasons) for (const name of rs) row.reasons[name] = (row.reasons[name] || 0) + 1;
-        if (r.ok) { if (r.attempts === 1) row.firstTry++; else row.afterRetries++; row.passed.push({ ideaId: idea.id, kind: idea.kind, attempts: r.attempts, hook: r.draft.hook, altText: r.draft.altText, text: r.draft.text }); }
+        if (r.ok) { if (r.attempts === 1) row.firstTry++; else row.afterRetries++; row.passed.push({ ideaId: idea.id, kind: idea.kind, attempts: r.attempts, hook: r.draft.hook, altText: r.draft.altText, text: r.draft.text, draft: r.draft }); }
         else { row.givenUp++; row.failedIdeas.push({ ideaId: idea.id, kind: idea.kind, reasons: r.reasons }); }
       }
     } finally { try { await unload(model); } catch { /* the unload is best effort */ } }
@@ -255,7 +284,7 @@ export async function listInstalledModels() {
 }
 export const unloadModel = (model) => execFileP('ollama', ['stop', model]);
 /** The real ask: one guarded request to the local model (local-model.js). */
-export const localAsk = (deps = {}) => async ({ prompt, system, model }) => askLocal({ model, prompt, system, format: 'json' }, deps);
+export const localAsk = (deps = {}) => async ({ prompt, system, model, temperature, timeoutMs }) => askLocal({ model, prompt, system, format: 'json', ...(temperature !== undefined ? { temperature } : {}), ...(timeoutMs !== undefined ? { timeoutMs } : {}) }, deps);
 
 async function main(argv) {
   const a = { ideas: 10, models: ['gpt-oss:20b', 'qwen3:8b', 'hermes3:8b'] }; const val = (i) => { if (i + 1 >= argv.length) { console.error(`missing value for ${argv[i]}`); process.exit(2); } return argv[i + 1]; };

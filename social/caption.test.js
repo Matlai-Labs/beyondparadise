@@ -218,3 +218,40 @@ test('caption.js has no code path to another host and does not write queue text 
   assert.ok(!/\bfetch\(|https?:\/\//.test(src.replace(/'[^'\n]*'|"[^"\n]*"|`[^`\n]*`/g, '')), 'caption.js reaches models only through local-model.js');
   assert.ok(!/\bdrafts\.push\(|\bd\.text\s*=[^=]/.test(src));
 });
+
+// ── B6: second prompt, the parts of an assembled caption, number fidelity as a function ──
+import { PROMPT_V1, PROMPT_V2, assembleParts, numberFidelity, localAsk } from './caption.js';
+test('prompts: V1 is the first prompt unchanged, V2 is the default and restates the facts, with no events, causes, judgements, advice or praise', () => {
+  assert.equal(typeof PROMPT_V1, 'string'); assert.ok(PROMPT_V1.includes('Do not sell and never tell anyone to book') && PROMPT_V1.includes('120 to 700 characters'));
+  assert.equal(CAPTION_PROMPT, PROMPT_V2); assert.notEqual(PROMPT_V1, PROMPT_V2);
+  for (const must of ['restate', 'announced', 'make sure', 'keep in mind', 'praise', 'judgement', 'advice', 'cause', 'most concrete', 'short', 'ONLY', 'first person', 'sea conditions', 'JSON', '"hook"', '"caption"', '"altText"', '90', '700', 'URL', '@mention']) assert.ok(PROMPT_V2.includes(must), `V2 must mention ${must}`);
+});
+test('draftFromIdea sends PROMPT_V2 unless the caller names another prompt', async () => {
+  const a = scripted(json(GOOD)); await run(IDEA, a); assert.equal(a.prompts[0].system, PROMPT_V2);
+  const b = scripted(json(GOOD)); await run(IDEA, b, { prompt: PROMPT_V1 }); assert.equal(b.prompts[0].system, PROMPT_V1);
+});
+test('assembleParts: the model-written lines (hook, sentences) apart from the lines code adds (source, pointer, hashtags); assembleText is their join', () => {
+  const p = assembleParts(IDEA, GOOD);
+  assert.equal(p.hook, GOOD.hook); assert.ok(p.sentences.length >= 2 && p.sentences.every((s) => GOOD.caption.includes(s.slice(0, 20))));
+  assert.ok(p.codeLines.some((l) => l.startsWith('Source: ')) && p.codeLines.includes(FIXED_LINES.pointer) && p.codeLines.some((l) => l.startsWith('#')));
+  for (const l of p.codeLines) { assert.ok(!p.sentences.includes(l)); assert.notEqual(l, p.hook); }
+  assert.equal(p.text, assembleText(IDEA, GOOD)); for (const l of [p.hook, ...p.sentences, ...p.codeLines]) assert.ok(p.text.includes(l));
+  const noLink = assembleParts({ ...IDEA, link: null }, GOOD); assert.ok(!noLink.codeLines.includes(FIXED_LINES.pointer));
+});
+test('numberFidelity: the numbers of the texts that are not in any claim, [] when all are', () => {
+  assert.deepEqual(numberFidelity(['USD 50 and USD 100'], IDEA.claims), []);
+  assert.deepEqual(numberFidelity(['USD 50 and USD 75', 'a 3 day trip'], IDEA.claims), [75, 3]);
+  assert.deepEqual(numberFidelity([undefined, 5, 'none'], []), []);
+  assert.ok(numberFidelity(['５０'], IDEA.claims).length === 1);
+});
+test('localAsk passes temperature and timeout through to the guarded caller', async () => {
+  let body, signalSeen = false; const fetchImpl = async (_u, o) => { body = JSON.parse(o.body); signalSeen = !!o.signal; return { ok: true, status: 200, json: async () => ({ message: { content: '{}' } }) }; };
+  const dir = fs.mkdtempSync(path.join(process.env.TMPDIR || '/tmp', 'cap-')); const deps = { fetchImpl, counterFile: path.join(dir, 'c.json'), run: { calls: 0 }, stopOpts: { flagPath: path.join(dir, 's'), fleetPath: path.join(dir, 'f') } };
+  await localAsk(deps)({ prompt: 'p', system: 's', model: 'm', temperature: 0, timeoutMs: 5000 }); assert.equal(body.options.temperature, 0); assert.ok(signalSeen);
+  await localAsk(deps)({ prompt: 'p', system: 's', model: 'm' }); assert.equal(body.options.temperature, 0.3);
+});
+test('runBakeoff: a prompt can be named (sent as the system text), and each passing draft keeps the whole draft for a later judge', async () => {
+  const systems = []; const res = await runBakeoff({ ideas: [IDEA], models: ['m'], installed: ['m'], voice: okVoice, prompt: PROMPT_V1, askFor: () => async (req) => { systems.push(req.system); return json(GOOD); }, memoryFree: async () => 90, unload: async () => {}, now: new Date('2026-11-17T06:00:00Z') });
+  assert.deepEqual(systems, [PROMPT_V1]); assert.equal(res[0].passed.length, 1); assert.equal(res[0].passed[0].draft.ideaId, IDEA.id); assert.deepEqual(res[0].passed[0].draft.claims, IDEA.claims);
+  const d = await runBakeoff({ ideas: [IDEA], models: ['m'], installed: ['m'], voice: okVoice, askFor: () => async (req) => { systems.push(req.system); return json(GOOD); }, memoryFree: async () => 90, unload: async () => {}, now: new Date() }); assert.equal(systems.at(-1), PROMPT_V2);
+});

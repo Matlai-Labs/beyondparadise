@@ -9,6 +9,7 @@
   "timezone": "Africa/Dar_es_Salaam",
   "draftTtlDays": 7,
   "captionModel": "hermes3:8b",
+  "judgeModel": "hermes3:8b",
   "tourismStatsDrafts": false,
   "tourismStatsDraftsNote": "Switch for the weekly drafts built from the tourism statistics briefs (signal and outlook drafts, Instagram and Facebook). false = no drafts from that source; key absent or true = old behaviour. Set to false 2026-11-17.",
   "approvalPort": 3028,
