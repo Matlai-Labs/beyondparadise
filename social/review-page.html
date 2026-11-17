@@ -31,6 +31,10 @@
   #state { margin: 0 0 8px; font-weight: 600; }
   #video-slot { background: #000; border-radius: 12px; overflow: hidden; margin: 8px 0; min-height: 120px; display: flex; flex-direction: column; align-items: stretch; justify-content: center; }
   #video-slot video { width: 100%; max-height: 45vh; display: block; }
+  #video-quiet { margin: 0 0 8px; font-size: 0.85rem; color: var(--muted); }
+  #video-slot:empty { display: none; }
+  .hint { display: block; font-size: 0.8rem; color: var(--muted); white-space: normal; }
+  #status span[tabindex] { text-decoration: underline dotted; cursor: help; }
   .video-note { padding: 16px; margin: 0; color: #ddd; text-align: center; }
   #facts p, #facts li { margin: 4px 0; }
   #facts ul { margin: 4px 0; padding-left: 20px; }
@@ -51,6 +55,10 @@
     #video-slot video { max-height: 55vh; }
     #swipe-hint { display: none; }
   }
+  @media (max-width: 480px) {
+    #filters { flex-wrap: nowrap; gap: 6px; padding: 8px 10px; }
+    #filters button { padding: 8px 9px; font-size: 0.9rem; white-space: nowrap; }
+  }
   @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 </style>
 </head>
@@ -63,8 +71,8 @@
 </header>
 <div id="filters">
   <button type="button" data-kind="all" aria-pressed="true">All</button>
-  <button type="button" data-kind="hook" aria-pressed="false">Video texts</button>
   <button type="button" data-kind="clip" aria-pressed="false">Clips</button>
+  <button type="button" data-kind="hook" aria-pressed="false">Video texts</button>
   <button type="button" id="refresh">Reload</button>
 </div>
 <p id="unavailable" class="hidden"></p>
@@ -76,6 +84,7 @@
   <section id="card" aria-label="Current card">
     <p id="card-kind"></p>
     <h2 id="card-title" tabindex="-1"></h2>
+    <p id="video-quiet" class="hidden"></p>
     <p id="state" aria-live="polite"></p>
     <div id="video-slot"></div>
     <div id="facts"></div>
@@ -101,6 +110,9 @@ const LABELS = {
   'history-unreadable': 'The list of earlier posts cannot be read right now.',
 };
 const FALLBACK = 'The checks refuse it today.';
+const NO_EXAMPLE_TEXT = 'No example video yet. Example videos for texts come in a later step. The clips have their videos.';
+const NO_POST_LINE = 'No post recorded yet';
+const NO_POST_HINT = 'This record started on the day the page went live.';
 const EXAMPLE_NOTE = 'Example footage. The real post may use other footage that fits.';
 const REASON_TEXT = {
   'hook-number-not-in-claims': 'The text has a number that is not in the facts.',
@@ -203,10 +215,13 @@ function factLines(item) {
 }
 function noteText(item) {
   const n = item.preview && item.preview.note;
-  if (n === 'video is being prepared') return 'The video is being prepared.';
+  if (n === 'no example video yet') return NO_EXAMPLE_TEXT;
+  if (n === 'video is being prepared') return 'This video will appear in a few seconds.';
   if (n === 'video missing') return 'The video file is missing.';
   return n || '';
 }
+function quietLine(item) { return item.kind === 'hook' && !(item.preview && item.preview.mediaId) && item.preview && item.preview.note === 'no example video yet' ? NO_EXAMPLE_TEXT : null; }
+function statusHint(line) { return line === NO_POST_LINE ? NO_POST_HINT : null; }
 function anyPending(items) { return items.some((i) => i.preview && i.preview.note === 'video is being prepared'); }
 function dateText(iso) { const d = new Date(iso); return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
 function minutesAgoText(iso, nowMs) {
@@ -221,7 +236,7 @@ function statusLines(s, nowMs) {
   out.push(s.stop && typeof s.stop === 'object' ? (s.stop.stopped ? 'Posting: stopped' + (s.stop.reason ? ' (' + s.stop.reason + ')' : '') : 'Posting: allowed') : 'Posting: could not be read');
   out.push(s.autoLane === 'on' ? 'Automatic posting: ON' : (s.autoLane === 'off' ? 'Automatic posting: OFF' : 'Automatic posting: could not be read'));
   const lp = s.lastPost && typeof s.lastPost === 'object' ? dateText(s.lastPost.at) : null;
-  out.push(lp ? 'Last post ' + lp : (s.lastPost === 'none' ? 'No post yet' : 'Could not be read'));
+  out.push(lp ? 'Last post ' + lp : (s.lastPost === 'none' ? NO_POST_LINE : 'Could not be read'));
   const lr = s.lastRun && typeof s.lastRun === 'object' ? minutesAgoText(s.lastRun.at, nowMs) : null;
   out.push(lr ? 'Last check by the system ' + lr : 'Last check by the system: could not be read');
   return out;
@@ -237,7 +252,15 @@ function clear(node) { while (node.firstChild) node.removeChild(node.firstChild)
 
 function showStatus(s, problems) {
   const box = $('status'); clear(box);
-  for (const line of statusLines(s, Date.now())) box.appendChild(el('span', line));
+  for (const line of statusLines(s, Date.now())) {
+    const span = el('span', line); const hint = statusHint(line);
+    if (hint) {
+      span.setAttribute('title', hint); span.setAttribute('tabindex', '0'); span.style.whiteSpace = 'normal';
+      const note = el('small', hint, 'hint hidden'); span.appendChild(note);
+      span.addEventListener('click', () => { note.classList.toggle('hidden'); });
+    }
+    box.appendChild(span);
+  }
   const pl = $('problems'); clear(pl);
   for (const p of problems || []) pl.appendChild(el('li', LABELS[p] || 'Something could not be read.'));
 }
@@ -251,7 +274,9 @@ function stopVideo() {
 }
 
 function showVideo(item) {
-  stopVideo(); const slot = $('video-slot');
+  stopVideo(); const slot = $('video-slot'); const quiet = $('video-quiet');
+  const q = quietLine(item); quiet.textContent = q || ''; quiet.classList.toggle('hidden', !q);
+  if (q) return; // a video text has no example video in this step: no black box, only the quiet line
   if (item.preview && item.preview.mediaId) {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const v = document.createElement('video');
@@ -286,14 +311,14 @@ function renderList() {
 }
 
 function renderFilters() {
-  const c = countKinds(state.items); const names = { all: 'All', hook: 'Video texts', clip: 'Clips' };
+  const c = countKinds(state.items); const names = { all: 'All', clip: 'Clips', hook: 'Video texts' };
   for (const b of document.querySelectorAll('#filters button[data-kind]')) { const k = b.getAttribute('data-kind'); b.textContent = names[k] + ' ' + c[k]; b.setAttribute('aria-pressed', k === state.kind ? 'true' : 'false'); }
 }
 
 function renderCard(moved) {
   const items = shownItems(); const n = items.length;
   if (n === 0) {
-    stopVideo(); $('card-kind').textContent = ''; $('card-title').textContent = ''; $('state').textContent = 'Nothing waits here. Pick another filter.'; clear($('facts')); $('idline').textContent = ''; $('counter').textContent = '';
+    stopVideo(); $('video-quiet').classList.add('hidden'); $('card-kind').textContent = ''; $('card-title').textContent = ''; $('state').textContent = 'Nothing waits here. Pick another filter.'; clear($('facts')); $('idline').textContent = ''; $('counter').textContent = '';
     $('prev').disabled = true; $('next').disabled = true; state.currentId = null; state.key = null; return;
   }
   state.index = moveIndex(state.index, 0, n); const item = items[state.index];

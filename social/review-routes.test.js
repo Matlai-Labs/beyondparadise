@@ -141,7 +141,7 @@ test('defaultInputs wires the lane\'s own readers and verdict (usage ledger, his
 
 test('E8: page loads without a cookie are rate limited: one cookie, then 429 not available; a valid cookie always gets the page', async () => {
   clock += 10000; const first = await call('/review/', login); assert.equal(first.status, 200); const c = first.headers['set-cookie'][0].split(';')[0];
-  for (let i = 0; i < 5; i++) { const r = await call('/review/', login); assert.equal(r.status, 429, 'a cookie-less flood'); assert.equal(r.body.toString(), 'not available'); assert.equal(r.headers['set-cookie'], undefined); }
+  for (let i = 0; i < 5; i++) { const r = await call('/review/', login); assert.equal(r.status, 429, 'a cookie-less flood'); assert.match(r.body.toString(), /One moment\. The page opens by itself\./); assert.equal(r.headers['set-cookie'], undefined); }
   const again = await call('/review/', { ...login, cookie: c }); assert.equal(again.status, 200); assert.equal(again.headers['set-cookie'], undefined);
   clock += 2000; assert.equal((await call('/review/', login)).status, 200, 'two seconds later a new one is allowed');
   assert.ok(logs.some((l) => /rate-limited page/.test(l)));
@@ -156,4 +156,30 @@ test('E10: nosniff on every response of the review routes: page, items, media 20
   clock += 10000; await call('/review/', login); all.push(await call('/review/', login)); fs.rmSync(accessFile); all.push(await call('/review/', login));
   assert.deepEqual(all.map((r) => r.status), [200, 200, 200, 206, 416, 404, 404, 403, 405, 429, 503]);
   for (const r of all) assert.equal(r.headers['x-content-type-options'], 'nosniff', String(r.status));
+});
+
+const WAIT_PAGE_SENTENCE = 'One moment. The page opens by itself.';
+test('change 4: a page load refused only because a session was issued under 2 s ago gets the small refresh page with the same strict headers', async () => {
+  clock += 10000; assert.equal((await call('/review/', login)).status, 200);
+  const r = await call('/review/', login); const body = r.body.toString();
+  assert.equal(r.status, 429); assert.match(r.headers['content-type'], /^text\/html; charset=utf-8/);
+  assert.ok(body.includes(WAIT_PAGE_SENTENCE)); assert.ok(body.includes('<meta http-equiv="refresh" content="3">')); assert.doesNotMatch(body, /<script|<link|https?:|\son[a-z]+=|<iframe/i);
+  const n = /nonce-([0-9a-f]{32})/.exec(r.headers['content-security-policy'])[1]; assert.equal(r.headers['content-security-policy'], CSP(n), 'the policy is the same function, so it allows nothing more than the page');
+  assert.equal(r.headers['x-content-type-options'], 'nosniff'); assert.equal(r.headers['referrer-policy'], 'no-referrer'); assert.equal(r.headers['x-frame-options'], 'DENY'); assert.equal(r.headers['cache-control'], 'no-store'); assert.equal(r.headers['set-cookie'], undefined);
+  assert.ok(logs.some((l) => /rate-limited page/.test(l)));
+  assert.equal(body.length < 600, true, 'minimal');
+});
+test('change 4: every other refusal stays the plain body not available, with no detail', async () => {
+  const plain = async (r, code) => { assert.equal(r.status, code); assert.equal(r.body.toString(), 'not available'); assert.match(r.headers['content-type'], /^text\/plain/); assert.equal(r.headers['set-cookie'], undefined); };
+  await plain(await call('/review/', { host: HOST }), 403); await plain(await call('/review/', login, { method: 'POST' }), 405);
+  await plain(await call('/review/api/items', login), 403); // no cookie
+  await plain(await call('/review/media/m_' + '0'.repeat(32), login), 403);
+  fs.rmSync(accessFile); await plain(await call('/review/', login), 503);
+});
+test('change 4: a full table of young sessions (not the 2 s rule) is still the plain refusal', async () => {
+  srv.close(); let t = 5e9; const sessions = createSessions({ now: () => t, max: 1 });
+  const h = createReviewHandler({ sessions, loadInputs: inputs, log: (m) => logs.push(m), cacheMs: 0, previewDir: path.join(dir, 'previews') });
+  srv = http.createServer((q, s) => { if (!h(q, s)) { s.statusCode = 418; s.end(); } }); await new Promise((r) => srv.listen(0, '127.0.0.1', r)); port = srv.address().port;
+  assert.equal((await call('/review/', login)).status, 200); t += 3000; // past the 2 s gap, the table (max 1) still holds a young session
+  const r = await call('/review/', login); assert.equal(r.status, 429); assert.equal(r.body.toString(), 'not available'); assert.match(r.headers['content-type'], /^text\/plain/);
 });

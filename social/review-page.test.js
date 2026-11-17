@@ -9,7 +9,7 @@ import { CLIP_REASONS, HOOK_REASONS } from './review-items.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(HERE, 'review-page.html'), 'utf8');
-const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText })`);
+const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine })`);
 
 test('static rules: no external request, no HTML injection, no inline handlers, nonce on every script', () => {
   assert.ok(html.length < 60000); assert.doesNotMatch(html, /https?:\/\//); assert.doesNotMatch(html, /<link|@import|<iframe/);
@@ -85,7 +85,7 @@ test('B: status line wording', () => {
   const NOW = Date.parse('2026-11-17T10:00:00Z'); const base = { autoLane: 'off', stop: { stopped: false, reason: null }, lastPost: { at: '2026-11-12T10:00:00Z', id: 'B26' }, lastRun: { at: '2026-11-17T09:56:00Z', result: 'ok' } };
   assert.deepEqual([...pure.statusLines(base, NOW)], ['Posting: allowed', 'Automatic posting: OFF', 'Last post 12 Nov', 'Last check by the system 4 min ago']);
   assert.equal(pure.statusLines({ ...base, stop: { stopped: true, reason: 'stopped by flag' } }, NOW)[0], 'Posting: stopped (stopped by flag)'); assert.equal(pure.statusLines({ ...base, autoLane: 'on' }, NOW)[1], 'Automatic posting: ON');
-  assert.equal(pure.statusLines({ ...base, lastPost: 'none' }, NOW)[2], 'No post yet'); assert.equal(pure.statusLines({ ...base, lastPost: 'unknown' }, NOW)[2], 'Could not be read');
+  assert.equal(pure.statusLines({ ...base, lastPost: 'none' }, NOW)[2], 'No post recorded yet'); assert.equal(pure.statusLines({ ...base, lastPost: 'unknown' }, NOW)[2], 'Could not be read');
   const bad = [...pure.statusLines({ autoLane: 'unknown', stop: 'unknown', lastPost: 'unknown', lastRun: 'unknown' }, NOW)]; assert.deepEqual(bad, ['Posting: could not be read', 'Automatic posting: could not be read', 'Could not be read', 'Last check by the system: could not be read']);
 });
 test('B: no code shape reaches any sentence the page can produce', () => {
@@ -97,7 +97,7 @@ test('B: no code shape reaches any sentence the page can produce', () => {
   assert.ok(sentences.length > 60);
 });
 test('B4: old wordings are gone from the page', () => {
-  for (const old of ['Hook proposal', 'Never expires', 'One subject only', 'Flash check', 'Reviewer says', 'Auto lane', 'System last ran', 'Page:', 'Hook: ', 'no flash']) assert.ok(!html.includes(old), old);
+  for (const old of ['Hook proposal', 'Never expires', 'One subject only', 'Flash check', 'Reviewer says', 'Auto lane', 'System last ran', 'Page:', 'Hook: ', 'no flash', 'No post yet', 'The video is being prepared.']) assert.ok(!html.includes(old), old);
   for (const w of ['Proposed video text', 'Example footage. The real post may use other footage that fits.', 'Nothing waits here. Pick another filter.', 'The page cannot load. Open it again from your own device with Tailscale switched on.', 'The video could not be loaded. Tap Reload.']) assert.ok(html.includes(w), w);
 });
 test('B5: an expired session reloads once, then shows the sentence', () => { assert.ok(html.includes('sessionStorage')); assert.ok(/location\.reload\(\)/.test(html)); });
@@ -119,5 +119,30 @@ test('C6: Up and Down are not captured; Left, Right, J and K move; modifier keys
 
 test('D7: the page asks again by itself while a video is being prepared, and says so in plain words', () => {
   assert.equal(pure.anyPending([{ preview: { note: null } }, { preview: { mediaId: null, note: 'video is being prepared' } }]), true); assert.equal(pure.anyPending([{ preview: { note: 'video missing' } }]), false);
-  assert.equal(pure.noteText({ preview: { note: 'video is being prepared' } }), 'The video is being prepared.'); assert.match(html, /if \(anyPending\(state\.items\)\) retryTimer = setTimeout\(load, \d+\)/);
+  assert.equal(pure.noteText({ preview: { note: 'video is being prepared' } }), 'This video will appear in a few seconds.'); assert.match(html, /if \(anyPending\(state\.items\)\) retryTimer = setTimeout\(load, \d+\)/);
+});
+
+const QUIET = 'No example video yet. Example videos for texts come in a later step. The clips have their videos.';
+test('change 1: a video text without an example video gets a small quiet line, no black box; a clip being read keeps a box', () => {
+  const none = hookItem({ preview: { mediaId: null, note: 'no example video yet' } });
+  assert.equal(pure.quietLine(none), QUIET); assert.equal(pure.noteText(none), QUIET);
+  assert.equal(pure.quietLine(clipItem({ preview: { mediaId: null, note: 'video is being prepared' } })), null, 'a clip being read is not the quiet case');
+  assert.equal(pure.quietLine(clipItem()), null);
+  assert.equal(pure.anyPending([none]), false, 'nothing is being prepared for a video text: no retry');
+  assert.equal(pure.anyPending([clipItem({ preview: { mediaId: null, note: 'video is being prepared' } })]), true);
+  assert.ok(html.includes('id="video-quiet"')); assert.ok(html.indexOf('id="video-quiet"') > html.indexOf('id="card-title"') && html.indexOf('id="video-quiet"') < html.indexOf('id="video-slot"'), 'under the heading, above the video area');
+  assert.match(html, /#video-quiet\s*\{[^}]*font-size: 0\.\d+rem/); assert.ok(!/#video-quiet\s*\{[^}]*background: #000/.test(html));
+  assert.ok(html.includes('quietLine(item)'), 'showVideo uses it');
+});
+test('change 2: the filter buttons are All, Clips, Video texts, then Reload', () => {
+  const order = [...html.split('<script')[0].matchAll(/<button type="button"(?: data-kind="(\w+)"| id="(\w+)")/g)].map((m) => m[1] || m[2]).filter((k) => ['all', 'clip', 'hook', 'refresh'].includes(k));
+  assert.deepEqual(order, ['all', 'clip', 'hook', 'refresh']);
+});
+test('change 3: no post record says so, with a hover and tap explanation', () => {
+  assert.equal(pure.statusHint('No post recorded yet'), 'This record started on the day the page went live.'); assert.equal(pure.statusHint('Last post 12 Nov'), null);
+  assert.ok(html.includes("setAttribute('title'") || html.includes('.title ='), 'hover text'); assert.ok(html.includes("addEventListener('click'") && html.includes('statusHint('), 'tap text');
+});
+test('change 5: at 390 px the top row stays on one line and Reload keeps its text', () => {
+  assert.match(html, /@media \(max-width: 480px\)[\s\S]*?#filters\s*\{[^}]*flex-wrap: nowrap/); assert.match(html, /@media \(max-width: 480px\)[\s\S]*?#filters button\s*\{[^}]*padding: \d+px \d+px/);
+  assert.match(html, /<button type="button" id="refresh">Reload<\/button>/);
 });

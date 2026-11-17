@@ -2,7 +2,7 @@
 //   GET /review/                the page (sets the session cookie; needs the login header)
 //   GET /review/api/items       { status, items, counts, problems } (needs login + cookie; the item list is cached a few seconds)
 //   GET /review/media/<id>      a clip video (needs login + cookie; the id list is computed fresh on EVERY request)
-// Every refusal answers the plain text `not available`. Logs hold closed-set reason codes and the route kind only.
+// Every refusal answers the plain text `not available`, except one: a page load refused only because a new session was issued under 2 s ago answers a tiny HTML page that reloads itself after 3 s. Logs hold closed-set reason codes and the route kind only.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -75,6 +75,12 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, log 
     const p = (async () => { const inp = loadInputs(env); const b = await buildItems(inp); lastMedia = b.media; lastLibraryDir = inp.libraryDir; return b; })(); cache = { at: now(), built: p }; p.catch(() => { if (cache && cache.built === p) cache = null; });
     return p;
   };
+  // The one refusal that clears itself: another new session was issued under 2 s ago. A tiny page, no script, that asks again in 3 s. Same headers and the same CSP as the real page.
+  const waitPage = (res) => {
+    const nonce = crypto.randomBytes(16).toString('hex');
+    res.writeHead(429, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': CSP(nonce), 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY', 'Cache-Control': 'no-store' });
+    res.end('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="refresh" content="3"><title>Beyond Paradise: review</title></head><body style="font:17px system-ui,sans-serif;padding:24px"><p>One moment. The page opens by itself.</p></body></html>');
+  };
   const text = (res, code, body = 'not available') => { res.writeHead(code, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(body); };
 
   async function handle(req, res, p, route) {
@@ -83,7 +89,7 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, log 
       // a request that already carries a valid cookie gets the page and no new cookie; a cookie-less one needs a new session, which is rate limited (429)
       const hasCookie = checkAccess(req, { access: loadAccess({ env }), sessions, needCookie: true }).ok;
       let cookieHeader = null;
-      if (!hasCookie) { const tok = sessions.issue(); if (!tok) { log('review refused: rate-limited page'); return refuse(res, { code: 429 }); } cookieHeader = setCookieHeader(tok); }
+      if (!hasCookie) { const tok = sessions.issue(); if (!tok) { log('review refused: rate-limited page'); return sessions.tooSoon() ? waitPage(res) : refuse(res, { code: 429 }); } cookieHeader = setCookieHeader(tok); }
       const nonce = crypto.randomBytes(16).toString('hex');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': CSP(nonce), 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY', 'Cache-Control': 'no-store', ...(cookieHeader ? { 'Set-Cookie': cookieHeader } : {}) });
       return res.end(page.split('__NONCE__').join(nonce));
