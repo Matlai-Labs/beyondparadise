@@ -12,23 +12,37 @@ export const NOTE_PENDING = 'video is being prepared';
 const NOTE_MISSING = 'video missing';
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 
-function hashFileSync(file) {
-  const h = crypto.createHash('sha256'); const buf = Buffer.allocUnsafe(1 << 20); const fd = fs.openSync(file, 'r');
-  try { for (;;) { const n = fs.readSync(fd, buf, 0, buf.length, null); if (n === 0) break; h.update(buf.subarray(0, n)); } } finally { fs.closeSync(fd); }
-  return h.digest('hex');
+function hashFileStream(file) {
+  return new Promise((resolve, reject) => {
+    const h = crypto.createHash('sha256'); const st = fs.createReadStream(file);
+    st.on('data', (c) => h.update(c)); st.on('error', reject); st.on('end', () => resolve(h.digest('hex')));
+  });
 }
 
-/** (absPath) => { sha256, mtimeMs } | null. The hash is cached by path, size, mtime and inode: bytes are read again only when one of them changes. */
-export function fileInfoOf({ stat = fs.statSync, readFile = hashFileSync } = {}) {
-  const cache = new Map();
-  return (abs) => {
-    let st; try { st = stat(abs); } catch { return null; }
-    if (!st || (typeof st.isFile === 'function' && !st.isFile())) return null;
+/** File identity and hash cache. peek(abs) is a cheap lstat that never hashes: { size, mtimeMs, ino, key, sha256 | null (not hashed yet) }, or null for a missing file, a folder or a SYMBOLIC LINK.
+ *  hash(abs, pk) hashes by stream (never a whole-file read) and caches under path, size, mtime and inode; two callers for one file share one run. prune(keep) drops entries of paths that left the manifest. */
+export function fileInfoOf({ lstat = fs.lstatSync, hashFile = hashFileStream } = {}) {
+  const shaByKey = new Map(); const keyByPath = new Map(); const inflight = new Map();
+  const peek = (abs) => {
+    let st; try { st = lstat(abs); } catch { return null; }
+    if (!st || (typeof st.isSymbolicLink === 'function' && st.isSymbolicLink()) || (typeof st.isFile === 'function' && !st.isFile())) return null;
     const key = `${abs}|${st.size}|${st.mtimeMs}|${st.ino}`;
-    let sha256 = cache.get(key);
-    if (sha256 === undefined) { try { sha256 = readFile(abs); } catch { return null; } if (typeof sha256 !== 'string') return null; cache.set(key, sha256); }
-    return { sha256, mtimeMs: st.mtimeMs };
+    return { size: st.size, mtimeMs: st.mtimeMs, ino: st.ino, key, sha256: shaByKey.get(key) ?? null };
   };
+  const hash = (abs, pk) => {
+    const known = shaByKey.get(pk.key); if (known !== undefined) return Promise.resolve(known);
+    if (inflight.has(pk.key)) return inflight.get(pk.key);
+    const run = (async () => {
+      try {
+        const sha = await hashFile(abs); if (typeof sha !== 'string') throw new Error('bad hash');
+        const old = keyByPath.get(abs); if (old && old !== pk.key) shaByKey.delete(old);
+        shaByKey.set(pk.key, sha); keyByPath.set(abs, pk.key); return sha;
+      } finally { inflight.delete(pk.key); }
+    })();
+    inflight.set(pk.key, run); return run;
+  };
+  const prune = (keep) => { for (const [abs, key] of [...keyByPath]) if (!keep.has(abs)) { shaByKey.delete(key); keyByPath.delete(abs); } };
+  return { peek, hash, prune, size: () => shaByKey.size };
 }
 
 export const clipVersion = (fileSha256, tags) => sha(JSON.stringify([fileSha256, [...tags].sort()]));
@@ -54,18 +68,29 @@ export const HOOK_REASONS = Object.freeze(['not-approved', 'stale', 'check-faile
 export function laneClipsOf(manifest, usage, libraryDir, exists = fs.existsSync) {
   return eligibleClips(manifest, usage, { dir: libraryDir, exists }).filter((c) => inside(libraryDir, c.file));
 }
-export function buildClipItems({ manifest, libraryDir, info, secret, exists = fs.existsSync, usage = [] }) {
+export const HASH_BUDGET = 4; // new files hashed per items build; the rest show "being prepared" and are done by the next request
+export async function buildClipItems({ manifest, libraryDir, info, secret, exists = fs.existsSync, usage = [], hashBudget = HASH_BUDGET }) {
   const clips = manifest && Array.isArray(manifest.clips) ? manifest.clips : [];
   const laneIds = usage === null ? new Set() : new Set(laneClipsOf(manifest, usage, libraryDir, exists).map((c) => c.id));
   const freeIds = new Set(laneClipsOf(manifest, [], libraryDir, exists).map((c) => c.id)); // eligible if the ledger were empty
-  const rows = [];
+  const rows = []; const keep = new Set();
   clips.forEach((c, index) => {
     if (!c || typeof c !== 'object' || typeof c.id !== 'string' || c.id === '' || isSuperseded(c)) return;
+    let abs = null; let pk = null;
+    if (typeof c.file === 'string' && c.file !== '' && inside(libraryDir, c.file)) { const p = path.resolve(libraryDir, c.file); keep.add(p); if (exists(p)) { pk = info.peek(p); if (pk) abs = p; } }
+    rows.push({ c, index, abs, pk });
+  });
+  // hash at most hashBudget files that are not cached yet, newest first (those are the ones the owner meets first)
+  const todo = rows.filter((r) => r.pk && r.pk.sha256 === null).sort((a, b) => b.pk.mtimeMs - a.pk.mtimeMs).slice(0, Math.max(0, hashBudget));
+  await Promise.all(todo.map(async (r) => { try { await info.hash(r.abs, r.pk); r.pk = info.peek(r.abs); } catch { r.abs = null; r.pk = null; } }));
+  info.prune(keep);
+  const media = new Map(); const built = [];
+  for (const r of rows) {
+    const { c, abs, pk } = r;
     const tags = Array.isArray(c.shows && c.shows.tags) ? c.shows.tags.filter((t) => typeof t === 'string') : [];
-    let abs = null; let fi = null;
-    if (typeof c.file === 'string' && c.file !== '' && inside(libraryDir, c.file)) { const p = path.resolve(libraryDir, c.file); if (exists(p)) { fi = info(p); if (fi) abs = p; } }
-    const version = clipVersion(fi ? fi.sha256 : 'file-missing', tags);
-    const mediaId = abs ? mediaIdFor(secret, c.id, version) : null;
+    const hashed = Boolean(abs && pk && pk.sha256);
+    const version = hashed ? clipVersion(pk.sha256, tags) : (abs && pk ? sha(JSON.stringify(['pending', pk.size, pk.mtimeMs, tags])) : clipVersion('file-missing', tags));
+    const mediaId = hashed ? mediaIdFor(secret, c.id, version) : null;
     const v = c.verified && typeof c.verified === 'object' ? c.verified : null;
     let state; let reason = null;
     if (!abs) { state = NOTE_MISSING; reason = 'video-missing'; }
@@ -75,22 +100,19 @@ export function buildClipItems({ manifest, libraryDir, info, secret, exists = fs
     else { const w = clipWhy(c); state = `not eligible: ${w.text}`; reason = w.reason; }
     const item = {
       kind: 'clip', id: c.id, version, title: c.id,
-      preview: abs ? { mediaId, note: null } : { mediaId: null, note: NOTE_MISSING },
+      preview: hashed ? { mediaId, note: null } : (abs ? { mediaId: null, note: NOTE_PENDING } : { mediaId: null, note: NOTE_MISSING }),
       facts: { durationSec: typeof c.durationSec === 'number' ? c.durationSec : null, verdict: v && (v.verdict === 'pass' || v.verdict === 'fail') ? v.verdict : null, singleSubject: v && (v.singleSubject === 'yes' || v.singleSubject === 'no') ? v.singleSubject : null,
         notes: v && typeof v.notes === 'string' ? v.notes : null, tags, flash: c.flash && typeof c.flash.flash === 'boolean' ? c.flash.flash : null,
         source: Array.isArray(c.source) ? c.source.map((s) => ({ videoId: s.videoId, startSec: s.startSec, endSec: s.endSec })) : [] },
       state, reason, usableToday: state === 'eligible', actions: [],
     };
-    rows.push({ item, abs, mtime: fi ? fi.mtimeMs : -Infinity, index, mediaId });
-  });
-  rows.sort((a, b) => (b.mtime === a.mtime ? b.index - a.index : (b.mtime > a.mtime ? 1 : -1)));
-  const media = new Map();
-  for (const r of rows) if (r.abs) media.set(r.mediaId, { path: r.abs, kind: 'clip' });
-  return { items: rows.map((r) => r.item), media };
+    built.push({ item, mtime: abs && pk ? pk.mtimeMs : -Infinity, index: r.index });
+    // the identity a media request is checked against: a file that changed size, mtime or inode since this build is not served under this id
+    if (hashed) media.set(mediaId, { path: abs, kind: 'clip', size: pk.size, mtimeMs: pk.mtimeMs, ino: pk.ino });
+  }
+  built.sort((a, b) => (b.mtime === a.mtime ? b.index - a.index : (b.mtime > a.mtime ? 1 : -1)));
+  return { items: built.map((r) => r.item), media };
 }
-
-/** The media route uses this alone: it is computed fresh per request, so an id for something that left the list or changed is simply absent. */
-export function listMedia(args) { return buildClipItems(args).media; }
 
 // ── hooks ────────────────────────────────────────────────────────────────────────
 const NOTE_EXAMPLE = 'Example footage. The real post may use other footage that fits.';
@@ -147,7 +169,7 @@ export async function buildItems({ readHooks, loadPool, readManifest, libraryDir
     })));
   }
   let clipItems = [];
-  if (manifestOk && manifest) { try { const c = buildClipItems({ manifest, libraryDir, info, secret, exists, usage }); clipItems = c.items; for (const [k, v] of c.media) media.set(k, v); } catch { problems.push('library-unreadable'); } }
+  if (manifestOk && manifest) { try { const c = await buildClipItems({ manifest, libraryDir, info, secret, exists, usage }); clipItems = c.items; for (const [k, v] of c.media) media.set(k, v); } catch { problems.push('library-unreadable'); } }
   const items = [...hookItems, ...clipItems];
   return { ok: true, items, counts: { all: items.length, hook: hookItems.length, clip: clipItems.length }, problems, media };
 }

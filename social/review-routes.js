@@ -9,10 +9,10 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './stop.js';
 import { loadAccess, checkAccess, setCookieHeader } from './review-auth.js';
-import { buildItems, listMedia, fileInfoOf } from './review-items.js';
+import { buildItems, fileInfoOf } from './review-items.js';
 import { readStatus } from './review-status.js';
 import { resolveMediaPath, serveMedia } from './review-media.js';
-import { readHooks, defaultHooksPath } from './auto-hooks.js';
+import { readHooks, defaultHooksPath, claimsSha256 } from './auto-hooks.js';
 import { loadIdeaPool } from './idea-drafts.js';
 import { libraryDir as libraryDirOf, readManifest } from './clip-library.js';
 import { readUsage, defaultUsagePath } from './reel-clip.js';
@@ -31,15 +31,30 @@ export function refuse(res, check) {
   res.end('not available');
 }
 
-/** The inputs buildItems takes, from the real sources. */
-export function defaultInputs(env = process.env) {
+/** Cache a function's result for ttlMs, per key. A thrown error or a rejected promise is not kept. */
+export function ttlMemo(fn, { ttlMs, now = Date.now, key = () => '' } = {}) {
+  const store = new Map();
+  return (...args) => {
+    const k = key(...args); const hit = store.get(k);
+    if (hit && now() - hit.at < ttlMs) return hit.value;
+    const value = fn(...args); store.set(k, { at: now(), value });
+    if (value && typeof value.then === 'function') value.catch(() => { const cur = store.get(k); if (cur && cur.value === value) store.delete(k); });
+    return value;
+  };
+}
+
+export const CHECK_CACHE_MS = 60000; // the idea pool and the hook checks change slowly; the item list itself is cached shorter
+
+/** The inputs buildItems takes, from the real sources. The idea pool and the hook checks are cached for 60 s (this process also answers the WhatsApp commands and the worker's health call). */
+export function createDefaultInputs({ env = process.env, now = Date.now, loadPool = (o) => loadIdeaPool(o), evaluateImpl } = {}) {
   const dir = libraryDirOf(env);
+  const evalImpl = evaluateImpl || (async (idea, o) => { const { evaluateIdea } = await import('./auto-lane.js'); return evaluateIdea(idea, { now: o.now, hook: o.hook, sourceNames: o.sourceNames }); });
   return {
     readHooks: () => readHooks(defaultHooksPath(env)),
-    loadPool: () => loadIdeaPool({ now: new Date(), env }),
+    loadPool: ttlMemo(() => loadPool({ now: new Date(), env }), { ttlMs: CHECK_CACHE_MS, now }),
     readManifest: () => readManifest(dir),
     libraryDir: dir, info: INFO, secret: SECRET,
-    evaluate: async (idea, o) => { const { evaluateIdea } = await import('./auto-lane.js'); return evaluateIdea(idea, { now: o.now, hook: o.hook, sourceNames: o.sourceNames }); },
+    evaluate: ttlMemo((idea, o) => evalImpl(idea, o), { ttlMs: CHECK_CACHE_MS, now, key: (idea, o) => `${idea.id}|${o.hook}|${claimsSha256(idea)}` }),
     readUsage: () => readUsage(defaultUsagePath(env)),              // the ledger the lane reads
     readHistory: () => historyFromQueue(loadQueue(QUEUE_PATH)),     // posted and queued ideas, as the lane reads them
     readConfig: () => JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8')), // fresh from disk
@@ -48,12 +63,15 @@ export function defaultInputs(env = process.env) {
     previewFor: () => null, // part 1b fills this in
   };
 }
+let DEFAULT_INPUTS = null;
+export function defaultInputs(env = process.env) { if (!DEFAULT_INPUTS) DEFAULT_INPUTS = createDefaultInputs({ env }); return DEFAULT_INPUTS; }
 
 export function createReviewHandler({ sessions, loadInputs = defaultInputs, log = () => {}, env = process.env, cacheMs = 10000, now = Date.now, pageFile = path.join(HERE, 'review-page.html'), previewDir = path.join(stateDir(env), 'bpa-review-previews') } = {}) {
   let cache = null; // { at, built: Promise }
+  let lastMedia = new Map(); let lastLibraryDir = null; // the id to file map of the latest item build: media requests are answered from it, never by building a list
   const built = () => {
     if (cache && now() - cache.at < cacheMs) return cache.built;
-    const p = (async () => buildItems(loadInputs(env)))(); cache = { at: now(), built: p }; p.catch(() => { if (cache && cache.built === p) cache = null; });
+    const p = (async () => { const inp = loadInputs(env); const b = await buildItems(inp); lastMedia = b.media; lastLibraryDir = inp.libraryDir; return b; })(); cache = { at: now(), built: p }; p.catch(() => { if (cache && cache.built === p) cache = null; });
     return p;
   };
   const text = (res, code, body = 'not available') => { res.writeHead(code, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(body); };
@@ -73,10 +91,12 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, log 
     if (route === 'media') {
       const id = p.slice('/review/media/'.length);
       if (!MEDIA_ID.test(id)) return text(res, 404);
-      const inp = loadInputs(env); let media;
-      try { media = listMedia({ manifest: inp.readManifest(), libraryDir: inp.libraryDir, info: inp.info, secret: inp.secret }); } catch { return text(res, 404); } // computed fresh: an id for something that left the list or changed is simply absent
-      const entry = media.get(id); if (!entry) return text(res, 404);
-      const r = resolveMediaPath(entry.path, [inp.libraryDir, previewDir]);
+      const entry = lastMedia.get(id); if (!entry) return text(res, 404);
+      if (typeof entry.size === 'number') { // file identity is checked on EVERY request: a file that changed since the build is not served under its old id
+        let st; try { st = fs.lstatSync(entry.path); } catch { return text(res, 404); }
+        if (st.isSymbolicLink() || !st.isFile() || st.size !== entry.size || st.mtimeMs !== entry.mtimeMs || st.ino !== entry.ino) return text(res, 404);
+      }
+      const r = resolveMediaPath(entry.path, [lastLibraryDir, previewDir].filter(Boolean));
       if (!r.ok) { log(`review media refused: ${r.reason}`); return text(res, 404); }
       return serveMedia(req, res, { path: r.path });
     }

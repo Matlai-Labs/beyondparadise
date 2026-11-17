@@ -4,8 +4,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import http from 'node:http';
-import { createReviewHandler, CSP } from './review-routes.js';
+import { createReviewHandler, CSP, createDefaultInputs, ttlMemo } from './review-routes.js';
 import { createSessions } from './review-auth.js';
 import { fileInfoOf } from './review-items.js';
 import { claimsSha256 } from './auto-hooks.js';
@@ -16,7 +17,7 @@ const clip = (id) => ({ id, file: `${id}.mp4`, durationSec: 7, source: [{ videoI
 const IDEA = { id: 'idea_1', title: 'Lion fact', link: '/x/', claims: [{ text: 'Claim A', sourceDate: '2026-10-01' }] };
 const login = goodHeaders();
 let dir, clipFile, accessFile, manifest, logs, srv, port, loads;
-const info = fileInfoOf(); const SECRET = 'test-secret';
+let hashed = 0; const info = fileInfoOf({ hashFile: async (f) => { hashed += 1; return crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex'); } }); const SECRET = 'test-secret';
 const inputs = () => { loads += 1; return {
   readHooks: () => ({ ok: true, hooks: [{ ideaId: 'idea_1', sourceId: null, hook: 'Hook one', claimsSha256: claimsSha256(IDEA), approvedBy: null, approvedAt: null }] }),
   loadPool: () => ({ ok: true, ideas: [IDEA], sourceNames: {} }), readManifest: () => manifest, libraryDir: dir, info, secret: SECRET,
@@ -73,7 +74,13 @@ test('media: 200 and 206 for an id from the list', async () => {
   assert.equal((await call(`/review/media/${id}`, { ...ck, range: 'bytes=5000-' })).status, 416);
 });
 test('media needs the cookie', async () => { const { id } = await firstClipMedia(); assert.equal((await call(`/review/media/${id}`, login)).status, 403); });
-test('media: an id that left the list is 404 (focus 1)', async () => { const { id } = await firstClipMedia(); manifest = { clips: [] }; assert.equal((await call(`/review/media/${id}`, ck)).status, 404); });
+test('media: an id that left the list is 404 once the next item list is built (focus 1)', async () => {
+  const { id } = await firstClipMedia(); manifest = { clips: [] }; await call('/review/api/items', ck); assert.equal((await call(`/review/media/${id}`, ck)).status, 404);
+});
+test('D7: the media route never builds a list and never hashes: an id from before the first item list is 404; a request does not hash', async () => {
+  await call('/review/', login); const before = hashed; assert.equal((await call(`/review/media/m_${'a'.repeat(32)}`, ck)).status, 404);
+  const { id } = await firstClipMedia(); const afterItems = hashed; assert.ok(afterItems > before, 'the items build hashed the files'); assert.equal((await call(`/review/media/${id}`, ck)).status, 200); await call(`/review/media/${id}`, { ...ck, range: 'bytes=0-9' }); assert.equal(hashed, afterItems, 'no hashing on the media route');
+});
 test('media: after the file is replaced the old id is 404 and the new id works (focus 1, 4)', async () => {
   const old = (await firstClipMedia()).id; fs.writeFileSync(clipFile, 'x'.repeat(1000)); bump(clipFile);
   assert.equal((await call(`/review/media/${old}`, ck)).status, 404); const fresh = (await firstClipMedia()).id; assert.notEqual(fresh, old); assert.equal((await call(`/review/media/${fresh}`, ck)).status, 200);
@@ -81,11 +88,12 @@ test('media: after the file is replaced the old id is 404 and the new id works (
 test('media: ids shaped like paths or names are 404 and never read', async () => {
   for (const id of ['../c1.mp4', '%2e%2e%2fc1.mp4', 'c1.mp4', 'm_zz', `m_${'g'.repeat(32)}`, `m_${'0'.repeat(32)}`, `m_${'0'.repeat(32)}/x`, `m_${'0'.repeat(33)}`]) assert.equal((await call(`/review/media/${id}`, ck)).status, 404, id);
 });
-test('media: a clip file turned into a symlink is 404 and the refusal is logged by reason only', async () => {
+test('media: a clip file turned into a symlink is 404 and gets no id in the next list (E11)', async () => {
   const outside = path.join(mk(), 'outside.mp4'); fs.writeFileSync(outside, Buffer.alloc(1000, 7)); const old = (await firstClipMedia()).id;
-  fs.rmSync(clipFile); fs.symlinkSync(outside, clipFile); bump(outside);
-  assert.equal((await call(`/review/media/${old}`, ck)).status, 404); const fresh = (await firstClipMedia()).id; assert.equal((await call(`/review/media/${fresh}`, ck)).status, 404, 'the link is refused even though the list shows it');
-  assert.ok(logs.some((l) => /symlink/.test(l))); assert.ok(!logs.join('\n').includes(outside));
+  fs.rmSync(clipFile); fs.symlinkSync(outside, clipFile);
+  assert.equal((await call(`/review/media/${old}`, ck)).status, 404, 'the old id: the file is a link now');
+  const j = JSON.parse((await call('/review/api/items', ck)).body); const c1 = j.items.find((i) => i.id === 'c1'); assert.deepEqual([c1.state, c1.preview.mediaId], ['video missing', null]);
+  assert.ok(!logs.join('\n').includes(outside));
 });
 test('non-GET is 405 after access; other paths are not handled', async () => {
   assert.equal((await call('/review/', login, { method: 'POST' })).status, 405); assert.equal((await call('/review/', { host: HOST }, { method: 'POST' })).status, 403, 'access comes first');
@@ -96,11 +104,32 @@ test('logs hold reason codes and route kinds only', async () => {
   assert.match(all, /review refused: bad-login page/); assert.match(all, /review refused: no-cookie items/);
   for (const s of [OWNER, HOST, ck.cookie.split('=')[1], 'm_zz']) assert.ok(!all.includes(s), s);
 });
-test('media list is computed fresh even while the item list is cached (focus 1)', async () => {
+test('D7: a file that changed since the build is not served under its old id, even while the item list is cached (focus 1)', async () => {
   srv.close(); await start({ cacheMs: 60000 }); ck = { ...login, cookie: await cookie() };
   const { id } = await firstClipMedia(); assert.equal((await call(`/review/media/${id}`, ck)).status, 200); // the item list is now cached, id included
-  fs.writeFileSync(clipFile, 'y'.repeat(1000)); bump(clipFile); assert.equal((await call(`/review/media/${id}`, ck)).status, 404, 'file replaced: the cached list must not serve it');
-  const again = (await firstClipMedia()).id; assert.equal(again, id, 'the cached item list still shows the old id'); manifest = { clips: [] }; assert.equal((await call(`/review/media/${id}`, ck)).status, 404, 'left the list');
+  fs.writeFileSync(clipFile, 'y'.repeat(1000)); bump(clipFile); assert.equal((await call(`/review/media/${id}`, ck)).status, 404, 'mtime changed');
+  assert.equal((await firstClipMedia()).id, id, 'the cached list still shows the old id, which is simply not served');
+});
+test('D7: size-only and inode-only changes are caught too', async () => {
+  srv.close(); await start({ cacheMs: 60000 }); ck = { ...login, cookie: await cookie() };
+  const { id } = await firstClipMedia(); const st = fs.statSync(clipFile); fs.writeFileSync(clipFile, Buffer.alloc(900, 3)); fs.utimesSync(clipFile, st.atime, st.mtime); assert.equal((await call(`/review/media/${id}`, ck)).status, 404, 'size changed, mtime put back');
+  const { id: id2 } = await (async () => { fs.writeFileSync(clipFile, Buffer.alloc(1000, 9)); bump(clipFile); srv.close(); await start({ cacheMs: 0 }); ck = { ...login, cookie: await cookie() }; return firstClipMedia(); })();
+  assert.equal((await call(`/review/media/${id2}`, ck)).status, 200); const t = fs.statSync(clipFile); const copy = `${clipFile}.new`; fs.copyFileSync(clipFile, copy); fs.utimesSync(copy, t.atime, t.mtime); fs.renameSync(copy, clipFile);
+  assert.equal((await call(`/review/media/${id2}`, ck)).status, 404, 'same bytes, size and mtime, other inode');
+});
+test('D7: ttlMemo caches a value for the time to live, a failure is not cached, a key keeps its own entry', async () => {
+  let t = 0; let n = 0; const f = ttlMemo((k) => { n += 1; if (k === 'bad') throw new Error('x'); return `${k}${n}`; }, { ttlMs: 60000, now: () => t, key: (k) => k });
+  assert.equal(f('a'), 'a1'); assert.equal(f('a'), 'a1'); assert.equal(f('b'), 'b2'); t = 59999; assert.equal(f('a'), 'a1'); t = 60001; assert.equal(f('a'), 'a3');
+  assert.throws(() => f('bad')); assert.throws(() => f('bad')); assert.equal(n, 5);
+  const g = ttlMemo(async (k) => { n += 1; if (k === 'bad') throw new Error('x'); return k; }, { ttlMs: 60000, now: () => t, key: (k) => k }); n = 0; await g('a'); await g('a'); assert.equal(n, 1); await assert.rejects(g('bad')); await assert.rejects(g('bad')); assert.equal(n, 3, 'a rejected promise is dropped');
+});
+test('D7: the default inputs cache the idea pool and the hook checks for 60 s', async () => {
+  let t = 0; let pools = 0; let evals = 0; const d = createDefaultInputs({ env: process.env, now: () => t, loadPool: () => { pools += 1; return { ok: true, ideas: [], sourceNames: {} }; }, evaluateImpl: async () => { evals += 1; return { ok: true, draft: { hook: 'x' } }; } });
+  d.loadPool(); d.loadPool(); assert.equal(pools, 1); const idea = { id: 'i1', title: 'T', claims: [{ text: 'c' }] };
+  await d.evaluate(idea, { hook: 'H', sourceNames: {}, now: new Date() }); await d.evaluate(idea, { hook: 'H', sourceNames: {}, now: new Date() }); assert.equal(evals, 1);
+  await d.evaluate(idea, { hook: 'H2', sourceNames: {}, now: new Date() }); assert.equal(evals, 2, 'another hook text is another check');
+  await d.evaluate({ ...idea, claims: [{ text: 'changed' }] }, { hook: 'H', sourceNames: {}, now: new Date() }); assert.equal(evals, 3, 'changed claims are another check');
+  t = 60001; d.loadPool(); await d.evaluate(idea, { hook: 'H', sourceNames: {}, now: new Date() }); assert.equal(pools, 2); assert.equal(evals, 4);
 });
 test('defaultInputs wires the lane\'s own readers and verdict (usage ledger, history, config, laneVerdict)', async () => {
   const { defaultInputs } = await import('./review-routes.js'); const d = defaultInputs();

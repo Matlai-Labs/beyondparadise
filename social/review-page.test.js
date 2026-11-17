@@ -9,7 +9,7 @@ import { CLIP_REASONS, HOOK_REASONS } from './review-items.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(HERE, 'review-page.html'), 'utf8');
-const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines })`);
+const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText })`);
 
 test('static rules: no external request, no HTML injection, no inline handlers, nonce on every script', () => {
   assert.ok(html.length < 60000); assert.doesNotMatch(html, /https?:\/\//); assert.doesNotMatch(html, /<link|@import|<iframe/);
@@ -115,4 +115,9 @@ test('C6: the pressed filter button has at least 4.5:1 contrast in light and dar
 test('C6: Up and Down are not captured; Left, Right, J and K move; modifier keys are left alone', () => {
   const k = html.slice(html.indexOf("addEventListener('keydown'")); const body = k.slice(0, k.indexOf('});'));
   assert.ok(!/ArrowUp|ArrowDown/.test(body)); for (const w of ['ArrowLeft', 'ArrowRight', "'j'", "'k'", 'ctrlKey', 'metaKey', 'altKey']) assert.ok(body.includes(w), w);
+});
+
+test('D7: the page asks again by itself while a video is being prepared, and says so in plain words', () => {
+  assert.equal(pure.anyPending([{ preview: { note: null } }, { preview: { mediaId: null, note: 'video is being prepared' } }]), true); assert.equal(pure.anyPending([{ preview: { note: 'video missing' } }]), false);
+  assert.equal(pure.noteText({ preview: { note: 'video is being prepared' } }), 'The video is being prepared.'); assert.match(html, /if \(anyPending\(state\.items\)\) retryTimer = setTimeout\(load, \d+\)/);
 });

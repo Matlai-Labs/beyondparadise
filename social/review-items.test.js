@@ -6,17 +6,20 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { buildClipItems, listMedia, fileInfoOf, clipVersion, mediaIdFor, hookVersion, buildItems } from './review-items.js';
+import { buildClipItems, fileInfoOf, clipVersion, mediaIdFor, hookVersion, buildItems } from './review-items.js';
 import { claimsSha256, readHooks } from './auto-hooks.js';
 import { eligibleClips } from './clip-library.js';
 import { laneVerdictFor } from './auto-lane.js';
 
 const mk = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bpa-rev-'));
 const clip = (id, over = {}) => ({ id, file: `${id}.mp4`, durationSec: 7, source: [{ videoId: 'v1', startSec: 1, endSec: 8 }], checks: { rendered: 'ok' }, flash: { flash: false }, verified: { verdict: 'pass', singleSubject: 'yes', notes: 'a lion' }, shows: { tags: ['lion', 'savanna'], by: 't' }, ...over });
-test('clip items: shape, states, superseded left out, no paths', () => {
+// a counting hasher: the real stream hasher, or a stub
+const counting = () => { const calls = []; const info = fileInfoOf({ hashFile: async (f) => { calls.push(f); return crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex'); } }); return { info, calls }; };
+const bump = (f) => { const t = new Date(Date.now() + 5000 + Math.floor(Math.random() * 1000)); fs.utimesSync(f, t, t); };
+test('clip items: shape, states, superseded left out, no paths', async () => {
   const dir = mk(); for (const f of ['c1', 'c2', 'c3']) fs.writeFileSync(path.join(dir, `${f}.mp4`), f);
   const manifest = { clips: [clip('c1'), clip('c2', { verified: null }), clip('c3', { supersededBy: ['c3-s1'] }), clip('c4'), clip('c5', { file: '../escape.mp4' })] };
-  const { items, media } = buildClipItems({ manifest, libraryDir: dir, info: fileInfoOf(), secret: 's' });
+  const { items, media } = await buildClipItems({ manifest, libraryDir: dir, info: fileInfoOf(), secret: 's' });
   assert.deepEqual(items.map((i) => i.id).sort(), ['c1', 'c2', 'c4', 'c5']);
   const by = Object.fromEntries(items.map((i) => [i.id, i]));
   assert.equal(by.c1.state, 'eligible'); assert.equal(by.c2.state, 'not eligible: no verdict'); assert.equal(by.c4.state, 'video missing'); assert.equal(by.c5.state, 'video missing');
@@ -24,42 +27,69 @@ test('clip items: shape, states, superseded left out, no paths', () => {
   assert.deepEqual(by.c1.facts, { durationSec: 7, verdict: 'pass', singleSubject: 'yes', notes: 'a lion', tags: ['lion', 'savanna'], flash: false, source: [{ videoId: 'v1', startSec: 1, endSec: 8 }] });
   assert.match(by.c1.preview.mediaId, /^m_[0-9a-f]{32}$/); assert.equal(media.size, 2); assert.ok(!JSON.stringify(items).includes(dir));
   assert.deepEqual(Object.keys(by.c1).sort(), ['actions', 'facts', 'id', 'kind', 'preview', 'reason', 'state', 'title', 'usableToday', 'version']); assert.equal(by.c1.kind, 'clip'); assert.equal(by.c1.title, 'c1');
+  const e = media.get(by.c1.preview.mediaId); assert.equal(e.kind, 'clip'); assert.equal(e.path, path.join(dir, 'c1.mp4')); assert.equal(typeof e.size, 'number'); assert.equal(typeof e.mtimeMs, 'number'); assert.equal(typeof e.ino, 'number');
 });
-test('not-eligible reasons, first match wins', () => {
+test('not-eligible reasons, first match wins', async () => {
   const dir = mk(); const ids = ['r', 'f', 'v', 'x', 's']; for (const id of ids) fs.writeFileSync(path.join(dir, `${id}.mp4`), id);
   const manifest = { clips: [clip('r', { checks: { rendered: 'bad' } }), clip('f', { flash: { flash: true } }), clip('v', { verified: { verdict: 'fail', singleSubject: 'yes' } }), clip('x', { verified: { verdict: 'pass', singleSubject: 'no' } }), clip('s', { checks: { rendered: 'bad' }, flash: { flash: true } })] };
-  const by = Object.fromEntries(buildClipItems({ manifest, libraryDir: dir, info: fileInfoOf(), secret: 's' }).items.map((i) => [i.id, i.state]));
+  const by = Object.fromEntries((await buildClipItems({ manifest, libraryDir: dir, info: fileInfoOf(), secret: 's' })).items.map((i) => [i.id, i.state]));
   assert.deepEqual(by, { r: 'not eligible: render check failed', f: 'not eligible: flash detected', v: 'not eligible: verdict fail', x: 'not eligible: single-subject not yes', s: 'not eligible: render check failed' });
 });
-test('version changes when the file bytes change under the SAME id and size (focus 4); tags change it; tag order does not', () => {
-  const dir = mk(); const f = path.join(dir, 'c1.mp4'); fs.writeFileSync(f, 'AAA'); const info = fileInfoOf(); const v = () => buildClipItems({ manifest: { clips: [clip('c1')] }, libraryDir: dir, info, secret: 's' }).items[0].version;
-  const v1 = v(); fs.writeFileSync(f, 'BBB'); const t = new Date(Date.now() + 5000); fs.utimesSync(f, t, t); assert.notEqual(v1, v());
+test('version changes when the file bytes change under the SAME id and size (focus 4); tags change it; tag order does not', async () => {
+  const dir = mk(); const f = path.join(dir, 'c1.mp4'); fs.writeFileSync(f, 'AAA'); const info = fileInfoOf(); const v = async () => (await buildClipItems({ manifest: { clips: [clip('c1')] }, libraryDir: dir, info, secret: 's' })).items[0].version;
+  const v1 = await v(); fs.writeFileSync(f, 'BBB'); bump(f); assert.notEqual(v1, await v());
   assert.equal(clipVersion('x', ['b', 'a']), clipVersion('x', ['a', 'b'])); assert.notEqual(clipVersion('x', ['a']), clipVersion('x', ['a', 'b']));
   assert.equal(clipVersion('x', ['a']), crypto.createHash('sha256').update(JSON.stringify(['x', ['a']])).digest('hex'));
 });
-test('after the file is replaced, the old media id is not in listMedia (focus 1)', () => {
+test('after the file is replaced the old media id is gone from the next build and the map entry carries the identity (focus 1)', async () => {
   const dir = mk(); const f = path.join(dir, 'c1.mp4'); fs.writeFileSync(f, 'AAA'); const info = fileInfoOf(); const args = { manifest: { clips: [clip('c1')] }, libraryDir: dir, info, secret: 's' };
-  const oldId = buildClipItems(args).items[0].preview.mediaId; assert.equal(listMedia(args).has(oldId), true);
-  fs.writeFileSync(f, 'BBB'); const t = new Date(Date.now() + 5000); fs.utimesSync(f, t, t);
-  const newId = buildClipItems(args).items[0].preview.mediaId; assert.notEqual(oldId, newId); assert.equal(listMedia(args).has(oldId), false); assert.equal(listMedia(args).has(newId), true);
+  const r1 = await buildClipItems(args); const oldId = r1.items[0].preview.mediaId; assert.equal(r1.media.has(oldId), true); const oldSize = r1.media.get(oldId).size;
+  fs.writeFileSync(f, 'BBBB'); bump(f);
+  const r2 = await buildClipItems(args); const newId = r2.items[0].preview.mediaId; assert.notEqual(oldId, newId); assert.equal(r2.media.has(oldId), false); assert.equal(r2.media.has(newId), true); assert.notEqual(r2.media.get(newId).size, oldSize);
 });
-test('file bytes are hashed once while path, size and mtime are unchanged', () => {
-  const fileA = path.join(mk(), 'a.mp4'); fs.writeFileSync(fileA, 'A'); let reads = 0; const info = fileInfoOf({ readFile: () => { reads++; return 'h'.repeat(64); } });
-  const a = info(fileA); info(fileA); assert.equal(reads, 1); assert.equal(a.sha256, 'h'.repeat(64)); assert.equal(typeof a.mtimeMs, 'number');
-  assert.equal(info(path.join(path.dirname(fileA), 'none.mp4')), null, 'unreadable is null'); assert.equal(info(path.dirname(fileA)), null, 'a folder is not a file');
+test('D7: file bytes are hashed once while path, size, mtime and inode are unchanged; async stream; a folder, a missing file and a symlink are null', async () => {
+  const d = mk(); const fileA = path.join(d, 'a.mp4'); fs.writeFileSync(fileA, 'A'); let reads = 0; const info = fileInfoOf({ hashFile: async () => { reads++; return 'h'.repeat(64); } });
+  const pk = info.peek(fileA); assert.equal(pk.sha256, null, 'not hashed yet: peek never hashes'); assert.equal(reads, 0);
+  assert.equal(await info.hash(fileA, pk), 'h'.repeat(64)); assert.equal(info.peek(fileA).sha256, 'h'.repeat(64)); await info.hash(fileA, info.peek(fileA)); assert.equal(reads, 1);
+  assert.equal(info.peek(path.join(d, 'none.mp4')), null); assert.equal(info.peek(d), null, 'a folder is not a file');
+  fs.symlinkSync(fileA, path.join(d, 'link.mp4')); assert.equal(info.peek(path.join(d, 'link.mp4')), null, 'E11: a link is never a file here');
 });
-test('the real hasher reads in chunks and matches sha256 of the bytes', () => {
+test('D7: two requests for the same unhashed file share one hashing run', async () => {
+  const d = mk(); const f = path.join(d, 'a.mp4'); fs.writeFileSync(f, 'A'); let reads = 0; const info = fileInfoOf({ hashFile: async () => { reads++; await new Promise((r) => setTimeout(r, 20)); return 'h'.repeat(64); } });
+  const pk = info.peek(f); await Promise.all([info.hash(f, pk), info.hash(f, pk)]); assert.equal(reads, 1);
+});
+test('D7: the real hasher streams and matches sha256 of the bytes', async () => {
   const f = path.join(mk(), 'big.mp4'); const buf = crypto.randomBytes(3 * 1024 * 1024 + 17); fs.writeFileSync(f, buf);
-  assert.equal(fileInfoOf()(f).sha256, crypto.createHash('sha256').update(buf).digest('hex'));
+  const info = fileInfoOf(); assert.equal(await info.hash(f, info.peek(f)), crypto.createHash('sha256').update(buf).digest('hex'));
+  assert.ok(/createReadStream/.test(fs.readFileSync(new URL('./review-items.js', import.meta.url), 'utf8')) && !/readFileSync\(file\)|readFileSync\(abs\)/.test(fs.readFileSync(new URL('./review-items.js', import.meta.url), 'utf8')), 'streams, no whole-file read');
 });
-test('newest file first', () => {
+test('D7: at most 4 new files are hashed per request; the rest are "being prepared" and filled in by the next request', async () => {
+  const dir = mk(); const ids = ['a', 'b', 'c', 'd', 'e', 'f']; for (const id of ids) fs.writeFileSync(path.join(dir, `${id}.mp4`), id); const { info, calls } = counting();
+  const args = { manifest: { clips: ids.map((id) => clip(id)) }, libraryDir: dir, info, secret: 's' };
+  const r1 = await buildClipItems(args); assert.equal(calls.length, 4); const pending = r1.items.filter((i) => i.preview.note === 'video is being prepared'); assert.equal(pending.length, 2);
+  for (const p of pending) { assert.equal(p.preview.mediaId, null); assert.equal(p.state, 'eligible', 'the state does not wait for the hash'); } assert.equal(r1.media.size, 4);
+  const r2 = await buildClipItems(args); assert.equal(calls.length, 6, 'only the two new ones'); assert.equal(r2.media.size, 6); assert.equal(r2.items.filter((i) => i.preview.note === 'video is being prepared').length, 0);
+  await buildClipItems(args); assert.equal(calls.length, 6, 'nothing is hashed again');
+});
+test('D7: cache entries for files that left the manifest are dropped', async () => {
+  const dir = mk(); for (const id of ['a', 'b']) fs.writeFileSync(path.join(dir, `${id}.mp4`), id); const { info } = counting();
+  await buildClipItems({ manifest: { clips: [clip('a'), clip('b')] }, libraryDir: dir, info, secret: 's' }); assert.equal(info.size(), 2);
+  await buildClipItems({ manifest: { clips: [clip('a')] }, libraryDir: dir, info, secret: 's' }); assert.equal(info.size(), 1);
+});
+test('E11: a symlinked clip file gets no media id, shows "video missing" and is never hashed', async () => {
+  const dir = mk(); const outside = path.join(mk(), 'o.mp4'); fs.writeFileSync(outside, 'secret'); fs.symlinkSync(outside, path.join(dir, 'c1.mp4')); const { info, calls } = counting();
+  const r = await buildClipItems({ manifest: { clips: [clip('c1')] }, libraryDir: dir, info, secret: 's' }); const it = r.items[0];
+  assert.deepEqual([it.state, it.preview.mediaId, it.preview.note, it.reason], ['video missing', null, 'video missing', 'video-missing']); assert.equal(r.media.size, 0); assert.equal(calls.length, 0);
+});
+test('newest file first', async () => {
   const dir = mk(); for (const id of ['c1', 'c2']) fs.writeFileSync(path.join(dir, `${id}.mp4`), id); const t = new Date(Date.now() + 5000); fs.utimesSync(path.join(dir, 'c2.mp4'), t, t);
-  assert.deepEqual(buildClipItems({ manifest: { clips: [clip('c1'), clip('c2'), clip('c9')] }, libraryDir: dir, info: fileInfoOf(), secret: 's' }).items.map((i) => i.id), ['c2', 'c1', 'c9'], 'missing files last');
+  assert.deepEqual((await buildClipItems({ manifest: { clips: [clip('c1'), clip('c2'), clip('c9')] }, libraryDir: dir, info: fileInfoOf(), secret: 's' })).items.map((i) => i.id), ['c2', 'c1', 'c9'], 'missing files last');
 });
 test('mediaIdFor depends on secret, id and version', () => { const a = mediaIdFor('s', 'c1', 'v'); assert.match(a, /^m_[0-9a-f]{32}$/); for (const b of [mediaIdFor('t', 'c1', 'v'), mediaIdFor('s', 'c2', 'v'), mediaIdFor('s', 'c1', 'w')]) assert.notEqual(a, b); });
-test('300 clips: built fast, response small (focus 5)', () => {
+test('300 clips: built fast, response small (focus 5)', async () => {
   const manifest = { clips: Array.from({ length: 300 }, (_, n) => clip(`c${n}`)) }; const t0 = Date.now();
-  const { items } = buildClipItems({ manifest, libraryDir: '/x', info: () => ({ sha256: 'a'.repeat(64), mtimeMs: 1 }), secret: 's', exists: () => true });
+  const info = { peek: () => ({ size: 1, mtimeMs: 1, ino: 1, key: 'k', sha256: 'a'.repeat(64) }), hash: async () => 'a'.repeat(64), prune() {}, size: () => 0 };
+  const { items } = await buildClipItems({ manifest, libraryDir: '/x', info, secret: 's', exists: () => true });
   assert.equal(items.length, 300); assert.ok(Date.now() - t0 < 2000); assert.ok(JSON.stringify(items).length < 400000);
 });
 
@@ -107,7 +137,7 @@ test('hooks come before clips; the media map carries clip files', async () => {
 
 // ── truth of what the page says (fix round A) ────────────────────────────────────
 const inside = (dir, f) => { const rel = path.relative(path.resolve(dir), path.resolve(dir, f)); return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel); };
-test('A1: the clips shown as eligible are exactly the lane\'s set (verdict, subject, flash, superseded, missing file, ledger)', () => {
+test('A1: the clips shown as eligible are exactly the lane\'s set (verdict, subject, flash, superseded, missing file, ledger)', async () => {
   const dir = mk(); const ids = [];
   const defs = [];
   for (const verdict of ['pass', 'fail', null]) for (const subj of ['yes', 'no', undefined]) for (const flash of [true, false, undefined]) {
@@ -118,19 +148,19 @@ test('A1: the clips shown as eligible are exactly the lane\'s set (verdict, subj
   const manifest = { clips: defs }; const usage = [{ clipId: 'used' }];
   const lane = new Set(eligibleClips(manifest, usage, { dir, exists: fs.existsSync }).filter((c) => inside(dir, c.file)).map((c) => c.id));
   assert.ok(lane.size >= 1 && lane.size < defs.length, 'the matrix has both kinds');
-  const { items } = buildClipItems({ manifest, libraryDir: dir, info: fileInfoOf(), secret: 's', usage });
+  const { items } = await buildClipItems({ manifest, libraryDir: dir, info: fileInfoOf(), secret: 's', usage });
   assert.deepEqual(new Set(items.filter((i) => i.state === 'eligible').map((i) => i.id)), lane);
   assert.deepEqual(new Set(items.filter((i) => i.usableToday).map((i) => i.id)), lane);
   const by = Object.fromEntries(items.map((i) => [i.id, i])); assert.equal(by.used.state, 'already used in a post'); assert.equal(by.used.reason, 'already-used'); assert.equal(by.used.usableToday, false);
   assert.equal(by.gone.state, 'video missing'); assert.equal(by.gone.reason, 'video-missing'); assert.equal(by.badrender.reason, 'render-check-failed'); assert.equal(by.sup, undefined);
 });
-test('A1: the ledger also matches by source overlap, as the lane does', () => {
+test('A1: the ledger also matches by source overlap, as the lane does', async () => {
   const dir = mk(); fs.writeFileSync(path.join(dir, 'c1.mp4'), 'x'); const manifest = { clips: [clip('c1')] };
   const usage = [{ id: 'v1', startSec: 2, endSec: 6 }]; const lane = eligibleClips(manifest, usage, { dir, exists: fs.existsSync });
-  assert.equal(lane.length, 0); assert.equal(buildClipItems({ manifest, libraryDir: dir, info: fileInfoOf(), secret: 's', usage }).items[0].state, 'already used in a post');
+  assert.equal(lane.length, 0); assert.equal((await buildClipItems({ manifest, libraryDir: dir, info: fileInfoOf(), secret: 's', usage })).items[0].state, 'already used in a post');
 });
-test('A1: an unreadable ledger (usage null) makes nothing eligible', () => {
-  const dir = mk(); fs.writeFileSync(path.join(dir, 'c1.mp4'), 'x'); const it = buildClipItems({ manifest: { clips: [clip('c1')] }, libraryDir: dir, info: fileInfoOf(), secret: 's', usage: null }).items[0];
+test('A1: an unreadable ledger (usage null) makes nothing eligible', async () => {
+  const dir = mk(); fs.writeFileSync(path.join(dir, 'c1.mp4'), 'x'); const it = (await buildClipItems({ manifest: { clips: [clip('c1')] }, libraryDir: dir, info: fileInfoOf(), secret: 's', usage: null })).items[0];
   assert.equal(it.usableToday, false); assert.equal(it.reason, 'usage-unreadable');
 });
 const NOW = new Date('2026-11-17T09:00:00Z');
@@ -178,4 +208,9 @@ test('B4: a claim carries the lane\'s own source line when a source name exists'
   const r = await buildItems(base({ sourceFor: async (c) => `Park service, read ${c.sourceDate}` })); const h = r.items.find((i) => i.id === 'idea_1');
   assert.deepEqual(h.facts.claims[0], { text: 'Claim A1', sourceDate: '2026-10-01', source: 'Park service, read 2026-10-01' });
   const r2 = await buildItems(base({ sourceFor: async () => { throw new Error('x'); } })); assert.deepEqual(r2.items.find((i) => i.id === 'idea_1').facts.claims[0], { text: 'Claim A1', sourceDate: '2026-10-01' }, 'a failing lookup leaves the name out');
+});
+test('D7: the hook checks run together, not one after the other', async () => {
+  let running = 0; let peak = 0; const slow = async (i, { hook }) => { running += 1; peak = Math.max(peak, running); await new Promise((r) => setTimeout(r, 15)); running -= 1; return { ok: true, draft: { hook, caption: 'c' } }; };
+  const t0 = Date.now(); const r = await buildItems(base({ evaluate: slow })); assert.ok(r.items.length >= 4); assert.ok(peak >= 3, `peak ${peak}`);
+  assert.deepEqual(r.items.map((i) => i.id), ['idea_4', 'idea_9', 'idea_3', 'idea_2', 'idea_1'], 'the order is kept'); assert.ok(Date.now() - t0 < 70);
 });
