@@ -32,7 +32,7 @@ function breakStale(lockPath, staleMs, token) {
   try { fs.unlinkSync(moved); } catch {}
 }
 /** returns the lock token, or null when the lock could not be taken in time */
-function acquire(lockPath, timeoutMs, staleMs = 30e3) {
+export function acquire(lockPath, timeoutMs, staleMs = 30e3) {
   const start = Date.now(); const token = `${process.pid}-${randomUUID()}`;
   for (;;) {
     try { const fd = fs.openSync(lockPath, 'wx'); try { fs.writeSync(fd, token); } finally { fs.closeSync(fd); } return token; }
@@ -44,7 +44,7 @@ function acquire(lockPath, timeoutMs, staleMs = 30e3) {
     }
   }
 }
-const releaseLock = (lockPath, token) => { try { if (fs.readFileSync(lockPath, 'utf8') === token) fs.unlinkSync(lockPath); } catch {} }; // only our own lock
+export const releaseLock = (lockPath, token) => { try { if (fs.readFileSync(lockPath, 'utf8') === token) fs.unlinkSync(lockPath); } catch {} }; // only our own lock
 function readLedger(p) {
   let raw; try { raw = fs.readFileSync(p, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return []; throw e; }
   return raw.split('\n').filter((l) => l.trim()).map((l) => {
