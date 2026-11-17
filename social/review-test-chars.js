@@ -28,3 +28,6 @@ export const GOOD_TEXTS = [
 export const EMOJI_OK_TEXTS = ['Love it \u2764\uFE0F', '\u26A0\uFE0F Check the ferry times', 'Sun \u2600\uFE0F and sea \u{1F30A}'];
 /** Still refused for a draft: a selector after a letter or at the start, a lone selector, and a zero width joiner sequence (U+200D is a format character; stated limitation). */
 export const EMOJI_BAD_TEXTS = ['a\uFE0Fb', '\uFE0Fstart', 'lone \uFE0F selector', '\u{1F469}\u200D\u{1F469}'];
+
+/** The line breaks a draft still refuses: a draft is several lines, so only the line feed is allowed. */
+export const DRAFT_LINEBREAKS_REFUSED = LINEBREAK_CHARS.filter((c) => c !== '\n');

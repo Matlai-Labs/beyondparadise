@@ -85,13 +85,14 @@
 <body>
 <header>
   <h1>Beyond Paradise: review</h1>
-  <p id="step-note">Step 2: you can decide here. Approve, Skip and Edit are saved at once. Undo is under What I decided.</p>
+  <p id="step-note">Step 3: posts too. Approve schedules a real post and cannot be undone here. Skip is final. Edit does not approve. Undo for video texts and clips is under What I decided.</p>
   <div id="status" aria-live="polite"></div>
   <button type="button" id="stop-all">Stop all posting</button>
   <ul id="problems"></ul>
 </header>
 <div id="filters">
   <button type="button" data-kind="all" aria-pressed="true">All</button>
+  <button type="button" data-kind="draft" aria-pressed="false">Posts</button>
   <button type="button" data-kind="clip" aria-pressed="false">Clips</button>
   <button type="button" data-kind="hook" aria-pressed="false">Video texts</button>
   <button type="button" id="refresh">Reload</button>
@@ -152,6 +153,7 @@ const LABELS = {
   'usage-unreadable': 'The list of clips already used cannot be read right now.',
   'approvals-unreadable': 'The list of your clip decisions cannot be read right now.',
   'history-unreadable': 'The list of earlier posts cannot be read right now.',
+  'queue-unreadable': 'The list of posts cannot be read right now.',
 };
 const FALLBACK = 'The checks refuse it today.';
 const NO_EXAMPLE_TEXT = 'No example video yet. Example videos for texts come in a later step. The clips have their videos.';
@@ -196,6 +198,19 @@ const REASON_TEXT = {
   'verdict-fail': 'The reviewer did not pass this clip.',
   'single-subject-not-yes': 'The reviewer has not confirmed one animal in one shot.',
   'not-usable': 'The clip does not meet the rules for automatic posting.',
+  'stopped': 'Posting is stopped right now.',
+  'text-missing': 'This post has no text.',
+  'sources-missing': 'The numbers or places in this post have no recorded source. Ask Claude to record them.',
+  'sources-old': 'The sources of this post were recorded the old way. Ask Claude to record them again.',
+  'sources-outdated': 'The text changed after its sources were recorded. Ask Claude to record them again.',
+  'sources-too-few': 'The numbers or places in this post need two sources on different sites.',
+  'blocked': 'The checks blocked this post.',
+  'hidden-characters': 'The text holds characters that cannot be seen. Use Edit and remove them.',
+  'check-meta': 'This post may already be scheduled at Meta. Look in Meta before you do anything here.',
+  'approve-off': 'Approving posts on this page is not switched on yet.',
+  'queue-unreadable': 'The list of posts cannot be read right now.',
+  'expired': 'The time to decide has passed. The system removes it soon.',
+  'ready-file-changed': 'The video file changed after it was checked.',
 };
 const REASON_PREFIX = [
   ['final-check:', 'The wording fails the voice or rules check.'],
@@ -212,7 +227,7 @@ function reasonText(code) {
   return FALLBACK;
 }
 function filterItems(items, kind) { return kind === 'all' ? items.slice() : items.filter((i) => i.kind === kind); }
-function countKinds(items) { const c = { all: items.length, hook: 0, clip: 0 }; for (const i of items) { if (i.kind === 'hook') c.hook += 1; else if (i.kind === 'clip') c.clip += 1; } return c; }
+function countKinds(items) { const c = { all: items.length, hook: 0, clip: 0, draft: 0 }; for (const i of items) { if (i.kind === 'hook') c.hook += 1; else if (i.kind === 'clip') c.clip += 1; else if (i.kind === 'draft') c.draft += 1; } return c; }
 function moveIndex(index, delta, length) { if (length <= 0) return 0; return Math.min(length - 1, Math.max(0, index + delta)); }
 function windowOf(length, index, size) { if (length <= 0) return { from: 0, to: 0 }; const from = Math.floor(index / size) * size; return { from, to: Math.min(length, from + size) }; }
 function humanDates(text) { return String(text).replace(/\d{4}-\d{2}-\d{2}/g, (m) => { const d = new Date(m + 'T00:00:00Z'); return Number.isNaN(d.getTime()) ? m : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }); }); }
@@ -224,9 +239,23 @@ function clipTitle(item) {
   const tags = tagList(item); if (tags) t += ', shows ' + tags;
   return t;
 }
-function rowText(item) { return item.kind === 'hook' ? 'Video text: ' + item.title : clipTitle(item); }
+function rowText(item) { if (item.kind === 'draft') return (item.facts && item.facts.auto ? 'Automatic post: ' : 'Post: ') + item.title; return item.kind === 'hook' ? 'Video text: ' + item.title : clipTitle(item); }
 function withReason(prefix, reason) { const t = reasonText(reason); return t === FALLBACK ? FALLBACK : prefix + t; }
+function draftStateLine(item) {
+  const st = item.state; const f = item.facts || {};
+  if (st === 'waiting') {
+    if (item.reason === 'approve-off') return 'Ready. Approving posts on this page is not switched on yet. You can skip or edit it.';
+    return 'Waiting for your yes.' + (f.nextSlotText ? ' If you approve it, it is scheduled at Meta for ' + f.nextSlotText + '.' : '');
+  }
+  if (typeof st === 'string' && st.indexOf('refused: ') === 0) return withReason('Not ready: ', item.reason);
+  if (st === 'blocked') return 'Blocked by the checks. It will not go out.';
+  if (st === 'scheduled') return 'Scheduled at Meta' + (f.whenText ? ' for ' + f.whenText : '') + '. It goes out by itself.';
+  if (st === 'automatic') return 'Automatic post' + (f.whenText ? ', scheduled for ' + f.whenText : '') + '. There is nothing to decide here. Stop all posting holds it.';
+  if (st === 'skipped') return 'You skipped it.';
+  return FALLBACK;
+}
 function stateLine(item) {
+  if (item.kind === 'draft') return draftStateLine(item);
   const st = item.state;
   if (item.kind === 'hook') {
     if (st === 'approved') return item.usableToday ? 'Approved. The automatic posting can use it.' : (reasonText(item.reason) === FALLBACK ? 'Approved, but the automatic posting would not use it today.' : 'Approved, but the automatic posting would not use it today: ' + reasonText(item.reason));
@@ -241,7 +270,21 @@ function stateLine(item) {
   if (typeof st === 'string' && st.indexOf('not eligible: ') === 0) return withReason('Not ready yet: ', item.reason);
   return FALLBACK;
 }
+function draftFactLines(item) {
+  const f = item.facts || {}; const out = [];
+  const pending = item.state === 'waiting' || (typeof item.state === 'string' && item.state.indexOf('refused: ') === 0);
+  if (typeof f.text === 'string' && f.text !== '') out.push(['Post:', f.text]);
+  if (f.videoText) out.push(['Text on the video:', f.videoText]);
+  for (const s of Array.isArray(f.sources) ? f.sources : []) { out.push(['Fact:', s.claim]); out.push(['Source:', s.source + ': ' + s.line]); }
+  if (f.expiresText) out.push(['Decide by:', f.expiresText]);
+  if (f.whenText) out.push(['Scheduled for:', f.whenText]);
+  if (pending) out.push(['Instagram:', f.instagram ? 'The system also posts it on Instagram later.' : 'Not on Instagram.']);
+  if (Array.isArray(f.blockedRules) && f.blockedRules.length) out.push(['Rules that refused it:', f.blockedRules.map(words).join(', ')]);
+  if (f.lastTryFailed) out.push(['Last try:', 'Meta did not accept the last try.']);
+  return out;
+}
 function factLines(item) {
+  if (item.kind === 'draft') return draftFactLines(item);
   const f = item.facts || {}; const out = [];
   if (item.kind === 'hook') {
     if (f.caption) out.push(['Caption:', f.caption]);
@@ -266,6 +309,7 @@ function noteText(item) {
   if (n === 'no example video yet') return NO_EXAMPLE_TEXT;
   if (n === 'video is being prepared') return 'This video will appear in a few seconds.';
   if (n === 'video missing') return 'The video file is missing.';
+  if (n === 'picture is made when the post goes out') return 'The picture or video is made when the post goes out. It is not shown here.';
   return n || '';
 }
 function quietLine(item) { return item.kind === 'hook' && !(item.preview && item.preview.mediaId) && item.preview && item.preview.note === 'no example video yet' ? NO_EXAMPLE_TEXT : null; }
@@ -312,6 +356,9 @@ function videoFailureAction(o) {
 function shouldAutoplay(reduce) { return !reduce; }
 // ── step 2: decision logic (no DOM) ──
 const EDIT_MAX = 60;
+const EDIT_LIMITS = { hook: 60, draft: 2000 };
+const BODY_MAX_BYTES = 2048;
+const DONE_TEXT = { approve: 'Approved. You can undo it under What I decided.', skip: 'Skipped. You can undo it under What I decided.', edit: 'Saved and approved.', undo: 'Undone. It is back in the waiting list.' };
 const REFUSAL_TEXT = {
   'version-changed': 'This changed after you looked at it. The card is loaded again. Please look at it once more.',
   'stale': 'The facts behind this text changed. Use Edit to write it again.',
@@ -325,7 +372,7 @@ const REFUSAL_TEXT = {
   'no-change': 'That is the same text as before. Change it first.',
   'bad-request': 'That did not work. Reload the page.',
   'bad-characters': 'The text has characters that cannot be seen. Remove them and try again.',
-  'cannot-decide': 'This card cannot be decided.',
+  'cannot-decide': 'This cannot be decided here. If it is a post: approving posts on this page is not switched on yet.',
   'queue-unreadable': 'The list of posts cannot be read right now. Nothing was changed.',
   'already-scheduled': 'This post is already scheduled.',
   'already-posted': 'This post is already published.',
@@ -361,6 +408,7 @@ const REFUSAL_TEXT = {
   'stop-changed': 'Posting was stopped again in the meantime. Check and tap again.',
 };
 const NET_TEXT = 'The connection broke. Your decision may have been saved. Reload the page to see what is saved.';
+const NET_TEXT_APPROVE = 'The connection broke. The post may have been scheduled at Meta. Check Meta before you tap again.';
 function postingBody(action, ui) { const b = { action: action }; if (action === 'start' && ui && typeof ui.reason === 'string' && ui.reason !== '') b.seen = ui.reason; return b; }
 function refusalText(code) {
   if (typeof code !== 'string' || code === '') return FALLBACK;
@@ -373,28 +421,71 @@ function waitingItems(items) { return items.filter((i) => i.decision === null ||
 function decidedItems(items) { return items.filter((i) => i.decision !== null && i.decision !== undefined).sort((a, b) => Date.parse(b.decision.at) - Date.parse(a.decision.at)); }
 // the same set the server refuses (bpa-actions.js INVISIBLE): control, format, private-use, unassigned, line and paragraph separators, every space but U+0020, variation selectors, fillers
 const BAD_EDIT_CHARS = /[\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Cs}\p{Zl}\p{Zp}︀-️\u{E0100}-\u{E01EF}͏ᅟᅠ⠀ㅤﾠ]|(?! )\p{Zs}/u;
+// a draft is several lines: the line feed is allowed, and U+FE0F directly after a pictograph (a red heart); everything else of BAD_EDIT_CHARS is refused (a copy of hiddenCharsIn in invisible-chars.js)
+function hiddenInDraft(text) { return BAD_EDIT_CHARS.test(String(text).replace(/\n/g, '').replace(/(\p{Extended_Pictographic})\uFE0F/gu, '$1')); }
+function utf8Length(str) { let n = 0; for (const ch of String(str)) { const c = ch.codePointAt(0); n += c < 0x80 ? 1 : (c < 0x800 ? 2 : (c < 0x10000 ? 3 : 4)); } return n; }
+const EDIT_PROBLEM_TEXT = {
+  'empty': 'Write at least one character.',
+  'bad-characters': REFUSAL_TEXT['bad-characters'],
+  'too-long': function (kind) { return kind === 'draft' ? 'Write between 1 and ' + EDIT_LIMITS.draft + ' characters.' : 'Write between 1 and ' + EDIT_LIMITS.hook + ' characters on one line.'; },
+  'too-big': 'This text is too long to save from this page. Shorten it, or use WhatsApp.',
+};
+// null, 'empty', 'bad-characters', 'too-long' or 'too-big' (the request body would pass the 2048 byte limit of the server)
+function editProblem(kind, text) {
+  if (typeof text !== 'string' || text.trim() === '') return 'empty';
+  const draft = kind === 'draft';
+  if (draft ? hiddenInDraft(text) : BAD_EDIT_CHARS.test(text)) return 'bad-characters';
+  if (text.length > (draft ? EDIT_LIMITS.draft : EDIT_LIMITS.hook)) return 'too-long';
+  if (utf8Length(JSON.stringify({ kind: kind, id: 'B000000', version: new Array(65).join('a'), action: 'edit', text: text })) > BODY_MAX_BYTES) return 'too-big';
+  return null;
+}
 function decisionRequest(item, action, text) {
   if (!item || !Array.isArray(item.actions) || item.actions.indexOf(action) < 0) return null;
   const req = { kind: item.kind, id: item.id, version: item.version, action };
   if (action === 'edit') {
-    if (typeof text !== 'string' || text.trim() === '' || text.length > EDIT_MAX || BAD_EDIT_CHARS.test(text)) return null;
+    if (editProblem(item.kind, text) !== null) return null;
     req.text = text;
+  }
+  if (item.kind === 'draft' && action === 'approve') { // the day the card showed travels with the tap
+    const slot = item.facts && item.facts.nextSlot; if (typeof slot !== 'string' || slot === '') return null;
+    req.slot = slot;
   }
   return req;
 }
-const RELOAD_CODES = ['version-changed', 'not-found', 'stale', 'not-decided', 'already-approved', 'already-skipped'];
+const RELOAD_CODES = ['version-changed', 'not-found', 'stale', 'not-decided', 'already-approved', 'already-skipped', 'already-scheduled', 'already-posted', 'expired', 'blocked', 'not-pending', 'slot-changed', 'check-meta'];
 function afterRefusal(code) { return RELOAD_CODES.indexOf(code) >= 0 ? 'reload' : 'stay'; }
 function tokenStep(o) { o = o || {}; if (o.status === 200 || o.status === 409) return 'done'; if (o.status === 403 && !o.retried) return 'refresh-and-retry'; return 'give-up'; }
 function keyAction(e, ctx) {
   if (ctx.editing && e.key === 'Escape') return 'cancel';
   if (!ctx.wide || ctx.typing || ctx.busy || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return null;
   const m = { a: 'approve', s: 'skip', e: 'edit' }[String(e.key).toLowerCase()];
+  if (ctx.kind === 'draft' && m !== 'edit') return null; // a post is never approved or skipped by a key
   return m && ctx.actions.indexOf(m) >= 0 ? m : null;
 }
+function canUndo(item) { return Boolean(item) && Array.isArray(item.actions) && item.actions.indexOf('undo') >= 0; }
 function decidedLine(item) {
+  if (item.kind === 'draft') {
+    if (item.decision && item.decision.kind === 'scheduled') return 'You scheduled "' + item.title + '"' + (item.facts && item.facts.whenText ? ' for ' + item.facts.whenText : '') + '.';
+    return 'You skipped "' + item.title + '".';
+  }
   const title = item.kind === 'clip' ? clipTitle(item) : item.title;
   return 'You ' + (item.decision && item.decision.kind === 'skipped' ? 'skipped' : 'approved') + ' "' + title + '".';
 }
+function doneText(item, action, data) {
+  if (item && item.kind === 'draft') {
+    if (action === 'approve') return data && typeof data.scheduledForText === 'string' && data.scheduledForText !== '' ? 'Scheduled at Meta for ' + data.scheduledForText + '. It goes out by itself.' : 'Scheduled at Meta.';
+    if (action === 'skip') return 'Skipped. This cannot be undone here.';
+    if (action === 'edit') return 'Saved. It is not scheduled yet. Look at the card again before you approve.';
+  }
+  return DONE_TEXT[action] || '';
+}
+function confirmText(item, action) {
+  if (!item || item.kind !== 'draft') return '';
+  if (action === 'approve') { const f = item.facts || {}; return 'This schedules a real post at Meta for ' + (f.nextSlotText || 'the next free day') + '. It then goes out by itself. This page cannot take it back; only Meta can cancel it.' + (f.instagram ? ' It also goes on Instagram.' : ''); }
+  if (action === 'skip') return 'Skip this post? It does not come back on this page.';
+  return '';
+}
+function netText(item, action) { return item && item.kind === 'draft' && action === 'approve' ? NET_TEXT_APPROVE : NET_TEXT; }
 function stopButtonText(o) {
   o = o || {};
   if (o.stopped) return o.armed ? 'Tap again to allow posting' : 'Allow posting again';
@@ -505,7 +596,7 @@ function renderList() {
 }
 
 function renderFilters() {
-  const c = countKinds(waitingItems(state.items)); const names = { all: 'All', clip: 'Clips', hook: 'Video texts' };
+  const c = countKinds(waitingItems(state.items)); const names = { all: 'All', draft: 'Posts', clip: 'Clips', hook: 'Video texts' };
   for (const b of document.querySelectorAll('#filters button[data-kind]')) { const k = b.getAttribute('data-kind'); b.textContent = names[k] + ' ' + c[k]; b.setAttribute('aria-pressed', k === state.kind ? 'true' : 'false'); }
 }
 
@@ -583,7 +674,6 @@ state.busy = false; state.editing = false;
 const SESSION_ENDED = 'Your session ended. Reload the page.';
 const ENFORCED_TEXT = 'All clips that were ready are decided. From now on the automatic posting uses only the clips you approve.';
 const ARM_EXPIRED_TEXT = 'The second tap came too late. Tap the button again if you still want to.';
-const DONE_TEXT = { approve: 'Approved. You can undo it under What I decided.', skip: 'Skipped. You can undo it under What I decided.', edit: 'Saved and approved.', undo: 'Undone. It is back in the waiting list.' };
 
 function isTyping(e) { const t = e.target; return !!t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' || t.isContentEditable === true); }
 function setNotice(text) { $('notice').textContent = text; }
