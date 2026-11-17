@@ -93,13 +93,13 @@ export function buildClipItems({ manifest, libraryDir, info, secret, exists = fs
 export function listMedia(args) { return buildClipItems(args).media; }
 
 // ── hooks ────────────────────────────────────────────────────────────────────────
-const NOTE_EXAMPLE = 'example clip; the lane may use another fitting clip';
+const NOTE_EXAMPLE = 'Example footage. The real post may use other footage that fits.';
 /** What a hook approval will bind to: the hook text plus the idea's title and claim texts. */
 export const hookVersion = (hook, idea) => sha(JSON.stringify([hook, idea.title, (Array.isArray(idea.claims) ? idea.claims : []).map((c) => c.text)]));
 
 /** Never throws. A source that cannot be read adds a problem and the other kind is still built.
  *  Hook items also carry `usableToday` + `reason`: for an approved hook, whether the lane would take its idea today (laneVerdict = laneVerdictFor from auto-lane.js, injected). */
-export async function buildItems({ readHooks, loadPool, readManifest, libraryDir, info, secret, evaluate, previewFor = () => null, now = new Date(), exists = fs.existsSync, readUsage = () => [], readHistory = () => [], readConfig = () => ({}), laneVerdict = () => ({ ok: true }) }) {
+export async function buildItems({ readHooks, loadPool, readManifest, libraryDir, info, secret, evaluate, previewFor = () => null, now = new Date(), exists = fs.existsSync, readUsage = () => [], readHistory = () => [], readConfig = () => ({}), laneVerdict = () => ({ ok: true }), sourceFor = () => null }) {
   const problems = []; const media = new Map(); const hookItems = [];
   let hooks = null; try { const h = readHooks(); if (h && h.ok && Array.isArray(h.hooks)) hooks = h.hooks; } catch { /* a problem below */ }
   if (!hooks) problems.push('hooks-unreadable');
@@ -136,7 +136,8 @@ export async function buildItems({ readHooks, loadPool, readManifest, libraryDir
         const draft = r && r.ok && r.draft ? r.draft : null;
         if (!draft) { reason = r && r.reason ? r.reason : 'check-failed'; state = `refused: ${reason}`; }
         else if (hs === 'approved') { const g = await gate(idea); usableToday = g.ok === true; reason = g.ok ? null : (g.reason || 'check-failed'); }
-        facts = { hook: e.hook, caption: draft ? (draft.caption ?? draft.text ?? null) : null, claims: (Array.isArray(idea.claims) ? idea.claims : []).map((c) => ({ text: c.text, sourceDate: c.sourceDate ?? null, ...(pool.sourceNames && c.sourceId && pool.sourceNames[c.sourceId] ? { sourceName: String(pool.sourceNames[c.sourceId]) } : {}) })), link: idea.link ?? null, exampleClip: null };
+        const claims = []; for (const c of Array.isArray(idea.claims) ? idea.claims : []) { let src = null; try { src = await sourceFor(c, pool.sourceNames || {}); } catch { src = null; } claims.push({ text: c.text, sourceDate: c.sourceDate ?? null, ...(typeof src === 'string' && src ? { source: src } : {}) }); }
+        facts = { hook: e.hook, caption: draft ? (draft.caption ?? draft.text ?? null) : null, claims, link: idea.link ?? null, exampleClip: null };
       }
       if (others > 0) facts = { ...facts, otherEntries: others };
       let preview = { mediaId: null, note: NOTE_PENDING };

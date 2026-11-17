@@ -44,6 +44,7 @@ export function defaultInputs(env = process.env) {
     readHistory: () => historyFromQueue(loadQueue(QUEUE_PATH)),     // posted and queued ideas, as the lane reads them
     readConfig: () => JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8')), // fresh from disk
     laneVerdict: async (idea, ctx) => (await import('./auto-lane.js')).laneVerdictFor(idea, ctx),
+    sourceFor: async (claim, sourceNames) => { const { sourceLine } = await import('./caption.js'); return sourceLine([claim], { sourceNames }).replace(/^Source: /, ''); }, // the same words the post's own source line uses
     previewFor: () => null, // part 1b fills this in
   };
 }

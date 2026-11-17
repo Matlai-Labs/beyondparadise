@@ -104,7 +104,7 @@ test('media list is computed fresh even while the item list is cached (focus 1)'
 });
 test('defaultInputs wires the lane\'s own readers and verdict (usage ledger, history, config, laneVerdict)', async () => {
   const { defaultInputs } = await import('./review-routes.js'); const d = defaultInputs();
-  for (const k of ['readHooks', 'loadPool', 'readManifest', 'readUsage', 'readHistory', 'readConfig', 'laneVerdict', 'evaluate']) assert.equal(typeof d[k], 'function', k);
+  for (const k of ['readHooks', 'loadPool', 'readManifest', 'readUsage', 'readHistory', 'readConfig', 'laneVerdict', 'sourceFor', 'evaluate']) assert.equal(typeof d[k], 'function', k);
   assert.deepEqual(d.readUsage(), [], 'no ledger in the test state folder'); assert.equal(typeof d.readConfig(), 'object');
   assert.equal((await d.laneVerdict({ id: 'i', kind: 'rule', title: 'Lion', claims: [] }, { clips: [], history: [], config: {}, now: new Date() })).reason, 'no-matching-clip');
 });

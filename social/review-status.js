@@ -7,6 +7,7 @@ import { runStatePathFor, lastPostPathFor } from './health.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const validTime = (s) => typeof s === 'string' && !Number.isNaN(Date.parse(s));
+const noFile = (file) => { try { fs.statSync(file); return false; } catch (e) { return e.code === 'ENOENT'; } };
 const readObj = (file) => { try { const j = JSON.parse(fs.readFileSync(file, 'utf8')); return j && typeof j === 'object' && !Array.isArray(j) ? j : null; } catch { return null; } };
 
 export function readStatus({ env = process.env, configFile = path.join(HERE, 'config.json'), runStatePath = runStatePathFor(env), lastPostPath = lastPostPathFor(env), stop = stopStatus } = {}) {
@@ -16,7 +17,7 @@ export function readStatus({ env = process.env, configFile = path.join(HERE, 'co
   const post = readObj(lastPostPath); const run = readObj(runStatePath);
   return {
     autoLane, stop: stopped,
-    lastPost: post && validTime(post.at) ? { at: post.at, id: String(post.id ?? '') } : 'unknown',
+    lastPost: post && validTime(post.at) ? { at: post.at, id: String(post.id ?? '') } : (noFile(lastPostPath) ? 'none' : 'unknown'),
     lastRun: run && validTime(run.lastRunAt) ? { at: run.lastRunAt, result: typeof run.result === 'string' ? run.result : 'unknown' } : 'unknown',
   };
 }

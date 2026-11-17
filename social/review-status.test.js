@@ -23,7 +23,7 @@ test('missing run file gives lastRun unknown', () => { assert.equal(st().lastRun
 test('run file with a bad date gives unknown', () => { assert.equal(st({ runStatePath: put({ lastRunAt: 'not a date', result: 'ok' }) }).lastRun, 'unknown'); });
 test('last post file gives lastPost; a bad date gives unknown', () => {
   assert.deepEqual(st({ lastPostPath: put({ at: '2026-11-12T10:00:00Z', id: 'B26' }) }).lastPost, { at: '2026-11-12T10:00:00Z', id: 'B26' });
-  assert.equal(st({ lastPostPath: put({ at: 'not a date', id: 'x' }) }).lastPost, 'unknown'); assert.equal(st().lastPost, 'unknown');
+  assert.equal(st({ lastPostPath: put({ at: 'not a date', id: 'x' }) }).lastPost, 'unknown'); assert.equal(st({ lastPostPath: put('{nope') }).lastPost, 'unknown', 'unreadable'); assert.equal(st().lastPost, 'none', 'no file: no post yet');
 });
 test('stop passes through; a throwing stop check gives unknown', () => {
   assert.deepEqual(st({ stop: () => ({ stopped: true, reason: 'r' }) }).stop, { stopped: true, reason: 'r' });

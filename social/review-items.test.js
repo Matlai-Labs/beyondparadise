@@ -97,7 +97,7 @@ test('a throwing evaluate does not throw out of buildItems; the item is refused'
 });
 test('counts per kind; a preview file turns into a media entry', async () => {
   const r = await buildItems(base({ previewFor: (id) => (id === 'idea_1' ? '/p/a.mp4' : null) })); assert.deepEqual(r.counts, { all: 5, hook: 5, clip: 0 });
-  const h = r.items.find((i) => i.id === 'idea_1'); assert.match(h.preview.mediaId, /^m_/); assert.equal(h.preview.note, 'example clip; the lane may use another fitting clip'); assert.deepEqual(r.media.get(h.preview.mediaId), { path: '/p/a.mp4', kind: 'preview' });
+  const h = r.items.find((i) => i.id === 'idea_1'); assert.match(h.preview.mediaId, /^m_/); assert.equal(h.preview.note, 'Example footage. The real post may use other footage that fits.'); assert.deepEqual(r.media.get(h.preview.mediaId), { path: '/p/a.mp4', kind: 'preview' });
 });
 test('hooks come before clips; the media map carries clip files', async () => {
   const dir = mk(); fs.writeFileSync(path.join(dir, 'c1.mp4'), 'x');
@@ -172,4 +172,10 @@ test('A2: the lane helper is the one prepareAutoPost uses (same verdicts)', () =
   assert.deepEqual(laneVerdictFor(i1, { clips, history: [], config: {}, now: NOW }).ok, true);
   assert.equal(laneVerdictFor(i1, { clips: [], history: [], config: {}, now: NOW }).reason, 'no-matching-clip');
   assert.equal(laneVerdictFor(i1, { clips, history: [], config: { autoKinds: [] }, now: NOW }).reason, 'bad-config:autoKinds');
+});
+
+test('B4: a claim carries the lane\'s own source line when a source name exists', async () => {
+  const r = await buildItems(base({ sourceFor: async (c) => `Park service, read ${c.sourceDate}` })); const h = r.items.find((i) => i.id === 'idea_1');
+  assert.deepEqual(h.facts.claims[0], { text: 'Claim A1', sourceDate: '2026-10-01', source: 'Park service, read 2026-10-01' });
+  const r2 = await buildItems(base({ sourceFor: async () => { throw new Error('x'); } })); assert.deepEqual(r2.items.find((i) => i.id === 'idea_1').facts.claims[0], { text: 'Claim A1', sourceDate: '2026-10-01' }, 'a failing lookup leaves the name out');
 });
