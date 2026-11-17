@@ -9,7 +9,7 @@ import { CLIP_REASONS, HOOK_REASONS } from './review-items.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(HERE, 'review-page.html'), 'utf8');
-const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine })`);
+const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS })`);
 
 test('static rules: no external request, no HTML injection, no inline handlers, nonce on every script', () => {
   assert.ok(html.length < 60000); assert.doesNotMatch(html, /https?:\/\//); assert.doesNotMatch(html, /<link|@import|<iframe/);
@@ -25,7 +25,7 @@ test('head: charset, viewport, title', () => {
 test('the step line, a muted looping inline video built in script, and no video in the markup', () => {
   assert.ok(html.includes('Step 1: look only. Approve and Skip arrive with the next step.')); assert.doesNotMatch(html.split('<script')[0], /<video/);
   for (const w of ["createElement('video')", 'muted = true', 'loop = true', 'playsInline = true', "'media/'"]) assert.ok(html.includes(w), w);
-  assert.ok(html.includes('autoplay = !reduce') && html.includes('controls = reduce'), 'reduced motion: no autoplay, controls shown');
+  assert.ok(html.includes('controls = true') && !/controls = (reduce|!reduce|false)/.test(html), 'native controls are on in every case');
 });
 test('the named elements and the only fetch exist', () => {
   for (const id of ['status', 'filters', 'list', 'card', 'video-slot', 'prev', 'next', 'refresh']) assert.ok(html.includes(`id="${id}"`), id);
@@ -98,7 +98,7 @@ test('B: no code shape reaches any sentence the page can produce', () => {
 });
 test('B4: old wordings are gone from the page', () => {
   for (const old of ['Hook proposal', 'Never expires', 'One subject only', 'Flash check', 'Reviewer says', 'Auto lane', 'System last ran', 'Page:', 'Hook: ', 'no flash', 'No post yet', 'The video is being prepared.']) assert.ok(!html.includes(old), old);
-  for (const w of ['Proposed video text', 'Example footage. The real post may use other footage that fits.', 'Nothing waits here. Pick another filter.', 'The page cannot load. Open it again from your own device with Tailscale switched on.', 'The video could not be loaded. Tap Reload.']) assert.ok(html.includes(w), w);
+  for (const w of ['Proposed video text', 'Example footage. The real post may use other footage that fits.', 'Nothing waits here. Pick another filter.', 'The page cannot load. Open it again from your own device with Tailscale switched on.', 'This browser could not play the video. Tap Reload. If it stays like this, tell Claude.']) assert.ok(html.includes(w), w);
 });
 test('B5: an expired session reloads once, then shows the sentence', () => { assert.ok(html.includes('sessionStorage')); assert.ok(/location\.reload\(\)/.test(html)); });
 test('C6: sticky buttons, 45vh video, swipe hint, focus, live state, reduced motion', () => {
@@ -145,4 +145,42 @@ test('change 3: no post record says so, with a hover and tap explanation', () =>
 test('change 5: at 390 px the top row stays on one line and Reload keeps its text', () => {
   assert.match(html, /@media \(max-width: 480px\)[\s\S]*?#filters\s*\{[^}]*flex-wrap: nowrap/); assert.match(html, /@media \(max-width: 480px\)[\s\S]*?#filters button\s*\{[^}]*padding: \d+px \d+px/);
   assert.match(html, /<button type="button" id="refresh">Reload<\/button>/);
+});
+
+// ── play button: a clip that is not playing always has a big Play video button ───
+const ui = (o) => ({ ...pure.videoUi(o) });
+test('play: reduced motion never starts by itself and shows the button', () => {
+  assert.equal(pure.shouldAutoplay(true), false); assert.equal(pure.shouldAutoplay(false), true);
+  assert.deepEqual(ui({ reduce: true, playing: false }), { button: true, errorSentence: false, playingLine: false, pausedLine: true });
+});
+test('play: autoplay rejected shows the button and no error text', () => {
+  assert.deepEqual(ui({ reduce: false, playing: false, playRejected: true, loadedWithin8s: true }), { button: true, errorSentence: false, playingLine: false, pausedLine: true });
+});
+test('play: an error event or nothing loaded after 8 s shows only the sentence', () => {
+  const only = { button: false, errorSentence: true, playingLine: false, pausedLine: false };
+  assert.deepEqual(ui({ errored: true }), only); assert.deepEqual(ui({ loadedWithin8s: false }), only); assert.deepEqual(ui({ errored: true, playing: true, playRejected: true }), only);
+  assert.equal(pure.VIDEO_FAILED_TEXT, 'This browser could not play the video. Tap Reload. If it stays like this, tell Claude.'); assert.equal(pure.VIDEO_WAIT_MS, 8000);
+  assert.equal(ui({ loadedWithin8s: undefined }).errorSentence, false, 'not yet decided is not a failure');
+});
+test('play: playing hides the button and says it is playing; paused after playing shows the button and Paused.', () => {
+  assert.deepEqual(ui({ reduce: false, playing: true, loadedWithin8s: true }), { button: false, errorSentence: false, playingLine: true, pausedLine: false });
+  assert.deepEqual(ui({ reduce: true, playing: true }), { button: false, errorSentence: false, playingLine: true, pausedLine: false });
+  assert.deepEqual(ui({ reduce: false, playing: false, loadedWithin8s: true }), { button: true, errorSentence: false, playingLine: false, pausedLine: true });
+  assert.equal(pure.PLAYING_LINE, 'Playing, no sound. The clip repeats.'); assert.equal(pure.PAUSED_LINE, 'Paused.'); assert.equal(pure.PLAY_TEXT, 'Play video');
+});
+test('play: every combination gives exactly one of button-or-playing-line unless it failed', () => {
+  for (const reduce of [true, false]) for (const playing of [true, false]) for (const playRejected of [true, false]) for (const errored of [true, false]) for (const loadedWithin8s of [true, false, undefined]) {
+    const r = pure.videoUi({ reduce, playing, playRejected, errored, loadedWithin8s });
+    if (errored || loadedWithin8s === false) assert.deepEqual({ ...r }, { button: false, errorSentence: true, playingLine: false, pausedLine: false });
+    else { assert.equal(r.button, !playing); assert.equal(r.playingLine, playing); assert.equal(r.pausedLine, !playing); assert.equal(r.errorSentence, false); }
+  }
+});
+test('play: static - controls on, play() called with its rejection handled, button by textContent, no inline handlers', () => {
+  assert.ok(html.includes('v.controls = true')); assert.ok(html.includes('v.muted = true') && html.includes('v.loop = true') && html.includes('v.playsInline = true'));
+  assert.match(html, /const p = v\.play\(\);[\s\S]{0,200}p\.then\(\(\) => \{[^\n]*\}, \(\) => \{/, 'play() promise has a rejection handler');
+  assert.equal((html.match(/\.play\(\)/g) || []).length, 1, 'play() is only called through start()');
+  assert.ok(html.includes("el('button', PLAY_TEXT, 'play-big')") && html.includes("btn.type = 'button'") && html.includes("setAttribute('aria-live', 'polite')"));
+  assert.ok(html.includes('v.paused === before'), 'a click that the native controls already handled is not toggled twice');
+  assert.ok(/\.play-big \{[^}]*min-height: 64px/.test(html));
+  assert.ok(html.includes('shouldAutoplay(reduce)') && html.includes("stopVideo(); slot.appendChild(el('p', VIDEO_FAILED_TEXT"));
 });
