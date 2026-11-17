@@ -23,7 +23,8 @@ async function runWorkerInner(deps) {
     approvalHealth = defaultApprovalHealth, reserve = reserveInstagramPublish, release = releaseInstagramReservation, ledgerPath, config: capConfig = CONFIG, stopOpts, stop = () => stopStatus(stopOpts), check = finalCheck, neverPromotePatterns } = deps;
   const lockOpts = { lockPath: queuePath + '.lock' };
   // armed stamp (health.js): the no-post clock starts when the lane is first seen on. Early, before anything can publish; an unwritable stamp while running is an error (worker-failing alarm). A stopped pipeline still returns as before.
-  { const a = syncArmedStamp({ now, on: capConfig.autoPublish === true, stopped: capConfig.autoPublish === true && stop().stopped, path: deps.armedPath }); if (!a.ok && !stop().stopped) throw new Error(`armed stamp not writable (${a.error}); the no-post clock cannot start`); }
+  { const laneOn = capConfig.autoPublish === true; const a = syncArmedStamp({ now, on: laneOn, stopped: laneOn && stop().stopped, path: deps.armedPath });
+    if (!a.ok) { if (laneOn && !stop().stopped) throw new Error(`armed stamp not writable (${a.error}); the no-post clock cannot start`); say(`worker: armed stamp could not be ${laneOn ? 'written' : 'removed'} (${a.error}); ${laneOn ? 'pipeline is stopped, going on' : 'lane is off, going on'}`); } } // lane off: a leftover stamp must never stop the normal work
   // stop flag (own or fleet-wide): publish nothing, schedule nothing, touch nothing; one line; exit code stays 0
   { const st = stop(); if (st.stopped) { say(`worker: ${st.reason}`); return { exitCode: 0, stopped: true }; } }
   const q = loadQueue(queuePath); const base = JSON.parse(JSON.stringify(q)); let changed = false; const problems = []; let stopNoted = false; let publishFailed = false; const state = q.state || (q.state = {});

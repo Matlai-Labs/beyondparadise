@@ -19,7 +19,7 @@ const labelled = (lines, label) => { const l = lines.find((x) => x.startsWith(la
 
 const HOOK_WHOLE_WORDS = 16; // a "What changed" statement this short is the hook as written, on one slide
 const key = (t) => t.toLowerCase().replace(/\s+/g, ' ').replace(/[\s,;:–—]+$/, '').replace(/\.$/, '').replace(/[\s,;:–—]+$/, '');
-const signalSentences = sentences; // one shared splitter (sentence-split.js): a slide must never end on "Dr." or "No."
+const signalSentences = sentences; // one shared splitter (sentence-split.js): a slide never ends on "Dr." or on "No." before a number or code; "No." before a plain capitalised word is read as a real sentence end
 const TOO_LONG = 'a sentence is too long for a slide; the draft goes out as a short video instead';
 const NO_FIT = 'the section text does not fit on 5 slides; the draft goes out as a short video instead';
 /** Split one section's sentences into slide texts, never leaving a sentence out: the whole section if <= FACT_MAX_WORDS,

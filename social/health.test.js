@@ -2,7 +2,7 @@ import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import { execFileSync, spawnSync } from 'node:child_process'; import { fileURLToPath } from 'node:url';
 import { checkHealth, recordWorkerRun, recordPost, healthTick, syncArmedStamp, armedPathFor, runStatePathFor, lastPostPathFor, alertsPathFor } from './health.js';
-import { whatsapp, saveQueue } from './lib.js';
+import { whatsapp, saveQueue, loadQueue, STATUS } from './lib.js';
 import { runWorker } from './worker.js';
 import { handle } from './approval-server.js';
 import { engageStop } from './stop.js';
@@ -192,4 +192,11 @@ test('worker: stamp unwritable while the lane is on: the run is an error (record
 });
 test('worker: stopped pipeline with the lane on still returns stopped and records stoppedSeenAt', async () => {
   const p = P(); engageStop(p.stopOpts); const r = await runWorker({ ...workerDeps(p), config: ON }); assert.equal(r.stopped, true); assert.equal(typeof JSON.parse(fs.readFileSync(p.armedPath, 'utf8')).stoppedSeenAt, 'string');
+});
+test('worker: lane OFF and a leftover stamp that cannot be removed: one log line, the run does its normal work, the result is not an error', async () => {
+  const p = P(); const deps = workerDeps(p); fs.mkdirSync(p.armedPath); fs.writeFileSync(path.join(p.armedPath, 'x'), '1'); // a non-empty directory where the stamp file should be: unlink fails with something other than ENOENT
+  saveQueue({ drafts: [{ id: 'OLD', status: STATUS.PENDING, createdAt: day(400).toISOString() }], state: {} }, deps.queuePath); const lines = [];
+  const r = await runWorker({ ...deps, config: {}, say: (l) => lines.push(l) }); assert.equal(r.exitCode, 0);
+  assert.equal(loadQueue(deps.queuePath).drafts[0].status, STATUS.EXPIRED, 'normal work (expiry) still ran');
+  assert.match(JSON.parse(fs.readFileSync(p.runStatePath, 'utf8')).result, /^ok$/); assert.ok(lines.some((l) => /armed stamp/.test(l)), 'one line says so');
 });
