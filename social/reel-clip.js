@@ -140,9 +140,13 @@ const overlaps = (a, b) => Math.min(a.endSec, b.endSec) - Math.max(a.startSec, b
  * 6 to 9 seconds: one shot if one is long enough, else the first 2 or 3 consecutive safe shots from the
  * SAME stretch. A shot overlapping a usage-ledger entry of the same video is never used.
  * Returns { ok: true, spans, durationSec, usedShots } or { ok: false, reason: 'nothing left' }.
+ * `stable: true` (the clip library build): no random pick. The candidate is the first one in a fixed order (video id, then
+ * start) and its target length comes from a hash of the candidate itself, so the same shot always plans to the same span
+ * however many other stretches the catalogue has (the seeded pick moved every span when stretches were added, 17 Nov 2026).
  */
-export function planClip(stretches, { targetSec, usedLedger = [], seed = '' } = {}) {
+export function planClip(stretches, { targetSec, usedLedger = [], seed = '', stable = false } = {}) {
   const rand = rng(seed);
+  const hashTarget = (key) => CLIP_MIN_SEC + (crypto.createHash('sha256').update(key).digest().readUInt32LE(0) % (CLIP_MAX_SEC - CLIP_MIN_SEC + 1));
   const target = Math.min(CLIP_MAX_SEC, Math.max(CLIP_MIN_SEC, finite(targetSec) ? targetSec : CLIP_MIN_SEC + Math.floor(rand() * 4)));
   const free = (id, h) => !usedLedger.some((u) => u.id === id && overlaps(u, h));
   const singles = []; const groups = [];
@@ -155,7 +159,8 @@ export function planClip(stretches, { targetSec, usedLedger = [], seed = '' } = 
         total += shots[i + k - 1].endSec - shots[i + k - 1].startSec;
         if (k < 2 || total < CLIP_MIN_SEC - EPS) continue;
         const firstSum = total - (shots[i + k - 1].endSec - shots[i + k - 1].startSec);
-        const dur = Math.min(total, CLIP_MAX_SEC, Math.max(target, firstSum + MIN_PIECE_SEC));
+        const tgt = stable ? hashTarget(shotKey({ id: st.id, ...shots[i] })) : target;
+        const dur = Math.min(total, CLIP_MAX_SEC, Math.max(tgt, firstSum + MIN_PIECE_SEC));
         if (dur < CLIP_MIN_SEC - EPS || dur - firstSum < MIN_PIECE_SEC - EPS) break;
         groups.push({ st, list: shots.slice(i, i + k), dur });
         break; // the smallest number of shots that works
@@ -163,13 +168,18 @@ export function planClip(stretches, { targetSec, usedLedger = [], seed = '' } = 
     }
   }
   const span = (st, a, b) => ({ id: st.id, file: st.file, startSec: r2(a), endSec: r2(b) });
+  const order = (a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : a.startSec - b.startSec);
+  if (stable) {
+    singles.sort((a, b) => order({ id: a.st.id, startSec: a.h.startSec }, { id: b.st.id, startSec: b.h.startSec }));
+    groups.sort((a, b) => order({ id: a.st.id, startSec: a.list[0].startSec }, { id: b.st.id, startSec: b.list[0].startSec }));
+  }
   if (singles.length) {
-    const { st, h } = singles[Math.floor(rand() * singles.length)];
-    const dur = Math.min(target, h.endSec - h.startSec);
+    const { st, h } = singles[stable ? 0 : Math.floor(rand() * singles.length)];
+    const dur = Math.min(stable ? hashTarget(shotKey({ id: st.id, ...h })) : target, h.endSec - h.startSec);
     return { ok: true, spans: [span(st, h.startSec, h.startSec + dur)], durationSec: r2(dur), usedShots: [{ id: st.id, startSec: h.startSec, endSec: h.endSec }] };
   }
   if (groups.length) {
-    const { st, list, dur } = groups[Math.floor(rand() * groups.length)];
+    const { st, list, dur } = groups[stable ? 0 : Math.floor(rand() * groups.length)];
     const spans = []; let left = dur;
     for (const h of list) {
       const len = Math.min(h.endSec - h.startSec, left);
