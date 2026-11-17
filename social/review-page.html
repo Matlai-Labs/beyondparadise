@@ -520,13 +520,13 @@ const CANNOT_LOAD = 'The page cannot load. Open it again from your own device wi
 async function load() {
   if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
   let res;
-  try { res = await fetch('api/items', { cache: 'no-store' }); } catch (e) { showUnavailable(CANNOT_LOAD); return; }
+  try { res = await fetch('api/items', { cache: 'no-store' }); } catch (e) { showUnavailable(CANNOT_LOAD); return false; }
   if (res.status === 403 || res.status === 503 || !res.ok) {
-    if (!sessionStorage.getItem('bpa_reloaded')) { sessionStorage.setItem('bpa_reloaded', '1'); location.reload(); return; }
-    showUnavailable(CANNOT_LOAD); return;
+    if (!sessionStorage.getItem('bpa_reloaded')) { sessionStorage.setItem('bpa_reloaded', '1'); location.reload(); return false; }
+    showUnavailable(CANNOT_LOAD); return false;
   }
   sessionStorage.removeItem('bpa_reloaded');
-  let data; try { data = await res.json(); } catch (e) { showUnavailable(CANNOT_LOAD); return; }
+  let data; try { data = await res.json(); } catch (e) { showUnavailable(CANNOT_LOAD); return false; }
   $('unavailable').classList.add('hidden'); $('main').classList.remove('hidden'); $('filters').classList.remove('hidden');
   const keep = state.currentId; state.items = Array.isArray(data.items) ? data.items : [];
   showStatus(data.status, data.problems);
@@ -536,6 +536,7 @@ async function load() {
   renderAll();
   if (actionToken === null && !tokenAsked) { tokenAsked = true; fetchToken(); }
   if (anyPending(state.items)) retryTimer = setTimeout(load, 5000);
+  return true; // fresh status was applied
 }
 
 for (const b of document.querySelectorAll('#filters button[data-kind]')) b.addEventListener('click', () => { state.kind = b.getAttribute('data-kind'); state.index = 0; state.shown = LIST_PAGE; state.currentId = null; state.key = null; renderAll(); });
@@ -656,7 +657,8 @@ async function stopOrStart() {
   if (state.busy) return;
   if (!stopUi.armed) {
     // SR4: the first tap reads the real state first; if it is not the state the button showed, nothing is armed (the owner looks again)
-    const was = stopUi.stopped; const wasReason = stopUi.reason; state.busy = true; setNotice('Checking…'); await load(); state.busy = false;
+    const was = stopUi.stopped; const wasReason = stopUi.reason; state.busy = true; setNotice('Checking…'); const fresh = await load(); state.busy = false;
+    if (fresh !== true) { setNotice(CANNOT_LOAD); renderStop(); return; } // an outdated state is never armed on
     if (stopUi.stopped !== was || stopUi.reason !== wasReason) { setNotice(stopUi.stopped ? refusalText('stop-changed') : 'Posting is no longer stopped. Check and tap again.'); renderStop(); return; }
     setNotice(''); stopUi.armed = true; renderStop(); stopUi.timer = setTimeout(() => { stopUi.armed = false; renderStop(); }, 5000); return;
   }

@@ -139,3 +139,33 @@ test('SR4: Start with the stop the page saw releases it; a stop that changed bet
 test('SR4: Start whose seen no longer matches but posting is not stopped at all is not refused (nothing to release, nothing to lose)', async () => {
   const p = posting(); const r = await runPosting('start', { ...p, seen: 'stopped by flag since 2020-01-01T00:00:00.000Z' }); assert.equal(r.ok, true);
 });
+
+// ── second fix round: Start re-checks the stop after its record call; one lock file; a lost Stop record is logged ─────────
+test('SR4b: a Stop that arrives while the Start record waits for the lock is not released: the second comparison refuses with stop-changed, posting stays stopped, the record line is voided', async () => {
+  const p = posting(); await runPosting('stop', p); fs.utimesSync(p.stopOpts.flagPath, new Date(Date.now() - 3600e3), new Date(Date.now() - 3600e3));
+  const seen = stopStatus(p.stopOpts).reason; let release; const held = withDecisionLock(() => new Promise((r) => { release = r; })); await sleep(30);
+  let started = false; const run = runPosting('start', { ...p, seen, start: () => { started = true; return {}; } }); await sleep(60);
+  releaseStop(p.stopOpts); engageStop({ flagPath: p.stopOpts.flagPath }); // the WhatsApp command (never takes the lock): start, then stop again, a new time
+  assert.notEqual(stopStatus(p.stopOpts).reason, seen);
+  release(); await held; const r = await run;
+  assert.deepEqual({ ok: r.ok, code: r.code }, { ok: false, code: 'stop-changed' }); assert.equal(started, false, 'start() was not called');
+  assert.equal(fs.existsSync(p.stopOpts.flagPath), true, 'still stopped');
+  const lines = fs.readFileSync(p.recordFile, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  assert.deepEqual(lines.map((x) => x.decision), ['stop', 'start', 'void']); assert.equal(lines[2].ref, lines[1].n);
+  assert.deepEqual(readDecisions(p.recordFile).records.map((x) => x.decision), ['stop'], 'the start is voided');
+});
+test('lock file: runPosting takes the lock of the env it is given (the same one the decisions use), not the default one', async () => {
+  const p = posting(); const env2 = { ...process.env, BPA_STATE_DIR: path.join(p.d, 'other-state') }; await runPosting('stop', p);
+  let release; const held = withDecisionLock(() => new Promise((r) => { release = r; }), { env: env2 }); await sleep(30);
+  const busy = await runPosting('start', { ...p, env: env2, lockTimeoutMs: 60 }); assert.deepEqual({ ok: busy.ok, code: busy.code }, { ok: false, code: 'record-failed' }, 'contends for the lock of env2');
+  release(); await held;
+  const free = await runPosting('start', { ...p, env: env2 }); assert.equal(free.ok, true);
+});
+test('a Stop whose record cannot be written (lock busy, or the write fails) still stops, and one reason code is logged', async () => {
+  const p = posting(); const logs = []; let release; const held = withDecisionLock(() => new Promise((r) => { release = r; })); await sleep(30);
+  const a = await runPosting('stop', { ...p, lockTimeoutMs: 60, log: (m) => logs.push(m) }); release(); await held;
+  assert.equal(a.ok, true); assert.equal(fs.existsSync(p.stopOpts.flagPath), true); assert.deepEqual(logs, ['review failed: stop-record-failed']);
+  const q = posting(); fs.mkdirSync(q.recordFile); const logs2 = [];
+  const b = await runPosting('stop', { ...q, log: (m) => logs2.push(m) }); assert.equal(b.ok, true); assert.equal(fs.existsSync(q.stopOpts.flagPath), true); assert.deepEqual(logs2, ['review failed: stop-record-failed']);
+  const c = posting(); const logs3 = []; await runPosting('stop', { ...c, log: (m) => logs3.push(m) }); assert.deepEqual(logs3, [], 'nothing logged when the record is written');
+});

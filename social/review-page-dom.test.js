@@ -141,3 +141,12 @@ test('DOM: a refusal of Start for a changed stop shows the agreed sentence', asy
   p.$('stop-all').click(); await p.flush(); p.$('stop-all').click(); await p.flush();
   assert.equal(p.$('notice').textContent, 'Posting was stopped again in the meantime. Check and tap again.');
 });
+
+test('DOM: a first tap on Stop while the status cannot be loaded arms nothing (the old state is not trusted), and a second tap sends no POST', async () => {
+  const s = serverOf(); const p = await openPage(s); assert.equal(p.$('stop-all').textContent, 'Stop all posting');
+  s.items = () => { throw new Error('offline'); };
+  p.$('stop-all').click(); await p.flush();
+  assert.equal(p.$('stop-all').textContent, 'Stop all posting', 'not armed');
+  p.$('stop-all').click(); await p.flush();
+  assert.equal(p.posts('api/posting').length, 0, 'no POST after two taps while the status fails'); assert.equal(p.$('stop-all').textContent, 'Stop all posting');
+});

@@ -3,6 +3,7 @@ import { stopStatus } from './stop.js';
 import { stopPosting, startPosting, publicCode } from './bpa-actions.js';
 import { appendDecision } from './review-decisions.js';
 import { withDecisionLock } from './decision-lock.js';
+import { log as defaultLog } from './lib.js';
 
 const NO = Object.freeze({ ok: false });
 const KINDS = new Set(['hook', 'clip']);
@@ -62,22 +63,31 @@ export async function runDecision(req, { actions, recordFile, claimedLogin, now 
   return r;
 }
 
-export async function runPosting(action, { recordFile, claimedLogin, now = () => new Date(), queuePath, stopOpts, readStatus = () => ({ stop: stopStatus(stopOpts) }), stop = stopPosting, start = startPosting, lockTimeoutMs = 5000, seen }) {
+export async function runPosting(action, { recordFile, claimedLogin, now = () => new Date(), queuePath, stopOpts, readStatus = () => ({ stop: stopStatus(stopOpts) }), stop = stopPosting, start = startPosting, lockTimeoutMs = 5000, seen, env = process.env, log = defaultLog }) {
   // CR3: the record line is written under the decision lock like every other writer of the record, or two writers could read the same last number
   // (the stop itself never waits for the lock: it happens first, and a busy lock only costs the audit line)
-  const rec = async (decision) => {
-    try { return await withDecisionLock(() => appendDecision(recordFile, { kind: 'posting', id: 'posting', version: null, decision, claimedLogin, at: now().toISOString() }), { timeoutMs: lockTimeoutMs }); } catch { return { ok: false }; }
+  // `env` is the one the decisions use (bpa-actions.js createActions), so both always take the same lock file
+  const rec = async (decision, extra = {}) => {
+    try { return await withDecisionLock(() => appendDecision(recordFile, { kind: 'posting', id: 'posting', version: null, decision, claimedLogin, at: now().toISOString(), ...extra }), { env, timeoutMs: lockTimeoutMs }); } catch { return { ok: false }; }
   };
+  const stopChanged = () => { if (typeof seen !== 'string') return false; let cur = null; try { cur = readStatus()?.stop; } catch { cur = null; } return Boolean(cur && cur.stopped === true && cur.reason !== seen); };
   if (action === 'stop') {
     let note; try { note = stop({ queuePath, stopOpts, now: now() })?.note; } catch { /* the read-back below decides */ }
-    try { await rec('stop'); } catch { /* best effort (D6) */ }
+    let r; try { r = await rec('stop'); } catch { r = null; } // best effort (D6): the stop stands without its line, but the loss is logged
+    if (!r || r.ok !== true) log('review failed: stop-record-failed');
     const stopped = readStatus()?.stop?.stopped === true;
     return stopped ? { ok: true, ...(note ? { note } : {}) } : { ok: false, code: 'could-not-stop' };
   }
   if (action === 'start') {
     // SR4: the page saw one stop; if posting is stopped now by another one (stopped again by WhatsApp in between), a stale two-tap must not release it
-    if (typeof seen === 'string') { let cur = null; try { cur = readStatus()?.stop; } catch { cur = null; } if (cur && cur.stopped === true && cur.reason !== seen) return { ok: false, code: 'stop-changed' }; }
+    if (stopChanged()) return { ok: false, code: 'stop-changed' };
     const r = await rec('start'); if (!r || r.ok !== true) return { ok: false, code: 'record-failed' };
+    // the record may have waited for the lock; the WhatsApp stop never takes it: compare again right before releasing, and void the line just written
+    if (stopChanged()) {
+      const v = await rec('void', { ref: r.n });
+      if (!v || v.ok !== true) log('review failed: void-record-failed');
+      return { ok: false, code: 'stop-changed' };
+    }
     try { start({ stopOpts }); } catch { /* the read-back below decides */ }
     return readStatus()?.stop?.stopped === false ? { ok: true } : { ok: false, code: 'still-stopped' };
   }

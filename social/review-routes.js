@@ -142,7 +142,7 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, load
       const code = publicCode(r && r.code); log(`review decision: ${pr.req.action} ${pr.req.kind} refused ${code}`); return json(res, 409, { ok: false, code });
     }
     const pp = parsePostingBody(body); if (!pp.ok) { log('review refused: bad-request posting'); return json(res, 400, { ok: false, code: 'bad-request' }); }
-    const r = await runPosting(pp.action, { recordFile, claimedLogin: access.ownerLogin, ...(pp.seen !== undefined ? { seen: pp.seen } : {}), ...postingOpts });
+    const r = await runPosting(pp.action, { recordFile, claimedLogin: access.ownerLogin, env, log, ...(pp.seen !== undefined ? { seen: pp.seen } : {}), ...postingOpts });
     if (r && r.ok === true) { cache = null; log(`review decision: ${pp.action} posting ok`); return json(res, 200, { ok: true, ...(r.note ? { note: r.note } : {}) }); }
     const code = publicCode(r && r.code); log(`review decision: ${pp.action} posting refused ${code}`); return json(res, 409, { ok: false, code });
   }

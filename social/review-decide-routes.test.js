@@ -228,3 +228,17 @@ test('SR5: a body that is really too large is still logged as body-size', async 
   await post('/review/api/decide', big).catch(() => ({})); await new Promise((r) => setTimeout(r, 50));
   assert.deepEqual(logs, ['review refused: body-size decide']); assert.equal(calls.length, 0);
 });
+
+test('lock file: the posting route uses the handler env for the decision lock (a non-default state folder): a Start record contends with a decision holding that lock', async () => {
+  const d2 = fs.mkdtempSync(path.join(os.tmpdir(), 'bpa-dr2-')); const env2 = { ...process.env, BPA_STATE_DIR: path.join(d2, 'state') }; fs.mkdirSync(env2.BPA_STATE_DIR, { recursive: true, mode: 0o700 }); { const f = path.join(env2.BPA_STATE_DIR, 'bpa-review-access.json'); fs.writeFileSync(f, JSON.stringify({ ownerLogin: OWNER, host: HOST })); fs.chmodSync(f, 0o600); } // the access file lives in the state folder
+  const h = createReviewHandler({ sessions: createSessions({ now: () => clock }), loadInputs: () => ({ readHooks: () => ({ ok: true, hooks: [] }), loadPool: () => ({ ok: true, ideas: [], sourceNames: {} }), readManifest: () => ({ clips: [] }), libraryDir: dir, info: { get: async () => 'x' }, secret: 's', evaluate: async () => ({ ok: true, draft: {} }) }), loadActions: () => mkStubs(), recordFile, log: (m) => logs.push(m), cacheMs: 60000, previewDir: path.join(dir, 'previews'), env: env2,
+    postingOpts: { lockTimeoutMs: 80, stop: () => ({}), start: () => { postCalls.push('start'); stopped = false; }, readStatus: () => ({ stop: { stopped } }) } });
+  const srv2 = http.createServer((q, r) => { if (!h(q, r)) { r.statusCode = 418; r.end(); } }); await new Promise((r) => srv2.listen(0, '127.0.0.1', r)); const p2 = srv2.address().port;
+  try {
+    clock += 5000; const c2 = await cookieFrom(p2); const t2 = await getTok(c2, p2); stopped = true;
+    const go = () => { const body = JSON.stringify({ action: 'start' }); return call('/review/api/posting', { ...login, cookie: c2, 'x-bpa-action': t2, 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) }, { method: 'POST', body, port: p2 }); };
+    const { withDecisionLock } = await import('./decision-lock.js'); let release; const held = withDecisionLock(() => new Promise((r) => { release = r; }), { env: env2 }); await new Promise((r) => setTimeout(r, 30));
+    const a = await go(); assert.equal(a.status, 409); assert.deepEqual(JSON.parse(a.body), { ok: false, code: 'record-failed' }); assert.deepEqual(postCalls, []);
+    release(); await held; const b = await go(); assert.equal(b.status, 200); assert.deepEqual(postCalls, ['start']);
+  } finally { srv2.close(); }
+});
