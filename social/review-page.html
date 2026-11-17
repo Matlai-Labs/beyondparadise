@@ -132,6 +132,7 @@ const REASON_TEXT = {
   'no-claims': 'The idea has no facts to rest on.',
   'check-failed': 'The checks could not be run today.',
   'bad-hooks-file': 'The list of video texts cannot be read right now.',
+  'bad-approvals-file': 'The list of clip decisions cannot be read right now.',
   'no-approved-hook': 'The automatic posting needs an approved video text for this idea.',
   'no-subject': 'The idea does not name an animal, so no clip can be matched.',
   'no-matching-clip': 'No approved, unused clip shows this animal.',
@@ -160,6 +161,7 @@ const REASON_PREFIX = [
   ['alt-text:', 'The picture description fails a check.'],
   ['bad-config:', 'A setting for the automatic posting is wrong.'],
   ['bad-hooks-file', 'The list of video texts cannot be read right now.'],
+  ['bad-approvals-file', 'The list of clip decisions cannot be read right now.'],
 ];
 function reasonText(code) {
   if (typeof code !== 'string' || code === '') return FALLBACK;

@@ -28,6 +28,7 @@ import { subjectOf, clipFits, altTextFor } from './auto-pairing.js';
 import { readHooks, approvedHookFor, defaultHooksPath } from './auto-hooks.js';
 import { numberFidelity } from './caption.js';
 import { deterministicChecks } from './judge.js';
+import { readClipApprovals, defaultClipApprovalsPath, clipsForLane, hashFile } from './clip-approvals.js';
 import { eligibleClips, libraryDir as defaultLibraryDir, readManifest as readManifestReal } from './clip-library.js';
 import { readUsage as readUsageReal, appendUsage, defaultUsagePath } from './reel-clip.js';
 import { renderOverlay, composeClip } from './overlay.js';
@@ -115,12 +116,13 @@ export async function evaluateIdea(idea, { now = new Date(), check = finalCheck,
 }
 
 export async function prepareAutoPost({ pool, manifest, usage = [], history = [], config = {}, now = new Date() } = {}, deps = {}) {
-  const { say = () => {}, outDir = autoDir(), libraryDir = defaultLibraryDir(), exists = fs.existsSync, overlay = renderOverlay, compose = composeClip, sourceNames, neverPromotePatterns, check = finalCheck, judgeChecks = deterministicChecks, hooksFile = defaultHooksPath(), previewUnapproved = false } = deps; // previewUnapproved: ONLY the rehearsal passes it (rehearse); ensureDailyAuto forces it off
+  const { say = () => {}, outDir = autoDir(), libraryDir = defaultLibraryDir(), exists = fs.existsSync, overlay = renderOverlay, compose = composeClip, sourceNames, neverPromotePatterns, check = finalCheck, judgeChecks = deterministicChecks, hooksFile = defaultHooksPath(), previewUnapproved = false, approvalsFile = defaultClipApprovalsPath(), hashClip = hashFile } = deps; // previewUnapproved: ONLY the rehearsal passes it (rehearse); ensureDailyAuto forces it off
   const kinds = autoKindsOf(config); if (!kinds.ok) return { ok: false, reasons: [kinds.reason], refused: [] };
   const need = requireApprovedHookOf(config); if (!need.ok) return { ok: false, reasons: [need.reason], refused: [] };
   const hooks = readHooks(hooksFile); if (!hooks.ok) return { ok: false, reasons: ['bad-hooks-file'], detail: hooks.reason, refused: [] }; // fail closed: never silently fall back to titles
   // the clips: those of the library that passed every check and are not in the usage ledger; there is NO fallback to other footage or a text-only reel
-  const clips = eligibleClips(manifest, usage, { dir: libraryDir, exists }).filter((c) => inside(libraryDir, c.file));
+  const ap = readClipApprovals(approvalsFile); if (!ap.ok) return { ok: false, reasons: ['bad-approvals-file'], detail: ap.reason, refused: [] }; // fail closed, like the hooks file
+  const clips = await clipsForLane(eligibleClips(manifest, usage, { dir: libraryDir, exists }).filter((c) => inside(libraryDir, c.file)), ap.data, { dir: libraryDir, hash: hashClip }); // skipped never; approved only once every current clip is decided
   if (!clips.length) return { ok: false, reasons: ['no-eligible-clip'], refused: [] };
   const ideas = (Array.isArray(pool) ? pool : (pool && Array.isArray(pool.ideas) ? pool.ideas : [])).filter((i) => i && kinds.kinds.includes(i.kind)).sort(rankOf);
   const refused = []; let chosen = null; let tried = 0;
@@ -220,8 +222,9 @@ export async function rehearse({ pool, manifest, usage = [], history = [], confi
 
 /** How many of the top ideas survive the text checks, and how many survivors have a fitting unused clip (per clip: its tags and how many survivors fit it). */
 export async function supplyReport({ ranked, top = 30, manifest, usage = [], config = {}, now = new Date(), libraryDir, sourceNames, kindsLabel = '', log = (l) => console.log(l) } = {}, deps = {}) {
-  const { exists = fs.existsSync, hooksFile = defaultHooksPath(), neverPromotePatterns } = deps;
+  const { exists = fs.existsSync, hooksFile = defaultHooksPath(), neverPromotePatterns, approvalsFile = defaultClipApprovalsPath(), hashClip = hashFile } = deps;
   const hooks = readHooks(hooksFile); if (!hooks.ok) return { ok: false, reason: `bad-hooks-file: ${hooks.reason}` };
+  const ap = readClipApprovals(approvalsFile); if (!ap.ok) return { ok: false, reason: `bad-approvals-file: ${ap.reason}` };
   const slice = ranked.slice(0, top); const refusals = {}; const survivors = [];
   for (const idea of slice) {
     const hk = hookFor(idea, hooks.hooks, config); const bump = (key) => { refusals[key] = (refusals[key] || 0) + 1; };
@@ -232,7 +235,7 @@ export async function supplyReport({ ranked, top = 30, manifest, usage = [], con
   }
   log(`top ${slice.length} ideas of kinds ${kindsLabel} (of ${ranked.length}): ${survivors.length} survive verbatimDraft + final check + deterministic judge checks`);
   for (const [k, n] of Object.entries(refusals).sort((x, y) => y[1] - x[1])) log(`  ${String(n).padStart(3)}  ${k}`);
-  const clips = eligibleClips(manifest, usage, { dir: libraryDir, exists }).filter((c) => inside(libraryDir, c.file));
+  const clips = await clipsForLane(eligibleClips(manifest, usage, { dir: libraryDir, exists }).filter((c) => inside(libraryDir, c.file)), ap.data, { dir: libraryDir, hash: hashClip });
   const per = new Map(clips.map((c) => [c.id, 0])); const bySubject = {}; let fitting = 0;
   for (const idea of survivors) {
     const key = subjectOf(idea)?.key ?? '(no animal named)'; bySubject[key] = (bySubject[key] || 0) + 1;
