@@ -7,7 +7,9 @@
 //
 // Analysis layout this relies on (established from the files, see the README of the analysis step):
 //   <root>/analysis/<folder>/<id>.onscreen.txt        one line per reading, "[12s] text", FIRST occurrence only
-//   <root>/analysis/<folder>/frames/<id>/NNN.jpg      frame N is the sample at second (N-1)*2, 90 frames at most
+//   <root>/analysis/<folder>/frames/<id>/NNN.jpg      frame N is labelled second (N-1)*2, 90 frames at most (measured against the
+//     video: the picture is really the one at (N-1)*2 + 1 s, the middle of its interval; the labels, stamps and windows all use the
+//     label, which a margin of one interval around every reading and a 2 s trim on both sides of a clip absorbs)
 //   Frames and stamps come from a working cut that starts at 0 and is at most 180 s long, so they share the
 //   timeline of the original video.
 //   Later parts of a longer video (optional, produced by the same local steps run on a later cut) sit beside it:
