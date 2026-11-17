@@ -4,7 +4,7 @@ import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'
 import { createDraftActions } from './draft-decisions.js';
 import { appendDecision } from './review-decisions.js';
 import { draftVersion } from './draft-version.js';
-import { withQueueLock, saveQueue } from './lib.js';
+import { withQueueLock, saveQueue, nextSlots } from './lib.js';
 import { withDecisionLock } from './decision-lock.js';
 import { StoppedError } from './stop.js';
 import { sourcesRecord } from './claim-gate.js';
@@ -115,7 +115,7 @@ function ak(drafts = [draft('B1', { createdAt: '2026-11-17T08:00:00Z' }), draft(
     queuePath: k.queuePath, recordFile: k.recordFile, neverPromotePatterns: NP, now: () => NOWT, lockTimeoutMs: 200,
     schedule: async (text, at) => { calls.schedule.push([text, at]); return { id: 'p1' }; }, stop: () => { calls.stop++; return { stopped: false }; },
     igOn: () => { calls.igOn++; return false; }, notify: async (m) => { calls.notify.push(m); return true; }, approveOn: () => { calls.approveOn++; return true; }, ...over };
-  const actions = createDraftActions(opts); const req = (id = 'B1', o = {}) => ({ kind: 'draft', id, version: ver(k, id), action: 'approve', ...o });
+  const actions = createDraftActions(opts); const req = (id = 'B1', o = {}) => ({ kind: 'draft', id, version: ver(k, id), action: 'approve', slot: nextSlots(k.q(), 1, NOWT)[0], ...o });
   return { ...k, actions, calls, opts, req, approve: (r, c = k.ctx) => actions.approveDraft(r ?? req(), c) };
 }
 const logLines = (was) => (fs.existsSync(LOGF) ? fs.readFileSync(LOGF, 'utf8').slice(was).split('\n').filter(Boolean) : []);
@@ -209,4 +209,55 @@ test('A12 static: no publisher, one scheduleDraft after the guards and the recor
   assert.ok(at("approveOn() !== true") < at('queueLocked('));
   const head = s.slice(s.indexOf('export function createDraftActions'), s.indexOf('const ready')); for (const k of ['schedule', 'igOn', 'stop', 'notify', 'queuePath', 'recordFile', 'approveOn']) assert.ok(!new RegExp(`\\b${k}\\s*=[^=]`).test(head), `no default for ${k}`);
   assert.match(head, /ttlDays = CONFIG\.draftTtlDays/);
+});
+
+// ══ Task 9b: no second approve after an unknown outcome, the date the owner saw, a time limit ═══════════════════════════════
+const hang = () => new Promise(() => {});
+test('B1 an approve whose outcome may be at Meta blocks a second approve: a save that fails after success, even from a fresh instance (a crash after Meta)', async () => {
+  const k = ak(undefined, { save: () => { throw new Error('disk full'); } }); const rq = k.req(); assert.equal((await k.approve(rq)).code, 'schedule-not-saved');
+  const again = createDraftActions({ ...k.opts, save: saveQueue }); assert.deepEqual(await again.approveDraft(rq, k.ctx), { ok: false, code: 'check-meta' }); assert.equal(k.calls.schedule.length, 1); assert.equal(k.lines().length, 1);
+});
+test('B2 a schedule that never answers (time limit) blocks a second approve', { timeout: 2000 }, async () => {
+  const k = ak(undefined, { schedule: async (t, a) => { k.calls.schedule.push([t, a]); return hang(); }, scheduleTimeoutMs: 50 }); const rq = k.req();
+  assert.equal((await k.approve(rq)).code, 'schedule-failed'); assert.deepEqual(await k.approve(rq), { ok: false, code: 'check-meta' }); assert.equal(k.calls.schedule.length, 1);
+});
+test('B3 an ordinary schedule failure: check-meta afterwards, one call, metaUnknown saved in the queue', async () => {
+  let n = 0; const k = ak(undefined, { schedule: async () => { n++; throw new Error('boom'); } }); const rq = k.req();
+  assert.equal((await k.approve(rq)).code, 'schedule-failed'); assert.deepEqual(await k.approve(rq), { ok: false, code: 'check-meta' }); assert.equal(n, 1);
+  assert.equal(k.q().drafts[0].metaUnknown.at, '2026-11-18T10:00:00.000Z'); assert.equal(k.q().drafts[0].status, 'pending_approval');
+  const f = createDraftActions({ ...k.opts }); fs.writeFileSync(k.recordFile, ''); assert.equal((await f.approveDraft(rq, k.ctx)).code, 'check-meta', 'the mark on the draft alone also blocks');
+});
+test('B4 a stop voids the line: a second approve is allowed and calls schedule again', async () => {
+  let n = 0; const k = ak(undefined, { schedule: async (t, a) => { n++; if (n === 1) throw new StoppedError('stopped by flag since T1'); return { id: 'p1' }; } }); const rq = k.req();
+  assert.equal((await k.approve(rq)).code, 'stopped'); assert.equal((await k.approve(rq)).ok, true); assert.equal(n, 2);
+});
+test('B5 a record file that cannot be read: record-failed and no call', async () => {
+  for (const make of [(f) => fs.mkdirSync(f), (f) => fs.writeFileSync(f, 'not json\n')]) { const k = ak(); make(k.recordFile); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'record-failed' }); assert.equal(k.calls.schedule.length, 0); assert.equal(k.bytes(), b); }
+});
+test('B6 skip and edit of a draft with an unknown outcome still work', async () => {
+  const k = ak(undefined, { schedule: async () => { throw new Error('boom'); } }); await k.approve(); assert.equal((await k.actions.skipDraft({ kind: 'draft', id: 'B1', version: ver(k), action: 'skip' }, k.ctx)).ok, true);
+  const e = ak(undefined, { schedule: async () => { throw new Error('boom'); } }); await e.approve(); assert.equal((await e.actions.editDraft({ kind: 'draft', id: 'B1', version: ver(e), action: 'edit', text: 'Giraffes feed on tall acacia trees.' }, e.ctx)).ok, true);
+});
+test('C1 the date: scheduled at exactly the slot the owner saw; another day is slot-changed with nothing scheduled or recorded; a missing slot is bad-request', async () => {
+  const k = ak(); const rq = k.req(); const r = await k.approve(rq); assert.equal(r.ok, true); assert.equal(r.scheduledFor, rq.slot); assert.equal(k.calls.schedule[0][1], rq.slot);
+  for (const slot of ['2026-11-19T09:00:00+03:00'.replace('19', '25'), '2026-11-18T09:00:00+03:00', 'tomorrow']) { const m = ak(); const b = m.bytes(); assert.deepEqual(await m.approve(m.req('B1', { slot })), { ok: false, code: 'slot-changed' }, slot); nothingHappened(m, b); }
+  for (const slot of [undefined, 5, null]) { const m = ak(); const b = m.bytes(); assert.deepEqual(await m.approve(m.req('B1', { slot })), { ok: false, code: 'bad-request' }, String(slot)); nothingHappened(m, b); }
+});
+test('C2 another draft took that day between the card and the tap: slot-changed', async () => {
+  const k = ak(); const rq = k.req(); const q = k.q(); q.drafts.push(draft('B9', { status: 'scheduled', scheduledFor: rq.slot })); fs.writeFileSync(k.queuePath, JSON.stringify(q)); const b = k.bytes();
+  assert.deepEqual(await k.approve(rq), { ok: false, code: 'slot-changed' }); nothingHappened(k, b);
+});
+test('C3 midnight in East Africa between two readings: the date that was compared is the date that is scheduled', async () => {
+  const T1 = new Date('2026-11-18T20:50:00Z'); const T2 = new Date('2026-11-18T21:10:00Z'); let n = 0; const now = () => (++n <= 2 ? T1 : T2); // expiry check, then the slot check; every later reading is after midnight
+  const k = ak([draft('B1', { createdAt: '2026-11-18T08:00:00Z' })], { now }); const slot = nextSlots(k.q(), 1, T1)[0]; assert.notEqual(slot, nextSlots(k.q(), 1, T2)[0]);
+  const r = await k.actions.approveDraft({ kind: 'draft', id: 'B1', version: ver(k), action: 'approve', slot }, k.ctx); assert.equal(r.ok, true); assert.equal(k.calls.schedule[0][1], slot);
+});
+test('D1 a schedule that never answers: schedule-failed soon, lastError is the timeout, metaUnknown set, the queue lock is free afterwards', { timeout: 2000 }, async () => {
+  const k = ak(undefined, { schedule: async () => hang(), scheduleTimeoutMs: 50 }); const t0 = Date.now(); const r = await k.approve();
+  assert.deepEqual(r, { ok: false, code: 'schedule-failed' }); assert.ok(Date.now() - t0 < 500); const d = k.q().drafts[0]; assert.equal(d.lastError, 'schedule timed out'); assert.ok(d.metaUnknown);
+  assert.equal((await k.actions.skipDraft({ kind: 'draft', id: 'B2', version: ver(k, 'B2'), action: 'skip' }, k.ctx)).ok, true);
+});
+test('D2 a schedule that answers in time succeeds and the limit timer is cleared; the source clears it in a finally', async () => {
+  const k = ak(undefined, { schedule: async () => { await new Promise((r) => setTimeout(r, 30)); return { id: 'p1' }; }, scheduleTimeoutMs: 5000 }); assert.equal((await k.approve()).ok, true);
+  const s = fs.readFileSync(path.join(HERE, 'draft-decisions.js'), 'utf8'); assert.match(s, /finally \{ clearTimeout\(timer\); \}/); assert.match(s, /timer\.unref\?\.\(\)/);
 });

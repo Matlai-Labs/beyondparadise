@@ -1,7 +1,8 @@
 // The review page's Skip and Edit for queue drafts: queue lock, the version the owner saw, the record first, then the change.
 // The checks and the changes are the SHARED functions of draft-actions.js (the WhatsApp commands call the same ones); nothing here sends anything.
 // Locks: the queue lock first, the decision lock only for the short record line inside it, never the other way round.
-import { withQueueLock, saveQueue, STATUS, CONFIG, log } from './lib.js';
+import { withQueueLock, saveQueue, nextSlots, STATUS, CONFIG, log } from './lib.js';
+import { readDecisions } from './review-decisions.js';
 import { withDecisionLock } from './decision-lock.js';
 import { publicCode } from './bpa-actions.js';
 import { hiddenCharsIn } from './invisible-chars.js';
@@ -16,8 +17,13 @@ const done = (id, decision) => ({ ok: true, change: { kind: 'draft', id, decisio
 /** No default for the queue file, the record file or the never-promote key: a caller that forgets one gets check-failed and nothing is read or written. */
 export function createDraftActions(options = {}) {
   const hasKey = Object.hasOwn(options, 'neverPromotePatterns'); // a destructured parameter cannot tell an absent key from undefined
-  const { env = process.env, queuePath, recordFile, now = () => new Date(), lockTimeoutMs = 5000, save = saveQueue, neverPromotePatterns, ttlDays = CONFIG.draftTtlDays, schedule, igOn, stop, notify, approveOn, finalCheck } = options;
+  const { env = process.env, queuePath, recordFile, now = () => new Date(), lockTimeoutMs = 5000, save = saveQueue, neverPromotePatterns, ttlDays = CONFIG.draftTtlDays, scheduleTimeoutMs = 70000, schedule, igOn, stop, notify, approveOn, finalCheck } = options;
   const approveReady = [schedule, igOn, stop, notify, approveOn].every((f) => typeof f === 'function'); // an igOn that is missing would be called AFTER the Meta call and read as a failure while the post exists
+  /** The injected schedule with a time limit above the 60 second limit of the Meta call: a hanging call must not hold the queue lock for ever. The timeout is an error, so scheduleDraft answers schedule-failed. */
+  const scheduleBounded = async (text, at) => {
+    let timer; const limit = new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('schedule timed out')), scheduleTimeoutMs); timer.unref?.(); });
+    try { return await Promise.race([schedule(text, at), limit]); } finally { clearTimeout(timer); }
+  };
   const say = (_text, code) => log(`review draft: ${publicCode(code ?? 'check-failed')}`); // the text is dropped on purpose: no draft text, id or Meta message in the log
   const ready = hasKey && typeof queuePath === 'string' && queuePath !== '' && typeof recordFile === 'string' && recordFile !== '';
 
@@ -72,21 +78,26 @@ export function createDraftActions(options = {}) {
   async function approveDraft(req, ctx) {
     if (!ready || !approveReady) return fail('check-failed');
     if (approveOn() !== true) return fail('cannot-decide'); // the off switch answers before any read, record or call
+    if (typeof req?.slot !== 'string') return fail('bad-request'); // the date the owner saw
     return queueLocked(async () => {
       const o = open(req); if (o.fail) return o.fail;
       const { q, d } = o;
       if (draftVersion(d) !== req.version) return fail('version-changed');
       const exp = draftExpiresAt(d, ttlDays); if (exp !== null && now().getTime() > exp) return fail('expired'); // the worker expires drafts only while posting is not stopped
       if (hiddenCharsIn(d.text) || hiddenCharsIn(String(d.videoText ?? ''))) return fail('bad-characters');
+      // An earlier approve may already exist at Meta (its record line is written BEFORE the call and survives a crash): never a second one.
+      const rd = readDecisions(recordFile); if (!rd.ok) return fail('record-failed');
+      if (d.metaUnknown || rd.records.some((x) => x.kind === 'draft' && x.id === req.id && x.decision === 'approve')) return fail('check-meta');
+      const at = nextSlots(q, 1, now())[0]; if (req.slot !== at) return fail('slot-changed'); // the value compared is the value scheduled
       const g = await approveGuards(d, { cmd: 'approve', stop, neverPromotePatterns, notify, say, onCheckError: 'refuse', finalCheck });
       if (!g.ok) { if (g.code === 'blocked') { try { save(q, queuePath); } catch { /* best effort: the alert was sent */ } } return fail(g.code); }
       const rec = await recordLocked(ctx, { kind: 'draft', id: req.id, version: req.version, decision: 'approve' }); if (!rec) return fail('record-failed');
-      const r = await scheduleDraft(q, d, { cmd: 'approve', schedule, igOn, say, now });
+      const r = await scheduleDraft(q, d, { cmd: 'approve', schedule: scheduleBounded, igOn, say, now, at });
       if (!r.ok) {
-        if (r.code === 'schedule-failed') { try { save(q, queuePath); } catch { /* best effort: lastError */ } return fail('schedule-failed'); } // outcome unknown: the record line stays
+        if (r.code === 'schedule-failed') { d.metaUnknown = { at: now().toISOString() }; try { save(q, queuePath); } catch { /* best effort: lastError */ } return fail('schedule-failed'); } // outcome unknown: the record line stays
         await recordLocked(ctx, { void: rec.n }); return fail(r.code === 'stopped' ? 'stopped' : 'check-failed'); // nothing reached Meta
       }
-      try { save(q, queuePath); } catch { log('review failed: schedule-not-saved'); return fail('schedule-not-saved'); } // the post exists: no void
+      try { save(q, queuePath); } catch { log('review failed: schedule-not-saved'); d.metaUnknown = { at: now().toISOString() }; try { save(q, queuePath); } catch { /* the record line is the durable guard */ } return fail('schedule-not-saved'); } // the post exists: no void
       return { ok: true, change: { kind: 'draft', id: req.id, decision: 'scheduled' }, scheduledFor: r.scheduledFor, scheduledForText: plainTime(r.scheduledFor) };
     });
   }
