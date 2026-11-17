@@ -106,3 +106,11 @@ test('9 no item carries a url, an error text, a file path or a hash of the sourc
   const r = await run([draft('B1', { text: T, ...sourcesRecord(T, [src('a.com'), src('b.org', 2)]), lastError: 'boom' }), draft('B2', { status: 'scheduled', auto: true, readyFile: f, readyFileSha256: sha })], { autoDir: dir });
   const json = JSON.stringify(r.items); for (const k of ['"url"', 'lastError', 'readyFile', 'claimSourcesHash']) assert.ok(!json.includes(k), k); assert.ok(!json.includes(dir));
 });
+
+// ── fix round R3: a text longer than the card can show is never approved or edited on the page ─────────────────────────
+test('R3 a text over 5000 characters: reason text-too-long, only Skip, the final check never runs; exactly 5000 is still fine', async () => {
+  const { item, r } = await one(draft('B1', { text: 'x'.repeat(5001) }));
+  assert.equal(item.reason, 'text-too-long'); assert.equal(item.state, 'refused: text-too-long'); assert.deepEqual(item.actions, ['skip']); assert.equal(r.calls.check, 0);
+  const ok = await one(draft('B1', { text: 'x'.repeat(5000) })); assert.equal(ok.item.reason, null); assert.deepEqual(ok.item.actions, ['approve', 'skip', 'edit']);
+  const emoji = await one(draft('B1', { text: '😀'.repeat(5000) })); assert.equal(emoji.item.reason, null, 'counted by character, not by UTF-16 unit');
+});

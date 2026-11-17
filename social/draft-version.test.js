@@ -23,4 +23,4 @@ test('draftExpiresAt: createdAt plus the days, or null', () => {
   assert.equal(draftExpiresAt({ createdAt: '2026-11-10T00:00:00Z' }, 7), Date.parse('2026-11-17T00:00:00Z'));
   for (const d of [{}, { createdAt: 'nope' }, { createdAt: undefined }, null]) assert.equal(draftExpiresAt(d, 7), null);
 });
-test('DRAFT_REASONS is frozen and holds the agreed words', () => { assert.ok(Object.isFrozen(DRAFT_REASONS)); assert.equal(DRAFT_REASONS.length, 15); for (const w of ['stopped', 'check-meta', 'approve-off', 'ready-file-changed', 'sources-old']) assert.ok(DRAFT_REASONS.includes(w)); });
+test('DRAFT_REASONS is frozen and holds the agreed words', () => { assert.ok(Object.isFrozen(DRAFT_REASONS)); assert.equal(DRAFT_REASONS.length, 16); for (const w of ['stopped', 'check-meta', 'approve-off', 'ready-file-changed', 'sources-old']) assert.ok(DRAFT_REASONS.includes(w)); });

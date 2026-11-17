@@ -261,3 +261,10 @@ test('D2 a schedule that answers in time succeeds and the limit timer is cleared
   const k = ak(undefined, { schedule: async () => { await new Promise((r) => setTimeout(r, 30)); return { id: 'p1' }; }, scheduleTimeoutMs: 5000 }); assert.equal((await k.approve()).ok, true);
   const s = fs.readFileSync(path.join(HERE, 'draft-decisions.js'), 'utf8'); assert.match(s, /finally \{ clearTimeout\(timer\); \}/); assert.match(s, /timer\.unref\?\.\(\)/);
 });
+
+// ── fix round R3: the server refuses what the card cannot show in full ─────────────────────────────────────────────────
+test('R3 approve of a text over 5000 characters is refused with text-too-long: nothing scheduled, nothing recorded; 5000 is allowed', async () => {
+  const k = ak([draft('B1', { text: 'Lions sleep most of the day on the plains. '.repeat(120) })]); const b = k.bytes(); assert.ok(k.q().drafts[0].text.length > 5000);
+  assert.deepEqual(await k.approve(), { ok: false, code: 'text-too-long' }); nothingHappened(k, b);
+  const ok = ak([draft('B1', { text: 'Lions sleep most of the day on the plains. '.repeat(100).slice(0, 5000) })]); assert.notEqual((await ok.approve()).code, 'text-too-long', 'exactly 5000 is not this refusal (other rules may still apply)');
+});

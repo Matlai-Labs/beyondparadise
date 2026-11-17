@@ -6,7 +6,7 @@ import { readDecisions } from './review-decisions.js';
 import { withDecisionLock } from './decision-lock.js';
 import { publicCode } from './bpa-actions.js';
 import { hiddenCharsIn } from './invisible-chars.js';
-import { draftVersion, readQueueStrict, draftExpiresAt } from './draft-version.js';
+import { draftVersion, readQueueStrict, draftExpiresAt, textTooLong } from './draft-version.js';
 import { plainTime } from './plain-time.js';
 import { checkSkip, applySkip, checkEdit, applyEdit, approveGuards, scheduleDraft, statusCodeOf } from './draft-actions.js';
 
@@ -84,6 +84,7 @@ export function createDraftActions(options = {}) {
       const { q, d } = o;
       if (draftVersion(d) !== req.version) return fail('version-changed');
       const exp = draftExpiresAt(d, ttlDays); if (exp !== null && now().getTime() > exp) return fail('expired'); // the worker expires drafts only while posting is not stopped
+      if (textTooLong(d)) return fail('text-too-long'); // the card shows at most 5000 characters: what was read must be all that goes out
       if (hiddenCharsIn(d.text) || hiddenCharsIn(String(d.videoText ?? ''))) return fail('bad-characters');
       // An earlier approve may already exist at Meta (its record line is written BEFORE the call and survives a crash): never a second one.
       const rd = readDecisions(recordFile); if (!rd.ok) return fail('record-failed');

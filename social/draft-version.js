@@ -2,8 +2,11 @@
 import crypto from 'node:crypto'; import fs from 'node:fs';
 
 /** Reasons shown on a card (not refusals). Both lists are in the closed set of bpa-actions.js. */
-export const DRAFT_REASONS = Object.freeze(['stopped', 'text-missing', 'hidden-characters', 'sources-missing', 'sources-old', 'sources-outdated', 'sources-too-few', 'check-meta', 'approve-off', 'final-check', 'blocked', 'queue-unreadable', 'expired', 'video-missing', 'ready-file-changed']);
+export const DRAFT_REASONS = Object.freeze(['stopped', 'text-missing', 'hidden-characters', 'sources-missing', 'sources-old', 'sources-outdated', 'sources-too-few', 'check-meta', 'approve-off', 'final-check', 'blocked', 'queue-unreadable', 'expired', 'video-missing', 'ready-file-changed', 'text-too-long']);
 
+/** The most text the card shows. A longer text is never approved or edited on the page: what the owner read must be all of what goes out. Counted by character (a pair of units is one). */
+export const TEXT_SHOW_MAX = 5000;
+export const textTooLong = (d) => typeof d?.text === 'string' && d.text.length > TEXT_SHOW_MAX && Array.from(d.text).length > TEXT_SHOW_MAX;
 const sourcesOf = (d) => (Array.isArray(d.claimSources) ? d.claimSources.map((s) => [s?.claim, s?.source, s?.url, s?.line]) : []);
 /** 64 hex. Covers the caption, the on-video text, the slides, the ready file hash and the recorded sources; NOT status, decidedAt, scheduledFor, ig, lastError, score, hookAdvice. */
 export function draftVersion(d) {

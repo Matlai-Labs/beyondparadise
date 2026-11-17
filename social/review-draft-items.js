@@ -2,7 +2,7 @@
 // This file SHOWS; it decides nothing. Every payload is capped and carries no url, no error text, no file path.
 import path from 'node:path';
 import { claimGateWhy } from './claim-gate.js';
-import { draftVersion, draftExpiresAt } from './draft-version.js';
+import { draftVersion, draftExpiresAt, textTooLong, TEXT_SHOW_MAX } from './draft-version.js';
 import { hiddenCharsIn } from './invisible-chars.js';
 import { plainTime } from './plain-time.js';
 import { nextSlots } from './lib.js';
@@ -10,12 +10,12 @@ import { mediaIdFor, DECISION_WINDOW_MS } from './review-items.js';
 
 export const NOTE_DRAFT_NO_PICTURE = 'picture is made when the post goes out';
 const NOTE_VIDEO_MISSING = 'video missing';
-const TEXT_MAX = 5000, TITLE_MAX = 120, SOURCES_MAX = 20, SOURCE_FIELD_MAX = 300, RULES_MAX = 20;
+const TEXT_MAX = TEXT_SHOW_MAX, TITLE_MAX = 120, SOURCES_MAX = 20, SOURCE_FIELD_MAX = 300, RULES_MAX = 20;
 const cut = (s, n) => { const a = Array.from(s); return a.length > n ? a.slice(0, n).join('') : s; }; // by code point: a surrogate pair is never split
 const nonEmpty = (v) => typeof v === 'string' && v !== '';
 const inWindow = (at, now, windowMs) => { const t = Date.parse(at); return Number.isNaN(t) || now.getTime() - t <= windowMs; };
 const titleOf = (text) => { const first = typeof text === 'string' ? text.split('\n')[0] : ''; const a = Array.from(first); return a.length > TITLE_MAX ? `${a.slice(0, TITLE_MAX - 1).join('')}…` : first; };
-const ACTIONS = { null: ['approve', 'skip', 'edit'], 'approve-off': ['skip', 'edit'], 'check-meta': ['skip'], expired: [] };
+const ACTIONS = { null: ['approve', 'skip', 'edit'], 'approve-off': ['skip', 'edit'], 'check-meta': ['skip'], 'text-too-long': ['skip'], expired: [] };
 
 function factsOf(d, { q, now, ttlDays, igOn, pending }) {
   const sources = []; if (Array.isArray(d.claimSources)) for (const s of d.claimSources) { if (s && typeof s === 'object' && nonEmpty(s.claim) && nonEmpty(s.source) && nonEmpty(s.line)) sources.push({ claim: cut(s.claim, SOURCE_FIELD_MAX), source: cut(s.source, SOURCE_FIELD_MAX), line: cut(s.line, SOURCE_FIELD_MAX) }); if (sources.length >= SOURCES_MAX) break; }
@@ -34,6 +34,7 @@ async function pendingReason(d, { claimWhy, checkFor, stop, approveOn, approvedI
   if (d.metaUnknown || approvedIds.has(d.id)) return 'check-meta'; // an earlier Approve may already exist at Meta
   const exp = draftExpiresAt(d, ttlDays); if (exp !== null && now.getTime() > exp) return 'expired';
   if (!nonEmpty(typeof d.text === 'string' ? d.text.trim() : '')) return 'text-missing';
+  if (textTooLong(d)) return 'text-too-long';
   if (hiddenCharsIn(d.text) || hiddenCharsIn(String(d.videoText ?? ''))) return 'hidden-characters';
   const w = claimWhy(d); if (w) return w.code;
   if (stop().stopped) return 'stopped';
