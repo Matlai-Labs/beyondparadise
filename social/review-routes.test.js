@@ -58,7 +58,7 @@ test('settings file missing gives 503 not available and a log line without value
 test('settings file with group-readable mode gives 503', async () => { fs.chmodSync(accessFile, 0o644); assert.equal((await call('/review/', login)).status, 503); });
 test('items: shape, counts, private cache header, no captions in logs', async () => {
   const r = await call('/review/api/items', ck); assert.equal(r.status, 200); assert.equal(r.headers['cache-control'], 'private, no-store'); const j = JSON.parse(r.body); assert.deepEqual(Object.keys(j).sort(), ['counts', 'items', 'problems', 'status']);
-  for (const i of j.items) assert.deepEqual(Object.keys(i).sort(), ['actions', 'facts', 'id', 'kind', 'preview', 'state', 'title', 'version']);
+  for (const i of j.items) assert.deepEqual(Object.keys(i).sort(), ['actions', 'facts', 'id', 'kind', 'preview', 'reason', 'state', 'title', 'usableToday', 'version']);
   assert.deepEqual(j.counts, { all: 3, hook: 1, clip: 2 }); assert.ok(!logs.join('\n').includes('SECRETCAPTION')); assert.ok(!r.body.toString().includes(dir), 'no path in the answer');
 });
 test('items are cached for cacheMs, not longer', async () => {
@@ -101,4 +101,10 @@ test('media list is computed fresh even while the item list is cached (focus 1)'
   const { id } = await firstClipMedia(); assert.equal((await call(`/review/media/${id}`, ck)).status, 200); // the item list is now cached, id included
   fs.writeFileSync(clipFile, 'y'.repeat(1000)); bump(clipFile); assert.equal((await call(`/review/media/${id}`, ck)).status, 404, 'file replaced: the cached list must not serve it');
   const again = (await firstClipMedia()).id; assert.equal(again, id, 'the cached item list still shows the old id'); manifest = { clips: [] }; assert.equal((await call(`/review/media/${id}`, ck)).status, 404, 'left the list');
+});
+test('defaultInputs wires the lane\'s own readers and verdict (usage ledger, history, config, laneVerdict)', async () => {
+  const { defaultInputs } = await import('./review-routes.js'); const d = defaultInputs();
+  for (const k of ['readHooks', 'loadPool', 'readManifest', 'readUsage', 'readHistory', 'readConfig', 'laneVerdict', 'evaluate']) assert.equal(typeof d[k], 'function', k);
+  assert.deepEqual(d.readUsage(), [], 'no ledger in the test state folder'); assert.equal(typeof d.readConfig(), 'object');
+  assert.equal((await d.laneVerdict({ id: 'i', kind: 'rule', title: 'Lion', claims: [] }, { clips: [], history: [], config: {}, now: new Date() })).reason, 'no-matching-clip');
 });

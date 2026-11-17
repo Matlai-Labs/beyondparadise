@@ -15,6 +15,9 @@ import { resolveMediaPath, serveMedia } from './review-media.js';
 import { readHooks, defaultHooksPath } from './auto-hooks.js';
 import { loadIdeaPool } from './idea-drafts.js';
 import { libraryDir as libraryDirOf, readManifest } from './clip-library.js';
+import { readUsage, defaultUsagePath } from './reel-clip.js';
+import { historyFromQueue } from './ideas.js';
+import { loadQueue, QUEUE_PATH } from './lib.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MEDIA_ID = /^m_[0-9a-f]{32}$/;
@@ -37,6 +40,10 @@ export function defaultInputs(env = process.env) {
     readManifest: () => readManifest(dir),
     libraryDir: dir, info: INFO, secret: SECRET,
     evaluate: async (idea, o) => { const { evaluateIdea } = await import('./auto-lane.js'); return evaluateIdea(idea, { now: o.now, hook: o.hook, sourceNames: o.sourceNames }); },
+    readUsage: () => readUsage(defaultUsagePath(env)),              // the ledger the lane reads
+    readHistory: () => historyFromQueue(loadQueue(QUEUE_PATH)),     // posted and queued ideas, as the lane reads them
+    readConfig: () => JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8')), // fresh from disk
+    laneVerdict: async (idea, ctx) => (await import('./auto-lane.js')).laneVerdictFor(idea, ctx),
     previewFor: () => null, // part 1b fills this in
   };
 }
