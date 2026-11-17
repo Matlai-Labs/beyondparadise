@@ -39,6 +39,11 @@ const entryProblem = (e) => {
 
 /** { ok:true, hooks } | { ok:false, reason }. Fail closed. */
 export function readHooks(file = defaultHooksPath()) {
+  if (path.resolve(file) === path.resolve(defaultHooksPath())) { // the private lane file: a regular file only the owner can read (an explicit path, as tests and --file use, is not checked)
+    let st; try { st = fs.lstatSync(file); } catch { st = null; }
+    if (st && !st.isFile()) return { ok: false, reason: 'the hooks file must be a regular file' };
+    if (st && (st.mode & 0o077) !== 0) return { ok: false, reason: 'the hooks file is readable by others (mode must be 600)' };
+  }
   let raw; try { raw = fs.readFileSync(file, 'utf8'); } catch (e) { return { ok: false, reason: `cannot read the hooks file (${e.code || e.message})` }; }
   let j; try { j = JSON.parse(raw); } catch { return { ok: false, reason: 'the hooks file is not valid JSON' }; }
   if (!j || typeof j !== 'object' || Array.isArray(j) || !Array.isArray(j.hooks)) return { ok: false, reason: 'the hooks file must be { "hooks": [...] }' };
@@ -64,7 +69,8 @@ let tmpCounter = 0;
 export function writeHooksAtomic(file, obj) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const tmp = `${file}.${process.pid}.${tmpCounter++}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify(obj, null, 2)}\n`, { mode: 0o600 }); fs.renameSync(tmp, file);
+  try { fs.writeFileSync(tmp, `${JSON.stringify(obj, null, 2)}\n`, { mode: 0o600 }); fs.renameSync(tmp, file); }
+  catch (e) { try { fs.unlinkSync(tmp); } catch { /* nothing to remove */ } throw e; }
 }
 const writeAtomic = writeHooksAtomic;
 

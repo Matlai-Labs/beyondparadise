@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { main, readHooks, hookState, writeHooksAtomic, claimsSha256 } from './auto-hooks.js';
+import { main, readHooks, hookState, writeHooksAtomic, claimsSha256, defaultHooksPath } from './auto-hooks.js';
 import { prepareAutoPost } from './auto-lane.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -74,4 +74,19 @@ test('the lane refuses when the private file is missing (default path)', async (
 test('auto-lane.js has three readHooks call sites, each checked for ok', () => {
   const s = fs.readFileSync(path.join(HERE, 'auto-lane.js'), 'utf8').split('\n').filter((l) => /readHooks\(/.test(l) && !/^import/.test(l));
   assert.equal(s.length, 3); for (const l of s) assert.match(l, /!hooks\.ok/);
+});
+
+test('E12: the DEFAULT hooks file is refused when group or others can read it, or when it is not a regular file; an explicit path keeps today\'s behaviour', async () => {
+  const def = defaultHooksPath(); fs.mkdirSync(path.dirname(def), { recursive: true }); fs.rmSync(def, { force: true, recursive: true });
+  writeHooksAtomic(def, { hooks: [entry(1)] }); assert.equal(readHooks(def).ok, true); assert.equal(readHooks().ok, true, 'no argument means the default path');
+  for (const mode of [0o644, 0o640, 0o604, 0o666]) { fs.chmodSync(def, mode); const r = readHooks(def); assert.equal(r.ok, false, mode.toString(8)); assert.match(r.reason, /readable by others/); assert.equal(readHooks().ok, false); }
+  const dir = tmp(); const dr = await prepareAutoPost({ pool: [idea(1)], manifest: { version: 1, clips: [] }, usage: [], history: [], config: {}, now: NOW }, { outDir: path.join(dir, 'out'), libraryDir: path.join(dir, 'lib'), exists: () => true }); assert.deepEqual(dr.reasons, ['bad-hooks-file'], 'the lane refuses too');
+  fs.chmodSync(def, 0o600); fs.rmSync(def); const real = tmpFile({ hooks: [entry(2)] }); fs.symlinkSync(real, def); const l = readHooks(def); assert.equal(l.ok, false); assert.match(l.reason, /regular file/); fs.rmSync(def);
+  fs.mkdirSync(def); assert.equal(readHooks(def).ok, false); fs.rmSync(def, { recursive: true });
+  const explicit = tmpFile({ hooks: [entry(3)] }); fs.chmodSync(explicit, 0o644); assert.equal(readHooks(explicit).ok, true, 'an explicit --file path is not checked');
+  assert.equal(readHooks(def).ok, false, 'missing is still a failure'); assert.match(readHooks(def).reason, /cannot read/);
+});
+test('E12: writeHooksAtomic removes its temp file when the rename fails', () => {
+  const d = tmp(); const target = path.join(d, 'h.json'); fs.mkdirSync(path.join(target, 'x'), { recursive: true });
+  assert.throws(() => writeHooksAtomic(target, { hooks: [] })); assert.deepEqual(fs.readdirSync(d), ['h.json'], 'no temp file is left behind');
 });

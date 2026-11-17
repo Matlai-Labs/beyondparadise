@@ -10,7 +10,7 @@ import { stopStatus, engageStop, releaseStop, StoppedError } from './stop.js';
 import { reserveInstagramPublish, releaseInstagramReservation } from './ledger.js';
 import { recordPost, healthTick } from './health.js';
 import { createReviewHandler, defaultInputs, refuse } from './review-routes.js';
-import { createSessions, loadAccess, checkHealthAccess } from './review-auth.js';
+import { createSessions, loadAccess, checkHealthAccess, hasProxyHeaders } from './review-auth.js';
 const PORT = CONFIG.approvalPort;
 /** One plain sentence about Facebook posts already scheduled at Meta (stop does not cancel them). Reads the queue WITHOUT the lock; a parse error leaves the sentence out. */
 export function scheduledAtMetaNote(queuePath, now = new Date(), tz = CONFIG.timezone) {
@@ -90,6 +90,8 @@ export const server = http.createServer(async (req, res) => {
     return send(200, { ok: true, service: 'bpa-social approval', pending: loadQueue().drafts.filter((d) => d.status === STATUS.PENDING).length });
   }
   if (req.method === 'POST' && req.url === '/bpa/action') {
+    // `tailscale serve` publishes the whole port; a request that came through it carries proxy headers, a loopback caller (the WhatsApp bridge) never does
+    if (hasProxyHeaders(req)) { log('review refused: proxied-request action'); return refuse(res, { code: 403 }); }
     const auth = authorize(req, { ...process.env, BPA_APPROVAL_PORT: process.env.BPA_APPROVAL_PORT || String(PORT) }); if (!auth.ok) { log(`auth rejected: ${auth.reason}`); return send(auth.code, { ok: false, message: auth.reason }); }
     let body = ''; req.on('data', (c) => { body += c; if (body.length > 20000) req.destroy(); });
     req.on('end', async () => { try { const { text } = JSON.parse(body || '{}'); log(`cmd: ${String(text).slice(0, 120)}`); const message = await dispatch(text); send(200, { ok: true, message }); } catch (e) { log(`cmd error ${e.message}`); send(500, { ok: false, message: `⚠️ bpa error: ${e.message}` }); } });

@@ -24,10 +24,11 @@ const MEDIA_ID = /^m_[0-9a-f]{32}$/;
 const SECRET = crypto.randomBytes(32).toString('hex'); // per process: media ids do not survive a restart
 const INFO = fileInfoOf(); // one hash cache for the whole process
 
-export const CSP = (nonce) => `default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}'; media-src 'self'; connect-src 'self'; img-src 'self'`;
+export const CSP = (nonce) => `default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}'; media-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`;
 
 export function refuse(res, check) {
-  res.writeHead(check && check.code === 503 ? 503 : (check && check.code === 405 ? 405 : (check && check.code === 404 ? 404 : 403)), { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+  const code = check && [404, 405, 429, 503].includes(check.code) ? check.code : 403;
+  res.writeHead(code, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
   res.end('not available');
 }
 
@@ -74,18 +75,22 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, log 
     const p = (async () => { const inp = loadInputs(env); const b = await buildItems(inp); lastMedia = b.media; lastLibraryDir = inp.libraryDir; return b; })(); cache = { at: now(), built: p }; p.catch(() => { if (cache && cache.built === p) cache = null; });
     return p;
   };
-  const text = (res, code, body = 'not available') => { res.writeHead(code, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(body); };
+  const text = (res, code, body = 'not available') => { res.writeHead(code, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(body); };
 
   async function handle(req, res, p, route) {
     if (route === 'page') {
       let page; try { page = fs.readFileSync(pageFile, 'utf8'); } catch { log('review failed: page-missing page'); return text(res, 503); }
+      // a request that already carries a valid cookie gets the page and no new cookie; a cookie-less one needs a new session, which is rate limited (429)
+      const hasCookie = checkAccess(req, { access: loadAccess({ env }), sessions, needCookie: true }).ok;
+      let cookieHeader = null;
+      if (!hasCookie) { const tok = sessions.issue(); if (!tok) { log('review refused: rate-limited page'); return refuse(res, { code: 429 }); } cookieHeader = setCookieHeader(tok); }
       const nonce = crypto.randomBytes(16).toString('hex');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': CSP(nonce), 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY', 'Cache-Control': 'no-store', 'Set-Cookie': setCookieHeader(sessions.issue()) });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': CSP(nonce), 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY', 'Cache-Control': 'no-store', ...(cookieHeader ? { 'Set-Cookie': cookieHeader } : {}) });
       return res.end(page.split('__NONCE__').join(nonce));
     }
     if (route === 'items') {
       const b = await built();
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'private, no-store' });
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' });
       return res.end(JSON.stringify({ status: readStatus({ env }), items: b.items, counts: b.counts, problems: b.problems }));
     }
     if (route === 'media') {

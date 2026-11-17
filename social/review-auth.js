@@ -24,14 +24,19 @@ export function loadAccess({ env = process.env, file = accessFilePath(env), read
   return { ok: true, ownerLogin: login, host };
 }
 
-export function createSessions({ ttlMs = SESSION_TTL_MS, now = Date.now, max = 20 } = {}) {
-  const live = new Map(); // token -> expiry (insertion order = age)
-  const prune = () => { for (const [t, exp] of live) if (exp <= now()) live.delete(t); };
+export const SESSION_MIN_AGE_MS = 60e3;   // a session younger than this is never evicted
+export const SESSION_ISSUE_GAP_MS = 2e3;  // at most one new session per this time, per process
+/** issue() returns a token, or null when it is too soon after the last one or the table is full of young sessions (nothing is evicted then). */
+export function createSessions({ ttlMs = SESSION_TTL_MS, now = Date.now, max = 50, minAgeMs = SESSION_MIN_AGE_MS, issueGapMs = SESSION_ISSUE_GAP_MS } = {}) {
+  const live = new Map(); // token -> { issuedAt, expiry } (insertion order = age)
+  let lastIssue = -Infinity;
+  const prune = () => { for (const [t, v] of live) if (v.expiry <= now()) live.delete(t); };
   return {
     issue() {
-      prune();
-      while (live.size >= max) live.delete(live.keys().next().value);
-      const t = crypto.randomBytes(32).toString('hex'); live.set(t, now() + ttlMs); return t;
+      prune(); const t0 = now();
+      if (t0 - lastIssue < issueGapMs) return null;
+      if (live.size >= max) { const oldest = live.entries().next().value; if (!oldest || t0 - oldest[1].issuedAt < minAgeMs) return null; live.delete(oldest[0]); }
+      const t = crypto.randomBytes(32).toString('hex'); live.set(t, { issuedAt: t0, expiry: t0 + ttlMs }); lastIssue = t0; return t;
     },
     valid(token) {
       if (typeof token !== 'string') return false;
@@ -72,7 +77,12 @@ export function checkAccess(req, { access, sessions, needCookie }) {
   return { ok: true };
 }
 
+/** A request that came through `tailscale serve` always carries these; a caller on loopback (the WhatsApp bridge, the worker) never does. */
+export function hasProxyHeaders(req) {
+  return Object.keys((req && req.headers) || {}).some((n) => { const k = n.toLowerCase(); return k === 'x-forwarded-for' || k === 'x-forwarded-host' || k === 'x-forwarded-proto' || k.startsWith('tailscale-'); });
+}
+
 export function checkHealthAccess(req, { port, access, sessions }) {
-  if (loopbackHost(req.headers?.host, port)) return { ok: true };
+  if (loopbackHost(req.headers?.host, port) && !hasProxyHeaders(req)) return { ok: true };
   return checkAccess(req, { access, sessions, needCookie: true });
 }
