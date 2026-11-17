@@ -230,3 +230,8 @@ test('render: card.py --slides with per-slide labels writes N PNGs of 1080x1350 
   assert.match(fs.readFileSync(path.join(import.meta.dirname, 'card.py'), 'utf8'), /s\.get\("label"\)/);
   fs.rmSync(out, { recursive: true, force: true });
 });
+test('sections: "Government Notice No. 256 of 2026" is never cut between two slides (real insurance claim)', () => {
+  const why = 'From 1 October 2026 foreign visitors entering Mainland Tanzania (subject to exemptions) must hold inbound travel insurance, under Government Notice No. 256 of 2026 dated 4 September 2026. Zanzibar has its own scheme (ZIC); a visitor whose first point of entry is the Mainland does not buy a second policy for Zanzibar.';
+  const { slides } = slidePlan(sig('Something happened here today', why, 'Do this now please. Then do that later.'));
+  const texts = slides.filter((s) => s.label === 'Why it matters').map((s) => s.text); assert.ok(texts.some((t) => t.includes('Government Notice No. 256 of 2026')), texts.join(' | ')); assert.ok(!texts.some((t) => /No\.$/.test(t)));
+});

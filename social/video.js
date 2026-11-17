@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { splitSentences } from './sentence-split.js';
 import { checkReel } from './reel-qa.js';
 import { gsapAssetPath, fontAssets } from './resources.js';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -18,7 +19,7 @@ function heroNumber(text) { const e = esc(text); return e.replace(/(\d[\d,.]{2,}
 
 export function buildComposition(spec, { width = 1080, height = 1920, seconds = 8 } = {}) {
   // A Reel is glanced at: keep the first sentence or two of each block, hard-capped.
-  const clip = (s, max) => { const out = []; for (const sent of String(s || '').split(/(?<=[.!?])\s+/)) { if ((out.join(' ') + ' ' + sent).trim().length > max) break; out.push(sent); } if (out.length) return out.join(' ').trim(); const cut = String(s || '').slice(0, max - 1); return cut.slice(0, cut.lastIndexOf(' ')) + '…'; };
+  const clip = (s, max) => { const out = []; for (const sent of splitSentences(String(s || ''))) { if ((out.join(' ') + ' ' + sent).trim().length > max) break; out.push(sent); } if (out.length) return out.join(' ').trim(); const cut = String(s || '').slice(0, max - 1); return cut.slice(0, cut.lastIndexOf(' ')) + '…'; };
   const lines = (spec.lines || []).map((l) => l.replace(/^(Why it matters|What I'd do|What changed): /, ''));
   const body = esc(clip(lines[0], 220));
   const body2 = esc(clip(lines[1], 170));
