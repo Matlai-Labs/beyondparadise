@@ -8,7 +8,8 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { prepareAutoPost, rehearse, supplyReport } from './auto-lane.js';
-import { clipVersion } from './clip-approvals.js';
+import { clipVersion, hashFile } from './clip-approvals.js';
+import { fileInfoOf } from './review-items.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bpa-clipap-'));
@@ -58,6 +59,11 @@ test('a clip entry without shows does not throw in the lane and gets the same ve
   const r = await prepareAutoPost(k.input, k.deps);
   // a clip without tags fits no animal idea; the point is that nothing throws and the version path ran: the refusal is about the idea, not about the clip list
   assert.ok(!(r.reasons || []).includes('no-eligible-clip'), JSON.stringify(r)); assert.ok(!(r.reasons || []).includes('bad-approvals-file'));
+  // the lane got PAST the clip list and refused only the idea: the one refusal is the idea's own (no animal), not anything about the clip
+  assert.deepEqual([r.ok, r.reasons, r.refused], [false, ['no-eligible-idea'], [{ ideaId: 'idea_1', reason: 'no-subject' }]]);
+  const lib = path.join(tmp(), 'library'); fs.mkdirSync(lib); fs.writeFileSync(path.join(lib, 'clip-a.mp4'), 'x');
+  const data = { version: 1, enforcedAt: '2026-11-17T08:30:00Z', clips: { 'clip-a': { state: 'approved', version: clipVersion(sha('clip-a'), []), at: '2026-11-17T08:00:00Z', by: 'review page' } } }; data.clips = Object.assign(Object.create(null), data.clips);
+  assert.deepEqual((await clipsForLane(k.input.manifest.clips, data, { dir: lib, hash: hashClip })).map((c) => c.id), ['clip-a'], 'the approved clip without tags is the one the lane keeps');
 });
 test('a malformed approvals file refuses the lane and composes nothing', async () => {
   const k = kit({ approvalsRaw: '{nope' }); const r = await prepareAutoPost(k.input, k.deps);
@@ -106,4 +112,16 @@ test('CR4: clipsForLane and laneClipsOf drop a linked clip and a folder, keep a 
   assert.deepEqual((await clipsForLane(clips, empty, { dir: lib, hash: hashClip })).map((c) => c.id), ['clip-b']);
   assert.deepEqual(laneClipsOf({ clips }, [], lib).map((c) => c.id), ['clip-b']);
   assert.deepEqual(laneClipsOf({ clips: [clipEntry('clip-z', ['lion'])] }, [], lib, () => true).map((c) => c.id), ['clip-z'], 'missing is the exists check, as before');
+});
+
+test('the lane and the page compute the SAME version from the SAME real bytes (the lane\'s hashFile, the page\'s info.hash, no stub), and a decision made on the page version is honoured by the lane', async () => {
+  const lib = path.join(tmp(), 'library'); fs.mkdirSync(lib); const bytes = crypto.randomBytes(300000); const abs = path.join(lib, 'clip-a.mp4'); fs.writeFileSync(abs, bytes);
+  const info = fileInfoOf(); const pageSha = await info.hash(abs, info.peek(abs)); const laneSha = await hashFile(abs);
+  assert.equal(pageSha, crypto.createHash('sha256').update(bytes).digest('hex')); assert.equal(laneSha, pageSha);
+  const pageVersion = clipVersion(pageSha, ['lion']);
+  const k = kit({ approvals: { enforcedAt: '2026-11-17T08:30:00Z', clips: { 'clip-a': { state: 'approved', version: pageVersion, at: '2026-11-17T08:00:00Z', by: 'review page' } } } });
+  const r = await prepareAutoPost(k.input, { ...k.deps, libraryDir: lib, exists: fs.existsSync, hashClip: undefined });
+  assert.equal(r.ok, true, JSON.stringify(r)); assert.equal(r.clip.id, 'clip-a');
+  fs.writeFileSync(abs, Buffer.concat([bytes, Buffer.from('more')])); // the file changed after the decision: the page version no longer matches
+  const r2 = await prepareAutoPost(k.input, { ...k.deps, libraryDir: lib, exists: fs.existsSync, hashClip: undefined }); assert.deepEqual([r2.ok, r2.reasons], [false, ['no-eligible-clip']]);
 });

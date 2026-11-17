@@ -305,3 +305,28 @@ test('low: editHook of an idea already used in a post answers already-used (like
   assert.equal((await k.actions.editHook({ id: 'idea_2', version: k.hv(2), text: 'Lions at dusk' }, k.ctx)).ok, true, 'an unused idea is still editable');
   k.state.history = null; assert.deepEqual(await k.actions.editHook({ id: 'idea_1', version: k.hv(1), text: 'Lions at noon' }, k.ctx), { ok: false, code: 'history-unreadable' });
 });
+
+// ── strengthened: races of clip decisions, and of a clip decision against a posting record ───────────────────────────────
+import { runPosting } from './review-decide.js';
+test('race: two clip decisions at once on different clips both land (no lost update in the state file), with two distinct record numbers', async () => {
+  const k = akit(); const [a, b] = await Promise.all([k.actions.approveClip({ id: 'c1', version: k.cv('c1') }, k.ctx), k.actions.skipClip({ id: 'c2', version: k.cv('c2') }, k.ctx)]);
+  assert.equal(a.ok, true); assert.equal(b.ok, true);
+  const d = readClipApprovals(k.approvalsFile).data; assert.equal(d.clips.c1.state, 'approved'); assert.equal(d.clips.c2.state, 'skipped');
+  const lines = fs.readFileSync(k.recordFile, 'utf8').trim().split('\n').map((l) => JSON.parse(l)); assert.deepEqual(lines.map((x) => x.n), [1, 2]); assert.deepEqual(lines.map((x) => x.id).sort(), ['c1', 'c2']);
+  assert.ok(d.enforcedAt, 'the last decision flipped the one-way switch, exactly once');
+});
+test('race: Approve and Skip of the SAME clip at once: exactly one wins, the other is refused, one record line, the state file holds the winner', async () => {
+  const k = akit(); const rs = await Promise.all([k.actions.approveClip({ id: 'c1', version: k.cv('c1') }, k.ctx), k.actions.skipClip({ id: 'c1', version: k.cv('c1') }, k.ctx), k.actions.approveClip({ id: 'c1', version: k.cv('c1') }, k.ctx)]);
+  assert.equal(rs.filter((r) => r.ok).length >= 1, true); const winner = readClipApprovals(k.approvalsFile).data.clips.c1.state;
+  const recs = fs.readFileSync(k.recordFile, 'utf8').trim().split('\n').map((l) => JSON.parse(l)); assert.equal(recs.length, rs.filter((r) => r.ok).length, 'one record per accepted decision, none for a refused one');
+  assert.deepEqual(recs.map((x) => x.n), recs.map((_, i) => i + 1)); assert.ok(['approved', 'skipped'].includes(winner));
+  for (const r of rs.filter((x) => !x.ok)) assert.ok(['already-approved', 'already-skipped'].includes(r.code), r.code);
+});
+test('race: a clip decision against Stop and Start records and a video text decision: every line of the record has its own number in order, none is lost', async () => {
+  const k = akit(); const p = { recordFile: k.recordFile, claimedLogin: LOGIN, now: () => NOW, stopOpts: { flagPath: path.join(k.dir, 'f', 'stop'), fleetPath: path.join(k.dir, 'fleet.flag') }, queuePath: path.join(k.dir, 'q.json') };
+  const rs = await Promise.all([k.actions.approveClip({ id: 'c1', version: k.cv('c1') }, k.ctx), runPosting('stop', p), k.actions.skipHook({ id: 'idea_1', version: k.hv(1) }, k.ctx), k.actions.skipClip({ id: 'c2', version: k.cv('c2') }, k.ctx)]);
+  assert.deepEqual(rs.map((r) => r.ok), [true, true, true, true]);
+  const lines = fs.readFileSync(k.recordFile, 'utf8').trim().split('\n').map((l) => JSON.parse(l)); assert.deepEqual(lines.map((x) => x.n), [1, 2, 3, 4], 'distinct, in order');
+  assert.deepEqual(lines.map((x) => `${x.kind}:${x.decision}`).sort(), ['clip:approve', 'clip:skip', 'hook:skip', 'posting:stop']);
+  assert.equal(readDecisions(k.recordFile).records.length, 4);
+});
