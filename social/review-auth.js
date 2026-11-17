@@ -84,6 +84,14 @@ export function hasProxyHeaders(req) {
   return Object.keys((req && req.headers) || {}).some((n) => { const k = n.toLowerCase(); return k === 'x-forwarded-for' || k === 'x-forwarded-host' || k === 'x-forwarded-proto' || k.startsWith('tailscale-'); });
 }
 
+export const PAGE_HEADER = 'x-bpa-page';
+/** True for a real page load (browser navigation) or a request that carries the page's own header. Another site's image tag or no-cors fetch is neither; the Tailscale proxy adds the owner's login to those too. */
+export function isPageLoad(req) {
+  const h = req && req.headers; if (!h || typeof h !== 'object') return false;
+  const norm = (v) => (typeof v === 'string' ? v.toLowerCase().trim() : null);
+  return (norm(h['sec-fetch-dest']) === 'document' && norm(h['sec-fetch-mode']) === 'navigate') || h[PAGE_HEADER] === '1';
+}
+
 export function checkHealthAccess(req, { port, access, sessions }) {
   if (loopbackHost(req.headers?.host, port) && !hasProxyHeaders(req)) return { ok: true };
   return checkAccess(req, { access, sessions, needCookie: true });

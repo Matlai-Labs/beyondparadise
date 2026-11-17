@@ -15,20 +15,20 @@ import { writeAccess, goodHeaders, OWNER, HOST } from './review-test-kit.js';
 const mk = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bpa-routes-'));
 const clip = (id) => ({ id, file: `${id}.mp4`, durationSec: 7, source: [{ videoId: 'v1', startSec: 1, endSec: 8 }], checks: { rendered: 'ok' }, flash: { flash: false }, verified: { verdict: 'pass', singleSubject: 'yes', notes: 'a lion' }, shows: { tags: ['lion'] } });
 const IDEA = { id: 'idea_1', title: 'Lion fact', link: '/x/', claims: [{ text: 'Claim A', sourceDate: '2026-10-01' }] };
-const login = goodHeaders();
-let dir, clipFile, accessFile, manifest, logs, srv, port, loads; let clock = 1e9;
+const login = goodHeaders(); const nav = { 'sec-fetch-dest': 'document', 'sec-fetch-mode': 'navigate' };
+let srvSessions; let dir, clipFile, accessFile, manifest, logs, srv, port, loads; let clock = 1e9;
 let hashed = 0; const info = fileInfoOf({ hashFile: async (f) => { hashed += 1; return crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex'); } }); const SECRET = 'test-secret';
 const inputs = () => { loads += 1; return {
   readHooks: () => ({ ok: true, hooks: [{ ideaId: 'idea_1', sourceId: null, hook: 'Hook one', claimsSha256: claimsSha256(IDEA), approvedBy: null, approvedAt: null }] }),
   loadPool: () => ({ ok: true, ideas: [IDEA], sourceNames: {} }), readManifest: () => manifest, libraryDir: dir, info, secret: SECRET,
   evaluate: async (i, { hook }) => ({ ok: true, draft: { hook, caption: 'SECRETCAPTION' } }) }; };
 async function start({ cacheMs = 0 } = {}) {
-  const h = createReviewHandler({ sessions: createSessions({ now: () => clock }), loadInputs: inputs, log: (m) => logs.push(m), cacheMs, previewDir: path.join(dir, 'previews') });
+  srvSessions = createSessions({ now: () => clock }); const h = createReviewHandler({ sessions: srvSessions, loadInputs: inputs, log: (m) => logs.push(m), cacheMs, previewDir: path.join(dir, 'previews') });
   srv = http.createServer((q, s) => { if (!h(q, s)) { s.statusCode = 418; s.end(); } }); await new Promise((r) => srv.listen(0, '127.0.0.1', r)); port = srv.address().port;
 }
 const call = (p, headers = {}, { method = 'GET' } = {}) => new Promise((resolve, reject) => {
   const r = http.request({ host: '127.0.0.1', port, path: p, method, headers }, (res) => { const bufs = []; res.on('data', (b) => bufs.push(b)); res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(bufs) })); }); r.on('error', reject); r.end(); });
-async function cookie() { const r = await call('/review/', login); return r.headers['set-cookie'][0].split(';')[0]; }
+async function cookie() { const r = await call('/review/', { ...login, ...nav }); return r.headers['set-cookie'][0].split(';')[0]; }
 let ck;
 async function firstClipMedia() { const r = await call('/review/api/items', ck); const j = JSON.parse(r.body); return { id: j.items.find((i) => i.kind === 'clip').preview.mediaId }; }
 const bump = (f) => { const t = new Date(Date.now() + 5000 + Math.floor(Math.random() * 1000)); fs.utimesSync(f, t, t); };
@@ -43,7 +43,7 @@ beforeEach(async () => {
 afterEach(() => { srv.close(); });
 
 let a0 = ''; test('page: 200 with cookie, CSP, nonce in header and body, hardening headers, fresh nonce each time', async () => {
-  clock += 5000; const a = await call('/review/', login), b = await call('/review/', { ...login, cookie: a0 }); assert.equal(a.status, 200); assert.match(a.headers['set-cookie'][0], /^bpa_review=[0-9a-f]{64}; HttpOnly; SameSite=Strict; Secure; Path=\/review/);
+  clock += 5000; const a = await call('/review/', { ...login, ...nav }), b = await call('/review/', { ...login, cookie: a0 }); assert.equal(a.status, 200); assert.match(a.headers['set-cookie'][0], /^bpa_review=[0-9a-f]{64}; HttpOnly; SameSite=Strict; Secure; Path=\/review/);
   const n = /nonce-([0-9a-f]{32})/.exec(a.headers['content-security-policy'])[1]; assert.ok(a.body.toString().includes(`nonce="${n}"`)); assert.ok(!a.body.toString().includes('__NONCE__')); assert.notEqual(n, /nonce-([0-9a-f]{32})/.exec(b.headers['content-security-policy'])[1]);
   assert.equal(a.headers['content-security-policy'], CSP(n)); assert.equal(b.headers['set-cookie'], undefined, 'a request that already carries a valid cookie gets none'); assert.equal(a.headers['x-content-type-options'], 'nosniff'); assert.equal(a.headers['referrer-policy'], 'no-referrer'); assert.equal(a.headers['x-frame-options'], 'DENY'); assert.equal(a.headers['cache-control'], 'no-store'); assert.match(a.headers['content-type'], /^text\/html; charset=utf-8/);
 });
@@ -140,28 +140,28 @@ test('defaultInputs wires the lane\'s own readers and verdict (usage ledger, his
 });
 
 test('E8: page loads without a cookie are rate limited: one cookie, then 429 not available; a valid cookie always gets the page', async () => {
-  clock += 10000; const first = await call('/review/', login); assert.equal(first.status, 200); const c = first.headers['set-cookie'][0].split(';')[0];
-  for (let i = 0; i < 5; i++) { const r = await call('/review/', login); assert.equal(r.status, 429, 'a cookie-less flood'); assert.match(r.body.toString(), /One moment\. The page opens by itself\./); assert.equal(r.headers['set-cookie'], undefined); }
+  clock += 10000; const first = await call('/review/', { ...login, ...nav }); assert.equal(first.status, 200); const c = first.headers['set-cookie'][0].split(';')[0];
+  for (let i = 0; i < 5; i++) { const r = await call('/review/', { ...login, ...nav }); assert.equal(r.status, 429, 'a cookie-less flood'); assert.match(r.body.toString(), /One moment\. The page opens by itself\./); assert.equal(r.headers['set-cookie'], undefined); }
   const again = await call('/review/', { ...login, cookie: c }); assert.equal(again.status, 200); assert.equal(again.headers['set-cookie'], undefined);
-  clock += 2000; assert.equal((await call('/review/', login)).status, 200, 'two seconds later a new one is allowed');
+  clock += 2000; assert.equal((await call('/review/', { ...login, ...nav })).status, 200, 'two seconds later a new one is allowed');
   assert.ok(logs.some((l) => /rate-limited page/.test(l)));
 });
 test('E8: a flood of page loads does not evict a live session', async () => {
-  const live = ck; for (let i = 0; i < 28; i++) { clock += 2000; await call('/review/', login); } // 56 s of flood, one new cookie per 2 s at best assert.equal((await call('/review/api/items', live)).status, 200);
+  const live = ck; for (let i = 0; i < 28; i++) { clock += 2000; await call('/review/', { ...login, ...nav }); } // 56 s of flood, one new cookie per 2 s at best assert.equal((await call('/review/api/items', live)).status, 200);
 });
 test('E10: nosniff on every response of the review routes: page, items, media 200/206/416/404, refusals 403/404/405/429/503', async () => {
   const { id } = await firstClipMedia(); const all = [
     await call('/review/', ck), await call('/review/api/items', ck), await call(`/review/media/${id}`, ck), await call(`/review/media/${id}`, { ...ck, range: 'bytes=0-9' }), await call(`/review/media/${id}`, { ...ck, range: 'bytes=9999-' }),
     await call(`/review/media/m_${'0'.repeat(32)}`, ck), await call('/review/zzz', ck), await call('/review/', { host: HOST }), await call('/review/', login, { method: 'POST' })];
-  clock += 10000; await call('/review/', login); all.push(await call('/review/', login)); fs.rmSync(accessFile); all.push(await call('/review/', login));
+  clock += 10000; await call('/review/', { ...login, ...nav }); all.push(await call('/review/', { ...login, ...nav })); fs.rmSync(accessFile); all.push(await call('/review/', { ...login, ...nav }));
   assert.deepEqual(all.map((r) => r.status), [200, 200, 200, 206, 416, 404, 404, 403, 405, 429, 503]);
   for (const r of all) assert.equal(r.headers['x-content-type-options'], 'nosniff', String(r.status));
 });
 
 const WAIT_PAGE_SENTENCE = 'One moment. The page opens by itself.';
 test('change 4: a page load refused only because a session was issued under 2 s ago gets the small refresh page with the same strict headers', async () => {
-  clock += 10000; assert.equal((await call('/review/', login)).status, 200);
-  const r = await call('/review/', login); const body = r.body.toString();
+  clock += 10000; assert.equal((await call('/review/', { ...login, ...nav })).status, 200);
+  const r = await call('/review/', { ...login, ...nav }); const body = r.body.toString();
   assert.equal(r.status, 429); assert.match(r.headers['content-type'], /^text\/html; charset=utf-8/);
   assert.ok(body.includes(WAIT_PAGE_SENTENCE)); assert.ok(body.includes('<meta http-equiv="refresh" content="3">')); assert.doesNotMatch(body, /<script|<link|https?:|\son[a-z]+=|<iframe/i);
   const n = /nonce-([0-9a-f]{32})/.exec(r.headers['content-security-policy'])[1]; assert.equal(r.headers['content-security-policy'], CSP(n), 'the policy is the same function, so it allows nothing more than the page');
@@ -180,6 +180,25 @@ test('change 4: a full table of young sessions (not the 2 s rule) is still the p
   srv.close(); let t = 5e9; const sessions = createSessions({ now: () => t, max: 1 });
   const h = createReviewHandler({ sessions, loadInputs: inputs, log: (m) => logs.push(m), cacheMs: 0, previewDir: path.join(dir, 'previews') });
   srv = http.createServer((q, s) => { if (!h(q, s)) { s.statusCode = 418; s.end(); } }); await new Promise((r) => srv.listen(0, '127.0.0.1', r)); port = srv.address().port;
-  assert.equal((await call('/review/', login)).status, 200); t += 3000; // past the 2 s gap, the table (max 1) still holds a young session
-  const r = await call('/review/', login); assert.equal(r.status, 429); assert.equal(r.body.toString(), 'not available'); assert.match(r.headers['content-type'], /^text\/plain/);
+  assert.equal((await call('/review/', { ...login, ...nav })).status, 200); t += 3000; // past the 2 s gap, the table (max 1) still holds a young session
+  const r = await call('/review/', { ...login, ...nav }); assert.equal(r.status, 429); assert.equal(r.body.toString(), 'not available'); assert.match(r.headers['content-type'], /^text\/plain/);
 });
+
+// the page issues a session only to a real page load: another site in the owner's browser (image tag, no-cors fetch) must not use up sessions
+const NOT_PAGE = [['image/no-cors', { 'sec-fetch-dest': 'image', 'sec-fetch-mode': 'no-cors' }], ['empty/cors', { 'sec-fetch-dest': 'empty', 'sec-fetch-mode': 'cors' }], ['no fetch-metadata headers', {}]];
+for (const [name, h] of NOT_PAGE) test(`page: no cookie and not a page load (${name}) is refused, no session, no Set-Cookie`, async () => {
+  clock += 5000; const s = srvSessions.count(); logs.length = 0; const r = await call('/review/', { ...login, ...h });
+  assert.equal(r.status, 403); assert.equal(r.body.toString(), 'not available'); assert.equal(r.headers['set-cookie'], undefined); assert.match(r.headers['content-type'], /^text\/plain/); assert.equal(r.headers['cache-control'], 'no-store');
+  assert.equal(srvSessions.count(), s); assert.deepEqual(logs, ['review refused: not-a-page-load page']);
+});
+test('page: 30 non-page requests in a row do not block or fill anything; the real page load right after gets 200 and a cookie', async () => {
+  clock += 5000; const s = srvSessions.count(); for (let i = 0; i < 30; i++) assert.equal((await call('/review/', { ...login, 'sec-fetch-dest': 'image', 'sec-fetch-mode': 'no-cors' })).status, 403);
+  assert.equal(srvSessions.count(), s); const r = await call('/review/', { ...login, ...nav }); assert.equal(r.status, 200); assert.match(r.headers['set-cookie'][0], /^bpa_review=[0-9a-f]{64}/); assert.equal(srvSessions.count(), s + 1);
+});
+test('page: a real page load without a cookie still gets 200 and a cookie', async () => { clock += 5000; const r = await call('/review/', { ...login, ...nav, 'sec-fetch-site': 'cross-site' }); assert.equal(r.status, 200); assert.ok(r.headers['set-cookie']); });
+test('page: the page header alone (with login and Host) gets 200 and a cookie', async () => { clock += 5000; const r = await call('/review/', { ...login, 'x-bpa-page': '1' }); assert.equal(r.status, 200); assert.ok(r.headers['set-cookie']); });
+test('page: the page header never bypasses Host or login', async () => {
+  clock += 5000; const s = srvSessions.count(); for (const h of [{ ...goodHeaders({ 'tailscale-user-login': 'x@example.com' }) }, goodHeaders({ host: 'x.example.com:10000' }), { host: HOST }]) { const r = await call('/review/', { ...h, 'x-bpa-page': '1' }); assert.equal(r.status, 403); assert.equal(r.headers['set-cookie'], undefined); }
+  assert.equal(srvSessions.count(), s);
+});
+test('page: a valid cookie and no fetch-metadata headers still gets 200 and no new cookie', async () => { clock += 5000; const s = srvSessions.count(); const r = await call('/review/', ck); assert.equal(r.status, 200); assert.equal(r.headers['set-cookie'], undefined); assert.equal(srvSessions.count(), s); });

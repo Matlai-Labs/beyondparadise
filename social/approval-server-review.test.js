@@ -25,7 +25,7 @@ test('old route still works on loopback with the token', async () => { const r =
 test('/health answers as today on 127.0.0.1 and localhost', async () => { for (const h of [`127.0.0.1:${PORT}`, `localhost:${PORT}`]) { const r = await call('GET', '/health', { host: h }); assert.equal(r.status, 200); const j = JSON.parse(r.body); assert.equal(j.ok, true); assert.equal(typeof j.pending, 'number'); } });
 test('/health through the published name needs login AND cookie', async () => {
   assert.equal((await call('GET', '/health', { host: HOST })).status, 403); assert.equal((await call('GET', '/health', { host: HOST, 'tailscale-user-login': OWNER })).status, 403);
-  const page = await call('GET', '/review/', { host: HOST, 'tailscale-user-login': OWNER }); ck = page.headers['set-cookie'][0].split(';')[0];
+  const page = await call('GET', '/review/', { host: HOST, 'tailscale-user-login': OWNER, 'sec-fetch-dest': 'document', 'sec-fetch-mode': 'navigate' }); ck = page.headers['set-cookie'][0].split(';')[0];
   assert.equal((await call('GET', '/health', { host: HOST, 'tailscale-user-login': OWNER, cookie: ck })).status, 200);
 });
 test('/health: another login is refused; an unreadable settings file refuses non-loopback but not loopback', async () => {
