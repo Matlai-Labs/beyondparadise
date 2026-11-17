@@ -20,8 +20,8 @@ const NP = ['examplehotel'];
 const NOW = new Date('2026-11-17T09:00:00Z'); // 12:00 EAT, before the 18:00 slot
 const THROW_ASK = async () => { throw new Error('a model was asked on the automatic path'); };
 const claim = (text, n = 1) => ({ text, ruleId: `r${n}`, sourceDate: '2026-10-01' });
-const idea = (n, over = {}) => ({ id: `idea_${n}`, sourceId: `rule:r${n}`, kind: 'rule', topic: 'visa', title: `Tanzania entry rule number ${n}`, claims: [claim(`The listed fee for item ${n} is ${n + 10} US dollars for most visitors.`, n)], link: '/destinations/tanzania/', score: 100 - n, ...over });
-const clipEntry = (id, over = {}) => ({ id, file: `${id}.mp4`, durationSec: 7, source: [{ videoId: `v-${id}`, startSec: 10, endSec: 17 }], subject: 'x', checks: { rendered: 'ok' }, flash: { flash: false, atSec: [] }, verified: { verdict: 'pass', by: 't', at: '2026-11-16T00:00:00Z', notes: '' }, ...over });
+const idea = (n, over = {}) => ({ id: `idea_${n}`, sourceId: `rule:r${n}`, kind: 'rule', topic: 'visa', title: `Lion entry rule number ${n}`, claims: [claim(`The listed fee for item ${n} is ${n + 10} US dollars for most visitors.`, n)], link: '/destinations/tanzania/', score: 100 - n, ...over });
+const clipEntry = (id, over = {}) => ({ id, file: `${id}.mp4`, durationSec: 7, source: [{ videoId: `v-${id}`, startSec: 10, endSec: 17 }], subject: 'x', checks: { rendered: 'ok' }, flash: { flash: false, atSec: [] }, verified: { verdict: 'pass', by: 't', at: '2026-11-16T00:00:00Z', notes: '' }, shows: { tags: ['lion'], by: 't', at: '2026-11-17T00:00:00Z', notes: '' }, ...over });
 const manifestOf = (...clips) => ({ version: 1, clips });
 const okCompose = (log) => async ({ clipFile, overlayPng, out }) => { log?.push({ clipFile, overlayPng, out }); fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, 'composed-bytes'); return { ok: true, problems: [], out, rendered: { ok: true, problems: [], durationSec: 7 }, qa: { ok: true, problems: [] } }; };
 const okOverlay = async ({ out }) => { fs.writeFileSync(out, 'png'); return { ok: true }; };
@@ -63,7 +63,7 @@ test('prepareAutoPost: a pool given as { ideas } works, and input order never ma
 test('prepareAutoPost: success carries claims, ideaId, lane, writer, the ready file with its hash, the clip id and its source, and the text is the verbatim one', async () => {
   const k = kit(); const r = await prepareAutoPost(k.input, k.deps);
   assert.equal(r.ok, true); const d = r.draft;
-  assert.deepEqual([d.lane, d.writer, d.ideaId, d.ideaTitle], ['auto', 'verbatim', 'idea_1', 'Tanzania entry rule number 1']);
+  assert.deepEqual([d.lane, d.writer, d.ideaId, d.ideaTitle], ['auto', 'verbatim', 'idea_1', 'Lion entry rule number 1']);
   assert.deepEqual(d.claims, k.input.pool[0].claims); assert.ok(d.text.split('\n').includes(k.input.pool[0].claims[0].text));
   assert.equal(d.clipId, 'clip-a'); assert.deepEqual(d.clipSource, [{ videoId: 'v-clip-a', startSec: 10, endSec: 17 }]);
   assert.equal(path.dirname(d.readyFile), k.outDir); assert.match(path.basename(d.readyFile), /\.mp4$/);
@@ -72,7 +72,7 @@ test('prepareAutoPost: success carries claims, ideaId, lane, writer, the ready f
   assert.equal(r.checks.rendered.ok, true); assert.equal(r.checks.qa.ok, true);
 });
 test('prepareAutoPost refusals: claim-too-long, title-too-long, no claims -> next idea, each logged with the idea id and the reason', async () => {
-  const k = kit({ input: { pool: [idea(1, { title: 'Z'.repeat(80) }), idea(2, { claims: [claim('x'.repeat(241))] }), idea(3, { claims: [] }), idea(4)] } });
+  const k = kit({ input: { pool: [idea(1, { title: `Lion ${'Z'.repeat(80)}` }), idea(2, { claims: [claim('x'.repeat(241))] }), idea(3, { claims: [] }), idea(4)] } });
   const r = await prepareAutoPost(k.input, k.deps);
   assert.equal(r.ok, true); assert.equal(r.draft.ideaId, 'idea_4');
   assert.deepEqual(r.refused, [{ ideaId: 'idea_1', reason: 'title-too-long' }, { ideaId: 'idea_2', reason: 'claim-too-long' }, { ideaId: 'idea_3', reason: 'idea-has-no-claims' }]);
@@ -88,7 +88,7 @@ test('prepareAutoPost: the deterministic judge part refuses filler wording (judg
   const r = await prepareAutoPost(k.input, k.deps); assert.equal(r.draft.ideaId, 'idea_2'); assert.equal(r.refused[0].reason, 'judge:filler');
 });
 test('prepareAutoPost: at most 15 ideas are tried per run; then no-eligible-idea with the refusal reasons counted', async () => {
-  const pool = Array.from({ length: 20 }, (_, i) => idea(i + 1, { title: 'Q'.repeat(90) })); pool.push(idea(99, { score: 1 }));
+  const pool = Array.from({ length: 20 }, (_, i) => idea(i + 1, { title: `Lion ${'Q'.repeat(90)}` })); pool.push(idea(99, { score: 1 }));
   const k = kit({ input: { pool } }); const r = await prepareAutoPost(k.input, k.deps);
   assert.deepEqual([r.ok, r.reasons], [false, ['no-eligible-idea']]); assert.equal(r.refused.length, 15); assert.equal(k.composeLog.length, 0);
   assert.equal(describeRefusal(r), 'no-eligible-idea (title-too-long x15)');
@@ -168,6 +168,11 @@ test('switch on: one item is queued for 18:00 EAT of the same day, in the state 
   assert.equal(fs.existsSync(d.deps.usagePath), false, 'the usage ledger is untouched until a successful publish');
   assert.equal(fs.existsSync(d.deps.ledgerPath), false, 'no cap reservation yet: that happens in the worker right before the publish');
 });
+test('ensureDailyAuto never passes the rehearsal-only preview switch on, whatever prepareDeps or config carry', async () => {
+  let seen = null; const d = daily({ config: { autoPublish: true, includeUnapproved: true, previewUnapproved: true }, prepare: async (input, deps) => { seen = { input, deps }; return { ok: false, reasons: ['x'], refused: [] }; } });
+  d.deps.prepareDeps = { ...d.deps.prepareDeps, previewUnapproved: true }; await ensureDailyAuto(d.deps);
+  assert.ok(seen); assert.equal(seen.deps.previewUnapproved, false); assert.equal('previewUnapproved' in seen.input, false);
+});
 test('the item is added next to the existing items; the sequence number continues; an existing draft is untouched', async () => {
   const d = daily(); saveQueue({ seq: 4, drafts: [{ id: 'B4', status: 'pending_approval', kind: 'outlook', text: 'x', sourceDate: '2026-11-01' }] }, d.deps.queuePath);
   await ensureDailyAuto(d.deps); const items = queued(d); assert.deepEqual(items.map((x) => x.id), ['B4', 'B5']); assert.equal(items[0].text, 'x');
@@ -246,7 +251,7 @@ test('runWorker, later: the existing path publishes it (stop check, final check,
   const it = queued(w)[0]; assert.deepEqual([it.status, it.ig.status, it.permalink], ['posted', 'posted', 'https://example.invalid/p/1']);
   assert.equal(reservationsOnDay({ now: EVENING, path: w.deps.ledgerPath }).count, 1, 'the daily cap slot was reserved');
   const used = readUsage(w.deps.usagePath); assert.deepEqual(used.map((u) => [u.id, u.startSec, u.endSec]), [['v-clip-a', 10, 17]]);
-  assert.deepEqual(w.sent, ['Automatic post published: https://example.invalid/p/1. Idea: Tanzania entry rule number 1. Reply bpa stop to halt automatic posting.']);
+  assert.deepEqual(w.sent, ['Automatic post published: https://example.invalid/p/1. Idea: Lion entry rule number 1. Reply bpa stop to halt automatic posting.']);
   await runWorker({ ...w.wdeps, now: new Date('2026-11-17T15:45:00Z') }); assert.equal(w.calls.ig.length, 1, 'never twice'); assert.equal(readUsage(w.deps.usagePath).length, 1);
 });
 test('the usage ledger is written only after a successful publish: a failed publish writes nothing and sends no "published" line', async () => {
