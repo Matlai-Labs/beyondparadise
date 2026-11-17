@@ -16,6 +16,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { parseJsonLoose } from './vendor/json-loose/json-loose.mjs';
 import { CONFIG, voiceGate, rulesCheck } from './lib.js';
+import { splitSentences } from './sentence-split.js';
 import { askLocal, GuardError, EmptyAnswerError } from './local-model.js';
 
 const execFileP = promisify(execFile);
@@ -168,7 +169,7 @@ export function codeLinesFor(idea, opts = {}) {
 }
 export function assembleParts(idea, ans, opts = {}) {
   const hook = ans.hook.replace(/\s+/g, ' ').trim();
-  const sentences = ans.caption.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+  const sentences = splitSentences(ans.caption);
   const codeLines = codeLinesFor(idea, opts); const tags = codeLines[codeLines.length - 1];
   const lines = [hook, '', ...sentences, ...codeLines.slice(0, -1), '', tags];
   return { hook, sentences, codeLines, text: lines.join('\n') };

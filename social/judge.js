@@ -16,6 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseJsonLoose } from './vendor/json-loose/json-loose.mjs';
 import { finalCheck } from './lib.js';
+import { splitSentences as splitShared } from './sentence-split.js';
 import { numberFidelity, assembleParts, localAsk, readFreeMemoryPercent, listInstalledModels, unloadModel, MIN_FREE_PERCENT, runBakeoff, pickBakeoffIdeas, PROMPT_V1, PROMPT_V2 } from './caption.js';
 import { CONFIG, voiceGate, rulesCheck } from './lib.js';
 
@@ -52,11 +53,8 @@ export const DEFECTS = Object.freeze({
 export const DEFECT_TYPES = Object.freeze(['event', 'judgement', 'recommendation', 'cause', 'number-swap', 'actor-place', 'first-person', 'sea-remark']);
 export const JUDGE_CHECKS = ['no-claims', 'no-model-text', 'final-check', 'number-not-in-claims', 'filler', 'unsupported-statement', 'judge-unparsable', 'judge-error'];
 
-/** Sentences of a model-written text: split after . ! ? before a capital letter or a quote; "No. 256" stays whole. */
-export function splitSentences(text) {
-  if (typeof text !== 'string') return [];
-  return text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+(?=[A-Z"'“‘])/).map((s) => s.trim()).filter((s) => s.length > 1);
-}
+/** Sentences of a model-written text: the shared splitter (sentence-split.js: "No. 256", "Mt. Kilimanjaro", "approx. 3 km" stay whole), one-character leftovers dropped. */
+export function splitSentences(text) { return splitShared(text).filter((s) => s.length > 1); }
 const hasText = (v) => typeof v === 'string' && v.trim() !== '';
 const claimTexts = (d) => (Array.isArray(d?.claims) ? d.claims.map((c) => c && c.text).filter(hasText) : []);
 const defaultClock = () => Number(process.hrtime.bigint()) / 1e9;
