@@ -23,6 +23,13 @@ export const SCENE_THRESHOLD = 0.3;
 export const SAMPLE_EVERY_SEC = 2;
 export const SHOT_TRIM_SEC = 0.3;
 export const MIN_SHOT_SEC = 3;
+/** THE lower length limit of a library clip: one shot of at least MIN_SHOT_SEC. Every duration check of a library clip (render check, composed-clip QA) reads this. A re-encode may land a frame or two short, hence the tolerance. */
+export const LIBRARY_CLIP_MIN_SEC = MIN_SHOT_SEC;
+export const DURATION_TOLERANCE_SEC = 0.1;
+/** THE shortest duration of a library clip as the checks see it (--split, the composed-clip checks, the automatic lane's publish check): the minimum minus the re-encode tolerance. The weekly reels and --build keep their own floors. */
+export const LIBRARY_CLIP_FLOOR_SEC = LIBRARY_CLIP_MIN_SEC - DURATION_TOLERANCE_SEC;
+/** The floor of checkRendered when the caller gives none (--build, the clip tool): unchanged. */
+export const RENDER_MIN_SEC = 5;
 export const CLIP_MIN_SEC = 6;
 export const CLIP_MAX_SEC = 9;
 const MIN_PIECE_SEC = 2;
@@ -291,8 +298,8 @@ export async function ffprobeJson(file) {
 
 const parseRate = (r) => { const m = /^(\d+)\/(\d+)$/.exec(String(r ?? '')); return m && Number(m[2]) > 0 ? Number(m[1]) / Number(m[2]) : NaN; };
 
-/** Duration 5 to 10 s, 1080x1920, no audio stream, 30 fps. Deletes nothing; returns { ok, problems, durationSec }. */
-export async function checkRendered(file, { probe = ffprobeJson } = {}) {
+/** Duration `minSec` (default RENDER_MIN_SEC 5; the library passes LIBRARY_CLIP_FLOOR_SEC) to 10 s, 1080x1920, no audio stream, 30 fps. Deletes nothing; returns { ok, problems, durationSec }. */
+export async function checkRendered(file, { probe = ffprobeJson, minSec = RENDER_MIN_SEC } = {}) {
   const problems = [];
   let p;
   try { p = await probe(file); } catch (e) { return { ok: false, problems: [`probe failed: ${e.message}`], durationSec: null }; }
@@ -306,7 +313,7 @@ export async function checkRendered(file, { probe = ffprobeJson } = {}) {
     if (!(Math.abs(fps - OUT_FPS) < 0.01)) problems.push(`frame rate ${v.r_frame_rate}, want ${OUT_FPS}`);
   }
   if (streams.some((s) => s.codec_type === 'audio')) problems.push('has an audio stream, want none');
-  if (!(dur >= 5 && dur <= 10)) problems.push(`duration ${Number.isFinite(dur) ? dur.toFixed(2) : 'unknown'} s, want 5 to 10`);
+  if (!(dur >= minSec && dur <= 10)) problems.push(`duration ${Number.isFinite(dur) ? dur.toFixed(2) : 'unknown'} s, want ${minSec} to 10`);
   return { ok: problems.length === 0, problems, durationSec: Number.isFinite(dur) ? dur : null };
 }
 

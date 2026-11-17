@@ -198,3 +198,9 @@ test('comparePrompts: a model that is not installed or under 15 percent free mem
   const a = await comparePrompts({ ideas: [IDEA], captionModel: 'gone', judgeModel: 'jud', installed: ['jud'], memoryFree: async () => 90, unload: async () => {}, askFor: () => async () => { throw new Error('no'); } }); assert.match(a.skipped, /gone: not installed/);
   const b = await comparePrompts({ ideas: [IDEA], captionModel: 'cap', judgeModel: 'jud', installed: ['cap', 'jud'], memoryFree: async () => 9, unload: async () => {}, askFor: () => async () => { throw new Error('no'); } }); assert.match(b.skipped, /free memory 9%/);
 });
+test('model: an unsupported second sentence after "Vitamin C." is judged as its own sentence (not merged behind the supported first one)', async () => {
+  const caption = 'Take Vitamin C. Zanzibar has no malaria risk.'; const d = mk({ caption, hook: 'Zanzibar health' }, { ...ANS, caption });
+  const ask = recorder((req) => (req.prompt.endsWith('Sentence: Zanzibar has no malaria risk.') ? no('the malaria claim') : yes)); const r = await J(d, ask);
+  assert.ok(ask.calls.some((c) => c.prompt.endsWith('Sentence: Take Vitamin C.')) && ask.calls.some((c) => c.prompt.endsWith('Sentence: Zanzibar has no malaria risk.')));
+  assert.equal(r.verdict, 'fail'); assert.ok(ids(r).includes('unsupported-statement') || ids(r).length > 0);
+});

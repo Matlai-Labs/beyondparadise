@@ -279,7 +279,7 @@ const chk = (p) => checkRendered('f.mp4', { probe: async () => p });
 test('checkRendered: a good file passes', async () => { assert.deepEqual(await chk(good), { ok: true, problems: [], durationSec: 7.5 }); });
 test('checkRendered: duration limits, both sides of each', async () => {
   assert.equal((await chk(withP({}, { duration: '5' }))).ok, true);
-  assert.equal((await chk(withP({}, { duration: '4.99' }))).ok, false);
+  assert.equal((await chk(withP({}, { duration: '4.99' }))).ok, false); // the default floor is the old 5 s; the library passes its own (clip-split.test.js)
   assert.equal((await chk(withP({}, { duration: '10' }))).ok, true);
   assert.equal((await chk(withP({}, { duration: '10.01' }))).ok, false);
 });
