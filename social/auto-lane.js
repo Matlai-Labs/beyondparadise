@@ -6,8 +6,12 @@
 //   prepareAutoPost({ pool, manifest, usage, history, config, now }, deps) -> { ok:true, draft, clip, idea, refused, checks } | { ok:false, reasons, detail?, refused }
 //   ensureDailyAuto(deps)    called by worker.js AFTER its existing work, only when config.autoPublish === true (this module is not even loaded otherwise)
 //   afterAutoPublish(d, r)   called by worker.js after a SUCCESSFUL publish: usage ledger, status, one alert
-//   node auto-lane.js --rehearse [--out <dir>] [--history-queue <queue.json>]   one full preparation against the real pool and library, nothing queued, hosted or posted
-//   node auto-lane.js --supply [--top 30] [--history-queue <queue.json>]        how many of the top ideas survive the text checks, refusal reasons counted
+//   node auto-lane.js --rehearse [--count 1] [--out <dir>] [--history-queue <queue.json>]   <count> full preparations (each its own clip and idea) against the real pool and library, nothing queued, hosted or posted
+//   node auto-lane.js --supply [--top 30] [--history-queue <queue.json>]        how many of the top ideas survive the text checks, refusal reasons counted, and how many of them have a fitting clip
+//
+// PAIRING (auto-pairing.js): a fact goes only over footage that fits it. The animal the idea is about must be among the tags a reviewer recorded for the clip
+// (clip-library.js --shows); the pairing test runs BEFORE the text checks, so MAX_IDEAS_PER_RUN counts only ideas that have a fitting, eligible, unused clip.
+// An idea may carry a hand-written, approved hook (auto-hooks.js) that replaces the title hook; config.autoRequireApprovedHook === true refuses ideas without one.
 //
 // Publishing is NOT done here. The queued item (status scheduled, ig.status queued, auto:true, no Facebook leg) is published by the EXISTING worker path:
 // stop check, final check, cap reservation, claim, host, publish (worker.js -> igPostDraftAny -> postReadyReel in lib.js).
@@ -20,6 +24,9 @@ import { CONFIG, QUEUE_PATH, STATUS, finalCheck, loadQueue, saveQueue, nextId, w
 import { stateDir, stopStatus } from './stop.js';
 import { dailyCap, eatDay, reservationsOnDay } from './ledger.js';
 import { verbatimDraft } from './fact-post.js';
+import { subjectOf, clipFits, altTextFor } from './auto-pairing.js';
+import { readHooks, approvedHookFor, defaultHooksPath } from './auto-hooks.js';
+import { numberFidelity } from './caption.js';
 import { deterministicChecks } from './judge.js';
 import { eligibleClips, libraryDir as defaultLibraryDir, readManifest as readManifestReal } from './clip-library.js';
 import { readUsage as readUsageReal, appendUsage, defaultUsagePath } from './reel-clip.js';
@@ -64,36 +71,53 @@ const inHistory = (idea, history, now, repeatDays) => {
 const rankOf = (a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 const inside = (dir, f) => { const rel = path.relative(path.resolve(dir), path.resolve(dir, f)); return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel); };
 
-/** One idea through the text checks: verbatim draft, the real final check (voice + rules), the alt text, the deterministic judge checks. { ok, draft } | { ok:false, reason }. */
-export async function evaluateIdea(idea, { now = new Date(), check = finalCheck, judgeChecks = deterministicChecks, verbatim = verbatimDraft, neverPromotePatterns, sourceNames } = {}) {
-  const v = verbatim(idea, { now, sourceNames }); if (!v.ok) return { ok: false, reason: v.reason };
+/** The first eligible unused clip (library order) that fits the idea: { clip } | { reason: 'no-subject' | 'no-matching-clip' }. Cheap, no text check. */
+export function pairingFor(idea, clips) {
+  if (!subjectOf(idea)) return { reason: 'no-subject' };
+  const clip = clips.find((c) => clipFits(idea, c)); return clip ? { clip } : { reason: 'no-matching-clip' };
+}
+/** The hook rule: an approved, current hand-written hook wins; else the title hook, unless config.autoRequireApprovedHook is exactly true. { hook } (undefined = the title) | { reason }. */
+export function hookFor(idea, hooks, config) {
+  const e = approvedHookFor(idea, hooks); if (e) return { hook: e.hook };
+  return config && config.autoRequireApprovedHook === true ? { reason: 'no-approved-hook' } : { hook: undefined };
+}
+
+/** One idea through the text checks: verbatim draft, the real final check (voice + rules), the alt text, the deterministic judge checks. { ok, draft } | { ok:false, reason }.
+ *  `hook`: an approved hand-written hook instead of the title (its figures must be claim figures, then it meets every check the title hook does); `clip`: the alt text then describes that footage. */
+export async function evaluateIdea(idea, { now = new Date(), check = finalCheck, judgeChecks = deterministicChecks, verbatim = verbatimDraft, neverPromotePatterns, sourceNames, hook, clip } = {}) {
+  const v = verbatim(idea, { now, sourceNames, hook }); if (!v.ok) return { ok: false, reason: v.reason };
+  if (hook !== undefined && numberFidelity([v.draft.hook], v.draft.claims).length) return { ok: false, reason: 'hook-number-not-in-claims' };
   const draft = { ...v.draft, ideaTitle: String(idea.title ?? '') };
+  const alt = clip ? altTextFor(clip, draft.hook) : null; if (alt) draft.altText = alt; // from what the reviewer recorded the clip as showing
   const opts = neverPromotePatterns !== undefined ? { neverPromotePatterns } : undefined;
   const fc = await check(draft, opts); if (!fc.ok) return { ok: false, reason: `final-check:${fc.ruleIds.join('+') || 'refused'}` };
-  const alt = await check({ id: 'alt', text: draft.altText, claims: draft.claims }, opts); if (!alt.ok) return { ok: false, reason: `alt-text:${alt.ruleIds.join('+') || 'refused'}` };
+  const altc = await check({ id: 'alt', text: draft.altText, claims: draft.claims }, opts); if (!altc.ok) return { ok: false, reason: `alt-text:${altc.ruleIds.join('+') || 'refused'}` };
   const j = await judgeChecks(draft, { check, ...(opts || {}) }); if (j.length) return { ok: false, reason: `judge:${j.map((x) => x.check).join('+')}` };
   return { ok: true, draft };
 }
 
 export async function prepareAutoPost({ pool, manifest, usage = [], history = [], config = {}, now = new Date() } = {}, deps = {}) {
-  const { say = () => {}, outDir = autoDir(), libraryDir = defaultLibraryDir(), exists = fs.existsSync, overlay = renderOverlay, compose = composeClip, sourceNames, neverPromotePatterns, check = finalCheck, judgeChecks = deterministicChecks } = deps;
+  const { say = () => {}, outDir = autoDir(), libraryDir = defaultLibraryDir(), exists = fs.existsSync, overlay = renderOverlay, compose = composeClip, sourceNames, neverPromotePatterns, check = finalCheck, judgeChecks = deterministicChecks, hooksFile = defaultHooksPath() } = deps;
   const kinds = autoKindsOf(config); if (!kinds.ok) return { ok: false, reasons: [kinds.reason], refused: [] };
+  const hooks = readHooks(hooksFile); if (!hooks.ok) return { ok: false, reasons: ['bad-hooks-file'], detail: hooks.reason, refused: [] }; // fail closed: never silently fall back to titles
+  // the clips: those of the library that passed every check and are not in the usage ledger; there is NO fallback to other footage or a text-only reel
+  const clips = eligibleClips(manifest, usage, { dir: libraryDir, exists }).filter((c) => inside(libraryDir, c.file));
+  if (!clips.length) return { ok: false, reasons: ['no-eligible-clip'], refused: [] };
   const ideas = (Array.isArray(pool) ? pool : (pool && Array.isArray(pool.ideas) ? pool.ideas : [])).filter((i) => i && kinds.kinds.includes(i.kind)).sort(rankOf);
   const repeatDays = Number.isInteger(config.repeatDays) && config.repeatDays > 0 ? config.repeatDays : 120;
   const refused = []; let chosen = null; let tried = 0;
   const refuse = (idea, reason) => { refused.push({ ideaId: idea.id, reason }); say(`auto: idea ${idea.id} refused: ${reason}`); };
   for (const idea of ideas) {
     if (inHistory(idea, history, now, repeatDays)) { refuse(idea, 'in-history'); continue; }
+    const fit = pairingFor(idea, clips); if (!fit.clip) { refuse(idea, fit.reason); continue; } // the cheap test first: only ideas WITH a fitting clip count against the cap
+    const hk = hookFor(idea, hooks.hooks, config); if (hk.reason) { refuse(idea, hk.reason); continue; }
     if (tried >= MAX_IDEAS_PER_RUN) break; tried += 1;
-    const r = await evaluateIdea(idea, { now, check, judgeChecks, neverPromotePatterns, sourceNames: sourceNames || (pool && pool.sourceNames) });
+    const r = await evaluateIdea(idea, { now, check, judgeChecks, neverPromotePatterns, sourceNames: sourceNames || (pool && pool.sourceNames), hook: hk.hook, clip: fit.clip });
     if (!r.ok) { refuse(idea, r.reason); continue; }
-    chosen = { idea, draft: r.draft }; break;
+    chosen = { idea, draft: r.draft, clip: fit.clip }; break;
   }
   if (!chosen) return { ok: false, reasons: ['no-eligible-idea'], refused };
-  // the clip: the next one of the library that passed every check and is not in the usage ledger; there is NO fallback to other footage or a text-only reel
-  const clip = eligibleClips(manifest, usage, { dir: libraryDir, exists }).find((c) => inside(libraryDir, c.file));
-  if (!clip) return { ok: false, reasons: ['no-eligible-clip'], refused };
-  const { idea, draft } = chosen; const outFile = path.join(outDir, `auto-${idea.id}-${clip.id}.mp4`);
+  const { idea, draft, clip } = chosen; const outFile = path.join(outDir, `auto-${idea.id}-${clip.id}.mp4`);
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'bpa-auto-ov-'));
   try {
     const ov = await overlay({ hook: draft.hook, out: path.join(work, 'overlay.png') });
@@ -155,39 +179,63 @@ export async function afterAutoPublish(d, r, { now = new Date(), usagePath = def
 
 // ── command line: rehearsal and supply count (read only: nothing is queued, hosted, posted or written to a ledger) ──────────
 async function main(argv) {
-  const a = { rehearse: false, supply: false, top: 30, out: null, historyQueue: null };
+  const a = { rehearse: false, supply: false, top: 30, count: 1, out: null, historyQueue: null };
   const val = (i) => { if (i + 1 >= argv.length) { console.error(`missing value for ${argv[i]}`); process.exit(2); } return argv[i + 1]; };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     if (k === '--rehearse') a.rehearse = true; else if (k === '--supply') a.supply = true;
-    else if (k === '--out') { a.out = val(i); i++; } else if (k === '--top') { a.top = Number(val(i)); i++; } else if (k === '--history-queue') { a.historyQueue = val(i); i++; }
+    else if (k === '--out') { a.out = val(i); i++; } else if (k === '--top') { a.top = Number(val(i)); i++; } else if (k === '--count') { a.count = Number(val(i)); i++; } else if (k === '--history-queue') { a.historyQueue = val(i); i++; }
     else { console.error(`unknown argument ${k}`); process.exit(2); }
   }
-  if (a.rehearse === a.supply || !Number.isInteger(a.top) || a.top < 1) { console.error('usage: auto-lane.js --rehearse [--out <dir>] [--history-queue <queue.json>] | --supply [--top 30] [--history-queue <queue.json>]'); process.exit(2); }
+  if (a.rehearse === a.supply || !Number.isInteger(a.top) || a.top < 1 || !Number.isInteger(a.count) || a.count < 1 || a.count > 50) { console.error('usage: auto-lane.js --rehearse [--count 1] [--out <dir>] [--history-queue <queue.json>] | --supply [--top 30] [--history-queue <queue.json>]'); process.exit(2); }
   const { loadIdeaPool } = await import('./idea-drafts.js'); const now = new Date(); const queuePath = a.historyQueue || QUEUE_PATH;
   const pool = loadIdeaPool({ queuePath, now }); if (!pool.ok) { console.error(`no pool: ${pool.reason}`); process.exit(3); }
+  const hooks = readHooks(); if (!hooks.ok) { console.error(`bad-hooks-file: ${hooks.reason}`); process.exit(3); }
   const history = historyFromQueue(loadQueue(queuePath)); const kinds = autoKindsOf(CONFIG);
   const ranked = pool.ideas.filter((i) => kinds.kinds.includes(i.kind)).sort(rankOf);
+  const libDir = defaultLibraryDir(); const manifest = readManifestReal(libDir); const usage = readUsageReal(defaultUsagePath());
   if (a.supply) {
-    const top = ranked.slice(0, a.top); const counts = {}; let ok = 0;
-    for (const idea of top) { const r = await evaluateIdea(idea, { now, sourceNames: pool.sourceNames }); if (r.ok) ok++; else { const key = r.reason.replace(/^(final-check|judge|alt-text):.*/, '$1:$&').replace(/^([^:]+):\1:/, '$1:'); counts[key] = (counts[key] || 0) + 1; } }
-    console.log(`top ${top.length} ideas of kinds ${kinds.kinds.join('+')} (of ${ranked.length}): ${ok} survive verbatimDraft + final check + deterministic judge checks`);
+    const top = ranked.slice(0, a.top); const counts = {}; const survivors = [];
+    for (const idea of top) {
+      const hk = hookFor(idea, hooks.hooks, CONFIG); const bump = (key) => { counts[key] = (counts[key] || 0) + 1; };
+      if (hk.reason) { bump(hk.reason); continue; }
+      const r = await evaluateIdea(idea, { now, sourceNames: pool.sourceNames, hook: hk.hook }); // without a clip: the alt text is clip-based later and does not change the verdict in practice
+      if (r.ok) survivors.push(idea); else bump(r.reason.replace(/^(final-check|judge|alt-text):.*/, '$1:$&').replace(/^([^:]+):\1:/, '$1:'));
+    }
+    console.log(`top ${top.length} ideas of kinds ${kinds.kinds.join('+')} (of ${ranked.length}): ${survivors.length} survive verbatimDraft + final check + deterministic judge checks`);
     for (const [k, n] of Object.entries(counts).sort((x, y) => y[1] - x[1])) console.log(`  ${String(n).padStart(3)}  ${k}`);
+    const clips = eligibleClips(manifest, usage, { dir: libDir }).filter((c) => inside(libDir, c.file));
+    const per = new Map(clips.map((c) => [c.id, 0])); const bySubject = {}; let fitting = 0;
+    for (const idea of survivors) {
+      const key = subjectOf(idea)?.key ?? '(no animal named)'; bySubject[key] = (bySubject[key] || 0) + 1;
+      const fits = clips.filter((c) => clipFits(idea, c)); if (fits.length) fitting += 1; for (const c of fits) per.set(c.id, per.get(c.id) + 1);
+    }
+    console.log(`${fitting} of ${survivors.length} surviving ideas have a fitting unused clip (${clips.length} eligible unused clips)`);
+    for (const c of clips) console.log(`  clip ${c.id}  tags: ${c.shows && Array.isArray(c.shows.tags) && c.shows.tags.length ? c.shows.tags.join(', ') : 'none recorded'}  fits ${per.get(c.id)} surviving ideas`);
+    console.log(`surviving ideas by the animal they are about: ${Object.entries(bySubject).sort((x, y) => y[1] - x[1]).map(([k, n]) => `${k} x${n}`).join(', ') || 'none'}`);
     return;
   }
   const out = path.resolve(a.out || path.join(os.tmpdir(), 'bpa-auto-rehearsal'));
-  // prepareAutoPost writes no queue, state, ledger or log: its only output is the video in `out`; the real files are only read
-  const manifest = readManifestReal(defaultLibraryDir()); const usage = readUsageReal(defaultUsagePath());
-  fs.mkdirSync(out, { recursive: true });
-  const r = await prepareAutoPost({ pool, manifest, usage, history, config: CONFIG, now }, { outDir: out, libraryDir: defaultLibraryDir() });
-  for (const x of r.refused || []) console.log(`refused  ${x.ideaId}  ${x.reason}`);
-  if (!r.ok) { console.log(`NOT PREPARED: ${describeRefusal(r)}`); process.exitCode = 1; return; }
-  const txt = path.join(out, 'auto-caption.txt'); fs.writeFileSync(txt, `${r.draft.text}\n`);
-  console.log(`idea chosen: ${r.idea.id} [${r.idea.kind}] ${r.idea.title}`);
-  console.log(`clip: ${r.clip.id}`);
-  console.log(`rendered check: ${r.checks.rendered.ok ? 'ok' : `FAILED ${r.checks.rendered.problems.join('; ')}`} (${r.checks.rendered.durationSec} s)`);
-  console.log(`qa check: ${r.checks.qa.ok ? 'ok' : `FAILED ${r.checks.qa.problems.join('; ')}`}`);
-  console.log(`video: ${r.draft.readyFile}`); console.log(`caption: ${txt}`); console.log(`alt text: ${r.draft.altText}`);
+  // prepareAutoPost writes no queue, state, ledger or log: its only output is the video in `out` (plus a caption file here); the real files are only read.
+  // Several posts: each next run sees the earlier clips as used and the earlier ideas as history, in memory only.
+  fs.mkdirSync(out, { recursive: true }); let used = [...usage]; let hist = [...history]; let made = 0;
+  for (let n = 1; n <= a.count; n++) {
+    const r = await prepareAutoPost({ pool, manifest, usage: used, history: hist, config: CONFIG, now }, { outDir: out, libraryDir: libDir });
+    if (!r.ok) { console.log(`NOT PREPARED (post ${n} of ${a.count}): ${describeRefusal(r)}`); break; }
+    made += 1; used = [...used, { clipId: r.clip.id }]; hist = [...hist, { ideaId: r.idea.id, sourceId: r.idea.sourceId ?? null }];
+    const txt = path.join(out, `auto-${r.idea.id}-${r.clip.id}.txt`); fs.writeFileSync(txt, `${r.draft.text}\n`);
+    console.log(`--- post ${n} of ${a.count}`);
+    console.log(`idea chosen: ${r.idea.id} [${r.idea.kind}] topic ${r.idea.topic ?? 'none'}: ${r.idea.title}`);
+    console.log(`clip: ${r.clip.id}  tags: ${r.clip.shows.tags.join(', ')}`);
+    console.log(`hook: ${r.draft.hook}`);
+    console.log(`rendered check: ${r.checks.rendered.ok ? 'ok' : `FAILED ${r.checks.rendered.problems.join('; ')}`} (${r.checks.rendered.durationSec} s)`);
+    console.log(`qa check: ${r.checks.qa.ok ? 'ok' : `FAILED ${r.checks.qa.problems.join('; ')}`}`);
+    console.log(`video: ${r.draft.readyFile}`); console.log(`caption file: ${txt}`); console.log(`alt text: ${r.draft.altText}`);
+    console.log(`refusals on the way: ${describeRefusal({ reasons: [], refused: r.refused }) || 'none'}`);
+    console.log(`caption text:\n${r.draft.text}`);
+  }
+  if (made < a.count) process.exitCode = made === 0 ? 1 : 0;
+  console.log(`prepared ${made} of ${a.count}; folder: ${out}`);
 }
 const isMain = process.argv[1] && (() => { try { return fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url)); } catch { return false; } })();
 if (isMain) await main(process.argv.slice(2));

@@ -4,7 +4,7 @@
 //   verbatimDraft(idea, { now, sourceNames }) -> { ok: true, draft, reason: null } | { ok: false, draft: null, reason }
 //   hookFrom(title) -> { ok: true, hook } | { ok: false, reason }
 // Refusals, each a named reason: idea-has-no-claims, title-missing, title-too-long, claim-too-long (a claim is never shortened),
-// claim-multiline. The draft carries lane "auto" and writer "verbatim", the claims it shows (the rules gate checks figures against them),
+// claim-multiline; with an approved hook also hook-invalid (empty or more than one line) and hook-too-long. The draft carries lane "auto" and writer "verbatim", the claims it shows (the rules gate checks figures against them),
 // and `videoText` (the hook that is drawn on the clip) so the final check sees the on-video text as well.
 import { codeLinesFor, hashtagsFor } from './caption.js';
 
@@ -41,11 +41,14 @@ export function hookFrom(title) {
   return { ok: true, hook };
 }
 
-export function verbatimDraft(idea, { now = new Date(), sourceNames } = {}) {
+/** `hook` (optional): an approved hand-written hook (auto-hooks.js) used INSTEAD of the cut title. One line, at most HOOK_MAX characters; the figures and the final check are the caller's (auto-lane.js evaluateIdea). */
+export function verbatimDraft(idea, { now = new Date(), sourceNames, hook } = {}) {
   const fail = (reason) => ({ ok: false, draft: null, reason });
   const all = idea && Array.isArray(idea.claims) ? idea.claims : [];
   if (!all.length || !all.every((c) => c && hasText(c.text))) return fail('idea-has-no-claims');
-  const h = hookFrom(idea.title); if (!h.ok) return fail(h.reason);
+  let h;
+  if (hook === undefined) { h = hookFrom(idea.title); if (!h.ok) return fail(h.reason); }
+  else { const t = typeof hook === 'string' ? hook.trim() : ''; if (!t || /[\r\n]/.test(t)) return fail('hook-invalid'); if (len(t) > HOOK_MAX) return fail('hook-too-long'); h = { ok: true, hook: t }; }
   const claims = all.slice(0, CLAIMS_MAX).map((c) => ({ ...c }));
   for (const c of claims) { if (/[\r\n]/.test(c.text)) return fail('claim-multiline'); if (len(c.text) > CLAIM_MAX) return fail('claim-too-long'); }
   const codeLines = codeLinesFor({ ...idea, claims }, { sourceNames }); const tags = codeLines[codeLines.length - 1];

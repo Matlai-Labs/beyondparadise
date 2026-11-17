@@ -5,6 +5,7 @@
 //   node clip-library.js --build [--catalog <path>] [--root <path>]
 //   node clip-library.js --summary
 //   node clip-library.js --verdict <id> pass|fail --by <text> [--notes <text>]
+//   node clip-library.js --shows <id> <tag,tag,...> --by <text> [--notes <text>]   what the clip shows (fixed vocabulary), recorded by the reviewer
 //
 // Why: reel-clip.js checks stretches one frame every 2 s and its shot detection misses dissolves, wipes
 // and a white flash, so a clip can contain a short scene nobody looked at. Here every rendered clip is
@@ -213,6 +214,27 @@ export function setVerdict(manifest, id, { verdict, by, at = new Date().toISOStr
   return { ...manifest, clips: clips.map((c) => (c.id === id ? { ...c, verified: { verdict, by: by.trim(), at, notes } } : c)) };
 }
 
+// ---------------------------------------------------------------- what a clip shows
+
+/** What a reviewer may record a clip as showing: lowercase, singular, fixed. Animal tags are the ones a fact can be paired on (auto-pairing.js); scene tags are descriptive only. */
+export const ANIMAL_TAGS = Object.freeze(['lion', 'elephant', 'buffalo', 'zebra', 'hippo', 'wildebeest', 'crocodile', 'bird', 'giraffe', 'cheetah', 'leopard', 'hyena', 'rhino', 'wild-dog']);
+export const SCENE_TAGS = Object.freeze(['savanna', 'wetland', 'river', 'river-crossing', 'volcano', 'landscape']);
+export const SHOW_TAGS = Object.freeze([...ANIMAL_TAGS, ...SCENE_TAGS]);
+
+/** The only way `shows` is written (the `subject` field of the manifest is unreliable and is never used for pairing). Returns a NEW manifest. Errors carry code 'unknown-clip' or 'bad-shows'. */
+export function setShows(manifest, id, { tags, by, at = new Date().toISOString(), notes = '' } = {}) {
+  const fail = (code, msg) => Object.assign(new Error(msg), { code });
+  const clips = manifest && Array.isArray(manifest.clips) ? manifest.clips : [];
+  if (!clips.some((c) => c.id === id)) throw fail('unknown-clip', `unknown clip ${id}`);
+  if (!Array.isArray(tags) || tags.length === 0) throw fail('bad-shows', 'give at least one tag');
+  const bad = tags.filter((t) => typeof t !== 'string' || !SHOW_TAGS.includes(t)); if (bad.length) throw fail('bad-shows', `unknown tag ${bad.map((t) => JSON.stringify(t)).join(', ')} (allowed: ${SHOW_TAGS.join(', ')})`);
+  if (typeof by !== 'string' || !by.trim()) throw fail('bad-shows', 'a record of what a clip shows needs "by" (who looked, how)');
+  if (typeof at !== 'string' || Number.isNaN(Date.parse(at))) throw fail('bad-shows', '"at" must be a date');
+  if (typeof notes !== 'string' || notes.length > 300) throw fail('bad-shows', 'notes must be text of at most 300 characters');
+  if (PERSON_WORDS.test(notes)) throw fail('bad-shows', 'notes may not describe a person');
+  return { ...manifest, clips: clips.map((c) => (c.id === id ? { ...c, shows: { tags: [...new Set(tags)], by: by.trim(), at, notes } } : c)) };
+}
+
 // ---------------------------------------------------------------- summary
 
 export function summarise(manifest, usage = [], opts = {}) {
@@ -236,7 +258,7 @@ export function summarise(manifest, usage = [], opts = {}) {
 // ---------------------------------------------------------------- command line
 
 function parseArgs(argv) {
-  const a = { build: false, summary: false, verdict: null, word: null, by: null, notes: '', catalog: null, root: null, bad: null };
+  const a = { build: false, summary: false, verdict: null, word: null, shows: null, tagList: null, by: null, notes: '', catalog: null, root: null, bad: null };
   for (let i = 0; i < argv.length; i += 1) {
     const t = argv[i];
     if (t === '--build') a.build = true;
@@ -244,12 +266,15 @@ function parseArgs(argv) {
     else if (t === '--verdict') {
       if (!argv[i + 1] || !argv[i + 2] || argv[i + 1].startsWith('--') || argv[i + 2].startsWith('--')) { a.bad = '--verdict needs <id> pass|fail'; break; }
       a.verdict = argv[i + 1]; a.word = argv[i + 2]; i += 2;
+    } else if (t === '--shows') {
+      if (!argv[i + 1] || !argv[i + 2] || argv[i + 1].startsWith('--') || argv[i + 2].startsWith('--')) { a.bad = '--shows needs <id> <tag,tag,...>'; break; }
+      a.shows = argv[i + 1]; a.tagList = argv[i + 2]; i += 2;
     } else if (['--by', '--notes', '--catalog', '--root'].includes(t)) {
       if (argv[i + 1] === undefined || argv[i + 1].startsWith('--')) { a.bad = `${t} needs a value`; break; }
       a[t.slice(2)] = argv[i + 1]; i += 1;
     } else { a.bad = `unknown argument ${t}`; break; }
   }
-  if (!a.bad && [a.build, a.summary, a.verdict !== null].filter(Boolean).length !== 1) a.bad = 'give exactly one of --build, --summary, --verdict';
+  if (!a.bad && [a.build, a.summary, a.verdict !== null, a.shows !== null].filter(Boolean).length !== 1) a.bad = 'give exactly one of --build, --summary, --verdict, --shows';
   return a;
 }
 
@@ -258,7 +283,7 @@ export async function main(argv, env = process.env, deps = {}) {
   const error = deps.error || ((s) => console.error(s));
   const args = parseArgs(argv);
   if (args.bad) {
-    error(`${args.bad}\nusage: clip-library.js --build [--catalog <path>] [--root <path>] | --summary | --verdict <id> pass|fail --by <text> [--notes <text>]`);
+    error(`${args.bad}\nusage: clip-library.js --build [--catalog <path>] [--root <path>] | --summary | --verdict <id> pass|fail --by <text> [--notes <text>] | --shows <id> <tag,tag,...> --by <text> [--notes <text>]`);
     return 2;
   }
   const dir = path.resolve(libraryDir(env));
@@ -292,6 +317,17 @@ export async function main(argv, env = process.env, deps = {}) {
   if (args.summary) {
     const s = summarise(manifest, readUsage(usageFile), { dir });
     log(`clips ${s.total}; render ok ${s.renderOk}, failed ${s.renderFailed}; flash ${s.flash} (checked ${s.flashChecked}); verdict pass ${s.pass}, fail ${s.fail}, none ${s.unverified}; eligible ${s.eligible} (${s.eligibleSec} s)`);
+    for (const c of manifest.clips || []) { const t = c && c.shows && Array.isArray(c.shows.tags) && c.shows.tags.length ? c.shows.tags.join(', ') : null; log(`  ${c.id}  ${t ? `shows: ${t}` : 'no tags'}`); }
+    return 0;
+  }
+  if (args.shows !== null) {
+    if (typeof args.by !== 'string' || !args.by.trim()) { error('--shows needs --by <text>'); return 2; } // refused before anything is read for writing
+    try {
+      const next = setShows(manifest, args.shows, { tags: args.tagList.split(',').map((x) => x.trim()).filter(Boolean), by: args.by, notes: args.notes });
+      next.updatedAt = new Date().toISOString();
+      writeManifest(dir, next);
+    } catch (e) { error(e.message); return e.code === 'unknown-clip' ? 4 : 2; }
+    log(`shows: ${args.shows} ${args.tagList}`);
     return 0;
   }
   try {
