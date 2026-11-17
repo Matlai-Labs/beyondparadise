@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { stateDir } from './stop.js';
 import { loadAccess, checkAccess, setCookieHeader, isPageLoad } from './review-auth.js';
 import { buildItems, fileInfoOf } from './review-items.js';
+import { readClipApprovals, defaultClipApprovalsPath } from './clip-approvals.js';
 import { readStatus } from './review-status.js';
 import { resolveMediaPath, serveMedia } from './review-media.js';
 import { readHooks, defaultHooksPath, claimsSha256 } from './auto-hooks.js';
@@ -56,6 +57,7 @@ export function createDefaultInputs({ env = process.env, now = Date.now, loadPoo
     readManifest: () => readManifest(dir),
     libraryDir: dir, info: INFO, secret: SECRET,
     evaluate: ttlMemo((idea, o) => evalImpl(idea, o), { ttlMs: CHECK_CACHE_MS, now, key: (idea, o) => `${idea.id}|${o.hook}|${claimsSha256(idea)}` }),
+    readApprovals: () => readClipApprovals(defaultClipApprovalsPath(env)), // the clip decisions the lane reads
     readUsage: () => readUsage(defaultUsagePath(env)),              // the ledger the lane reads
     readHistory: () => historyFromQueue(loadQueue(QUEUE_PATH)),     // posted and queued ideas, as the lane reads them
     readConfig: () => JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8')), // fresh from disk

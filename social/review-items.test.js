@@ -23,10 +23,10 @@ test('clip items: shape, states, superseded left out, no paths', async () => {
   assert.deepEqual(items.map((i) => i.id).sort(), ['c1', 'c2', 'c4', 'c5']);
   const by = Object.fromEntries(items.map((i) => [i.id, i]));
   assert.equal(by.c1.state, 'eligible'); assert.equal(by.c2.state, 'not eligible: no verdict'); assert.equal(by.c4.state, 'video missing'); assert.equal(by.c5.state, 'video missing');
-  assert.deepEqual(by.c4.preview, { mediaId: null, note: 'video missing' }); assert.deepEqual(by.c1.actions, []);
+  assert.deepEqual(by.c4.preview, { mediaId: null, note: 'video missing' }); assert.deepEqual(by.c1.actions, ['approve', 'skip']);
   assert.deepEqual(by.c1.facts, { durationSec: 7, verdict: 'pass', singleSubject: 'yes', notes: 'a lion', tags: ['lion', 'savanna'], flash: false, source: [{ videoId: 'v1', startSec: 1, endSec: 8 }] });
   assert.match(by.c1.preview.mediaId, /^m_[0-9a-f]{32}$/); assert.equal(media.size, 2); assert.ok(!JSON.stringify(items).includes(dir));
-  assert.deepEqual(Object.keys(by.c1).sort(), ['actions', 'facts', 'id', 'kind', 'preview', 'reason', 'state', 'title', 'usableToday', 'version']); assert.equal(by.c1.kind, 'clip'); assert.equal(by.c1.title, 'c1');
+  assert.deepEqual(Object.keys(by.c1).sort(), ['actions', 'decision', 'facts', 'id', 'kind', 'preview', 'reason', 'state', 'title', 'usableToday', 'version']); assert.equal(by.c1.kind, 'clip'); assert.equal(by.c1.title, 'c1');
   const e = media.get(by.c1.preview.mediaId); assert.equal(e.kind, 'clip'); assert.equal(e.path, path.join(dir, 'c1.mp4')); assert.equal(typeof e.size, 'number'); assert.equal(typeof e.mtimeMs, 'number'); assert.equal(typeof e.ino, 'number');
 });
 test('not-eligible reasons, first match wins', async () => {
@@ -102,7 +102,7 @@ test('hook items: state per entry, newest (last in file) first', async () => { c
 test('hook item facts, preview and actions', async () => {
   const r = await buildItems(base()); const h = r.items.find((i) => i.id === 'idea_1');
   assert.deepEqual(h.facts, { hook: 'Hook 1', caption: 'Cap idea_1', claims: [{ text: 'Claim A1', sourceDate: '2026-10-01' }, { text: 'Claim B1', sourceDate: '2026-10-02' }], link: '/x/1/', exampleClip: null });
-  assert.deepEqual(h.preview, { mediaId: null, note: 'no example video yet' }); assert.deepEqual(h.actions, []); assert.equal(h.kind, 'hook'); assert.equal(h.title, 'Hook 1'); assert.equal(h.version, hookVersion('Hook 1', idea(1)));
+  assert.deepEqual(h.preview, { mediaId: null, note: 'no example video yet' }); assert.deepEqual(h.actions, ['undo']); assert.equal(h.kind, 'hook'); assert.equal(h.title, 'Hook 1'); assert.equal(h.version, hookVersion('Hook 1', idea(1)));
   assert.deepEqual(r.items.find((i) => i.id === 'idea_9').facts, { hook: 'Hook 9' }, 'a stale item shows the hook only');
   assert.deepEqual(r.items.find((i) => i.id === 'idea_3').facts, { hook: 'Hook 3' });
 });
@@ -241,4 +241,98 @@ test('clipReasonOf gives the same state and reason as buildClipItems for every c
     }
   }
   assert.equal(clipReasonOf(manifest, [], dir, manifest.clips.find((c) => c.id === 'link'), { info: fileInfoOf() }).reason, 'video-missing');
+});
+
+// ── task 7: decisions and allowed actions ────────────────────────────────────────
+import { prepareAutoPost } from './auto-lane.js';
+import { emptyApprovals, setDecision, clipsForLane } from './clip-approvals.js';
+const T7_NOW = new Date('2026-11-17T09:00:00Z');
+const shaOf = (s) => crypto.createHash('sha256').update(s).digest('hex');
+const t7dir = (ids) => { const d = mk(); for (const id of ids) fs.writeFileSync(path.join(d, `${id}.mp4`), id); return d; };
+const verOf = (id, tags = ['lion', 'savanna']) => clipVersion(shaOf(id), tags);
+const appr = (clips = {}, enforcedAt = null) => { let d = emptyApprovals(); for (const [id, [state, version, at]] of Object.entries(clips)) d = setDecision(d, id, state, { version, at: at || '2026-11-17T08:00:00Z' }); return { ok: true, data: { ...d, enforcedAt } }; };
+const t7base = (dir, over = {}) => base({ laneVerdict: laneVerdictFor, readHistory: () => [], readConfig: () => ({}), readUsage: () => [], now: T7_NOW, readManifest: () => ({ clips: [clip('c1')] }), libraryDir: dir, info: fileInfoOf(), readApprovals: () => appr(), evaluate: ev, ...over });
+const byId = (r) => Object.fromEntries(r.items.map((i) => [i.id, i]));
+
+test('actions per state: hook unapproved, refused, stale, approved, skipped; clip eligible, not eligible, decided, pending hash', async () => {
+  const dir = t7dir(['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7']);
+  const old = new Date(Date.now() - 86400e3); fs.utimesSync(path.join(dir, 'c4.mp4'), old, old); const fresh = new Date(Date.now() + 60000); for (const f of ['c1', 'c2', 'c3']) fs.utimesSync(path.join(dir, f + '.mp4'), fresh, fresh); // the oldest file is hashed last: with a budget of 4 new files it stays pending
+  const hooks = [ent(1, { approvedBy: 't', approvedAt: '2026-11-17T08:00:00Z' }), ent(2), ent(3, { claimsSha256: 'a'.repeat(64) }), ent(4), ent(5, { skipped: { by: 't', at: '2026-11-17T08:00:00Z' } }), ent(9)];
+  const ideas = [1, 2, 3, 4, 5].map((n) => idea(n));
+  const clips = [clip('c1'), clip('c2', { verified: null }), clip('c3'), clip('c4'), clip('c5'), clip('c6'), clip('c7')];
+  const approvals = appr({ c3: ['approved', verOf('c3')] });
+  const r = await buildItems(t7base(dir, { readHooks: () => ({ ok: true, hooks }), loadPool: () => ({ ok: true, ideas, sourceNames: {} }), readManifest: () => ({ clips }), readApprovals: () => approvals, evaluate: async (i, { hook }) => (i.id === 'idea_4' ? { ok: false, reason: 'hook-number-not-in-claims' } : { ok: true, draft: { hook, caption: 'c' } }) }));
+  const by = byId(r);
+  assert.deepEqual(by.idea_1.actions, ['undo']); assert.deepEqual(by.idea_2.actions, ['approve', 'skip', 'edit']); assert.deepEqual(by.idea_4.actions, ['skip', 'edit']);
+  assert.deepEqual(by.idea_3.actions, ['skip', 'edit'], 'stale with the idea present'); assert.deepEqual(by.idea_9.actions, [], 'stale, idea gone'); assert.deepEqual(by.idea_5.actions, ['undo']);
+  assert.deepEqual(by.c1.actions, ['approve', 'skip']); assert.deepEqual(by.c2.actions, ['skip']); assert.deepEqual(by.c3.actions, ['undo']);
+  assert.equal(by.c4.preview.note, NOTE_PENDING); assert.deepEqual(by.c4.actions, [], 'hash pending');
+});
+test('decision: hook approved and skipped carry kind and at; clip decision matches only for the same version', async () => {
+  const dir = t7dir(['c1']);
+  const hooks = [ent(1, { approvedBy: 't', approvedAt: '2026-11-17T08:00:00Z' }), ent(2, { skipped: { by: 't', at: '2026-11-17T07:00:00Z' } }), ent(3)];
+  let r = await buildItems(t7base(dir, { readHooks: () => ({ ok: true, hooks }), readApprovals: () => appr({ c1: ['approved', verOf('c1')] }) })); let by = byId(r);
+  assert.deepEqual(by.idea_1.decision, { kind: 'approved', at: '2026-11-17T08:00:00Z' }); assert.deepEqual(by.idea_2.decision, { kind: 'skipped', at: '2026-11-17T07:00:00Z' }); assert.equal(by.idea_3.decision, null);
+  assert.deepEqual(by.c1.decision, { kind: 'approved', at: '2026-11-17T08:00:00Z' });
+  r = await buildItems(t7base(dir, { readApprovals: () => appr({ c1: ['approved', verOf('c1', ['other'])] }) })); by = byId(r);
+  assert.equal(by.c1.decision, null); assert.deepEqual(by.c1.actions, ['approve', 'skip']);
+});
+const f1 = (clipDecision, enforcedAt, over = {}) => { const dir = t7dir(['c1']); return { dir, args: t7base(dir, { readHooks: approvedHooks(1), readApprovals: () => appr(clipDecision ? { c1: [clipDecision, verOf('c1')] } : {}, enforcedAt), ...over }) }; };
+test('F1: after enforcement with the only fitting clip skipped, the hook item is NOT usable today and the clip item does not say eligible (state skipped by you, reason skipped)', async () => {
+  const { dir, args } = f1('skipped', '2026-11-17T08:30:00Z'); const by = byId(await buildItems(args));
+  assert.equal(by.idea_1.usableToday, false); assert.notEqual(by.c1.state, 'eligible'); assert.deepEqual([by.c1.state, by.c1.reason, by.c1.usableToday], ['skipped by you', 'skipped', false]);
+  const ap = path.join(mk(), 'a.json'); fs.writeFileSync(ap, JSON.stringify({ version: 1, enforcedAt: '2026-11-17T08:30:00Z', clips: { c1: { state: 'skipped', version: verOf('c1'), at: '2026-11-17T08:00:00Z', by: 'review page' } } }), { mode: 0o600 });
+  const hf = path.join(mk(), 'h.json'); fs.writeFileSync(hf, '{"hooks":[]}');
+  const lane = await prepareAutoPost({ pool: [idea(1, { kind: 'rule' })], manifest: { version: 1, clips: [clip('c1')] }, usage: [], history: [], config: {}, now: T7_NOW }, { outDir: mk(), libraryDir: dir, exists: () => true, neverPromotePatterns: ['examplehotel'], say: () => {}, hooksFile: hf, approvalsFile: ap, hashClip: async (f) => shaOf(path.basename(f, '.mp4')) });
+  assert.deepEqual([lane.ok, lane.reasons], [false, ['no-eligible-clip']]);
+});
+test('F1: after enforcement an undecided eligible clip is eligible but not usable today (reason not-approved) and the hook that needs it is not usable; approving it flips both', async () => {
+  let { args } = f1(null, '2026-11-17T08:30:00Z'); let by = byId(await buildItems(args));
+  assert.deepEqual([by.c1.state, by.c1.usableToday, by.c1.reason], ['eligible', false, 'not-approved']); assert.equal(by.idea_1.usableToday, false); assert.deepEqual(by.c1.actions, ['approve', 'skip']);
+  ({ args } = f1('approved', '2026-11-17T08:30:00Z')); by = byId(await buildItems(args));
+  assert.deepEqual([by.c1.state, by.c1.usableToday, by.c1.reason], ['eligible', true, null]); assert.equal(by.idea_1.usableToday, true);
+});
+test('F1: before enforcement an undecided clip still makes a hook usable (step 1 behaviour kept); a skipped one never does', async () => {
+  let { args } = f1(null, null); let by = byId(await buildItems(args)); assert.equal(by.c1.usableToday, true); assert.equal(by.idea_1.usableToday, true);
+  ({ args } = f1('skipped', null)); by = byId(await buildItems(args)); assert.equal(by.c1.usableToday, false); assert.equal(by.idea_1.usableToday, false); assert.equal(by.c1.reason, 'skipped');
+});
+test('the page and the lane agree on which clips are usable (clipsForLane over the same data)', async () => {
+  const dir = t7dir(['c1', 'c2', 'c3']); const manifest = { clips: [clip('c1'), clip('c2'), clip('c3')] };
+  const approvals = appr({ c1: ['approved', verOf('c1')], c2: ['skipped', verOf('c2')] }, '2026-11-17T08:30:00Z');
+  const by = byId(await buildItems(t7base(dir, { readManifest: () => manifest, readApprovals: () => approvals })));
+  const lane = await clipsForLane(eligibleClips(manifest, [], { dir, exists: fs.existsSync }), approvals.data, { dir, hash: async (f) => shaOf(path.basename(f, '.mp4')) });
+  assert.deepEqual(['c1', 'c2', 'c3'].filter((id) => by[id].usableToday), lane.map((c) => c.id).sort());
+});
+test('an item decided 31 days ago is gone from items and from media; 29 days ago stays (D12)', async () => {
+  const dir = t7dir(['c1', 'c2']); const day = 86400e3; const ago = (n) => new Date(T7_NOW.getTime() - n * day).toISOString();
+  const hooks = [ent(1, { approvedBy: 't', approvedAt: ago(31) }), ent(2, { approvedBy: 't', approvedAt: ago(29) }), ent(3, { skipped: { by: 't', at: ago(31) } })];
+  const r = await buildItems(t7base(dir, { readHooks: () => ({ ok: true, hooks }), readManifest: () => ({ clips: [clip('c1'), clip('c2')] }), readApprovals: () => appr({ c1: ['approved', verOf('c1'), ago(31)], c2: ['skipped', verOf('c2'), ago(29)] }) }));
+  const ids = r.items.map((i) => i.id).sort(); assert.deepEqual(ids, ['c2', 'idea_2']); assert.deepEqual(r.counts, { all: 2, hook: 1, clip: 1 });
+  const c2 = byId(r).c2; assert.equal(r.media.has(c2.preview.mediaId), true); assert.equal(r.media.size, 1, 'the 31-day clip is not in media');
+});
+test('unreadable approvals: clips get no actions, laneClips is empty (hooks are not usable today), and the problem approvals-unreadable is listed; hooks still carry their actions', async () => {
+  const dir = t7dir(['c1']); const r = await buildItems(t7base(dir, { readHooks: () => ({ ok: true, hooks: [ent(1, { approvedBy: 't', approvedAt: '2026-11-17T08:00:00Z' }), ent(2)] }), readApprovals: () => ({ ok: false, reason: 'not-json' }) }));
+  const by = byId(r); assert.ok(r.problems.includes('approvals-unreadable')); assert.deepEqual(by.c1.actions, []); assert.equal(by.c1.usableToday, false);
+  assert.equal(by.idea_1.usableToday, false); assert.deepEqual(by.idea_2.actions, ['approve', 'skip', 'edit']); assert.deepEqual(by.idea_1.actions, ['undo']);
+  const r2 = await buildItems(t7base(dir, { readApprovals: () => { throw new Error('x'); } })); assert.ok(r2.problems.includes('approvals-unreadable'));
+});
+test('used hook or clip: undo is not offered', async () => {
+  const dir = t7dir(['c1']); const hooks = [ent(1, { approvedBy: 't', approvedAt: '2026-11-17T08:00:00Z' }), ent(2, { skipped: { by: 't', at: '2026-11-17T08:00:00Z' } })];
+  const r = await buildItems(t7base(dir, { readHooks: () => ({ ok: true, hooks }), readHistory: () => [{ ideaId: 'idea_1', date: '2026-11-01T00:00:00Z' }], readUsage: () => [{ clipId: 'c1' }], readApprovals: () => appr({ c1: ['approved', verOf('c1')] }) }));
+  const by = byId(r); assert.deepEqual(by.idea_1.actions, []); assert.deepEqual(by.idea_2.actions, ['undo']); assert.deepEqual([by.c1.reason, by.c1.actions], ['already-used', []]);
+});
+test('a clip without shows: page version === lane version (F2)', async () => {
+  const dir = t7dir(['c1']); const r = await buildItems(t7base(dir, { readManifest: () => ({ clips: [clip('c1', { shows: undefined })] }) }));
+  assert.equal(byId(r).c1.version, clipVersion(shaOf('c1'), []));
+});
+test('step 1 shape is kept: every item has exactly the keys kind, id, version, title, preview, facts, state, reason, usableToday, decision, actions', async () => {
+  const dir = t7dir(['c1']); const r = await buildItems(t7base(dir)); assert.ok(r.items.length > 1);
+  for (const i of r.items) assert.deepEqual(Object.keys(i), ['kind', 'id', 'version', 'title', 'preview', 'facts', 'state', 'reason', 'usableToday', 'decision', 'actions']);
+});
+test('ids __proto__ and constructor as clip or hook ids do not break the build and are never found as someone else\'s decision', async () => {
+  const dir = t7dir(['__proto__', 'constructor', 'c1']);
+  const r = await buildItems(t7base(dir, { readManifest: () => ({ clips: [clip('__proto__'), clip('constructor'), clip('c1')] }), readApprovals: () => appr({ c1: ['approved', verOf('c1')] }) }));
+  const by = Object.fromEntries(r.items.filter((i) => i.kind === 'clip').map((i) => [i.id, i]));
+  for (const id of ['__proto__', 'constructor']) { assert.equal(by[id].decision, null); assert.deepEqual(by[id].actions, ['approve', 'skip']); }
+  assert.deepEqual(by.c1.decision, { kind: 'approved', at: '2026-11-17T08:00:00Z' });
 });
