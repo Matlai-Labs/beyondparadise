@@ -27,7 +27,6 @@ test('static: nothing writes the switch file; approve-on appears only in approve
   for (const w of ['writeFile', 'writeFileSync', 'openSync', 'open(', 'mkdir', 'rename', 'copyFile', 'symlink', 'appendFile', 'createWriteStream', 'unlink', 'chmod']) assert.ok(!own.includes(w), w);
   assert.match(own, /lstatSync/); assert.ok(!/[^l]statSync/.test(own), 'statSync would follow a link');
 });
-test('static: approveSwitchOn( has no caller yet (the callers arrive in the route tasks), and draft-decisions.js never calls it', () => {
-  let calls = 0; for (const [f, s] of sources()) { const n = (s.match(/approveSwitchOn\(/g) || []).length; if (f === 'approve-switch.js') assert.equal(n, 1, 'its own definition'); else calls += n; }
-  assert.equal(calls, 0); assert.ok(!sources().find(([f]) => f === 'draft-decisions.js')[1].includes('approveSwitchOn'));
+test('static: draft-decisions.js never calls approveSwitchOn (it receives approveOn as a parameter); the count of calls is pinned in review-step3-guards.test.js', () => {
+  assert.ok(!sources().find(([f]) => f === 'draft-decisions.js')[1].includes('approveSwitchOn'));
 });

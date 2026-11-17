@@ -127,13 +127,13 @@ test('a throwing evaluate does not throw out of buildItems; the item is refused'
   const r = await buildItems(base({ evaluate: async () => { throw new Error('boom'); } })); const h = r.items.find((i) => i.id === 'idea_1'); assert.match(h.state, /^refused: /);
 });
 test('counts per kind; a preview file turns into a media entry', async () => {
-  const r = await buildItems(base({ previewFor: (id) => (id === 'idea_1' ? '/p/a.mp4' : null) })); assert.deepEqual(r.counts, { all: 5, hook: 5, clip: 0 });
+  const r = await buildItems(base({ previewFor: (id) => (id === 'idea_1' ? '/p/a.mp4' : null) })); assert.deepEqual(r.counts, { all: 5, hook: 5, clip: 0, draft: 0 });
   const h = r.items.find((i) => i.id === 'idea_1'); assert.match(h.preview.mediaId, /^m_/); assert.equal(h.preview.note, 'Example footage. The real post may use other footage that fits.'); assert.deepEqual(r.media.get(h.preview.mediaId), { path: '/p/a.mp4', kind: 'preview' });
 });
 test('clips come before hooks (clips have videos); the media map carries clip files', async () => {
   const dir = mk(); fs.writeFileSync(path.join(dir, 'c1.mp4'), 'x');
   const r = await buildItems(base({ readManifest: () => ({ clips: [clip('c1')] }), libraryDir: dir, info: fileInfoOf() }));
-  assert.deepEqual(r.items.map((i) => i.kind), ['clip', 'hook', 'hook', 'hook', 'hook', 'hook']); assert.deepEqual(r.counts, { all: 6, hook: 5, clip: 1 }); assert.equal(r.media.size, 1);
+  assert.deepEqual(r.items.map((i) => i.kind), ['clip', 'hook', 'hook', 'hook', 'hook', 'hook']); assert.deepEqual(r.counts, { all: 6, hook: 5, clip: 1, draft: 0 }); assert.equal(r.media.size, 1);
 });
 
 // ── truth of what the page says (fix round A) ────────────────────────────────────
@@ -307,7 +307,7 @@ test('an item decided 31 days ago is gone from items and from media; 29 days ago
   const dir = t7dir(['c1', 'c2']); const day = 86400e3; const ago = (n) => new Date(T7_NOW.getTime() - n * day).toISOString();
   const hooks = [ent(1, { approvedBy: 't', approvedAt: ago(31) }), ent(2, { approvedBy: 't', approvedAt: ago(29) }), ent(3, { skipped: { by: 't', at: ago(31) } })];
   const r = await buildItems(t7base(dir, { readHooks: () => ({ ok: true, hooks }), readManifest: () => ({ clips: [clip('c1'), clip('c2')] }), readApprovals: () => appr({ c1: ['approved', verOf('c1'), ago(31)], c2: ['skipped', verOf('c2'), ago(29)] }) }));
-  const ids = r.items.map((i) => i.id).sort(); assert.deepEqual(ids, ['c2', 'idea_2']); assert.deepEqual(r.counts, { all: 2, hook: 1, clip: 1 });
+  const ids = r.items.map((i) => i.id).sort(); assert.deepEqual(ids, ['c2', 'idea_2']); assert.deepEqual(r.counts, { all: 2, hook: 1, clip: 1, draft: 0 });
   const c2 = byId(r).c2; assert.equal(r.media.has(c2.preview.mediaId), true); assert.equal(r.media.size, 1, 'the 31-day clip is not in media');
 });
 test('unreadable approvals: clips get no actions, laneClips is empty (hooks are not usable today), and the problem approvals-unreadable is listed; hooks still carry their actions', async () => {
