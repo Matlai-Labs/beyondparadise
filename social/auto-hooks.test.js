@@ -20,9 +20,10 @@ function setup(ideas = [IDEA]) {
   return { file, out, err, deps, run: (argv, over = {}) => main(argv, { ...deps, ...over }), read: () => JSON.parse(fs.readFileSync(file, 'utf8')) };
 }
 
-test('the committed file starts EMPTY and is valid', () => {
-  const r = readHooks(defaultHooksPath()); assert.deepEqual(r, { ok: true, hooks: [] });
+test('committed file stays the EMPTY default but is no longer the lane file', () => {
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(HERE, 'auto-hooks.json'), 'utf8')), { hooks: [] });
+  assert.equal(defaultHooksPath(), path.join(process.env.BPA_STATE_DIR, 'bpa-auto-hooks.json'));
+  assert.equal(readHooks(defaultHooksPath()).ok, false, 'missing private file fails closed');
 });
 test('claimsSha256 covers the idea TITLE and the claim texts in order: a changed title, changed, added, removed or reordered claim changes it; other fields do not', () => {
   const h = claimsSha256(IDEA); assert.match(h, /^[0-9a-f]{64}$/);

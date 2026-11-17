@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beyond Paradise: review</title>
+<style>
+  :root { color-scheme: light dark; --bg: #f6f4ef; --fg: #1d2421; --muted: #5d6762; --card: #ffffff; --line: #d9d5ca; --accent: #1f6f5c; --accent-fg: #ffffff; --warn: #9a5b00; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14181a; --fg: #eceae4; --muted: #a0a8a3; --card: #1e2326; --line: #343b3e; --accent: #5fc4a8; --accent-fg: #0b1a15; --warn: #e0a84a; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { padding: 12px 16px 8px; border-bottom: 1px solid var(--line); }
+  h1 { margin: 0 0 4px; font-size: 1.1rem; }
+  #step-note { margin: 0 0 6px; color: var(--muted); font-size: 0.9rem; }
+  #status { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.9rem; }
+  #status span { white-space: nowrap; }
+  #problems { margin: 6px 0 0; padding: 0; list-style: none; color: var(--warn); font-size: 0.9rem; }
+  #filters { display: flex; gap: 8px; padding: 8px 16px; flex-wrap: wrap; }
+  button { font: inherit; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--fg); min-height: 44px; cursor: pointer; }
+  button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-fg); }
+  button:disabled { opacity: 0.45; cursor: default; }
+  main { display: block; padding: 0 16px 24px; }
+  #list-wrap { display: none; }
+  #list { list-style: none; margin: 0; padding: 0; }
+  #list li button { width: 100%; text-align: left; border-radius: 8px; margin-bottom: 4px; min-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #list li button[aria-current="true"] { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+  #card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; min-height: calc(100vh - 220px); touch-action: pan-y; }
+  #card-kind { margin: 0; font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  #card-title { margin: 4px 0 8px; font-size: 1.2rem; }
+  #card-title:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #state { margin: 0 0 8px; font-weight: 600; }
+  #video-slot { background: #000; border-radius: 12px; overflow: hidden; margin: 8px 0; min-height: 120px; display: flex; flex-direction: column; align-items: stretch; justify-content: center; }
+  #video-slot video { width: 100%; max-height: 45vh; display: block; }
+  .video-note { padding: 16px; margin: 0; color: #ddd; text-align: center; }
+  #facts p, #facts li { margin: 4px 0; }
+  #facts ul { margin: 4px 0; padding-left: 20px; }
+  #idline { margin: 12px 0 0; font-size: 0.75rem; color: var(--muted); }
+  #swipe-hint { margin: 8px 0 0; font-size: 0.8rem; color: var(--muted); }
+  #nav { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; }
+  #counter { color: var(--muted); }
+  #empty, #unavailable { padding: 24px 0; }
+  .hidden { display: none !important; }
+  @media (max-width: 899px) {
+    #nav { position: sticky; bottom: 0; background: var(--card); padding: 8px 0 4px; border-top: 1px solid var(--line); }
+    #video-slot video { max-height: 45vh; }
+  }
+  @media (min-width: 900px) {
+    main { display: grid; grid-template-columns: 320px 1fr; gap: 16px; align-items: start; }
+    #list-wrap { display: block; max-height: calc(100vh - 190px); overflow: auto; }
+    #card { min-height: 0; }
+    #video-slot video { max-height: 55vh; }
+    #swipe-hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Beyond Paradise: review</h1>
+  <p id="step-note">Step 1: look only. Approve and Skip arrive with the next step.</p>
+  <div id="status" aria-live="polite"></div>
+  <ul id="problems"></ul>
+</header>
+<div id="filters">
+  <button type="button" data-kind="all" aria-pressed="true">All</button>
+  <button type="button" data-kind="hook" aria-pressed="false">Video texts</button>
+  <button type="button" data-kind="clip" aria-pressed="false">Clips</button>
+  <button type="button" id="refresh">Reload</button>
+</div>
+<p id="unavailable" class="hidden"></p>
+<main id="main">
+  <div id="list-wrap">
+    <ul id="list"></ul>
+    <button type="button" id="more" class="hidden">Show more</button>
+  </div>
+  <section id="card" aria-label="Current card">
+    <p id="card-kind"></p>
+    <h2 id="card-title" tabindex="-1"></h2>
+    <p id="state" aria-live="polite"></p>
+    <div id="video-slot"></div>
+    <div id="facts"></div>
+    <p id="idline"></p>
+    <p id="swipe-hint">Swipe left or right, or use the buttons.</p>
+    <div id="nav">
+      <button type="button" id="prev">Back</button>
+      <span id="counter"></span>
+      <button type="button" id="next">Next</button>
+    </div>
+  </section>
+</main>
+<script nonce="__NONCE__">
+'use strict';
+// BEGIN PURE
+const LIST_PAGE = 50;
+const LABELS = {
+  'hooks-unreadable': 'The video texts cannot be read right now.',
+  'ideas-unavailable': 'The facts behind the video texts cannot be read right now.',
+  'library-missing': 'There is no clip library yet.',
+  'library-unreadable': 'The clips cannot be read right now.',
+  'usage-unreadable': 'The list of clips already used cannot be read right now.',
+  'history-unreadable': 'The list of earlier posts cannot be read right now.',
+};
+const FALLBACK = 'The checks refuse it today.';
+const EXAMPLE_NOTE = 'Example footage. The real post may use other footage that fits.';
+const REASON_TEXT = {
+  'hook-number-not-in-claims': 'The text has a number that is not in the facts.',
+  'hook-subject-mismatch': 'The text names a different animal than the facts.',
+  'hook-too-long': 'The text is too long to fit on the video.',
+  'hook-invalid': 'The text is not usable. It needs one plain line.',
+  'title-claim-differ': "The idea's title and its fact do not match.",
+  'title-has-markup': "The idea's title contains markup.",
+  'title-missing': 'The idea has no title.',
+  'title-too-long': "The idea's title is too long.",
+  'claim-too-long': 'One of the facts is too long to use.',
+  'claim-multiline': 'One of the facts runs over several lines.',
+  'no-claims': 'The idea has no facts to rest on.',
+  'check-failed': 'The checks could not be run today.',
+  'bad-hooks-file': 'The list of video texts cannot be read right now.',
+  'no-approved-hook': 'The automatic posting needs an approved video text for this idea.',
+  'no-subject': 'The idea does not name an animal, so no clip can be matched.',
+  'no-matching-clip': 'No approved, unused clip shows this animal.',
+  'no-eligible-clip': 'No clip is ready to use.',
+  'no-eligible-idea': 'No idea passes the checks today.',
+  'compose-failed': 'The video could not be made.',
+  'overlay-refused': 'The text on the video was refused.',
+  'in-history': 'This idea was posted recently.',
+  'wrong-kind': 'The automatic posting does not use this kind of idea.',
+  'not-approved': 'It is not approved yet.',
+  'stale': 'The facts changed since it was written.',
+  'usage-unreadable': 'The list of clips already used cannot be read right now.',
+  'video-missing': 'The video file is missing.',
+  'already-used': 'This clip was already used in a post.',
+  'render-check-failed': 'The video file is damaged.',
+  'flash-not-checked': 'Nobody has checked this clip for flashing yet.',
+  'flash-detected': 'The clip has flashing in it.',
+  'no-verdict': 'The reviewer has not decided yet.',
+  'verdict-fail': 'The reviewer did not pass this clip.',
+  'single-subject-not-yes': 'The reviewer has not confirmed one animal in one shot.',
+  'not-usable': 'The clip does not meet the rules for automatic posting.',
+};
+const REASON_PREFIX = [
+  ['final-check:', 'The wording fails the voice or rules check.'],
+  ['judge:', 'A quality check refuses the wording.'],
+  ['alt-text:', 'The picture description fails a check.'],
+  ['bad-config:', 'A setting for the automatic posting is wrong.'],
+  ['bad-hooks-file', 'The list of video texts cannot be read right now.'],
+];
+function reasonText(code) {
+  if (typeof code !== 'string' || code === '') return FALLBACK;
+  if (Object.prototype.hasOwnProperty.call(REASON_TEXT, code)) return REASON_TEXT[code];
+  for (const p of REASON_PREFIX) if (code.indexOf(p[0]) === 0) return p[1];
+  return FALLBACK;
+}
+function filterItems(items, kind) { return kind === 'all' ? items.slice() : items.filter((i) => i.kind === kind); }
+function countKinds(items) { const c = { all: items.length, hook: 0, clip: 0 }; for (const i of items) { if (i.kind === 'hook') c.hook += 1; else if (i.kind === 'clip') c.clip += 1; } return c; }
+function moveIndex(index, delta, length) { if (length <= 0) return 0; return Math.min(length - 1, Math.max(0, index + delta)); }
+function windowOf(length, index, size) { if (length <= 0) return { from: 0, to: 0 }; const from = Math.floor(index / size) * size; return { from, to: Math.min(length, from + size) }; }
+function humanDates(text) { return String(text).replace(/\d{4}-\d{2}-\d{2}/g, (m) => { const d = new Date(m + 'T00:00:00Z'); return Number.isNaN(d.getTime()) ? m : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }); }); }
+function words(tag) { return String(tag).replace(/-/g, ' '); }
+function tagList(item) { const t = item.facts && Array.isArray(item.facts.tags) ? item.facts.tags : []; return t.map(words).join(', '); }
+function clipTitle(item) {
+  const f = item.facts || {}; let t = 'Clip';
+  if (typeof f.durationSec === 'number') t += ', ' + Math.round(f.durationSec * 10) / 10 + ' s';
+  const tags = tagList(item); if (tags) t += ', shows ' + tags;
+  return t;
+}
+function rowText(item) { return item.kind === 'hook' ? 'Video text: ' + item.title : clipTitle(item); }
+function withReason(prefix, reason) { const t = reasonText(reason); return t === FALLBACK ? FALLBACK : prefix + t; }
+function stateLine(item) {
+  const st = item.state;
+  if (item.kind === 'hook') {
+    if (st === 'approved') return item.usableToday ? 'Approved. The automatic posting can use it.' : (reasonText(item.reason) === FALLBACK ? 'Approved, but the automatic posting would not use it today.' : 'Approved, but the automatic posting would not use it today: ' + reasonText(item.reason));
+    if (st === 'unapproved') return 'Waiting for your yes.';
+    if (st === 'stale') return 'Out of date: the facts changed since it was written.';
+    if (typeof st === 'string' && st.indexOf('refused: ') === 0) return withReason('The checks refuse it today: ', item.reason);
+    return FALLBACK;
+  }
+  if (st === 'eligible') return 'Ready to use.';
+  if (st === 'already used in a post') return 'Already used in a post.';
+  if (st === 'video missing') return 'The video file is missing.';
+  if (typeof st === 'string' && st.indexOf('not eligible: ') === 0) return withReason('Not ready yet: ', item.reason);
+  return FALLBACK;
+}
+function factLines(item) {
+  const f = item.facts || {}; const out = [];
+  if (item.kind === 'hook') {
+    if (f.caption) out.push(['Caption:', f.caption]);
+    for (const c of Array.isArray(f.claims) ? f.claims : []) {
+      out.push(['Fact:', c.text]);
+      if (c.source) out.push(['Source:', humanDates(c.source)]); else if (c.sourceDate) out.push(['Source:', 'read ' + humanDates(String(c.sourceDate).slice(0, 10))]);
+    }
+    if (f.link) out.push(['Related page:', f.link]);
+    if (f.otherEntries > 0) out.push(['Note:', f.otherEntries === 1 ? 'Another text for the same idea exists and is not shown here.' : 'Other texts for the same idea exist and are not shown here.']);
+    return out;
+  }
+  if (typeof f.durationSec === 'number') out.push(['Length:', Math.round(f.durationSec * 10) / 10 + ' seconds']);
+  out.push(["Reviewer's decision:", f.verdict === 'pass' ? 'passed' : (f.verdict === 'fail' ? 'failed' : 'none yet')]);
+  out.push(['One animal in one shot:', f.singleSubject === 'yes' ? 'yes' : (f.singleSubject === 'no' ? 'no' : 'not confirmed')]);
+  if (f.notes) out.push(['Reviewer note:', f.notes]);
+  const tags = tagList(item); if (tags) out.push(['Shows:', tags]);
+  out.push(['Flashing:', f.flash === false ? 'none found' : (f.flash === true ? 'found' : 'not checked')]);
+  return out;
+}
+function noteText(item) {
+  const n = item.preview && item.preview.note;
+  if (n === 'video is being prepared') return 'The video is being prepared.';
+  if (n === 'video missing') return 'The video file is missing.';
+  return n || '';
+}
+function anyPending(items) { return items.some((i) => i.preview && i.preview.note === 'video is being prepared'); }
+function dateText(iso) { const d = new Date(iso); return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
+function minutesAgoText(iso, nowMs) {
+  const t = Date.parse(iso); if (Number.isNaN(t)) return null;
+  const m = Math.max(0, Math.round((nowMs - t) / 60000));
+  if (m < 180) return m + ' min ago';
+  if (m < 2 * 24 * 60) return Math.round(m / 60) + ' h ago';
+  return Math.round(m / 1440) + ' days ago';
+}
+function statusLines(s, nowMs) {
+  s = s || {}; const out = [];
+  out.push(s.stop && typeof s.stop === 'object' ? (s.stop.stopped ? 'Posting: stopped' + (s.stop.reason ? ' (' + s.stop.reason + ')' : '') : 'Posting: allowed') : 'Posting: could not be read');
+  out.push(s.autoLane === 'on' ? 'Automatic posting: ON' : (s.autoLane === 'off' ? 'Automatic posting: OFF' : 'Automatic posting: could not be read'));
+  const lp = s.lastPost && typeof s.lastPost === 'object' ? dateText(s.lastPost.at) : null;
+  out.push(lp ? 'Last post ' + lp : (s.lastPost === 'none' ? 'No post yet' : 'Could not be read'));
+  const lr = s.lastRun && typeof s.lastRun === 'object' ? minutesAgoText(s.lastRun.at, nowMs) : null;
+  out.push(lr ? 'Last check by the system ' + lr : 'Last check by the system: could not be read');
+  return out;
+}
+// END PURE
+
+const $ = (id) => document.getElementById(id);
+const state = { items: [], kind: 'all', index: 0, shown: LIST_PAGE, currentId: null, key: null };
+let retryTimer = null;
+
+function el(tag, text, cls) { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; }
+function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+function showStatus(s, problems) {
+  const box = $('status'); clear(box);
+  for (const line of statusLines(s, Date.now())) box.appendChild(el('span', line));
+  const pl = $('problems'); clear(pl);
+  for (const p of problems || []) pl.appendChild(el('li', LABELS[p] || 'Something could not be read.'));
+}
+
+function shownItems() { return filterItems(state.items, state.kind); }
+
+function stopVideo() {
+  const slot = $('video-slot');
+  for (const v of Array.from(slot.querySelectorAll('video'))) { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); }
+  clear(slot);
+}
+
+function showVideo(item) {
+  stopVideo(); const slot = $('video-slot');
+  if (item.preview && item.preview.mediaId) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const v = document.createElement('video');
+    v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = !reduce; v.controls = reduce;
+    v.setAttribute('aria-label', 'Preview video');
+    v.addEventListener('error', () => { stopVideo(); slot.appendChild(el('p', 'The video could not be loaded. Tap Reload.', 'video-note')); });
+    v.src = 'media/' + item.preview.mediaId;
+    slot.appendChild(v);
+    if (item.kind === 'hook') slot.appendChild(el('p', EXAMPLE_NOTE, 'video-note'));
+  } else {
+    slot.appendChild(el('p', noteText(item) || 'No video.', 'video-note'));
+  }
+}
+
+function showFacts(item) {
+  const box = $('facts'); clear(box);
+  for (const row of factLines(item)) { const p = el('p'); p.appendChild(el('strong', row[0] + ' ')); p.appendChild(document.createTextNode(String(row[1]))); box.appendChild(p); }
+  $('idline').textContent = item.kind === 'clip' ? 'Clip number ' + item.id : '';
+}
+
+function renderList() {
+  const list = $('list'); clear(list); const items = shownItems();
+  const w = windowOf(items.length, state.index, LIST_PAGE); if (w.to > state.shown) state.shown = w.to;
+  const upto = Math.min(items.length, state.shown);
+  for (let i = 0; i < upto; i++) {
+    const li = el('li'); const b = el('button', rowText(items[i])); b.type = 'button';
+    if (i === state.index) b.setAttribute('aria-current', 'true');
+    b.addEventListener('click', () => { state.index = i; renderCard(true); renderList(); });
+    li.appendChild(b); list.appendChild(li);
+  }
+  $('more').classList.toggle('hidden', upto >= items.length);
+}
+
+function renderFilters() {
+  const c = countKinds(state.items); const names = { all: 'All', hook: 'Video texts', clip: 'Clips' };
+  for (const b of document.querySelectorAll('#filters button[data-kind]')) { const k = b.getAttribute('data-kind'); b.textContent = names[k] + ' ' + c[k]; b.setAttribute('aria-pressed', k === state.kind ? 'true' : 'false'); }
+}
+
+function renderCard(moved) {
+  const items = shownItems(); const n = items.length;
+  if (n === 0) {
+    stopVideo(); $('card-kind').textContent = ''; $('card-title').textContent = ''; $('state').textContent = 'Nothing waits here. Pick another filter.'; clear($('facts')); $('idline').textContent = ''; $('counter').textContent = '';
+    $('prev').disabled = true; $('next').disabled = true; state.currentId = null; state.key = null; return;
+  }
+  state.index = moveIndex(state.index, 0, n); const item = items[state.index];
+  $('prev').disabled = state.index <= 0; $('next').disabled = state.index >= n - 1;
+  $('card-kind').textContent = item.kind === 'hook' ? 'Proposed video text' : 'Clip';
+  $('card-title').textContent = item.kind === 'hook' ? item.title : clipTitle(item);
+  $('state').textContent = stateLine(item);
+  $('counter').textContent = 'Card ' + (state.index + 1) + ' of ' + n;
+  const key = item.id + '|' + item.version;
+  if (state.key !== key) { showVideo(item); state.key = key; }
+  state.currentId = item.id;
+  showFacts(item);
+  if (moved) $('card-title').focus({ preventScroll: true });
+}
+
+function renderAll() { renderFilters(); renderList(); renderCard(false); }
+
+function move(delta) { const n = shownItems().length; const next = moveIndex(state.index, delta, n); if (next === state.index) return; state.index = next; renderCard(true); renderList(); }
+
+function showUnavailable(text) {
+  stopVideo(); const u = $('unavailable'); u.textContent = text; u.classList.remove('hidden'); $('main').classList.add('hidden'); $('filters').classList.add('hidden'); clear($('status')); clear($('problems'));
+}
+const CANNOT_LOAD = 'The page cannot load. Open it again from your own device with Tailscale switched on.';
+
+async function load() {
+  if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+  let res;
+  try { res = await fetch('api/items', { cache: 'no-store' }); } catch (e) { showUnavailable(CANNOT_LOAD); return; }
+  if (res.status === 403 || res.status === 503 || !res.ok) {
+    if (!sessionStorage.getItem('bpa_reloaded')) { sessionStorage.setItem('bpa_reloaded', '1'); location.reload(); return; }
+    showUnavailable(CANNOT_LOAD); return;
+  }
+  sessionStorage.removeItem('bpa_reloaded');
+  let data; try { data = await res.json(); } catch (e) { showUnavailable(CANNOT_LOAD); return; }
+  $('unavailable').classList.add('hidden'); $('main').classList.remove('hidden'); $('filters').classList.remove('hidden');
+  const keep = state.currentId; state.items = Array.isArray(data.items) ? data.items : [];
+  showStatus(data.status, data.problems);
+  const items = shownItems(); const at = keep ? items.findIndex((i) => i.id === keep) : -1;
+  state.index = at >= 0 ? at : 0; if (at < 0) { state.currentId = null; state.key = null; }
+  renderAll();
+  if (anyPending(state.items)) retryTimer = setTimeout(load, 5000);
+}
+
+for (const b of document.querySelectorAll('#filters button[data-kind]')) b.addEventListener('click', () => { state.kind = b.getAttribute('data-kind'); state.index = 0; state.shown = LIST_PAGE; state.currentId = null; state.key = null; renderAll(); });
+$('prev').addEventListener('click', () => move(-1));
+$('next').addEventListener('click', () => move(1));
+$('refresh').addEventListener('click', () => { load(); });
+$('more').addEventListener('click', () => { state.shown += LIST_PAGE; renderList(); });
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  if (!window.matchMedia('(min-width: 900px)').matches) return;
+  if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); move(-1); }
+  else if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); move(1); }
+});
+let touchX = 0; let touchY = 0;
+$('card').addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; touchX = t.clientX; touchY = t.clientY; }, { passive: true });
+$('card').addEventListener('touchend', (e) => { const t = e.changedTouches[0]; const dx = t.clientX - touchX; const dy = t.clientY - touchY; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) move(dx < 0 ? 1 : -1); }, { passive: true });
+load();
+</script>
+</body>
+</html>

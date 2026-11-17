@@ -2,20 +2,24 @@
 // Hand-written, approved hooks for the automatic lane (C2). The lane's own hook is the idea's cut title; a person may instead write a hook per idea, a
 // second person-visible step approves it, and the lane uses it only while the idea's claims are exactly the ones it was written and approved against.
 //
-//   auto-hooks.json   { "hooks": [ { ideaId, sourceId, hook, claimsSha256, approvedBy, approvedAt } ] }   committed, starts EMPTY
+//   <state folder>/bpa-auto-hooks.json   { "hooks": [ { ideaId, sourceId, hook, claimsSha256, approvedBy, approvedAt, skipped? } ] }   the LANE file: private, mode 600, never committed
+//     (proposals and approvals do not belong in a public repository, and a tap on a phone must not leave uncommitted changes in the live checkout)
+//   auto-hooks.json   the committed file stays as the EMPTY default; it is no longer read by the lane. A fresh install runs `node auto-hooks.js --migrate auto-hooks.json` once.
+//     `skipped` is absent, null or { by, at }: "not this wording" (kept and validated here; the review page shows it from step 2 on)
 //     an entry is bound to ONE idea: it matches on ideaId only (sourceId is kept for the reader), and `claimsSha256` is the hash of the idea's TITLE and its claim texts in order
 //   node auto-hooks.js --add <ideaId> "<hook>"       looks the idea up in the real pool (read only), checks the hook like the on-video text, writes it UNAPPROVED
 //   node auto-hooks.js --approve <ideaId> --by <text>   sets approvedBy and approvedAt (refused when the claims changed since --add)
 //   node auto-hooks.js --list                         each entry with its state: approved, unapproved, stale
+//   node auto-hooks.js --migrate <sourceFile>         copies the entries of another hooks file into the private file (never overwrites an entry for the same idea; writes nothing when anything is unusable)
 //   [--file <path>] on every command: another hooks file (tests)
 // readHooks fails closed: a missing or malformed file is an error, never "no hooks". Unapproved and stale entries are ignored by the lane (approvedHookFor).
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { stateDir } from './stop.js';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-export const defaultHooksPath = () => path.join(HERE, 'auto-hooks.json');
+export const defaultHooksPath = (env = process.env) => path.join(stateDir(env), 'bpa-auto-hooks.json');
 const SHA = /^[0-9a-f]{64}$/;
 const text = (v) => typeof v === 'string' && v.trim() !== '';
 
@@ -26,6 +30,7 @@ const entryProblem = (e) => {
   if (!e || typeof e !== 'object' || Array.isArray(e)) return 'an entry is not an object';
   if (!text(e.ideaId)) return 'ideaId missing'; if (e.sourceId !== null && !text(e.sourceId)) return `sourceId of ${e.ideaId} must be text or null`;
   if (!text(e.hook)) return `hook of ${e.ideaId} missing`; if (!SHA.test(String(e.claimsSha256))) return `claimsSha256 of ${e.ideaId} is not a sha256`;
+  if (e.skipped !== undefined && e.skipped !== null && !(typeof e.skipped === 'object' && !Array.isArray(e.skipped) && text(e.skipped.by) && typeof e.skipped.at === 'string' && !Number.isNaN(Date.parse(e.skipped.at)))) return `skipped of ${e.ideaId} must be null or { by, at }`;
   const by = e.approvedBy ?? null; const at = e.approvedAt ?? null;
   if (by === null && at === null) return null;
   if (!text(by) || typeof at !== 'string' || Number.isNaN(Date.parse(at))) return `approval of ${e.ideaId} needs both approvedBy (text) and approvedAt (a date), or neither`;
@@ -34,6 +39,11 @@ const entryProblem = (e) => {
 
 /** { ok:true, hooks } | { ok:false, reason }. Fail closed. */
 export function readHooks(file = defaultHooksPath()) {
+  if (path.resolve(file) === path.resolve(defaultHooksPath())) { // the private lane file: a regular file only the owner can read (an explicit path, as tests and --file use, is not checked)
+    let st; try { st = fs.lstatSync(file); } catch { st = null; }
+    if (st && !st.isFile()) return { ok: false, reason: 'the hooks file must be a regular file' };
+    if (st && (st.mode & 0o077) !== 0) return { ok: false, reason: 'the hooks file is readable by others (mode must be 600)' };
+  }
   let raw; try { raw = fs.readFileSync(file, 'utf8'); } catch (e) { return { ok: false, reason: `cannot read the hooks file (${e.code || e.message})` }; }
   let j; try { j = JSON.parse(raw); } catch { return { ok: false, reason: 'the hooks file is not valid JSON' }; }
   if (!j || typeof j !== 'object' || Array.isArray(j) || !Array.isArray(j.hooks)) return { ok: false, reason: 'the hooks file must be { "hooks": [...] }' };
@@ -54,22 +64,52 @@ export function approvedHookFor(idea, hooks, { includeUnapproved = false } = {})
   return (Array.isArray(hooks) ? hooks : []).find((e) => e.ideaId === idea.id && ok(e)) || null;
 }
 
-function writeAtomic(file, obj) { const tmp = `${file}.${process.pid}.tmp`; fs.writeFileSync(tmp, `${JSON.stringify(obj, null, 2)}\n`); fs.renameSync(tmp, file); }
+let tmpCounter = 0;
+/** Write tmp then rename, so a reader sees the old file or the new one, never half. Mode 600, folder created when missing. */
+export function writeHooksAtomic(file, obj) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = `${file}.${process.pid}.${tmpCounter++}.tmp`;
+  try { fs.writeFileSync(tmp, `${JSON.stringify(obj, null, 2)}\n`, { mode: 0o600 }); fs.renameSync(tmp, file); }
+  catch (e) { try { fs.unlinkSync(tmp); } catch { /* nothing to remove */ } throw e; }
+}
+const writeAtomic = writeHooksAtomic;
+
+/** --migrate: refuse (exit 3) before writing anything when the source, the pool or an existing target is unusable; one atomic write at the end. */
+async function migrate(sourceFile, file, { deps, log, error, nowOf }) {
+  const src = readHooks(sourceFile); if (!src.ok) { error(`refused: ${src.reason}`); return 3; }
+  const loadPool = deps.loadPool || (async () => (await import('./idea-drafts.js')).loadIdeaPool({ now: nowOf() }));
+  const pool = await loadPool(); if (!pool || !pool.ok) { error(`no pool: ${pool && pool.reason}`); return 3; }
+  let target = { ok: true, hooks: [] };
+  let exists = true; try { fs.lstatSync(file); } catch (e) { if (e.code === 'ENOENT') exists = false; }
+  if (exists) { target = readHooks(file); if (!target.ok) { error(`refused: ${target.reason}`); return 3; } }
+  const ideas = new Map((pool.ideas || []).map((i) => [i.id, i]));
+  const evaluate = deps.evaluate || (async (i, hook) => (await import('./auto-lane.js')).evaluateIdea(i, { now: nowOf(), hook, sourceNames: pool.sourceNames }));
+  const out = [...target.hooks]; const lines = [];
+  for (const e of src.hooks) {
+    if (out.some((x) => x.ideaId === e.ideaId)) { lines.push(`skipped ${e.ideaId}: already in the private file`); continue; }
+    const idea = ideas.get(e.ideaId); const st = hookState(e, idea); let line = `migrated ${e.ideaId} ${st}`;
+    if (st !== 'stale') { const r = await evaluate(idea, e.hook); if (!r.ok) line = `migrated ${e.ideaId} REFUSED-TODAY: ${r.reason}`; }
+    out.push(e); lines.push(line);
+  }
+  writeHooksAtomic(file, { hooks: out }); for (const l of lines) log(l); return 0;
+}
 
 export async function main(argv, deps = {}) {
   const log = deps.log || ((s) => console.log(s)); const error = deps.error || ((s) => console.error(s)); const nowOf = deps.now || (() => new Date());
-  const a = { add: null, hook: null, approve: null, list: false, by: null, file: deps.file || null }; let bad = null;
+  const a = { add: null, hook: null, approve: null, list: false, by: null, file: deps.file || null, migrate: null }; let bad = null;
   for (let i = 0; i < argv.length && !bad; i++) {
     const k = argv[i]; const v = argv[i + 1];
     if (k === '--list') a.list = true;
     else if (k === '--add') { if (v === undefined || argv[i + 2] === undefined || v.startsWith('--')) bad = '--add needs <ideaId> "<hook>"'; else { a.add = v; a.hook = argv[i + 2]; i += 2; } }
-    else if (k === '--approve' || k === '--by' || k === '--file') { if (v === undefined || v.startsWith('--')) bad = `${k} needs a value`; else { a[k.slice(2)] = v; i += 1; } }
+    else if (k === '--approve' || k === '--by' || k === '--file' || k === '--migrate') { if (v === undefined || v.startsWith('--')) bad = `${k} needs a value`; else { a[k.slice(2)] = v; i += 1; } }
     else bad = `unknown argument ${k}`;
   }
-  if (!bad && [a.add !== null, a.approve !== null, a.list].filter(Boolean).length !== 1) bad = 'give exactly one of --add, --approve, --list';
+  if (!bad && [a.add !== null, a.approve !== null, a.list, a.migrate !== null].filter(Boolean).length !== 1) bad = 'give exactly one of --add, --approve, --list, --migrate';
   if (!bad && a.approve !== null && !text(a.by)) bad = '--approve needs --by <text>';
-  if (bad) { error(`${bad}\nusage: auto-hooks.js --add <ideaId> "<hook>" | --approve <ideaId> --by <text> | --list  [--file <hooks.json>]`); return 2; }
-  const file = a.file || defaultHooksPath(); const cur = readHooks(file); if (!cur.ok) { error(`refused: ${cur.reason}`); return 3; }
+  if (bad) { error(`${bad}\nusage: auto-hooks.js --add <ideaId> "<hook>" | --approve <ideaId> --by <text> | --list | --migrate <sourceFile>  [--file <hooks.json>]`); return 2; }
+  const file = a.file || defaultHooksPath();
+  if (a.migrate !== null) return migrate(a.migrate, file, { deps, log, error, nowOf });
+  const cur = readHooks(file); if (!cur.ok) { error(`refused: ${cur.reason}`); return 3; }
   const loadPool = deps.loadPool || (async () => (await import('./idea-drafts.js')).loadIdeaPool({ now: nowOf() }));
   const pool = await loadPool(); if (!pool || !pool.ok) { error(`no pool: ${pool && pool.reason}`); return 3; }
   const ideas = new Map((pool.ideas || []).map((i) => [i.id, i]));

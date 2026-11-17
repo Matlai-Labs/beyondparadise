@@ -76,6 +76,17 @@ export function pairingFor(idea, clips) {
   if (!subjectOf(idea)) return { reason: 'no-subject' };
   const clip = clips.find((c) => clipFits(idea, c)); return clip ? { clip } : { reason: 'no-matching-clip' };
 }
+/** The lane's gates for one idea BEFORE any text check, in the lane's order: its kind is allowed, it was not posted within repeatDays, its title and fact agree, a fitting eligible unused clip exists.
+ *  `clips` = the lane's eligible clip list. { ok:true, clip } | { ok:false, reason }. prepareAutoPost and the review page both call this, so "usable today" means exactly what the lane means. */
+export function laneVerdictFor(idea, { clips, history = [], config = {}, now = new Date() } = {}) {
+  const kinds = autoKindsOf(config); if (!kinds.ok) return { ok: false, reason: kinds.reason };
+  if (!kinds.kinds.includes(idea.kind)) return { ok: false, reason: 'wrong-kind' };
+  const repeatDays = Number.isInteger(config.repeatDays) && config.repeatDays > 0 ? config.repeatDays : 120;
+  if (inHistory(idea, history, now, repeatDays)) return { ok: false, reason: 'in-history' };
+  if (idea.titleFromOtherField === true) return { ok: false, reason: 'title-claim-differ' }; // title and caption text are different strings: the video could say the opposite of the caption, even with an approved hook
+  const fit = pairingFor(idea, Array.isArray(clips) ? clips : []); if (!fit.clip) return { ok: false, reason: fit.reason };
+  return { ok: true, clip: fit.clip };
+}
 /** config.autoRequireApprovedHook is a RESTRICTION, so a typo must not switch it off: absent or false = off, true = on, ANY other present value refuses the lane (like autoKindsOf). */
 export function requireApprovedHookOf(config) {
   const v = config && config.autoRequireApprovedHook;
@@ -112,13 +123,10 @@ export async function prepareAutoPost({ pool, manifest, usage = [], history = []
   const clips = eligibleClips(manifest, usage, { dir: libraryDir, exists }).filter((c) => inside(libraryDir, c.file));
   if (!clips.length) return { ok: false, reasons: ['no-eligible-clip'], refused: [] };
   const ideas = (Array.isArray(pool) ? pool : (pool && Array.isArray(pool.ideas) ? pool.ideas : [])).filter((i) => i && kinds.kinds.includes(i.kind)).sort(rankOf);
-  const repeatDays = Number.isInteger(config.repeatDays) && config.repeatDays > 0 ? config.repeatDays : 120;
   const refused = []; let chosen = null; let tried = 0;
   const refuse = (idea, reason) => { refused.push({ ideaId: idea.id, reason }); say(`auto: idea ${idea.id} refused: ${reason}`); };
   for (const idea of ideas) {
-    if (inHistory(idea, history, now, repeatDays)) { refuse(idea, 'in-history'); continue; }
-    if (idea.titleFromOtherField === true) { refuse(idea, 'title-claim-differ'); continue; } // title and caption text are different strings: the video could say the opposite of the caption, even with an approved hook
-    const fit = pairingFor(idea, clips); if (!fit.clip) { refuse(idea, fit.reason); continue; } // the cheap test first: only ideas WITH a fitting clip count against the cap
+    const fit = laneVerdictFor(idea, { clips, history, config, now }); if (!fit.ok) { refuse(idea, fit.reason); continue; } // the cheap tests first: only ideas WITH a fitting clip count against the cap
     const hk = hookFor(idea, hooks.hooks, config, { preview: previewUnapproved === true }); if (hk.reason) { refuse(idea, hk.reason); continue; }
     if (tried >= MAX_IDEAS_PER_RUN) break; tried += 1;
     const r = await evaluateIdea(idea, { now, check, judgeChecks, neverPromotePatterns, sourceNames: sourceNames || (pool && pool.sourceNames), hook: hk.hook, clip: fit.clip });
