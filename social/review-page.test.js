@@ -9,7 +9,7 @@ import { CLIP_REASONS, HOOK_REASONS } from './review-items.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(HERE, 'review-page.html'), 'utf8');
-const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS, videoFailureAction, EDIT_MAX, NET_TEXT, REFUSAL_TEXT, refusalText, waitingItems, decidedItems, decisionRequest, afterRefusal, tokenStep, keyAction, decidedLine, stopButtonText })`);
+const pure = vm.runInNewContext(`${html.split('// BEGIN PURE')[1].split('// END PURE')[0]}; ({ LIST_PAGE, LABELS, REASON_TEXT, REASON_PREFIX, FALLBACK, filterItems, countKinds, moveIndex, windowOf, reasonText, stateLine, clipTitle, rowText, statusLines, factLines, anyPending, noteText, statusHint, quietLine, videoUi, shouldAutoplay, PLAY_TEXT, PLAYING_LINE, PAUSED_LINE, VIDEO_FAILED_TEXT, VIDEO_WAIT_MS, videoFailureAction, EDIT_MAX, NET_TEXT, postingBody, REFUSAL_TEXT, refusalText, waitingItems, decidedItems, decisionRequest, afterRefusal, tokenStep, keyAction, decidedLine, stopButtonText })`);
 
 test('static rules: no external request, no HTML injection, no inline handlers, nonce on every script', () => {
   assert.ok(html.length < 60000); assert.doesNotMatch(html, /https?:\/\//); assert.doesNotMatch(html, /<link|@import|<iframe/);
@@ -287,3 +287,23 @@ test('low: a network error on a decision has its own sentence that says the deci
   assert.match(pure.NET_TEXT, /may have been saved/); assert.match(pure.NET_TEXT, /Reload the page/); assert.notEqual(pure.NET_TEXT, 'That did not work. Reload the page.');
   assert.doesNotMatch(pure.NET_TEXT, /\b(sha\d*|hash|json|manifest|api|mediaId|version|null|undefined|token|nonce|network)\b/i);
 });
+
+// ── review fixes: SR2, the page refuses the same characters as the server (one shared list) ─────────────────────────────
+import { BAD_CHARS, LINEBREAK_CHARS, GOOD_TEXTS } from './review-test-chars.js';
+test('SR2: the page refuses every character of the shared list (the same list the server test uses), line breaks too; ordinary text passes', () => {
+  const item = { kind: 'hook', id: 'idea_1', version: 'a'.repeat(64), actions: ['edit'] }; const missed = [];
+  for (const ch of [...BAD_CHARS, ...LINEBREAK_CHARS]) if (pure.decisionRequest(item, 'edit', `Lions at${ch}dawn`) !== null) missed.push(`U+${ch.codePointAt(0).toString(16).toUpperCase()}`);
+  assert.deepEqual(missed, []);
+  for (const text of GOOD_TEXTS) assert.deepEqual({ ...pure.decisionRequest(item, 'edit', text) }, { kind: 'hook', id: 'idea_1', version: 'a'.repeat(64), action: 'edit', text }, JSON.stringify(text));
+});
+test('SR2: the page source holds its refusal set as plain escapes with the u flag (no literal invisible characters in the file)', () => {
+  const line = html.split('\n').find((l) => l.startsWith('const BAD_EDIT_CHARS')); assert.ok(line); assert.match(line, /\\p\{Cc\}/); assert.match(line, /\/u;/);
+  assert.doesNotMatch(html, /[​-‏‪-‮⁠-⁤⁦-⁩﻿؜]/, 'no literal invisible character anywhere in the page file');
+});
+
+test('SR4: the posting body: Stop carries nothing else; Start carries the stop reason the page saw (and nothing when the page has none)', () => {
+  assert.deepEqual({ ...pure.postingBody('stop', { reason: 'stopped by flag since T' }) }, { action: 'stop' });
+  assert.deepEqual({ ...pure.postingBody('start', { reason: 'stopped by flag since T' }) }, { action: 'start', seen: 'stopped by flag since T' });
+  assert.deepEqual({ ...pure.postingBody('start', { reason: null }) }, { action: 'start' }); assert.deepEqual({ ...pure.postingBody('start', {}) }, { action: 'start' });
+});
+test('SR4: the sentence for a stop that changed in between is exactly the agreed one', () => { assert.equal(pure.refusalText('stop-changed'), 'Posting was stopped again in the meantime. Check and tap again.'); });

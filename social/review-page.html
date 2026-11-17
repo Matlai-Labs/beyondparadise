@@ -338,8 +338,10 @@ const REFUSAL_TEXT = {
   'lock-busy': 'The system is busy. Try again in a moment.',
   'still-stopped': 'Posting is still stopped by another stop switch.',
   'could-not-stop': 'Posting could not be stopped from here. Use the stop command in WhatsApp.',
+  'stop-changed': 'Posting was stopped again in the meantime. Check and tap again.',
 };
 const NET_TEXT = 'The connection broke. Your decision may have been saved. Reload the page to see what is saved.';
+function postingBody(action, ui) { const b = { action: action }; if (action === 'start' && ui && typeof ui.reason === 'string' && ui.reason !== '') b.seen = ui.reason; return b; }
 function refusalText(code) {
   if (typeof code !== 'string' || code === '') return FALLBACK;
   if (Object.prototype.hasOwnProperty.call(REFUSAL_TEXT, code)) return REFUSAL_TEXT[code];
@@ -349,7 +351,8 @@ function refusalText(code) {
 }
 function waitingItems(items) { return items.filter((i) => i.decision === null || i.decision === undefined); }
 function decidedItems(items) { return items.filter((i) => i.decision !== null && i.decision !== undefined).sort((a, b) => Date.parse(b.decision.at) - Date.parse(a.decision.at)); }
-const BAD_EDIT_CHARS = /[\u0000-\u001f\u007f؜​-‏‪-‮⁠-⁤⁦-⁩﻿]/;
+// the same set the server refuses (bpa-actions.js INVISIBLE): control, format, private-use, unassigned, line and paragraph separators, every space but U+0020, variation selectors, fillers
+const BAD_EDIT_CHARS = /[\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Cs}\p{Zl}\p{Zp}︀-️\u{E0100}-\u{E01EF}͏ᅟᅠ⠀ㅤﾠ]|(?! )\p{Zs}/u;
 function decisionRequest(item, action, text) {
   if (!item || !Array.isArray(item.actions) || item.actions.indexOf(action) < 0) return null;
   const req = { kind: item.kind, id: item.id, version: item.version, action };
@@ -529,7 +532,7 @@ async function load() {
   showStatus(data.status, data.problems);
   const items = shownItems(); const at = keep ? items.findIndex((i) => i.id === keep) : -1;
   state.index = at >= 0 ? at : (keep ? state.index : 0); if (at < 0) { state.currentId = null; state.key = null; }
-  stopUi.stopped = !!(data.status && data.status.stop && data.status.stop.stopped === true); renderStop();
+  stopUi.stopped = !!(data.status && data.status.stop && data.status.stop.stopped === true); stopUi.reason = stopUi.stopped && typeof data.status.stop.reason === 'string' ? data.status.stop.reason : null; renderStop();
   renderAll();
   if (actionToken === null && !tokenAsked) { tokenAsked = true; fetchToken(); }
   if (anyPending(state.items)) retryTimer = setTimeout(load, 5000);
@@ -554,7 +557,7 @@ $('card').addEventListener('touchend', (e) => { const t = e.changedTouches[0]; c
 // ── step 2: decide, edit, undo, stop (DOM part) ──
 const PAGE_HDR = { 'X-Bpa-Page': '1' };
 let actionToken = null; let tokenAsked = false;
-const stopUi = { stopped: false, armed: false, timer: null };
+const stopUi = { stopped: false, reason: null, armed: false, timer: null };
 state.busy = false; state.editing = false;
 const SESSION_ENDED = 'Your session ended. Reload the page.';
 const ENFORCED_TEXT = 'All clips that were ready are decided. From now on the automatic posting uses only the clips you approve.';
@@ -651,11 +654,16 @@ async function decide(action, text, fromList) {
 
 async function stopOrStart() {
   if (state.busy) return;
-  if (!stopUi.armed) { stopUi.armed = true; renderStop(); stopUi.timer = setTimeout(() => { stopUi.armed = false; renderStop(); }, 5000); return; }
+  if (!stopUi.armed) {
+    // SR4: the first tap reads the real state first; if it is not the state the button showed, nothing is armed (the owner looks again)
+    const was = stopUi.stopped; const wasReason = stopUi.reason; state.busy = true; setNotice('Checking…'); await load(); state.busy = false;
+    if (stopUi.stopped !== was || stopUi.reason !== wasReason) { setNotice(stopUi.stopped ? refusalText('stop-changed') : 'Posting is no longer stopped. Check and tap again.'); renderStop(); return; }
+    setNotice(''); stopUi.armed = true; renderStop(); stopUi.timer = setTimeout(() => { stopUi.armed = false; renderStop(); }, 5000); return;
+  }
   if (stopUi.timer) { clearTimeout(stopUi.timer); stopUi.timer = null; }
   stopUi.armed = false; const action = stopUi.stopped ? 'start' : 'stop';
   setBusy(true);
-  const r = await callServer(postPosting, { action });
+  const r = await callServer(postPosting, postingBody(action, stopUi));
   setBusy(false);
   if (r.expired) { setNotice(SESSION_ENDED); renderStop(); return; }
   const d = r.net ? null : r.data;

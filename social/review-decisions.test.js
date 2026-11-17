@@ -110,3 +110,37 @@ test('a null version is allowed (posting records)', () => {
   const f = path.join(tmp(), 'd.jsonl');
   assert.equal(appendDecision(f, rec({ kind: 'posting', id: 'posting', version: null, decision: 'stop' })).ok, true);
 });
+
+// ── review fixes: SR3, a torn last line, all bytes written, no link followed ───────────────────────────────────────────
+import { LOG_PATH } from './lib.js';
+const lines = (f) => fs.readFileSync(f, 'utf8').split('\n').filter((l) => l !== '');
+test('SR3: a torn (unterminated, unparsable) last line after good records: the next record goes on a fresh line, numbering continues from the last good line, a code is logged, the fragment is kept aside, and the whole file reads back', () => {
+  const f = path.join(tmp(), 'd.jsonl'); appendDecision(f, rec()); appendDecision(f, rec({ id: 'h2' }));
+  fs.appendFileSync(f, '{"n":3,"kind":"hook","id":"h3","ver'); const was = fs.existsSync(LOG_PATH) ? fs.readFileSync(LOG_PATH, 'utf8').length : 0;
+  assert.deepEqual(appendDecision(f, rec({ id: 'h4' })), { ok: true, n: 3 });
+  assert.deepEqual(lines(f).map((l) => JSON.parse(l).n), [1, 2, 3]); assert.equal(JSON.parse(lines(f)[2]).id, 'h4'); assert.equal(fs.readFileSync(f, 'utf8').endsWith('\n'), true);
+  assert.deepEqual(readDecisions(f).records.map((r) => r.id), ['h1', 'h2', 'h4']); assert.equal(mode(f), 0o600);
+  assert.equal(fs.readFileSync(`${f}.torn`, 'utf8').trim(), '{"n":3,"kind":"hook","id":"h3","ver'); assert.equal(mode(`${f}.torn`), 0o600);
+  const added = fs.readFileSync(LOG_PATH, 'utf8').slice(was).split('\n').filter((l) => l.includes('decision-record-torn')); assert.equal(added.length, 1); assert.match(added[0], /review failed: decision-record-torn$/);
+  assert.deepEqual(appendDecision(f, rec({ id: 'h5' })), { ok: true, n: 4 }, 'and the next one after that works as well');
+});
+test('SR3: a last line that parses but has no newline (the newline was lost): the next record starts on a fresh line and nothing is lost', () => {
+  const f = path.join(tmp(), 'd.jsonl'); appendDecision(f, rec()); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').trimEnd(), { mode: 0o600 });
+  assert.deepEqual(appendDecision(f, rec({ id: 'h2' })), { ok: true, n: 2 }); assert.deepEqual(lines(f).map((l) => JSON.parse(l).id), ['h1', 'h2']); assert.equal(fs.existsSync(`${f}.torn`), false);
+});
+test('SR3: a damaged line in the MIDDLE still fails closed when the last line is also unusable, and a file that holds nothing but one terminated garbage line stays refused (bytes unchanged)', () => {
+  const f = path.join(tmp(), 'd.jsonl'); fs.writeFileSync(f, '{"n":1,"kind":"hook"\n{broken\n{"torn', { mode: 0o600 }); const before = fs.readFileSync(f);
+  assert.deepEqual(appendDecision(f, rec()), { ok: false, reason: 'record-failed' }); assert.deepEqual(fs.readFileSync(f), before);
+  const g = path.join(tmp(), 'g.jsonl'); fs.writeFileSync(g, '{broken\n', { mode: 0o600 }); assert.deepEqual(appendDecision(g, rec()), { ok: false, reason: 'record-failed' });
+});
+test('SR3: writeSync is looped until every byte is written (a write that takes 5 bytes at a time still writes the whole line)', () => {
+  const real = fs.writeSync; const f = path.join(tmp(), 'd.jsonl'); let calls = 0;
+  fs.writeSync = (fd, buf, ...rest) => { calls += 1; if (typeof buf === 'string') return real(fd, buf.slice(0, 5)) ; const off = rest[0] ?? 0; const len = rest[1] ?? buf.length - off; return real(fd, buf, off, Math.min(5, len)); };
+  try { assert.deepEqual(appendDecision(f, rec()), { ok: true, n: 1 }); } finally { fs.writeSync = real; }
+  assert.ok(calls > 5, `${calls} writes`); const l = lines(f); assert.equal(l.length, 1); assert.equal(JSON.parse(l[0]).n, 1);
+});
+test('SR3: the file is opened with O_NOFOLLOW: a symbolic link in the file place is refused and its target is not written', () => {
+  const d = tmp(); const target = path.join(d, 'target.jsonl'); fs.writeFileSync(target, '', { mode: 0o600 }); const f = path.join(d, 'link.jsonl'); fs.symlinkSync(target, f);
+  assert.deepEqual(appendDecision(f, rec()), { ok: false, reason: 'record-failed' }); assert.equal(fs.readFileSync(target, 'utf8'), '');
+  assert.ok(/O_NOFOLLOW/.test(fs.readFileSync(new URL('./review-decisions.js', import.meta.url), 'utf8')), 'the flag is in the code');
+});

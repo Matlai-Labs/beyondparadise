@@ -59,3 +59,12 @@ test('(4b) CR3: the posting record in review-decide.js is written inside withDec
 test('(5) no request or body id is used as a plain object key', () => {
   for (const f of ['bpa-actions.js', 'review-decide.js']) for (const line of read(f).split('\n')) assert.doesNotMatch(line, /\[\s*(req|body)\.id\s*\]/, `${f}: ${line.trim()}`);
 });
+
+test('(6) SR1: checkSameOrigin( is called at exactly two sites in review-routes.js (session, then decide/posting after the token), both inside handlePost, never in the page route', () => {
+  const s = read('review-routes.js'); assert.equal(count(s, /\bcheckSameOrigin\(/g), 2);
+  const post = s.slice(s.indexOf('async function handlePost('), s.indexOf('async function handle(req'));
+  assert.equal(count(post, /\bcheckSameOrigin\(/g), 2);
+  assert.ok(post.indexOf('checkSameOrigin(', post.indexOf('checkAction(')) > post.indexOf('checkAction('), 'after the token check');
+  assert.ok(post.indexOf('checkSameOrigin(', post.indexOf('checkAction(')) < post.indexOf('readBody('), 'before the body is read');
+  assert.equal(count(s.slice(s.indexOf('async function handle(req')), /\bcheckSameOrigin\(/g), 0, 'the page route does not use it');
+});

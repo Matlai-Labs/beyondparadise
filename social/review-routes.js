@@ -8,7 +8,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './stop.js';
-import { loadAccess, checkAccess, checkAction, cookieOf, setCookieHeader, isPageLoad, PAGE_HEADER } from './review-auth.js';
+import { loadAccess, checkAccess, checkAction, checkSameOrigin, cookieOf, setCookieHeader, isPageLoad, PAGE_HEADER } from './review-auth.js';
 import { createActions, publicCode } from './bpa-actions.js';
 import { parseDecisionBody, parsePostingBody, runDecision, runPosting } from './review-decide.js';
 import { decisionsFilePath } from './review-decisions.js';
@@ -110,6 +110,7 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, load
   // an answer that leaves unread input: tell the client the connection ends, and destroy it once the answer is out (never before, or no answer is sent)
   const early = (req, res, code) => { res.setHeader('Connection', 'close'); text(res, code); res.on('finish', () => { try { req.destroy(); } catch { /* gone */ } }); };
   // the body, counted in BYTES, only after every guard has passed. Content-Length is judged first and the body is never awaited when it is too big.
+  const ABORTED = Symbol('aborted'); // SR5: the client went away before the body was complete (not a size problem)
   function readBody(req, res) {
     return new Promise((resolve) => {
       const cl = req.headers['content-length'];
@@ -119,19 +120,21 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, load
       const timer = setTimeout(() => { early(req, res, 413); fin(null); }, BODY_WAIT_MS); timer.unref?.();
       req.on('data', (c) => { const b = Buffer.isBuffer(c) ? c : Buffer.from(c); n += b.length; if (n > MAX_BODY) { early(req, res, 413); return fin(null); } chunks.push(b); });
       req.on('end', () => fin(Buffer.concat(chunks).toString('utf8')));
-      req.on('error', () => fin(null)); req.on('aborted', () => fin(null));
+      req.on('error', () => fin(ABORTED)); req.on('aborted', () => fin(ABORTED)); req.on('close', () => fin(ABORTED)); // 'close' after a complete body finds fin already done
     });
   }
   async function handlePost(req, res, route, access) {
     if (route === 'session') {
       if (req.headers[PAGE_HEADER] !== '1') { log('review refused: no-page-header session'); return refuse(res, { code: 403 }); }
+      { const so = checkSameOrigin(req); if (!so.ok) { log(`review refused: ${so.reason} session`); return refuse(res, so); } }
       const t = sessions.actionToken(cookieOf(req)); if (t === null) { log('review refused: bad-cookie session'); return refuse(res, { code: 403 }); }
       return json(res, 200, { ok: true, token: t });
     }
     const chk = checkAction(req, { sessions }); if (!chk.ok) { log(`review refused: ${chk.reason} ${route}`); res.setHeader('Connection', 'close'); refuse(res, chk); res.on('finish', () => { try { req.destroy(); } catch { /* gone */ } }); return; }
+    const so = checkSameOrigin(req); if (!so.ok) { log(`review refused: ${so.reason} ${route}`); res.setHeader('Connection', 'close'); refuse(res, so); res.on('finish', () => { try { req.destroy(); } catch { /* gone */ } }); return; } // SR1, before the body is read
     const ct = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
     if (ct !== 'application/json') { log(`review refused: content-type ${route}`); return early(req, res, 415); }
-    const body = await readBody(req, res); if (body === null) { log(`review refused: body-size ${route}`); return; }
+    const body = await readBody(req, res); if (body === ABORTED) { log(`review refused: client-aborted ${route}`); return; } if (body === null) { log(`review refused: body-size ${route}`); return; }
     if (route === 'decide') {
       const pr = parseDecisionBody(body); if (!pr.ok) { log('review refused: bad-request decide'); return json(res, 400, { ok: false, code: 'bad-request' }); }
       const r = await runDecision(pr.req, { actions: loadActions(env), recordFile, claimedLogin: access.ownerLogin });
@@ -139,7 +142,7 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, load
       const code = publicCode(r && r.code); log(`review decision: ${pr.req.action} ${pr.req.kind} refused ${code}`); return json(res, 409, { ok: false, code });
     }
     const pp = parsePostingBody(body); if (!pp.ok) { log('review refused: bad-request posting'); return json(res, 400, { ok: false, code: 'bad-request' }); }
-    const r = await runPosting(pp.action, { recordFile, claimedLogin: access.ownerLogin, ...postingOpts });
+    const r = await runPosting(pp.action, { recordFile, claimedLogin: access.ownerLogin, ...(pp.seen !== undefined ? { seen: pp.seen } : {}), ...postingOpts });
     if (r && r.ok === true) { cache = null; log(`review decision: ${pp.action} posting ok`); return json(res, 200, { ok: true, ...(r.note ? { note: r.note } : {}) }); }
     const code = publicCode(r && r.code); log(`review decision: ${pp.action} posting refused ${code}`); return json(res, 409, { ok: false, code });
   }

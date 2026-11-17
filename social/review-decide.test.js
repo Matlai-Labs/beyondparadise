@@ -118,3 +118,24 @@ test('CR3: a Stop arriving while a clip decision commits gets its own number, af
   assert.deepEqual(lines.map((x) => x.decision), ['approve', 'void', 'stop']); assert.deepEqual(lines.map((x) => x.n), [1, 2, 3]); assert.equal(lines[1].ref, n1);
   assert.deepEqual(readDecisions(p.recordFile).records.map((x) => x.decision), ['stop'], 'the stop is still in the audit list');
 });
+
+// ── review fixes: SR4, Start carries the stop the page saw ─────────────────────────────────────────────────────────────
+import { stopStatus, engageStop, releaseStop } from './stop.js';
+test('SR4: parsePostingBody: start may carry seen (a short single-line string), stop may not; a seen of the wrong type, length or with a control character is refused', () => {
+  assert.deepEqual(parsePostingBody('{"action":"start","seen":"stopped by flag since 2026-11-17T09:00:00.000Z"}'), { ok: true, action: 'start', seen: 'stopped by flag since 2026-11-17T09:00:00.000Z' });
+  assert.deepEqual(parsePostingBody('{"action":"start"}'), { ok: true, action: 'start' });
+  for (const b of ['{"action":"stop","seen":"x"}', '{"action":"start","seen":5}', '{"action":"start","seen":null}', '{"action":"start","seen":""}', `{"action":"start","seen":"${'x'.repeat(301)}"}`, '{"action":"start","seen":"a\\nb"}', '{"action":"start","seen":"a","b":1}']) assert.deepEqual(parsePostingBody(b), { ok: false }, b);
+});
+test('SR4: Start with the stop the page saw releases it; a stop that changed between the two taps is refused with stop-changed, nothing is recorded and the stop stays', async () => {
+  const p = posting(); await runPosting('stop', p); fs.utimesSync(p.stopOpts.flagPath, new Date(Date.now() - 3600e3), new Date(Date.now() - 3600e3));
+  const seen = stopStatus(p.stopOpts).reason; assert.match(seen, /^stopped by flag since /);
+  releaseStop(p.stopOpts); engageStop({ flagPath: p.stopOpts.flagPath }); // WhatsApp: start, then stop again: a new stop with a new time
+  const now = stopStatus(p.stopOpts).reason; assert.notEqual(now, seen);
+  const before = readDecisions(p.recordFile).records.length;
+  const r = await runPosting('start', { ...p, seen }); assert.deepEqual({ ok: r.ok, code: r.code }, { ok: false, code: 'stop-changed' });
+  assert.equal(fs.existsSync(p.stopOpts.flagPath), true, 'still stopped'); assert.equal(readDecisions(p.recordFile).records.length, before, 'no record');
+  const ok = await runPosting('start', { ...p, seen: now }); assert.equal(ok.ok, true); assert.equal(fs.existsSync(p.stopOpts.flagPath), false);
+});
+test('SR4: Start whose seen no longer matches but posting is not stopped at all is not refused (nothing to release, nothing to lose)', async () => {
+  const p = posting(); const r = await runPosting('start', { ...p, seen: 'stopped by flag since 2020-01-01T00:00:00.000Z' }); assert.equal(r.ok, true);
+});

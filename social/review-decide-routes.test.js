@@ -168,3 +168,63 @@ test('no route writes config.json: its bytes and mtime are identical after every
   await post('/review/api/decide', GOOD); await post('/review/api/posting', { action: 'stop' }); await post('/review/api/posting', { action: 'start' }); await call('/review/api/items', { ...login, cookie: ck }); await call('/review/api/session', { ...login, cookie: ck, 'x-bpa-page': '1' }, { method: 'POST' });
   assert.ok(before.equals(fs.readFileSync(f))); assert.equal(fs.statSync(f).mtimeMs, m0);
 });
+
+// ── review fixes: SR1, a same-origin check on every state-changing request (not on the page load) ───────────────────────
+const sf = (v) => ({ 'sec-fetch-site': v });
+test('SR1: decide, posting and session refuse Sec-Fetch-Site cross-site, same-site and none with the plain answer and the code cross-site; the action is never reached and no record is written', async () => {
+  const dec = JSON.stringify(GOOD); const pst = JSON.stringify({ action: 'stop' });
+  for (const v of ['cross-site', 'same-site', 'none', 'Cross-Site', '']) {
+    for (const [route, body] of [['decide', dec], ['posting', pst]]) {
+      logs.length = 0; const r = await post(`/review/api/${route}`, body, sf(v));
+      assert.equal(r.status, 403, `${route} ${v}`); assert.equal(r.body.toString(), 'not available', `${route} ${v}`); assert.deepEqual(logs, [`review refused: cross-site ${route}`], `${route} ${v}`);
+    }
+    logs.length = 0; const s = await call('/review/api/session', { ...login, cookie: ck, 'x-bpa-page': '1', ...sf(v) }, { method: 'POST' });
+    assert.equal(s.status, 403, `session ${v}`); assert.equal(s.body.toString(), 'not available'); assert.deepEqual(logs, ['review refused: cross-site session'], `session ${v}`);
+  }
+  assert.equal(calls.length, 0); assert.deepEqual(postCalls, []); assert.equal(fs.existsSync(recordFile), false);
+});
+test('SR1: same-origin and a request with no Sec-Fetch-Site header are accepted on all three routes (older browsers, the bridge, the existing tests)', async () => {
+  for (const extra of [sf('same-origin'), {}]) {
+    const d = await post('/review/api/decide', GOOD, extra); assert.equal(d.status, 200, JSON.stringify(extra));
+    const p = await post('/review/api/posting', { action: 'stop' }, extra); assert.equal(p.status, 200, JSON.stringify(extra));
+    const s = await call('/review/api/session', { ...login, cookie: ck, 'x-bpa-page': '1', ...extra }, { method: 'POST' }); assert.equal(s.status, 200, JSON.stringify(extra));
+  }
+});
+test('SR1: the guard order is kept: a cross-site request with a wrong token is refused by the token check first (no-token), by the cookie check before that', async () => {
+  logs.length = 0; const a = await call('/review/api/decide', { ...login, cookie: ck, 'content-type': 'application/json', 'content-length': 2, ...sf('cross-site') }, { method: 'POST', body: '{}' });
+  assert.equal(a.status, 403); assert.deepEqual(logs, ['review refused: no-token decide']);
+  logs.length = 0; const b = await call('/review/api/decide', { ...login, 'x-bpa-action': tok, 'content-type': 'application/json', 'content-length': 2, ...sf('cross-site') }, { method: 'POST', body: '{}' });
+  assert.equal(b.status, 403); assert.deepEqual(logs, ['review refused: no-cookie decide']);
+});
+test('SR1: the page load is NOT subject to it: a cross-site document navigation (a link in a chat app) still gets the page and a cookie; a cross-site page request that is not a navigation is still refused as before', async () => {
+  clock += 5000; const a = await call('/review/', { ...login, ...nav, ...sf('cross-site') }); assert.equal(a.status, 200); assert.match(String(a.headers['set-cookie']), /bpa_review=/); assert.match(a.headers['content-type'], /text\/html/);
+  clock += 5000; const b = await call('/review/', { ...login, ...nav, ...sf('none') }); assert.equal(b.status, 200, 'a typed address arrives as none'); assert.match(String(b.headers['set-cookie']), /bpa_review=/);
+  clock += 5000; const c = await call('/review/', { ...login, 'sec-fetch-dest': 'image', 'sec-fetch-mode': 'no-cors', ...sf('cross-site') }); assert.equal(c.status, 403); assert.equal(c.headers['set-cookie'], undefined);
+});
+
+test('SR4: the posting route passes seen to runPosting: a Start that names a different stop than the one now in force answers 409 stop-changed (plain code in the log), nothing is released; the matching one releases', async () => {
+  // a server whose status reads a reason, like the real stop status
+  let reason = 'stopped by flag since 2026-11-17T09:00:00.000Z'; stopped = true;
+  const h = createReviewHandler({ sessions: createSessions({ now: () => clock }), loadInputs: () => ({ readHooks: () => ({ ok: true, hooks: [] }), loadPool: () => ({ ok: true, ideas: [], sourceNames: {} }), readManifest: () => ({ clips: [] }), libraryDir: dir, info: { get: async () => 'x' }, secret: 's', evaluate: async () => ({ ok: true, draft: {} }) }), loadActions: () => mkStubs(), recordFile, log: (m) => logs.push(m), cacheMs: 60000, previewDir: path.join(dir, 'previews'),
+    postingOpts: { stop: () => ({}), start: () => { postCalls.push('start'); stopped = false; }, readStatus: () => ({ stop: { stopped, reason: stopped ? reason : null } }) } });
+  const srv2 = http.createServer((q, r) => { if (!h(q, r)) { r.statusCode = 418; r.end(); } }); await new Promise((r) => srv2.listen(0, '127.0.0.1', r)); const p2 = srv2.address().port;
+  try {
+    clock += 5000; const c2 = await cookieFrom(p2); const t2 = await getTok(c2, p2);
+    const go = (obj) => { const body = JSON.stringify(obj); return call('/review/api/posting', { ...login, cookie: c2, 'x-bpa-action': t2, 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) }, { method: 'POST', body, port: p2 }); };
+    logs.length = 0; const a = await go({ action: 'start', seen: 'stopped by flag since 2026-11-17T08:00:00.000Z' });
+    assert.equal(a.status, 409); assert.deepEqual(JSON.parse(a.body), { ok: false, code: 'stop-changed' }); assert.deepEqual(postCalls, []); assert.ok(logs.includes('review decision: start posting refused stop-changed'));
+    const b = await go({ action: 'start', seen: reason }); assert.equal(b.status, 200); assert.deepEqual(postCalls, ['start']);
+  } finally { srv2.close(); }
+});
+
+test('SR5: a client that hangs up in the middle of the body is logged as client-aborted, not as body-size; nothing reaches the action', async () => {
+  const body = '{"kind":"hook","id":"idea_1"'; const head = { ...H({ 'content-length': 120 }), host: HOST };
+  await new Promise((resolve) => { const s = net.connect(port, '127.0.0.1', () => { s.write(`POST /review/api/decide HTTP/1.1\r\n${headText(head)}\r\n\r\n${body}`); setTimeout(() => { s.destroy(); resolve(); }, 80); }); s.on('error', () => {}); });
+  await new Promise((r) => setTimeout(r, 150));
+  assert.ok(logs.includes('review refused: client-aborted decide'), JSON.stringify(logs)); assert.ok(!logs.some((l) => l.includes('body-size')), JSON.stringify(logs)); assert.equal(calls.length, 0);
+});
+test('SR5: a body that is really too large is still logged as body-size', async () => {
+  const big = JSON.stringify({ ...GOOD, text: 'x'.repeat(2100) }); logs.length = 0;
+  await post('/review/api/decide', big).catch(() => ({})); await new Promise((r) => setTimeout(r, 50));
+  assert.deepEqual(logs, ['review refused: body-size decide']); assert.equal(calls.length, 0);
+});

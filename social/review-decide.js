@@ -42,8 +42,12 @@ export function parseDecisionBody(text) {
 export function parsePostingBody(text) {
   const j = parseObject(text); if (!j) return NO;
   const keys = Object.keys(j);
-  if (keys.length !== 1 || keys[0] !== 'action') return NO;
-  return j.action === 'stop' || j.action === 'start' ? { ok: true, action: j.action } : NO;
+  if (!Object.hasOwn(j, 'action') || (j.action !== 'stop' && j.action !== 'start')) return NO;
+  if (keys.length === 1) return { ok: true, action: j.action };
+  // SR4: only Start may carry `seen`, the stop (its reason line with the time) the page showed when the owner tapped
+  if (j.action !== 'start' || keys.length !== 2 || !Object.hasOwn(j, 'seen')) return NO;
+  if (typeof j.seen !== 'string' || j.seen.length < 1 || j.seen.length > 300 || CONTROL.test(j.seen)) return NO;
+  return { ok: true, action: 'start', seen: j.seen };
 }
 
 export async function runDecision(req, { actions, recordFile, claimedLogin, now = () => new Date() }) {
@@ -58,7 +62,7 @@ export async function runDecision(req, { actions, recordFile, claimedLogin, now 
   return r;
 }
 
-export async function runPosting(action, { recordFile, claimedLogin, now = () => new Date(), queuePath, stopOpts, readStatus = () => ({ stop: stopStatus(stopOpts) }), stop = stopPosting, start = startPosting, lockTimeoutMs = 5000 }) {
+export async function runPosting(action, { recordFile, claimedLogin, now = () => new Date(), queuePath, stopOpts, readStatus = () => ({ stop: stopStatus(stopOpts) }), stop = stopPosting, start = startPosting, lockTimeoutMs = 5000, seen }) {
   // CR3: the record line is written under the decision lock like every other writer of the record, or two writers could read the same last number
   // (the stop itself never waits for the lock: it happens first, and a busy lock only costs the audit line)
   const rec = async (decision) => {
@@ -71,6 +75,8 @@ export async function runPosting(action, { recordFile, claimedLogin, now = () =>
     return stopped ? { ok: true, ...(note ? { note } : {}) } : { ok: false, code: 'could-not-stop' };
   }
   if (action === 'start') {
+    // SR4: the page saw one stop; if posting is stopped now by another one (stopped again by WhatsApp in between), a stale two-tap must not release it
+    if (typeof seen === 'string') { let cur = null; try { cur = readStatus()?.stop; } catch { cur = null; } if (cur && cur.stopped === true && cur.reason !== seen) return { ok: false, code: 'stop-changed' }; }
     const r = await rec('start'); if (!r || r.ok !== true) return { ok: false, code: 'record-failed' };
     try { start({ stopOpts }); } catch { /* the read-back below decides */ }
     return readStatus()?.stop?.stopped === false ? { ok: true } : { ok: false, code: 'still-stopped' };

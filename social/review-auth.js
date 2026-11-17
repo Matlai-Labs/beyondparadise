@@ -82,6 +82,13 @@ export function checkAction(req, { sessions }) {
   return c !== null && sessions.actionValid(c, h) ? { ok: true } : refuse(403, 'bad-token');
 }
 
+/** SR1: a state-changing request must come from this page's own origin. `SameSite=Strict` only means same SITE: a page on another port of the same host carries the cookie.
+ *  Sec-Fetch-Site absent (an older browser, a non-browser caller) is accepted: the custom headers and the refused preflight still stand. NOT used for the page load: a link opened from a chat app is cross-site. */
+export function checkSameOrigin(req) {
+  const v = req && req.headers ? req.headers['sec-fetch-site'] : undefined;
+  return v === undefined || v === 'same-origin' ? { ok: true } : refuse(403, 'cross-site');
+}
+
 export function checkAccess(req, { access, sessions, needCookie }) {
   if (!access || !access.ok) return refuse(503, 'access-file-unavailable');
   const host = req.headers?.host;
