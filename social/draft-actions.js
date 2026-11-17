@@ -9,6 +9,7 @@ import { StoppedError } from './stop.js';
 export const STATUS_CODE = new Map([[STATUS.SCHEDULED, 'already-scheduled'], [STATUS.SKIPPED, 'already-skipped'], [STATUS.POSTED, 'already-posted'], [STATUS.EXPIRED, 'expired'], [STATUS.BLOCKED, 'blocked'], [STATUS.FAILED, 'not-pending']]);
 export const statusCodeOf = (status) => STATUS_CODE.get(status) || 'not-pending';
 
+export const checkMetaLine = (id) => `⚠️ ${id}: the last try may already have scheduled this post at Meta. Look in Meta first. If no post is there, send: bpa approve ${id} again`;
 const notPending = (d) => ({ ok: false, code: statusCodeOf(d.status), line: `⚠️ ${d.id} is ${d.status}` });
 
 export function checkSkip(d) { if (d.status !== STATUS.PENDING) return notPending(d); return { ok: true }; }
@@ -35,6 +36,8 @@ const PASSED = new WeakSet(); // drafts that approveGuards let through; schedule
 /** `say(text, code)`: the WhatsApp route passes `log` (it ignores the code); the page passes a say that logs only the closed code. */
 export async function approveGuards(d, { cmd = 'approve', stop, neverPromotePatterns, notify, say = log, onCheckError = 'block', finalCheck = realFinalCheck } = {}) {
   if (d.status !== STATUS.PENDING) return notPending(d);
+  // An earlier try may already have scheduled this post at Meta (it failed or timed out): never a second one until the owner has looked. Every route goes through here.
+  if (d.metaUnknown) { say(`${cmd} ${d.id} refused: the last try may already exist at Meta`, 'check-meta'); return { ok: false, code: 'check-meta', line: checkMetaLine(d.id) }; }
   { const st = stop(); if (st.stopped) { say(`${cmd} ${d.id} refused: ${st.reason}`, 'stopped'); return { ok: false, code: 'stopped', line: `⏸ ${d.id}: ${st.reason}. Reply *bpa start* to resume.` }; } }
   { const g = claimGateWhy(d); if (g) { say(`${cmd} ${d.id} refused: ${g.message}`, g.code); return { ok: false, code: g.code, line: `❌ ${d.id}: ${g.message}` }; } }
   // FINAL CHECK on the exact text that is about to go out (voice gate + rules), BEFORE any ledger reservation, schedule or publish call
@@ -57,6 +60,6 @@ export async function scheduleDraft(q, d, { cmd = 'approve', schedule, igOn, say
     return { ok: true, line: `📅 ${d.id} scheduled for ${at.slice(0, 16)} on the Page${ig ? ' + Instagram' : ''} (${r.id})`, scheduledFor: at, postId: r.id };
   } catch (e) {
     if (e instanceof StoppedError) { say(`${cmd} ${d.id} refused: ${e.reason}`, 'stopped'); return { ok: false, code: 'stopped', line: `⏸ ${d.id}: ${e.reason}. Nothing was posted. Reply *bpa start* to resume.` }; }
-    d.lastError = e.message; say(`${cmd} ${d.id} failed: ${e.message}`, 'schedule-failed'); return { ok: false, code: 'schedule-failed', line: `❌ ${d.id}: ${e.message.slice(0, 160)}` };
+    d.lastError = e.message; d.metaUnknown = { at: now().toISOString() }; say(`${cmd} ${d.id} failed: ${e.message}`, 'schedule-failed'); return { ok: false, code: 'schedule-failed', line: `❌ ${d.id}: ${e.message.slice(0, 160)}` };
   }
 }

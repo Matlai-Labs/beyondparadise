@@ -23,7 +23,7 @@ export async function dispatch(text, deps = {}) {
 }
 export async function handle(text, deps = {}) {
   const { queuePath = QUEUE_PATH, stopOpts, stop = () => stopStatus(stopOpts), schedule = schedulePost, publish = publishNow, publishIg = igPostDraftAny, igOn = igEnabled, reserve = reserveInstagramPublish, release = releaseInstagramReservation, now: nowDep, ledgerPath, config: capConfig = CONFIG, lastPostPath, notify = whatsapp, neverPromotePatterns } = deps;
-  const c = parseCommand(text);
+  const parsed = parseCommand(text); const again = parsed.cmd === 'approveagain'; const c = again ? { ...parsed, cmd: 'approve' } : parsed; // `bpa approve B1 again` is an approve that first clears the "check Meta first" mark
   // stop / start never wait for the queue lock (dispatch() below calls them outside it) and never need a readable queue.
   if (c.cmd === 'stop') return stopPosting({ queuePath, stopOpts, now: nowDep || new Date() }).reply;
   if (c.cmd === 'start') return startPosting({ stopOpts }).reply;
@@ -40,6 +40,10 @@ export async function handle(text, deps = {}) {
     const d = find(id); if (!d) { out.push(`❌ ${id}: not found`); continue; }
     if (c.cmd === 'skip') { out.push(skipDraft(d).line); continue; }
     if (c.cmd === 'edit') { out.push((await editDraft(d, c.text, { neverPromotePatterns })).line); continue; }
+    if (again) { // the way out of "check Meta first": the owner looked and no post is there. Same queue lock, then the normal approve with every guard.
+      if (!d.metaUnknown) { out.push(`❌ ${id}: nothing to repeat`); continue; }
+      delete d.metaUnknown; log(`approve again ${id}`);
+    }
     if (c.cmd === 'approve' || c.cmd === 'postnow') {
       const g = await approveGuards(d, { cmd: c.cmd, stop, neverPromotePatterns, notify, say: log }); if (!g.ok) { out.push(g.line); continue; }
       try {
