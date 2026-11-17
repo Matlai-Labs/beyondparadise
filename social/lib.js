@@ -470,8 +470,8 @@ export function readyFileOf(d, dir = autoDir()) {
   return f;
 }
 async function verifyReadyFile(f) {
-  const { checkRendered } = await import('./reel-clip.js'); const { checkReel } = await import('./reel-qa.js');
-  const a = await checkRendered(f); const b = checkReel(f);
+  const { checkLibraryRendered, checkLibraryClip } = await import('./overlay.js'); // the SAME floor compose accepted the file with; automatic-lane items only (postReadyReel), the weekly reels never come here
+  const a = await checkLibraryRendered(f); const b = checkLibraryClip(f);
   if (!a.ok || !b.ok) throw new Error(`ready file failed the render checks: ${[...a.problems, ...b.problems].join('; ')}`);
 }
 /** guards, then host, then publish: nothing is uploaded before the file has passed every guard again. `host`, `publishReel`, `verify`, `dir` are injectable for tests. */

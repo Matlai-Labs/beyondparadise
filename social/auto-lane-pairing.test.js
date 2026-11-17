@@ -18,7 +18,7 @@ const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bpa-pair-'));
 const NP = ['examplehotel']; const NOW = new Date('2026-11-17T09:00:00Z');
 const claim = (text, n = 1) => ({ text, ruleId: `r${n}`, sourceDate: '2026-10-01' });
 const idea = (n, animal, over = {}) => ({ id: `idea_${n}`, sourceId: `rule:r${n}`, kind: 'rule', topic: 'wildlife-ethics', title: `${animal} rule number ${n}`, claims: [claim(`The listed fee for item ${n} is ${n + 10} US dollars for most visitors.`, n)], link: '/destinations/tanzania/', score: 100 - n, ...over });
-const clipEntry = (id, tags, over = {}) => ({ id, file: `${id}.mp4`, durationSec: 7, source: [{ videoId: `v-${id}`, startSec: 10, endSec: 17 }], subject: 'x', checks: { rendered: 'ok' }, flash: { flash: false, atSec: [] }, verified: { verdict: 'pass', by: 't', at: '2026-11-16T00:00:00Z', notes: '' }, shows: tags ? { tags, by: 't', at: '2026-11-17T00:00:00Z', notes: '' } : undefined, ...over });
+const clipEntry = (id, tags, over = {}) => ({ id, file: `${id}.mp4`, durationSec: 7, source: [{ videoId: `v-${id}`, startSec: 10, endSec: 17 }], subject: 'x', checks: { rendered: 'ok' }, flash: { flash: false, atSec: [] }, verified: { verdict: 'pass', by: 't', at: '2026-11-16T00:00:00Z', notes: '', singleSubject: 'yes' }, shows: tags ? { tags, by: 't', at: '2026-11-17T00:00:00Z', notes: '' } : undefined, ...over });
 const okCompose = (log) => async ({ clipFile, overlayPng, out }) => { log.push({ clipFile, out }); fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, 'composed-bytes'); return { ok: true, problems: [], out, rendered: { ok: true, problems: [], durationSec: 7 }, qa: { ok: true, problems: [] } }; };
 function kit(over = {}) {
   const dir = tmp(); const hooksFile = path.join(dir, 'auto-hooks.json'); fs.writeFileSync(hooksFile, over.hooksRaw ?? JSON.stringify({ hooks: over.hooks || [] }));
@@ -52,6 +52,14 @@ test('pairing: a clip without reviewer tags fits nothing; the unreliable subject
 test('pairing: no eligible clip at all keeps today\'s no-eligible-clip', async () => {
   const k = kit({ input: { manifest: { version: 1, clips: [clipEntry('clip-a', ['lion'], { verified: null })] } } }); assert.deepEqual((await prepareAutoPost(k.input, k.deps)).reasons, ['no-eligible-clip']);
   const used = kit({ input: { usage: [{ clipId: 'clip-a' }] } }); assert.deepEqual((await prepareAutoPost(used.input, used.deps)).reasons, ['no-eligible-clip']);
+});
+test('pairing (C5): a passed clip without singleSubject "yes", and a superseded parent, are never chosen, however well their tags fit', async () => {
+  const pass = { verdict: 'pass', by: 't', at: '2026-11-16T00:00:00Z', notes: '' };
+  const bad = [clipEntry('clip-nofield', ['lion'], { verified: pass }), clipEntry('clip-no', ['lion'], { verified: { ...pass, singleSubject: 'no' } }), clipEntry('clip-parent', ['lion'], { supersededBy: ['clip-parent-s1'] })];
+  const k = kit({ input: { pool: [idea(1, 'Lion')], manifest: { version: 1, clips: bad } } });
+  const r = await prepareAutoPost(k.input, k.deps); assert.deepEqual([r.ok, r.reasons], [false, ['no-eligible-clip']]); assert.equal(k.composeLog.length, 0);
+  const mixed = kit({ input: { pool: [idea(1, 'Lion')], manifest: { version: 1, clips: [...bad, clipEntry('clip-child', ['lion'], { parent: 'clip-parent' })] } } });
+  const m = await prepareAutoPost(mixed.input, mixed.deps); assert.equal(m.ok, true); assert.equal(m.clip.id, 'clip-child');
 });
 test('pairing: MAX_IDEAS_PER_RUN counts only ideas that HAVE a fitting clip: 40 ideas without one do not use the cap up', async () => {
   const pool = [...Array.from({ length: 40 }, (_, i) => idea(i + 1, i % 2 ? 'Tanzania fee' : 'Giraffe', { score: 500 - i })), idea(99, 'Lion', { score: 1 })];
