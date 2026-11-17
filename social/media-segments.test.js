@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   findCleanWindows, parseStamps, parseVerdict, checkFrame, judgeWindow, windowFrameSeconds,
-  makeLocalAsk, applySegments, processVideo, selftest, main,
+  makeLocalAsk, applySegments, processVideo, selftest, main, loadCoverage, subtractRanges,
 } from './media-segments.js';
 
 const tmp = () => fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ms-test-')));
@@ -316,4 +316,75 @@ test('selftest: nothing to test is reported, not invented', async () => {
   const { out, log, error } = io();
   const code = await main(['--selftest'], t.env, { fetchImpl: fakeFetch(() => clearJson), log, error });
   assert.equal(code, 0); assert.match(out.join('\n'), /known-text frames: 0/);
+});
+
+// ---------- later parts of a long video ----------
+function addPart(t, { id = 'AAA', folder = 'africa', offset, frames, stamps = '' }) {
+  const d = path.join(t.root, 'analysis', folder, 'parts', String(offset));
+  fs.mkdirSync(path.join(d, 'frames', id), { recursive: true });
+  for (let i = 1; i <= frames; i += 1) fs.writeFileSync(path.join(d, 'frames', id, `${String(i).padStart(3, '0')}.jpg`), `p${offset}-${i}`);
+  if (stamps !== null) fs.writeFileSync(path.join(d, `${id}.onscreen.txt`), stamps);
+}
+const recEntry = (t) => JSON.parse(fs.readFileSync(t.catPath, 'utf8')).entries[0];
+
+test('parts: stamps and frames of a later part are moved onto the original timeline (offset from the folder name)', () => {
+  const t = tree({ stamps: '[10s] a', frames: 90, duration: 300 });
+  addPart(t, { offset: 180, frames: 60, stamps: '[20s] later caption' });
+  const c = loadCoverage(t.root, recEntry(t), 2);
+  assert.equal(c.covered, 300);
+  assert.ok(c.stamps.includes(10) && c.stamps.includes(200));
+  assert.match(fs.readFileSync(c.frameFor(200), 'utf8'), /^p180-11$/); // (200-180)/2 + 1
+  assert.match(c.frameFor(178), /frames\/AAA\/090\.jpg$/);
+  assert.match(fs.readFileSync(c.frameFor(180), 'utf8'), /^p180-1$/);
+  assert.equal(c.frameFor(301), null);
+});
+test('parts: a clean stretch runs across a boundary only when both sides were sampled (contiguous parts)', () => {
+  const t = tree({ stamps: '', frames: 90, duration: 300 });
+  addPart(t, { offset: 180, frames: 60, stamps: '' });
+  const c = loadCoverage(t.root, recEntry(t), 2);
+  // the boundary itself is a reading, so the stretch is split by one interval each side, never spanning blind
+  const w = findCleanWindows({ durationSec: 300, textStamps: c.stamps, sampleIntervalSec: 2, coveredUntilSec: c.covered });
+  assert.deepEqual(w, [W(0, 178), W(182, 300)]);
+});
+test('parts: a gap (previous part short of the offset) ends the coverage there, nothing beyond is claimed', () => {
+  const t = tree({ stamps: '', frames: 80, duration: 400 }); // covers 0..160 only
+  addPart(t, { offset: 180, frames: 60, stamps: '' });
+  const c = loadCoverage(t.root, recEntry(t), 2);
+  assert.equal(c.covered, 160); assert.equal(c.parts.length, 1);
+});
+test('parts: a later part with no stamp file (text unknown) or no frames is not used', () => {
+  const a = tree({ stamps: '', frames: 90, duration: 400 });
+  addPart(a, { offset: 180, frames: 60, stamps: null });
+  assert.equal(loadCoverage(a.root, recEntry(a), 2).covered, 180);
+  const b = tree({ stamps: '', frames: 90, duration: 400 });
+  addPart(b, { offset: 180, frames: 0, stamps: '' });
+  assert.equal(loadCoverage(b.root, recEntry(b), 2).covered, 180);
+});
+test('parts: a caption still on screen across the boundary is not trusted as clear in the first seconds of the later part', () => {
+  const t = tree({ stamps: '[170s] big caption', frames: 90, duration: 300 });
+  addPart(t, { offset: 180, frames: 60, stamps: '' }); // the later cut carried its de-duplication: no stamp at its start
+  const c = loadCoverage(t.root, recEntry(t), 2);
+  const w = findCleanWindows({ durationSec: 300, textStamps: c.stamps, sampleIntervalSec: 2, coveredUntilSec: c.covered });
+  assert.ok(w.every((x) => x.endSec <= 178 || x.startSec >= 182), JSON.stringify(w));
+});
+test('subtractRanges: only the parts outside the taken ranges, short pieces dropped', () => {
+  assert.deepEqual(subtractRanges(W(162, 190), [W(162, 180)]), [W(180, 190)]);
+  assert.deepEqual(subtractRanges(W(162, 184), [W(162, 180)]), []);
+  assert.deepEqual(subtractRanges(W(0, 100), [W(20, 30), W(50, 90)]), [W(0, 20), W(30, 50), W(90, 100)].filter((x) => x.endSec - x.startSec >= 6));
+});
+test('processVideo: existing segments (and their later review) are kept untouched and not asked about again; new windows come from the later part', async () => {
+  const old = { startSec: 0, endSec: 100, frames: 8, verdict: 'not-clear', reasons: ['x'], label: 'animal', checkedAt: 'c', model: 'm', secondLook: { verdict: 'fails', usable: null } };
+  const t = tree({ stamps: '', frames: 90, duration: 300, catalogExtra: { segments: [old] } });
+  addPart(t, { offset: 180, frames: 60, stamps: '[40s] x' });
+  const asked = [];
+  const r = await processVideo({ entry: recEntry(t), root: t.root, ask: async (p) => { asked.push(p); return clearJson; }, maxFramesPerWindow: 50 });
+  assert.deepEqual(r.segments[0], old);
+  assert.deepEqual(r.segments.slice(1).map((s) => [s.startSec, s.endSec]), [[100, 178], [182, 218], [222, 300]]);
+  assert.ok(asked.some((p) => p.includes(`${path.sep}parts${path.sep}180${path.sep}`)));
+  assert.equal(r.segments.every((s) => s.startSec >= 0), true);
+});
+test('processVideo: a video with no parts behaves as before (covered only by the first cut)', async () => {
+  const t = tree({ stamps: '', frames: 90, duration: 300 });
+  const r = await processVideo({ entry: recEntry(t), root: t.root, ask: async () => clearJson, maxFramesPerWindow: 50 });
+  assert.deepEqual(r.segments.map((s) => [s.startSec, s.endSec]), [[0, 180]]);
 });
