@@ -1,3 +1,4 @@
+import './test-env.js';
 // Tests for social/media-segments.js: clean stretches of a video and the local vision check.
 // No model, no ffprobe, no real media: injected `ask` and `fetchImpl`, made-up stamps, tiny fake frame files.
 import { test } from 'node:test';
