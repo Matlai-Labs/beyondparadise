@@ -36,14 +36,15 @@ export async function handle(text, deps = {}) {
   if (c.cmd === 'list') return renderList(q);
   if (c.cmd === 'status') { const n = (s) => q.drafts.filter((d) => d.status === s).length; const up = q.drafts.filter((d) => d.status === STATUS.SCHEDULED).map((d) => `${d.id} ${d.scheduledFor.slice(0, 16)}`).join(', ') || 'none'; return `📊 pending ${n(STATUS.PENDING)} · scheduled ${n(STATUS.SCHEDULED)} (${up}) · posted ${n(STATUS.POSTED)} · skipped ${n(STATUS.SKIPPED)} · blocked ${n(STATUS.BLOCKED)}`; }
   if (c.cmd === 'unknown') return `❓ Didn't get "${c.raw}". ${await handle('help', deps)}`;
-  const out = [];
+  const out = []; const againMarks = [];
   for (const id of c.ids) {
     const d = find(id); if (!d) { out.push(`❌ ${id}: not found`); continue; }
     if (c.cmd === 'skip') { out.push(skipDraft(d).line); continue; }
     if (c.cmd === 'edit') { out.push((await editDraft(d, c.text, { neverPromotePatterns })).line); continue; }
     if (again) { // the way out of "check Meta first": the owner looked and no post is there. Same queue lock, then the normal approve with every guard.
       if (!d.metaUnknown) { out.push(`❌ ${id}: nothing to repeat`); continue; }
-      delete d.metaUnknown; log(`${parsed.cmd === 'postnowagain' ? 'post now again' : 'approve again'} ${id}`);
+      const was = d.metaUnknown; delete d.metaUnknown; log(`${parsed.cmd === 'postnowagain' ? 'post now again' : 'approve again'} ${id}`);
+      againMarks.push(() => { if (d.status === STATUS.PENDING && !d.metaUnknown) d.metaUnknown = was; }); // a refusal before the call to Meta (stop, claim gate, a failed first save) must not leave the mark cleared
     }
     if (c.cmd === 'approve' || c.cmd === 'postnow') {
       const g = await approveGuards(d, { cmd: c.cmd, stop, neverPromotePatterns, notify, say: log }); if (!g.ok) { out.push(g.line); continue; }
@@ -73,6 +74,7 @@ export async function handle(text, deps = {}) {
         d.lastError = e.message; log(`${c.cmd} ${id} failed: ${e.message}`); out.push(`❌ ${id}: ${e.message.slice(0, 160)}`); }
     }
   }
+  for (const restore of againMarks) restore();
   saveQueue(q, queuePath); return out.join('\n');
 }
 const reviewSessions = createSessions();

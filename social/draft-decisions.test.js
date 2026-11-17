@@ -301,3 +301,16 @@ test('R9 the page edit of a draft made by the automatic lane is refused with can
   assert.deepEqual(await k.actions.editDraft(editReq(k, 'Giraffes feed on tall acacia trees.'), k.ctx), { ok: false, code: 'cannot-decide' }); assert.equal(k.bytes(), b); assert.equal(k.lines().length, 0);
   const plain = kit([draft('B1')]); assert.equal((await plain.actions.editDraft(editReq(plain, 'Giraffes feed on tall acacia trees.'), plain.ctx)).ok, true);
 });
+
+// ── S1: the record line alone (no mark on the draft) blocks a second approve ────────────────────────────────────────────
+test('S1a a pending draft with NO mark and an un-voided approve line in the record: check-meta, schedule never called, queue unchanged', async () => {
+  const k = ak(); const rq = k.req(); assert.ok(!('metaUnknown' in k.q().drafts[0])); k.ctx.record({ kind: 'draft', id: 'B1', version: rq.version, decision: 'approve' });
+  const b = k.bytes(); assert.deepEqual(await k.approve(rq), { ok: false, code: 'check-meta' }); assert.equal(k.calls.schedule.length, 0); assert.equal(k.bytes(), b);
+  // a voided line does not block
+  const v = ak(); const vr = v.req(); const w = v.ctx.record({ kind: 'draft', id: 'B1', version: vr.version, decision: 'approve' }); v.ctx.voidRecord(w.n); assert.equal((await v.approve(vr)).ok, true);
+});
+test('S1b the answer on a fresh instance whose saves all fail can only come from the record line (the mark is stripped from the file)', async () => {
+  let sn = 0; const k = ak(undefined, { save: (q, p) => { if (sn++ >= 1) throw new Error('disk full'); saveQueue(q, p); } }); const rq = k.req(); assert.equal((await k.approve(rq)).code, 'schedule-not-saved');
+  const q = k.q(); delete q.drafts[0].metaUnknown; fs.writeFileSync(k.queuePath, JSON.stringify(q, null, 2)); assert.ok(!('metaUnknown' in k.q().drafts[0]));
+  const fresh = createDraftActions({ ...k.opts, save: () => { throw new Error('disk full'); } }); assert.deepEqual(await fresh.approveDraft(rq, k.ctx), { ok: false, code: 'check-meta' }); assert.equal(k.calls.schedule.length, 1);
+});
