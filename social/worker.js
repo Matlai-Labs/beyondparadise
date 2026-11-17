@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { stuckIgPublishes, markStuckAlerted, loadQueue, saveQueue, withQueueLock, mergeQueue, claimIgPublish, STATUS, postStatus as metaPostStatus, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, igGate, QUEUE_PATH, finalCheck, blockDraft } from './lib.js';
 import { stopStatus, StoppedError } from './stop.js';
 import { reserveInstagramPublish, releaseInstagramReservation, eatDay } from './ledger.js';
-import { recordWorkerRun, recordPost } from './health.js';
+import { recordWorkerRun, recordPost, syncArmedStamp } from './health.js';
 
 const defaultApprovalHealth = async () => { const h = await fetch(`http://127.0.0.1:${CONFIG.approvalPort}/health`, { signal: AbortSignal.timeout(3000) }); return h.json(); };
 
@@ -22,6 +22,8 @@ async function runWorkerInner(deps) {
   const { now = new Date(), lastPostPath, queuePath = QUEUE_PATH, igOn = igEnabled, publishIg = igPostDraftAny, postStatus = metaPostStatus, notify = whatsapp, say = log,
     approvalHealth = defaultApprovalHealth, reserve = reserveInstagramPublish, release = releaseInstagramReservation, ledgerPath, config: capConfig = CONFIG, stopOpts, stop = () => stopStatus(stopOpts), check = finalCheck, neverPromotePatterns } = deps;
   const lockOpts = { lockPath: queuePath + '.lock' };
+  // armed stamp (health.js): the no-post clock starts when the lane is first seen on. Early, before anything can publish; an unwritable stamp while running is an error (worker-failing alarm). A stopped pipeline still returns as before.
+  { const a = syncArmedStamp({ now, on: capConfig.autoPublish === true, stopped: capConfig.autoPublish === true && stop().stopped, path: deps.armedPath }); if (!a.ok && !stop().stopped) throw new Error(`armed stamp not writable (${a.error}); the no-post clock cannot start`); }
   // stop flag (own or fleet-wide): publish nothing, schedule nothing, touch nothing; one line; exit code stays 0
   { const st = stop(); if (st.stopped) { say(`worker: ${st.reason}`); return { exitCode: 0, stopped: true }; } }
   const q = loadQueue(queuePath); const base = JSON.parse(JSON.stringify(q)); let changed = false; const problems = []; let stopNoted = false; let publishFailed = false; const state = q.state || (q.state = {});
