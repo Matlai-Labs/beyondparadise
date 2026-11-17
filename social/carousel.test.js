@@ -73,7 +73,7 @@ test('publish: refuses >10 and <2 images before any call; child ERROR aborts bef
   const calls = []; const post = async (p) => { calls.push(p); return { id: 'i' + calls.length }; };
   await assert.rejects(igPublishCarousel('c', Array.from({ length: 11 }, (_, i) => `https://x/${i}.png`), { post, igUserId: 'IG' }), /2-10/);
   await assert.rejects(igPublishCarousel('c', ['https://x/1.png'], { post, igUserId: 'IG' }), /2-10/); assert.equal(calls.length, 0);
-  await assert.rejects(igPublishCarousel('c', ['https://x/1.png', 'https://x/2.png'], { post, igUserId: 'IG', sleep: async () => {}, status: async () => ({ status_code: 'ERROR', status: 'bad' }) }), /child container error/);
+  await assert.rejects(igPublishCarousel('c', ['https://x/1.png', 'https://x/2.png'], { post, igUserId: 'IG', sleep: async () => {}, status: async () => ({ status_code: 'ERROR', status: 'bad' }), info: async () => ({}) }), /child container error/);
   assert.ok(!calls.includes('IG/media_publish')); assert.equal(calls.length, 1);
 });
 

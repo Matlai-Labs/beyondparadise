@@ -12,7 +12,7 @@ import { rulesGate, loadNeverPromote } from './rules-gate.js';
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(modulePath(import.meta.url));
 export const CONFIG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
-export const QUEUE_PATH = path.join(HERE, 'queue.json');
+export const QUEUE_PATH = process.env.BPA_QUEUE_PATH || path.join(HERE, 'queue.json');
 export const DEFAULT_LOG_PATH = path.join(os.homedir(), 'Library', 'Logs', 'beyondparadise', 'social.log');
 /** BPA_LOG_PATH redirects the log (tests set it via test-env.js so they never write the real log). */
 export const LOG_PATH = process.env.BPA_LOG_PATH || DEFAULT_LOG_PATH;
