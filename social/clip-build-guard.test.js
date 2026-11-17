@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { buildPlan, renderLibrary, readManifest, main } from './clip-library.js';
+import { planClip } from './reel-clip.js';
 
 const tmp = () => fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'cbg-test-')));
 const noGit = () => null;
@@ -114,20 +115,39 @@ test('dry run: renders nothing and writes nothing (manifest bytes identical, no 
   await renderLibrary(plan, deps(fresh, { dryRun: true }));
   assert.equal(fs.existsSync(fresh), false);
 });
-test('--build: exit 5 and the one-line message when a judged clip was planned differently; exit 0 otherwise; --dry-run writes nothing', async () => {
+test('--build: the judged-clips line is printed every time (stdout) but is not a failure: exit 0; --dry-run the same and writes nothing; exit 5 stays for render and flash failures', async () => {
   const dir = await libWith(orig(), (m) => { m.clips[0].verified = PASS; });
   const before = fs.readFileSync(path.join(dir, 'manifest.json'));
+  const line = /1 judged clips were planned differently and were kept as they are: clip-AAAAAAAAAAA-150/;
   const dry = await cliBuild(dir, moved(), ['--dry-run']);
-  assert.equal(dry.code, 5); assert.deepEqual(rendered, []);
+  assert.equal(dry.code, 0, dry.err.join('\n')); assert.deepEqual(rendered, []);
   assert.ok(fs.readFileSync(path.join(dir, 'manifest.json')).equals(before));
-  assert.match(dry.out.join('\n') + dry.err.join('\n'), /1 judged clips were planned differently and were kept as they are: clip-AAAAAAAAAAA-150/);
+  assert.match(dry.out.join('\n'), line);
   const real = await cliBuild(dir, moved());
-  assert.equal(real.code, 5);
-  assert.match(real.out.join('\n') + real.err.join('\n'), /1 judged clips were planned differently and were kept as they are: clip-AAAAAAAAAAA-150/);
+  assert.equal(real.code, 0, real.err.join('\n'));
+  assert.match(real.out.join('\n'), line);
   assert.equal(snapshot(dir, `clip-${A}-150`).bytes, 'render-1');
   const ok = await cliBuild(dir, orig());
   assert.equal(ok.code, 0, ok.err.join('\n'));
   assert.match(ok.out.join('\n'), /kept unchanged 1/);
+  const failing = await cliBuild(dir, [...orig(), item(`clip-${B}-250`, B, 25, 31)]); // the fake cannot measure frames, so the flash check of the new clip fails
+  assert.equal(failing.code, 5);
+});
+test('an unjudged clip whose new plan overlaps judged footage is KEPT as it is (entry and file), listed as skipped, and every id is accounted for', async () => {
+  const two = () => [item(`clip-${A}-100`, A, 10, 16), item(`clip-${A}-300`, A, 30, 36)];
+  const dir = await libWith(two(), (m) => { m.clips.find((c) => c.id === `clip-${A}-100`).verified = PASS; });
+  const before = snapshot(dir, `clip-${A}-300`);
+  const plan = [item(`clip-${A}-100`, A, 10, 16), item(`clip-${A}-300`, A, 14, 20)];
+  const res = await renderLibrary(plan, deps(dir));
+  assert.deepEqual(rendered, []);
+  assert.deepEqual(snapshot(dir, `clip-${A}-300`), before);
+  assert.deepEqual(res.manifest.clips.map((c) => c.id).sort(), [`clip-${A}-100`, `clip-${A}-300`]);
+  assert.deepEqual(res.counts.skippedOverVerdicts.map((p) => p.id), [`clip-${A}-300`]);
+  const k = res.counts;
+  assert.equal(k.unjudgedDropped, 0);
+  assert.equal(k.kept + k.newClips + k.unjudgedRerendered + k.unjudgedDropped + k.skippedOverVerdicts.length + k.protectedChanged.length, 2);
+  const cli = await cliBuild(dir, plan);
+  assert.match(cli.out.join('\n'), /skipped.*clip-AAAAAAAAAAA-300/);
 });
 
 // ---------------------------------------------------------------- the planner: the same stretch gives the same clip
@@ -142,3 +162,24 @@ test('buildPlan: clips of a catalogue that gets more stretches keep their id and
   assert.ok(p1.length >= 4 && p2.length > p1.length);
   for (const c of p1) assert.deepEqual(p2.find((x) => x.id === c.id)?.source, c.source, c.id);
 });
+
+test('buildPlan: a NEW stretch that sorts before the existing ones, and a reversed pool order, leave the old clips as they are', async () => {
+  const base = [entryOf(B, [seg(20, 50)]), entryOf(C, [seg(5, 35)])];
+  const p1 = await buildPlan({ entries: base }, { run: cutsRun, root: '/media' });
+  const withA = await buildPlan({ entries: [entryOf(A, [seg(10, 40)]), ...base] }, { run: cutsRun, root: '/media' });
+  const reversed = await buildPlan({ entries: [...base].reverse() }, { run: cutsRun, root: '/media' });
+  assert.ok(p1.length >= 4 && withA.length > p1.length);
+  for (const c of p1) { assert.deepEqual(withA.find((x) => x.id === c.id)?.source, c.source, c.id); assert.deepEqual(reversed.find((x) => x.id === c.id)?.source, c.source, c.id); }
+  assert.equal(reversed.length, p1.length);
+});
+
+// weekly reels keep the seeded pick: values computed once from main's planClip (git show main:social/reel-clip.js), written as literals
+test('planClip without stable (weekly reels) gives exactly what main gave for fixed inputs and seeds', () => {
+  const st = [{ id: 'AAAAAAAAAAA', file: 'a.mp4', startSec: 10, endSec: 40, shots: [{ startSec: 10.3, endSec: 14 }, { startSec: 14, endSec: 25 }, { startSec: 25.3, endSec: 39.7 }] },
+    { id: 'BBBBBBBBBBB', file: 'b.mp4', startSec: 20, endSec: 50, shots: [{ startSec: 20.3, endSec: 24 }, { startSec: 24.6, endSec: 27.6 }, { startSec: 27.6, endSec: 30 }, { startSec: 30.5, endSec: 49.7 }] }];
+  const short = [{ id: 'CCCCCCCCCCC', file: 'c.mp4', startSec: 0, endSec: 30, shots: [{ startSec: 1, endSec: 4 }, { startSec: 4, endSec: 6.5 }, { startSec: 6.5, endSec: 9.5 }, { startSec: 12, endSec: 15 }] }];
+  const got = [...['s-0', 's-1', 's-2', 'weekly-7'].map((seed) => planClip(st, { seed })), planClip(st, { seed: 't', targetSec: 8 }),
+    ...['g-0', 'g-1'].map((seed) => planClip(short, { seed })), planClip(st, { seed: 'l', usedLedger: [{ id: 'AAAAAAAAAAA', startSec: 10, endSec: 40 }] })];
+  assert.deepEqual(got, JSON.parse(MAIN_PLANS));
+});
+const MAIN_PLANS = '[{"ok":true,"spans":[{"id":"BBBBBBBBBBB","file":"b.mp4","startSec":30.5,"endSec":37.5}],"durationSec":7,"usedShots":[{"id":"BBBBBBBBBBB","startSec":30.5,"endSec":49.7}]},{"ok":true,"spans":[{"id":"AAAAAAAAAAA","file":"a.mp4","startSec":25.3,"endSec":32.3}],"durationSec":7,"usedShots":[{"id":"AAAAAAAAAAA","startSec":25.3,"endSec":39.7}]},{"ok":true,"spans":[{"id":"AAAAAAAAAAA","file":"a.mp4","startSec":14,"endSec":21}],"durationSec":7,"usedShots":[{"id":"AAAAAAAAAAA","startSec":14,"endSec":25}]},{"ok":true,"spans":[{"id":"AAAAAAAAAAA","file":"a.mp4","startSec":14,"endSec":20}],"durationSec":6,"usedShots":[{"id":"AAAAAAAAAAA","startSec":14,"endSec":25}]},{"ok":true,"spans":[{"id":"BBBBBBBBBBB","file":"b.mp4","startSec":30.5,"endSec":38.5}],"durationSec":8,"usedShots":[{"id":"BBBBBBBBBBB","startSec":30.5,"endSec":49.7}]},{"ok":true,"spans":[{"id":"CCCCCCCCCCC","file":"c.mp4","startSec":6.5,"endSec":9.5},{"id":"CCCCCCCCCCC","file":"c.mp4","startSec":12,"endSec":15}],"durationSec":6,"usedShots":[{"id":"CCCCCCCCCCC","startSec":6.5,"endSec":9.5},{"id":"CCCCCCCCCCC","startSec":12,"endSec":15}]},{"ok":true,"spans":[{"id":"CCCCCCCCCCC","file":"c.mp4","startSec":6.5,"endSec":9.5},{"id":"CCCCCCCCCCC","file":"c.mp4","startSec":12,"endSec":15}],"durationSec":6,"usedShots":[{"id":"CCCCCCCCCCC","startSec":6.5,"endSec":9.5},{"id":"CCCCCCCCCCC","startSec":12,"endSec":15}]},{"ok":true,"spans":[{"id":"BBBBBBBBBBB","file":"b.mp4","startSec":30.5,"endSec":39.5}],"durationSec":9,"usedShots":[{"id":"BBBBBBBBBBB","startSec":30.5,"endSec":49.7}]}]';

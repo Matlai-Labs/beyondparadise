@@ -101,7 +101,7 @@ const spansOverlap = (a, b) => a.some((x) => b.some((y) => x.videoId === y.video
  * PROTECTED clips of the earlier manifest (a verdict, a `shows` record, `supersededBy` children, or a split child) are never
  * rendered over, changed or dropped: when the plan gives such an id another span (or a missing file), or no longer plans it, the old
  * entry and file stay as they are and the id goes to `counts.protectedChanged`. A planned clip that overlaps the footage of a
- * protected clip gets no clip of its own (`counts.skippedOverVerdicts`); a non-overlapping one is a new clip.
+ * protected clip gets no clip of its own (`counts.skippedOverVerdicts`; an old unjudged entry of that id and its file are kept unchanged); a non-overlapping one is a new clip.
  * An unprotected clip whose id, file and source spans are unchanged is kept; a changed or missing one is rendered again
  * (verified and flash null), and one no longer planned leaves the manifest (its file is never deleted).
  * `dryRun: true` computes the same counts and renders and writes nothing, not even the folder.
@@ -134,7 +134,7 @@ export async function renderLibrary(plan, { dir = libraryDir(), run = defaultRun
       counts.kept += 1;
       continue;
     }
-    if (protectedSources.some((ps) => spansOverlap(source, ps))) { counts.skippedOverVerdicts.push({ id: p.id }); continue; } // that footage is already a judged clip's
+    if (protectedSources.some((ps) => spansOverlap(source, ps))) { counts.skippedOverVerdicts.push({ id: p.id }); if (prev) clips.push(prev); continue; } // that footage is already a judged clip's: nothing new for this id, an old unjudged entry and its file stay as they are
     if (prev) counts.unjudgedRerendered += 1; else counts.newClips += 1;
     counts.rendered += 1;
     if (dryRun) continue;
@@ -474,10 +474,11 @@ export async function main(argv, env = process.env, deps = {}) {
     log(`${args.dryRun ? 'DRY RUN, nothing rendered or written: ' : ''}planned ${k.planned}, kept unchanged ${k.kept}, new clips ${args.dryRun ? 'to render' : 'rendered'} ${k.newClips}, judged clips planned differently (kept as they are) ${ids.length}${ids.length ? `: ${ids.join(', ')}` : ''}, unjudged clips ${args.dryRun ? 'to re-render' : 're-rendered'} ${k.unjudgedRerendered}, unjudged clips dropped ${k.unjudgedDropped}`);
     log(`render check failed ${k.renderFailed}, flash ${flashed.length}, flash check errors ${flashErrors}, split children carried ${k.carriedChildren}, split clips refused ${k.splitRefused.length}, planned over judged footage and skipped ${k.skippedOverVerdicts.length}`);
     for (const x of k.protectedChanged) log(`  protected ${x.id}: ${x.reason}`);
+    if (k.skippedOverVerdicts.length) log(`  skipped (planned over judged footage, an old unjudged entry of the id is kept as it is): ${k.skippedOverVerdicts.map((x) => x.id).join(', ')}`);
     for (const c of flashed) log(`  flash ${c.id} at ${c.flash.atSec.join(', ')} s`);
-    if (ids.length) error(`${ids.length} judged clips were planned differently and were kept as they are: ${ids.join(', ')}`);
+    if (ids.length) log(`${ids.length} judged clips were planned differently and were kept as they are: ${ids.join(', ')}`);
     log(`library: ${dir}`);
-    return k.renderFailed || flashErrors || ids.length ? 5 : 0;
+    return k.renderFailed || flashErrors ? 5 : 0; // a judged clip kept as it is is the guard working, not a failure
   }
   const manifest = readManifest(dir);
   if (!manifest) { error(`no manifest in ${dir}: run --build first`); return 4; }
