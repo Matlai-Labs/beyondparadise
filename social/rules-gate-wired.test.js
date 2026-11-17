@@ -63,8 +63,8 @@ test('every source file that reaches a publish function also runs finalCheck fir
     const s = read(f); const m = /\b(?:schedulePost|publishNow|igPostDraftAny|publishIg|publish|schedule|scheduleDraft)\(/.exec(s.replace(/\/\/.*$/gm, ''));
     if (m) callers.push(f); // ANY file that calls a publisher or receives one as a parameter and calls it
   }
-  assert.deepEqual(callers.sort(), ['approval-server.js', 'draft-actions.js', 'worker.js'], 'the set of files that publish changed: each needs its guard');
-  const guard = { 'approval-server.js': /await approveGuards\(/, 'draft-actions.js': /await finalCheck\(/, 'worker.js': /await check\(/ };
+  assert.deepEqual(callers.sort(), ['approval-server.js', 'draft-actions.js', 'draft-decisions.js', 'worker.js'], 'the set of files that publish changed: each needs its guard');
+  const guard = { 'approval-server.js': /await approveGuards\(/, 'draft-actions.js': /await finalCheck\(/, 'draft-decisions.js': /await approveGuards\(/, 'worker.js': /await check\(/ };
   for (const f of callers) assert.match(read(f), guard[f], `${f} publishes without its guard`);
 });
 test('finalCheck re-runs BOTH the voice gate and the rules check on every text that goes out', () => {

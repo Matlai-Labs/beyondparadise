@@ -4,7 +4,10 @@ import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'
 import { createDraftActions } from './draft-decisions.js';
 import { appendDecision } from './review-decisions.js';
 import { draftVersion } from './draft-version.js';
-import { withQueueLock } from './lib.js';
+import { withQueueLock, saveQueue } from './lib.js';
+import { withDecisionLock } from './decision-lock.js';
+import { StoppedError } from './stop.js';
+import { sourcesRecord } from './claim-gate.js';
 import { statusCodeOf } from './draft-actions.js';
 import { BAD_CHARS, GOOD_TEXTS, EMOJI_OK_TEXTS, EMOJI_BAD_TEXTS } from './review-test-chars.js';
 
@@ -100,4 +103,110 @@ test('9b a function without queuePath, recordFile or the neverPromotePatterns ke
   }
   assert.equal(k.bytes(), b); assert.equal(k.lines().length, 0);
   const u = createDraftActions({ queuePath: k.queuePath, recordFile: k.recordFile, neverPromotePatterns: undefined }); assert.equal((await u.skipDraft(req, k.ctx)).ok, true);
+});
+
+// ══ Task 9: Approve of a draft. EVERYTHING that leaves the process is injected and counted. ═══════════════════════════════
+const NOWT = new Date('2026-11-18T10:00:00Z'); const LOGF = process.env.BPA_LOG_PATH;
+const SEA = 'Book now for big waves today at the beach.';
+const src = (host, n = 1) => ({ claim: 'x', source: `Site ${n}`, url: `https://${host}/p`, line: `exact line quoted from page ${n}` });
+function ak(drafts = [draft('B1', { createdAt: '2026-11-17T08:00:00Z' }), draft('B2', { createdAt: '2026-11-17T08:00:00Z' })], over = {}) {
+  const calls = { schedule: [], stop: 0, notify: [], igOn: 0, approveOn: 0, finalCheck: 0 };
+  const k = kit(drafts); const opts = {
+    queuePath: k.queuePath, recordFile: k.recordFile, neverPromotePatterns: NP, now: () => NOWT, lockTimeoutMs: 200,
+    schedule: async (text, at) => { calls.schedule.push([text, at]); return { id: 'p1' }; }, stop: () => { calls.stop++; return { stopped: false }; },
+    igOn: () => { calls.igOn++; return false; }, notify: async (m) => { calls.notify.push(m); return true; }, approveOn: () => { calls.approveOn++; return true; }, ...over };
+  const actions = createDraftActions(opts); const req = (id = 'B1', o = {}) => ({ kind: 'draft', id, version: ver(k, id), action: 'approve', ...o });
+  return { ...k, actions, calls, opts, req, approve: (r, c = k.ctx) => actions.approveDraft(r ?? req(), c) };
+}
+const logLines = (was) => (fs.existsSync(LOGF) ? fs.readFileSync(LOGF, 'utf8').slice(was).split('\n').filter(Boolean) : []);
+const logSize = () => (fs.existsSync(LOGF) ? fs.readFileSync(LOGF, 'utf8').length : 0);
+const nothingHappened = (k, bytes) => { assert.equal(k.calls.schedule.length, 0, 'schedule not called'); assert.equal(k.bytes(), bytes, 'queue unchanged'); assert.equal(k.lines().length, 0, 'no record line'); };
+
+test('A1 approve ok: one schedule call with the text and a 09:00 slot, state saved, one approve record, the time in words; igOn adds the queued leg', async () => {
+  const k = ak(); const v = ver(k); const r = await k.approve();
+  assert.equal(r.ok, true); assert.deepEqual(r.change, { kind: 'draft', id: 'B1', decision: 'scheduled' }); assert.match(r.scheduledFor, /^\d{4}-\d{2}-\d{2}T09:00:00\+03:00$/); assert.match(r.scheduledForText, /^\d{1,2} \w{3} at 09:00 \(East Africa time\)$/);
+  assert.equal(k.calls.schedule.length, 1); assert.equal(k.calls.schedule[0][0], k.q().drafts[0].text); assert.equal(k.calls.schedule[0][1], r.scheduledFor);
+  const d = k.q().drafts[0]; assert.equal(d.status, 'scheduled'); assert.equal(d.postId, 'p1'); assert.equal(d.scheduledFor, r.scheduledFor); assert.equal(d.decidedAt, '2026-11-18T10:00:00.000Z'); assert.ok(!('ig' in d));
+  const l = k.lines(); assert.equal(l.length, 1); assert.deepEqual({ kind: l[0].kind, decision: l[0].decision, version: l[0].version }, { kind: 'draft', decision: 'approve', version: v });
+  const i = ak(undefined, { igOn: () => true }); const ri = await i.approve(); assert.deepEqual(i.q().drafts[0].ig, { status: 'queued', at: ri.scheduledFor });
+});
+test('A2 nothing is scheduled or recorded: wrong version, every status, unknown id, stop, sources, unreadable queue, expired, hidden characters', async () => {
+  { const k = ak(); const b = k.bytes(); assert.deepEqual(await k.approve(k.req('B1', { version: 'f'.repeat(64) })), { ok: false, code: 'version-changed' }); nothingHappened(k, b); }
+  for (const status of ['scheduled', 'posted', 'expired', 'blocked', 'skipped', 'failed']) { const k = ak([draft('B1', { status })]); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: statusCodeOf(status) }, status); nothingHappened(k, b); }
+  for (const id of ['B9', '__proto__', 'constructor']) { const k = ak(); const b = k.bytes(); assert.deepEqual(await k.approve(k.req('B1', { id })), { ok: false, code: 'not-found' }, id); nothingHappened(k, b); }
+  { const k = ak(undefined, { stop: () => ({ stopped: true, reason: 'stopped by flag since T1' }) }); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'stopped' }); nothingHappened(k, b); }
+  const T = 'A resort on Muyuni Beach';
+  const cases = [[draft('B1', { text: T }), 'sources-missing'],
+    [draft('B1', { text: T, ...sourcesRecord('Another text on Paje Beach', [src('a.com'), src('b.org', 2)]) }), 'sources-outdated'],
+    [draft('B1', { text: T, ...sourcesRecord(T, [src('a.com'), src('www.a.com', 2)]) }), 'sources-too-few']];
+  for (const [d, code] of cases) { const k = ak([d]); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code }, code); nothingHappened(k, b); }
+  { const k = ak(); const rq = k.req(); fs.writeFileSync(k.queuePath, '{broken'); assert.deepEqual(await k.approve(rq), { ok: false, code: 'queue-unreadable' }); assert.equal(k.bytes(), '{broken'); assert.equal(k.calls.schedule.length, 0); }
+  { const k = ak([draft('B1', { createdAt: '2026-11-10T09:00:00Z' })]); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'expired' }); nothingHappened(k, b); }
+  for (const over of [{ text: 'Lions sleep​ most of the day.' }, { videoText: 'Lions​' }]) { const k = ak([draft('B1', over)]); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'bad-characters' }, JSON.stringify(over)); nothingHappened(k, b); }
+  { const k = ak([draft('B1', { text: 'Love the lions ❤️ on the plains.' })]); assert.equal((await k.approve()).ok, true); }
+});
+test('A3 a missing parameter makes approve answer check-failed and call nothing; approveOn false is cannot-decide before anything else', async () => {
+  for (const key of ['schedule', 'stop', 'igOn', 'notify', 'approveOn', 'queuePath', 'recordFile', 'neverPromotePatterns']) {
+    const k = ak(); const o = { ...k.opts }; delete o[key]; const a = createDraftActions(o); const b = k.bytes();
+    assert.deepEqual(await a.approveDraft(k.req(), k.ctx), { ok: false, code: 'check-failed' }, key); nothingHappened(k, b);
+  }
+  { const k = ak(); const a = createDraftActions({ ...k.opts, schedule: 'nope' }); assert.equal((await a.approveDraft(k.req(), k.ctx)).code, 'check-failed'); assert.equal(k.calls.schedule.length, 0); }
+  { const k = ak(undefined, { neverPromotePatterns: undefined }); assert.equal((await k.approve()).ok, true, 'a key present with undefined is accepted'); }
+  const k = ak(undefined, { approveOn: () => false }); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'cannot-decide' }); nothingHappened(k, b); assert.equal(k.calls.stop, 0); assert.equal(k.calls.notify.length, 0);
+});
+test('A4 the final check: a violation blocks and alerts once with no record; a check that could not run, or an unavailable voice lint, leaves the draft pending', async () => {
+  { const k = ak([draft('B1', { text: SEA })]); const r = await k.approve(); assert.deepEqual(r, { ok: false, code: 'blocked' }); const d = k.q().drafts[0]; assert.equal(d.status, 'blocked'); assert.deepEqual(d.blocked.rules, ['sea-conditions', 'paid-link-wording']); assert.equal(k.calls.notify.length, 1); assert.equal(k.calls.schedule.length, 0); assert.equal(k.lines().length, 0); }
+  const fc = (o) => async () => ({ ok: false, violations: [], listReason: null, ...o });
+  for (const [name, f, code, status, alerts] of [
+    ['check-error', fc({ ruleIds: ['check-error'] }), 'check-failed', 'pending_approval', 0],
+    ['voice unavailable', fc({ ruleIds: ['voice-lint'], voiceUnavailable: true }), 'check-failed', 'pending_approval', 0],
+    ['real voice violation', fc({ ruleIds: ['voice-lint'], voiceUnavailable: false }), 'blocked', 'blocked', 1]]) {
+    const k = ak(undefined, { finalCheck: f }); const r = await k.approve(); assert.deepEqual(r, { ok: false, code }, name); assert.equal(k.q().drafts[0].status, status, name); assert.equal(k.calls.notify.length, alerts, name); assert.equal(k.calls.schedule.length, 0); assert.equal(k.lines().length, 0, name);
+  }
+});
+test('A5 a stop during the call voids the record; an ordinary failure keeps it and saves lastError', async () => {
+  { const k = ak(undefined, { schedule: async () => { throw new StoppedError('stopped by flag since T1'); } }); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'stopped' }); assert.equal(k.bytes(), b); const l = k.lines(); assert.equal(l.length, 2); assert.equal(l[0].decision, 'approve'); assert.equal(l[1].decision, 'void'); assert.equal(l[1].ref, l[0].n); }
+  { const k = ak(undefined, { schedule: async () => { throw new Error('boom'); } }); assert.deepEqual(await k.approve(), { ok: false, code: 'schedule-failed' }); assert.equal(k.q().drafts[0].lastError, 'boom'); assert.equal(k.q().drafts[0].status, 'pending_approval'); const l = k.lines(); assert.equal(l.length, 1); assert.equal(l[0].decision, 'approve'); }
+});
+test('A6 a save that fails after a good schedule: schedule-not-saved, no void, the log has the code and no text', async () => {
+  let n = 0; const k = ak(undefined, { save: (q, p) => { if (n++ === 0) throw new Error('disk full: Lions sleep'); saveQueue(q, p); } }); const was = logSize();
+  assert.deepEqual(await k.approve(), { ok: false, code: 'schedule-not-saved' }); assert.equal(k.calls.schedule.length, 1); const l = k.lines(); assert.equal(l.length, 1); assert.equal(l[0].decision, 'approve');
+  const lines = logLines(was).join('\n'); assert.match(lines, /review failed: schedule-not-saved/); assert.ok(!lines.includes('Lions')); assert.ok(!lines.includes('disk full'));
+});
+test('A7 a record that cannot be written: record-failed, nothing scheduled', async () => {
+  const k = ak(); fs.mkdirSync(k.recordFile); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'record-failed' }); assert.equal(k.calls.schedule.length, 0); assert.equal(k.bytes(), b);
+});
+test('A8 a double tap and two concurrent approves schedule exactly once', async () => {
+  const k = ak(undefined, { schedule: async (t, a) => { await new Promise((r) => setTimeout(r, 30)); k2.push(1); return { id: 'p1' }; } }); const k2 = [];
+  const rq = k.req(); const [a, b] = await Promise.all([k.approve(rq), k.approve(rq)]); assert.deepEqual([a.ok, b.ok].sort(), [false, true]); assert.equal([a, b].find((x) => !x.ok).code, 'already-scheduled'); assert.equal(k2.length, 1);
+  assert.equal((await k.approve(rq)).code, 'already-scheduled'); assert.equal(k2.length, 1); assert.equal(k.lines().length, 1);
+});
+test('A9 an automatic draft that is already scheduled answers already-scheduled', async () => {
+  const k = ak([draft('B1', { auto: true, status: 'scheduled' })]); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'already-scheduled' }); nothingHappened(k, b);
+});
+test('A10 lock order: while schedule is waiting, the decision lock is free (hook and clip decisions are not blocked)', async () => {
+  let release; const gate = new Promise((r) => { release = r; }); let started; const seen = new Promise((r) => { started = r; });
+  const k = ak(undefined, { schedule: async () => { started(); await gate; return { id: 'p1' }; } }); const running = k.approve();
+  await Promise.race([seen, new Promise((_, rej) => setTimeout(() => rej(new Error('schedule was never reached')), 1500))]); assert.equal(await withDecisionLock(() => 'ok', { env: process.env, timeoutMs: 200 }), 'ok'); release(); assert.equal((await running).ok, true);
+});
+test('A11 the log is clean: only closed codes, never an id, text, source line, claim-gate message or Meta message', async () => {
+  const was = logSize(); const T = 'A resort on Muyuni Beach';
+  { const k = ak([draft('B1', { text: T, ...sourcesRecord(T, [src('a.com'), src('www.a.com', 2)]) })]); await k.approve(); }
+  { const k = ak([draft('B1', { text: T })]); await k.approve(); }
+  { const k = ak(undefined, { stop: () => ({ stopped: true, reason: 'stopped by flag since T1' }) }); await k.approve(); }
+  { const k = ak(undefined, { schedule: async () => { throw new Error('SECRET-META-TEXT 123'); } }); await k.approve(); }
+  const lines = logLines(was); assert.ok(lines.length >= 3);
+  for (const l of lines) assert.match(l, /^\S+ review (draft|failed): [a-z0-9-]+$/, l);
+  const all = lines.join('\n'); for (const bad of ['B1', 'SECRET-META', 'Muyuni', 'exact line quoted', 'no recorded source', 'Lions']) assert.ok(!all.includes(bad), bad);
+});
+test('A12 static: no publisher, one scheduleDraft after the guards and the record, no default for the doors, the version check before the guards', () => {
+  const s = fs.readFileSync(path.join(HERE, 'draft-decisions.js'), 'utf8').replace(/^\s*\/\/.*$/gm, '');
+  for (const w of ['publish(', 'publishNow', 'schedulePost', 'igPostDraftAny', 'createPost']) assert.ok(!s.includes(w), w);
+  assert.equal((s.match(/\bscheduleDraft\(/g) || []).length, 1);
+  const sec = s.split('async function approveDraft')[1].split(/\n  return \{/)[0];
+  const at = (x) => { const i = sec.indexOf(x); assert.ok(i >= 0, x); return i; };
+  assert.ok(at('draftVersion(d) !== req.version') < at('approveGuards(') && at('approveGuards(') < at('recordLocked(') && at('recordLocked(') < at('scheduleDraft('), 'version, guards, record, schedule');
+  assert.ok(at("approveOn() !== true") < at('queueLocked('));
+  const head = s.slice(s.indexOf('export function createDraftActions'), s.indexOf('const ready')); for (const k of ['schedule', 'igOn', 'stop', 'notify', 'queuePath', 'recordFile', 'approveOn']) assert.ok(!new RegExp(`\\b${k}\\s*=[^=]`).test(head), `no default for ${k}`);
+  assert.match(head, /ttlDays = CONFIG\.draftTtlDays/);
 });
