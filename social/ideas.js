@@ -24,12 +24,15 @@
 //   BASE 50, FRESH_MAX 50, FRESH_DAYS 730 (a source dated today gets +50, a two-year-old one +0), MONTH_BONUS 5,
 //   topicWeight = config.topicWeights[topic] ?? 1. A month match = a `months` / `month` / `season` / `best_months` field that contains
 //   the month of `now`. Sorted by score descending, ties by idea id ascending. Input order never matters.
+//   OWN RESULTS (optional, `own: { state, queue }` = bpa-ig-insights.json + queue.json): when 4+ of our posts with a known topic exist for a topic, its median reach against the account median
+//   moves the score by 5 * (ratio - 1), capped at +-5, and adds one plain line to `reasons`. No state, a state older than 14 days or fewer than 4 posts: nothing changes (insights.js topicAdjustments).
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REFUSAL_PATTERNS, FIRST_PERSON_PATTERNS, refusalHits } from './rules-gate.js';
+import { topicAdjustments, readInsightsState, defaultInsightsPath } from './insights.js';
 
 export const BASE = 50, FRESH_MAX = 50, FRESH_DAYS = 730, MONTH_BONUS = 5;
 export const DEFAULT_REGIONS = ['tanzania', 'zanzibar'];
@@ -77,12 +80,12 @@ const compileNever = (list) => (Array.isArray(list) ? list : []).map((p) => (p i
 const history12 = (history) => (Array.isArray(history) ? history : []);
 
 /** Pure. See the header for the rules. */
-export function buildIdeaPool({ facts = [], pages = [], rules = [], history = [], now = new Date(), config = {} } = {}) {
+export function buildIdeaPool({ facts = [], pages = [], rules = [], history = [], now = new Date(), config = {}, own = null } = {}) {
   const cfg = { regions: DEFAULT_REGIONS, repeatDays: 120, topicWeights: {}, neverPromotePatterns: [], ...config };
   const regions = new Set((cfg.regions || DEFAULT_REGIONS).map((r) => String(r).toLowerCase()));
   const never = compileNever(cfg.neverPromotePatterns);
   const nowMs = toMs(now); const nowMonth = new Date(nowMs).getUTCMonth() + 1;
-  const ideas = [], dropped = [];
+  const ideas = [], dropped = []; const topicOf = new Map(); // sourceId -> topic of EVERY candidate that got this far, also the ones dropped as repeats (those are our posted ones)
   const drop = (kind, sourceId, reason) => dropped.push({ kind, sourceId: String(sourceId), reason });
   const pageList = Array.isArray(pages) ? pages : [];
   const ruleList = Array.isArray(rules) ? rules : (rules && Array.isArray(rules.rules) ? rules.rules : []);
@@ -115,6 +118,7 @@ export function buildIdeaPool({ facts = [], pages = [], rules = [], history = []
     idea.reasons = [`fresh: source dated ${idea.claims[0].sourceDate}, ${Math.floor(age)} days old (+${fresh.toFixed(1)})`];
     if (bonus) idea.reasons.push(`month match: ${nowMonth} is in the source's season (+${MONTH_BONUS})`);
     if (weight !== 1) idea.reasons.push(`topic weight ${topic} x${weight}`);
+    topicOf.set(idea.sourceId, topic ?? null);
     const why = repeatReason(idea); if (why) return drop(kind, sourceId, why);
     ideas.push(idea);
   };
@@ -153,6 +157,10 @@ export function buildIdeaPool({ facts = [], pages = [], rules = [], history = []
     finish('rule', r.id, { id: ideaId('rule', r.id), sourceId: `rule:${r.id}`, kind: 'rule', topic: r.topic ?? 'official-rules', title: r.label, claims: [{ text, ruleId: r.id, sourceDate }], link: r.address }, monthsOf(r), r.topic ?? 'official-rules');
   }
 
+  if (own && typeof own === 'object') {
+    const adj = topicAdjustments({ state: own.state, queue: own.queue, topicOfSource: (id) => topicOf.get(id) ?? null, now });
+    for (const i of ideas) { const a = i.topic != null ? adj.get(i.topic) : null; if (a) { i.score = Math.round((i.score + a.adjust) * 1000) / 1000; i.reasons.push(a.reason); } }
+  }
   ideas.sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   return { ideas, dropped };
 }
@@ -218,13 +226,14 @@ export function loadNeverPatterns(file) {
   const list = Array.isArray(j) ? j : j.patterns; if (!Array.isArray(list)) throw new Error(`never-promote file ${file}: expected an array or { patterns: [] }`);
   return list.map(String);
 }
-export function loadInputs({ root, historyFile, queueFile, neverFile, regions } = {}) {
+export function loadInputs({ root, historyFile, queueFile, neverFile, regions, insightsFile } = {}) {
   const facts = readJson(path.join(root, 'data', 'facts', 'facts.json'), { facts: [] }).facts;
   const rules = readJson(path.join(root, 'data', 'rules', 'official-rules.json'), { rules: [] }).rules;
-  const history = [...historyFromQueue(readJson(queueFile || path.join(root, 'social', 'queue.json'), null)), ...(historyFile ? historyFromAudit(readJson(historyFile, null)) : [])];
+  const queue = readJson(queueFile || path.join(root, 'social', 'queue.json'), null);
+  const history = [...historyFromQueue(queue), ...(historyFile ? historyFromAudit(readJson(historyFile, null)) : [])];
   const config = {}; if (regions) config.regions = regions;
   const never = neverFile ? loadNeverPatterns(neverFile) : null; if (never) config.neverPromotePatterns = never;
-  return { facts, pages: loadPages(root), rules, history, config, neverFileFound: never !== null };
+  return { facts, pages: loadPages(root), rules, history, config, neverFileFound: never !== null, own: { state: readInsightsState(insightsFile || defaultInsightsPath()), queue } };
 }
 
 // ── command line ───────────────────────────────────────────────────────────────────────────────
@@ -249,7 +258,7 @@ function main(argv) {
   try { inp = loadInputs({ root, historyFile: a.historyFile, queueFile: a.queueFile, neverFile, regions: a.regions }); } catch (e) { console.error(`ideas: cannot read inputs: ${e.message}`); process.exit(2); }
   if (!inp.neverFileFound) console.error(`ideas: no never-promote file at ${neverFile} (no private refusal list applied)`);
   const now = a.now ? new Date(a.now + (/^\d{4}-\d{2}-\d{2}$/.test(a.now) ? 'T00:00:00Z' : '')) : new Date();
-  const { ideas, dropped } = buildIdeaPool({ facts: inp.facts, pages: inp.pages, rules: inp.rules, history: inp.history, now, config: inp.config });
+  const { ideas, dropped } = buildIdeaPool({ facts: inp.facts, pages: inp.pages, rules: inp.rules, history: inp.history, now, config: inp.config, own: inp.own });
   const byKind = {}; for (const i of ideas) byKind[i.kind] = (byKind[i.kind] || 0) + 1;
   const droppedByReason = {}; for (const d of dropped) { const key = d.reason.startsWith(`${d.kind}:`) ? d.reason : `${d.kind}:${d.reason}`; droppedByReason[key] = (droppedByReason[key] || 0) + 1; }
   const top = ideas.slice(0, a.top);

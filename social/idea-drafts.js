@@ -61,7 +61,7 @@ function factSourceNames(root, facts) {
 export function loadIdeaPool({ root = ROOT, queuePath = QUEUE_PATH, now = new Date(), env = process.env } = {}) {
   const never = loadNeverPromote({ env }); if (!never.ok) return { ok: false, reason: never.reason };
   let inp; try { inp = loadInputs({ root, queueFile: queuePath }); } catch (e) { return { ok: false, reason: `cannot read the idea inputs: ${e.message}` }; }
-  const { ideas, dropped } = buildIdeaPool({ facts: inp.facts, pages: inp.pages, rules: inp.rules, history: inp.history, now, config: { ...inp.config, neverPromotePatterns: never.patterns } });
+  const { ideas, dropped } = buildIdeaPool({ facts: inp.facts, pages: inp.pages, rules: inp.rules, history: inp.history, now, own: inp.own, config: { ...inp.config, neverPromotePatterns: never.patterns } });
   return { ok: true, ideas, dropped, sourceNames: factSourceNames(root, Array.isArray(inp.facts) ? inp.facts : []) };
 }
 
