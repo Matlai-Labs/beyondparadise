@@ -35,15 +35,17 @@ export function sourcesRecord(text, list) {
   if (!nonEmpty(text)) throw new Error('draft has no text');
   return { claimSources: list, claimSourcesHash: textHash(text), claimSourcesAt: new Date().toISOString() };
 }
-/** Returns null when approval may proceed, else the refusal reason. */
-export function claimGate(d) {
-  if (!d || typeof d.text !== 'string' || !d.text.trim()) return 'draft text is missing or blank; nothing to approve';
+/** null when approval may proceed, else { code, message }: `code` is from a closed set (safe to show or log), `message` is the WhatsApp text (it may name claims from the draft). */
+export function claimGateWhy(d) {
+  if (!d || typeof d.text !== 'string' || !d.text.trim()) return { code: 'text-missing', message: 'draft text is missing or blank; nothing to approve' };
   const claims = claimsIn(d.text); if (!claims.length) return null;
   const list = Array.isArray(d.claimSources) ? d.claimSources : [];
   const ok = list.filter(validEntry);
-  if (!ok.length) return `no recorded source line for claims (${[...new Set(claims)].slice(0, 5).join(', ')}); record claimSources first`;
-  if (!d.claimSourcesHash) return 'sources were recorded the old way (no text hash); record the sources again with record-claim-sources.js';
-  if (d.claimSourcesHash !== textHash(d.text)) return 'the text changed after the sources were recorded; record the sources again';
+  if (!ok.length) return { code: 'sources-missing', message: `no recorded source line for claims (${[...new Set(claims)].slice(0, 5).join(', ')}); record claimSources first` };
+  if (!d.claimSourcesHash) return { code: 'sources-old', message: 'sources were recorded the old way (no text hash); record the sources again with record-claim-sources.js' };
+  if (d.claimSourcesHash !== textHash(d.text)) return { code: 'sources-outdated', message: 'the text changed after the sources were recorded; record the sources again' };
   const sites = new Set(ok.map((s) => registrableDomain(host(s.url))));
-  return sites.size >= 2 ? null : 'claims need 2 independent recorded sources on different sites';
+  return sites.size >= 2 ? null : { code: 'sources-too-few', message: 'claims need 2 independent recorded sources on different sites' };
 }
+/** Returns null when approval may proceed, else the refusal reason. */
+export function claimGate(d) { const w = claimGateWhy(d); return w ? w.message : null; }
