@@ -4,6 +4,7 @@ import path from 'node:path';
 import { STATUS, CONFIG, QUEUE_PATH, log } from './lib.js';
 import { engageStop, releaseStop } from './stop.js';
 import { REVIEW_BY, defaultHooksPath, readHooks, writeHooksAtomic, hookState, shownEntry, claimsSha256 } from './auto-hooks.js';
+import { localParts } from './plain-time.js';
 import { withDecisionLock } from './decision-lock.js';
 import { CLIP_REASONS, HOOK_REASONS, hookVersion, clipReasonOf, laneClipsOf } from './review-items.js';
 import { defaultClipApprovalsPath, readClipApprovals, writeClipApprovals, clipVersion, tagsOf, decisionOf, setDecision, clearDecision, maybeEnforce, stockRightsProblem } from './clip-approvals.js';
@@ -12,7 +13,7 @@ export function scheduledAtMetaNote(queuePath, now = new Date(), tz = CONFIG.tim
   let q; try { q = JSON.parse(fs.readFileSync(queuePath, 'utf8')); } catch { return ''; }
   const times = (Array.isArray(q?.drafts) ? q.drafts : []).filter((d) => d?.status === STATUS.SCHEDULED && Date.parse(d.scheduledFor) > now.getTime()).map((d) => Date.parse(d.scheduledFor)).sort((x, y) => x - y);
   if (!times.length) return '';
-  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(times[0])).map((x) => [x.type, x.value]));
+  const p = localParts(times[0], tz);
   const when = `${p.day} ${p.month} ${p.hour}:${p.minute}`;
   return times.length === 1 ? `1 Facebook post is already scheduled at Meta for ${when} and will still go out; cancel it in Meta if needed.`
     : `${times.length} Facebook posts are already scheduled at Meta, the next for ${when}, and will still go out; cancel them in Meta if needed.`;

@@ -30,3 +30,10 @@ test('stop passes through; a throwing stop check gives unknown', () => {
   assert.equal(st({ stop: () => { throw new Error('x'); } }).stop, 'unknown');
 });
 test('the status carries no path and never throws on odd input', () => { const s = st({ configFile: put('null'), runStatePath: put('{"lastRunAt":5}'), lastPostPath: put('7') }); assert.ok(!JSON.stringify(s).includes(dir)); assert.equal(s.autoLane, 'unknown'); });
+
+test('stop with a valid time carries sinceText in words and still the raw reason; a bad time or no time adds nothing', () => {
+  const r = st({ stop: () => ({ stopped: true, reason: 'stopped by flag since 2026-11-17T21:06:42.521Z', since: '2026-11-17T21:06:42.521Z', by: 'own' }) }).stop;
+  assert.deepEqual(r, { stopped: true, reason: 'stopped by flag since 2026-11-17T21:06:42.521Z', since: '2026-11-17T21:06:42.521Z', sinceText: '18 Nov at 00:06 (East Africa time)', by: 'own' });
+  const bad = st({ stop: () => ({ stopped: true, reason: 'r', since: 'garbage', by: 'other' }) }).stop; assert.deepEqual(bad, { stopped: true, reason: 'r' });
+  assert.equal(st({ stop: () => ({ stopped: true, reason: 'r', by: 'fleet' }) }).stop.by, 'fleet');
+});

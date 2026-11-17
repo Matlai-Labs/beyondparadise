@@ -28,8 +28,8 @@ function probe(p) {
 export function stopStatus({ env = process.env, flagPath = stopFlagPath(env), fleetPath = fleetStopPath(env) } = {}) {
   try {
     const own = probe(flagPath), fleet = probe(fleetPath);
-    if (own.state === 'engaged') return { stopped: true, reason: `stopped by flag since ${own.since}` };
-    if (fleet.state === 'engaged') return { stopped: true, reason: `stopped by fleet stop-all flag since ${fleet.since}` };
+    if (own.state === 'engaged') return { stopped: true, reason: `stopped by flag since ${own.since}`, since: own.since, by: 'own' };
+    if (fleet.state === 'engaged') return { stopped: true, reason: `stopped by fleet stop-all flag since ${fleet.since}`, since: fleet.since, by: 'fleet' };
     if (own.state === 'unreadable') return { stopped: true, reason: `stopped: stop flag state unreadable (${own.code}), failing closed` };
     if (fleet.state === 'unreadable') return { stopped: true, reason: `stopped: fleet stop-all flag state unreadable (${fleet.code}), failing closed` };
     return { stopped: false, reason: null };

@@ -184,3 +184,10 @@ test('DOM: the expiry sentence does not overwrite another notice', async () => {
   fireArmTimer(p);
   assert.equal(p.$('notice').textContent, other);
 });
+
+test('DOM: the status line shows the time in words while Start still sends the raw reason as seen', async () => {
+  const raw = 'stopped by flag since 2026-11-17T21:06:42.521Z'; const s = serverOf(); s.status = status({ stopped: true, reason: raw, since: '2026-11-17T21:06:42.521Z', sinceText: '18 Nov at 00:06 (East Africa time)', by: 'own' }); const p = await openPage(s);
+  assert.match(p.$('status').textContent || JSON.stringify(p.$('status').children.map((c) => c.textContent)), /stopped since 18 Nov at 00:06/);
+  p.$('stop-all').click(); await p.flush(); p.$('stop-all').click(); await p.flush();
+  assert.deepEqual(p.posts('api/posting').map((c) => c.body), [{ action: 'start', seen: raw }]);
+});

@@ -146,3 +146,12 @@ test('the backstop inside lib.js: with the flag set, the REAL schedulePost/publi
     assert.equal(fetched, 0);
   } finally { globalThis.fetch = realFetch; fs.unlinkSync(flag); }
 });
+
+test('engaged flags carry the time and which flag; the unreadable case has no time', () => {
+  const p = paths(); fs.mkdirSync(path.dirname(p.flagPath), { recursive: true }); fs.writeFileSync(p.flagPath, 'x');
+  const s = stopStatus(p); assert.deepEqual(s, { stopped: true, reason: `stopped by flag since ${s.since}`, since: s.since, by: 'own' }); assert.match(s.since, new RegExp(`^${ISO.source}$`));
+  const q = paths(); fs.mkdirSync(path.dirname(q.fleetPath), { recursive: true }); fs.writeFileSync(q.fleetPath, '');
+  const f = stopStatus(q); assert.equal(f.by, 'fleet'); assert.match(f.since, new RegExp(`^${ISO.source}$`));
+  const file = path.join(q.dir, 'afile'); fs.writeFileSync(file, ''); const u = stopStatus({ ...q, flagPath: path.join(file, 'x'), fleetPath: q.fleetPath + 'none' });
+  assert.equal(u.stopped, true); assert.ok(!('since' in u) && !('by' in u));
+});

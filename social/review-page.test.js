@@ -85,7 +85,7 @@ test('B: clip titles, states and facts in plain words', () => {
 test('B: status line wording', () => {
   const NOW = Date.parse('2026-11-17T10:00:00Z'); const base = { autoLane: 'off', stop: { stopped: false, reason: null }, lastPost: { at: '2026-11-12T10:00:00Z', id: 'B26' }, lastRun: { at: '2026-11-17T09:56:00Z', result: 'ok' } };
   assert.deepEqual([...pure.statusLines(base, NOW)], ['Posting: allowed', 'Automatic posting: OFF', 'Last post 12 Nov', 'Last check by the system 4 min ago']);
-  assert.equal(pure.statusLines({ ...base, stop: { stopped: true, reason: 'stopped by flag' } }, NOW)[0], 'Posting: stopped (stopped by flag)'); assert.equal(pure.statusLines({ ...base, autoLane: 'on' }, NOW)[1], 'Automatic posting: ON');
+  assert.equal(pure.statusLines({ ...base, stop: { stopped: true, reason: 'stopped by flag' } }, NOW)[0], 'Posting: stopped (a stop switch could not be read)'); assert.equal(pure.statusLines({ ...base, autoLane: 'on' }, NOW)[1], 'Automatic posting: ON');
   assert.equal(pure.statusLines({ ...base, lastPost: 'none' }, NOW)[2], 'No post recorded yet'); assert.equal(pure.statusLines({ ...base, lastPost: 'unknown' }, NOW)[2], 'Could not be read');
   const bad = [...pure.statusLines({ autoLane: 'unknown', stop: 'unknown', lastPost: 'unknown', lastRun: 'unknown' }, NOW)]; assert.deepEqual(bad, ['Posting: could not be read', 'Automatic posting: could not be read', 'Could not be read', 'Last check by the system: could not be read']);
 });
@@ -307,3 +307,14 @@ test('SR4: the posting body: Stop carries nothing else; Start carries the stop r
   assert.deepEqual({ ...pure.postingBody('start', { reason: null }) }, { action: 'start' }); assert.deepEqual({ ...pure.postingBody('start', {}) }, { action: 'start' });
 });
 test('SR4: the sentence for a stop that changed in between is exactly the agreed one', () => { assert.equal(pure.refusalText('stop-changed'), 'Posting was stopped again in the meantime. Check and tap again.'); });
+
+test('the stop line is a local time in words and never the raw reason', () => {
+  const NOW = Date.parse('2026-11-17T10:00:00Z'); const base = { autoLane: 'off', stop: { stopped: false, reason: null }, lastPost: { at: '2026-11-12T10:00:00Z', id: 'B26' }, lastRun: { at: '2026-11-17T09:56:00Z', result: 'ok' } };
+  const raw = 'stopped by flag since 2026-11-17T21:06:42.521Z'; const T = '18 Nov at 00:06 (East Africa time)';
+  const own = pure.statusLines({ ...base, stop: { stopped: true, reason: raw, since: '2026-11-17T21:06:42.521Z', sinceText: T, by: 'own' } }, NOW)[0];
+  const fleet = pure.statusLines({ ...base, stop: { stopped: true, reason: raw, sinceText: T, by: 'fleet' } }, NOW)[0];
+  const none = pure.statusLines({ ...base, stop: { stopped: true, reason: raw } }, NOW)[0];
+  assert.equal(own, 'Posting: stopped since ' + T); assert.equal(fleet, 'Posting: stopped by the fleet-wide stop switch since ' + T); assert.equal(none, 'Posting: stopped (a stop switch could not be read)');
+  for (const l of [own, fleet, none]) assert.doesNotMatch(l, /T21:06|\dZ/);
+  assert.equal(pure.statusLines({ ...base, stop: { stopped: false, reason: null } }, NOW)[0], 'Posting: allowed'); assert.equal(pure.statusLines({ ...base, stop: 'unknown' }, NOW)[0], 'Posting: could not be read');
+});

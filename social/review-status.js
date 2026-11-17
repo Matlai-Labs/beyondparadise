@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stopStatus } from './stop.js';
 import { runStatePathFor, lastPostPathFor } from './health.js';
+import { plainTime } from './plain-time.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const validTime = (s) => typeof s === 'string' && !Number.isNaN(Date.parse(s));
@@ -13,7 +14,9 @@ const readObj = (file) => { try { const j = JSON.parse(fs.readFileSync(file, 'ut
 export function readStatus({ env = process.env, configFile = path.join(HERE, 'config.json'), runStatePath = runStatePathFor(env), lastPostPath = lastPostPathFor(env), stop = stopStatus } = {}) {
   const cfg = readObj(configFile);
   const autoLane = !cfg ? 'unknown' : (cfg.autoPublish === true ? 'on' : 'off'); // fresh from disk: the server's CONFIG is read once at start
-  let stopped; try { const s = stop({ env }); stopped = s && typeof s.stopped === 'boolean' ? { stopped: s.stopped, reason: typeof s.reason === 'string' ? s.reason : null } : 'unknown'; } catch { stopped = 'unknown'; }
+  let stopped; try { const s = stop({ env }); stopped = s && typeof s.stopped === 'boolean' ? { stopped: s.stopped, reason: typeof s.reason === 'string' ? s.reason : null } : 'unknown';
+    if (stopped !== 'unknown' && validTime(s.since)) { stopped.since = s.since; stopped.sinceText = plainTime(s.since); }
+    if (stopped !== 'unknown' && (s.by === 'own' || s.by === 'fleet')) stopped.by = s.by; } catch { stopped = 'unknown'; }
   const post = readObj(lastPostPath); const run = readObj(runStatePath);
   return {
     autoLane, stop: stopped,

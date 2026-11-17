@@ -281,7 +281,7 @@ function minutesAgoText(iso, nowMs) {
 }
 function statusLines(s, nowMs) {
   s = s || {}; const out = [];
-  out.push(s.stop && typeof s.stop === 'object' ? (s.stop.stopped ? 'Posting: stopped' + (s.stop.reason ? ' (' + s.stop.reason + ')' : '') : 'Posting: allowed') : 'Posting: could not be read');
+  out.push(s.stop && typeof s.stop === 'object' ? (s.stop.stopped ? (typeof s.stop.sinceText === 'string' && s.stop.sinceText ? (s.stop.by === 'fleet' ? 'Posting: stopped by the fleet-wide stop switch since ' : 'Posting: stopped since ') + s.stop.sinceText : 'Posting: stopped (a stop switch could not be read)') : 'Posting: allowed') : 'Posting: could not be read');
   out.push(s.autoLane === 'on' ? 'Automatic posting: ON' : (s.autoLane === 'off' ? 'Automatic posting: OFF' : 'Automatic posting: could not be read'));
   const lp = s.lastPost && typeof s.lastPost === 'object' ? dateText(s.lastPost.at) : null;
   out.push(lp ? 'Last post ' + lp : (s.lastPost === 'none' ? NO_POST_LINE : 'Could not be read'));
