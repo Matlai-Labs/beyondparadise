@@ -47,7 +47,7 @@ test('page: 200 with cookie, CSP, nonce in header and body, hardening headers, f
 });
 test('CSP has exactly the allowed directives', () => assert.equal(CSP('N'), "default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-N'; media-src 'self'; connect-src 'self'; img-src 'self'"));
 test('every route refuses without login or Host, and without the cookie except the page', async () => {
-  assert.equal((await call('/review/', { host: HOST })).status, 403); assert.equal((await call('/review/', goodHeaders({ host: 'x.example.ts.net:10000' }))).status, 403);
+  assert.equal((await call('/review/', { host: HOST })).status, 403); assert.equal((await call('/review/', goodHeaders({ host: 'x.example.com:10000' }))).status, 403);
   for (const p of ['/review/api/items', `/review/media/m_${'0'.repeat(32)}`, '/review/zzz']) { const r = await call(p, login); assert.equal(r.status, 403, p); assert.equal(r.body.toString(), 'not available'); assert.match(r.headers['content-type'], /^text\/plain/); assert.equal(r.headers['cache-control'], 'no-store'); }
   for (const p of ['/review/api/items', `/review/media/m_${'0'.repeat(32)}`]) assert.equal((await call(p, { host: HOST, cookie: ck.cookie })).status, 403, `cookie alone is not enough: ${p}`);
 });
