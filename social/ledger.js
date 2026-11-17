@@ -72,6 +72,12 @@ export function reserveInstagramPublish({ id, now = new Date(), config = CONFIG,
   } finally { releaseLock(lockPath, token); }
 }
 
+/** Read-only: how many reservations the East Africa day of `now` already has. { ok:true, count } | { ok:false, reason }. A missing file is 0; an unreadable or corrupt one fails closed. */
+export function reservationsOnDay({ now = new Date(), config = CONFIG, path: p = defaultLedgerPath(), tz = config?.timezone || CONFIG.timezone } = {}) {
+  let rows; try { rows = readLedger(p); } catch (e) { return { ok: false, reason: `ledger unreadable or corrupt (${e.code || e.message}), failing closed` }; }
+  const today = eatDay(now, tz); return { ok: true, count: rows.filter((r) => eatDay(new Date(r.at), tz) === today).length };
+}
+
 /** Remove exactly one reservation line ({id, at}) atomically. ONLY for a StoppedError between reserve and publish (nothing reached the network);
  *  a network failure keeps its reservation. { ok } or { ok:false, reason }; never throws. */
 export function releaseInstagramReservation({ id, at, path: p = defaultLedgerPath(), lockTimeoutMs = 2000 } = {}) {

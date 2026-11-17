@@ -44,7 +44,7 @@ test('draft.js only queues what buildDrafts returned, and never a rejected draft
 });
 
 test('no other file writes draft text to the queue without being declared here', () => {
-  const declared = new Set(['lib.js', 'draft.js', 'approval-server.js']); // the three paths above
+  const declared = new Set(['lib.js', 'draft.js', 'approval-server.js', 'auto-lane.js']); // the three paths above, and the automatic lane (proved in auto-lane-wired.test.js: its one queue push follows the voice + rules final check)
   const offenders = [];
   for (const f of fs.readdirSync(HERE).filter((f) => f.endsWith('.js') && !f.endsWith('.test.js') && !declared.has(f))) {
     const s = read(f);
