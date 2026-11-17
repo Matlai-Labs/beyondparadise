@@ -179,3 +179,22 @@ test('formatCalibration: says plainly at the top when the best model misses more
   const good = await calibrateModel({ model: 'm', picked, askFor: () => async (req) => (/Sentence: The |Sentence: This |Sentence: Operators|Sentence: Travellers|Sentence: Having|international 9 USD; Safety fee, international 40/.test(req.prompt) ? no() : yes), check: okCheck });
   assert.ok(!formatCalibration([good], { picked }).includes('STILL MISSES'));
 });
+
+// ── the prompt comparison with the judge ──
+import { comparePrompts, formatComparison } from './judge.js';
+import { PROMPT_V1, PROMPT_V2 } from './caption.js';
+test('comparePrompts: the same ideas with both prompts, caption model only, then the judge model over every passing draft; numbers per prompt', async () => {
+  const events = []; const ideas = [IDEA, { ...IDEA, id: 'idea_b', sourceId: 'rule:b' }];
+  const caption = (req) => { events.push(`cap:${req.system === PROMPT_V1 ? 'v1' : 'v2'}:${req.model}`); return JSON.stringify(req.system === PROMPT_V1 ? { ...ANS, caption: `${ANS.caption} Check the operator for current times.` } : ANS); };
+  const judgeAnswer = (req) => { events.push(`judge:${req.model}`); return /Check the operator/.test(req.prompt) ? no() : yes; };
+  const res = await comparePrompts({ ideas, captionModel: 'cap', judgeModel: 'jud', installed: ['cap', 'jud'], memoryFree: async () => 90, unload: async (m) => events.push(`unload:${m}`), now: new Date('2026-11-17T06:00:00Z'), voice: async () => ({ ok: true }), rules: () => ({ ok: true }), check: okCheck,
+    askFor: () => async (req) => (req.system === JUDGE_QUESTION ? judgeAnswer(req) : caption(req)) });
+  assert.deepEqual(res.prompts.map((p) => p.name), ['v1', 'v2']); for (const p of res.prompts) { assert.equal(p.total, 2); assert.equal(p.passedAfterRetries, 2); }
+  assert.equal(res.prompts[0].judgePassed, 0); assert.equal(res.prompts[1].judgePassed, 2); assert.equal(res.prompts[1].judged.every((j) => j.verdict === 'pass' && typeof j.text === 'string'), true);
+  assert.ok(events.indexOf('unload:cap') < events.indexOf('judge:jud'), 'the caption model is unloaded before the judge model runs'); assert.equal(events.at(-1), 'unload:jud');
+  const rep = formatComparison(res, { date: '2026-11-17' }); assert.ok(rep.includes('| v1 |') && rep.includes('| v2 |')); assert.match(rep, /judge passed 2 of 2/); assert.match(rep, /judge passed 0 of 2/); assert.ok(rep.includes('drafts the judge passed, in full') && rep.includes('Source: '));
+});
+test('comparePrompts: a model that is not installed or under 15 percent free memory is skipped and said so', async () => {
+  const a = await comparePrompts({ ideas: [IDEA], captionModel: 'gone', judgeModel: 'jud', installed: ['jud'], memoryFree: async () => 90, unload: async () => {}, askFor: () => async () => { throw new Error('no'); } }); assert.match(a.skipped, /gone: not installed/);
+  const b = await comparePrompts({ ideas: [IDEA], captionModel: 'cap', judgeModel: 'jud', installed: ['cap', 'jud'], memoryFree: async () => 9, unload: async () => {}, askFor: () => async () => { throw new Error('no'); } }); assert.match(b.skipped, /free memory 9%/);
+});

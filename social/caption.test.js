@@ -250,3 +250,8 @@ test('localAsk passes temperature and timeout through to the guarded caller', as
   await localAsk(deps)({ prompt: 'p', system: 's', model: 'm', temperature: 0, timeoutMs: 5000 }); assert.equal(body.options.temperature, 0); assert.ok(signalSeen);
   await localAsk(deps)({ prompt: 'p', system: 's', model: 'm' }); assert.equal(body.options.temperature, 0.3);
 });
+test('runBakeoff: a prompt can be named (sent as the system text), and each passing draft keeps the whole draft for a later judge', async () => {
+  const systems = []; const res = await runBakeoff({ ideas: [IDEA], models: ['m'], installed: ['m'], voice: okVoice, prompt: PROMPT_V1, askFor: () => async (req) => { systems.push(req.system); return json(GOOD); }, memoryFree: async () => 90, unload: async () => {}, now: new Date('2026-11-17T06:00:00Z') });
+  assert.deepEqual(systems, [PROMPT_V1]); assert.equal(res[0].passed.length, 1); assert.equal(res[0].passed[0].draft.ideaId, IDEA.id); assert.deepEqual(res[0].passed[0].draft.claims, IDEA.claims);
+  const d = await runBakeoff({ ideas: [IDEA], models: ['m'], installed: ['m'], voice: okVoice, askFor: () => async (req) => { systems.push(req.system); return json(GOOD); }, memoryFree: async () => 90, unload: async () => {}, now: new Date() }); assert.equal(systems.at(-1), PROMPT_V2);
+});

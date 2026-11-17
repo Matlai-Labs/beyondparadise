@@ -228,7 +228,7 @@ export function pickBakeoffIdeas(ideas, n = 10) {
   return ideas.filter((i) => chosen.has(i));
 }
 
-export async function runBakeoff({ ideas, models, installed, askFor, voice = voiceGate, rules = rulesCheck, memoryFree, unload, clock = defaultClock, now = new Date(), config = CONFIG, sourceNames }) {
+export async function runBakeoff({ ideas, models, installed, askFor, voice = voiceGate, rules = rulesCheck, memoryFree, unload, clock = defaultClock, now = new Date(), config = CONFIG, sourceNames, prompt = CAPTION_PROMPT }) {
   const rows = [];
   for (const model of models) {
     if (!installed.includes(model)) { rows.push({ model, total: 0, skipped: 'not installed' }); continue; }
@@ -239,11 +239,11 @@ export async function runBakeoff({ ideas, models, installed, askFor, voice = voi
     try {
       for (const idea of ideas) {
         let r;
-        try { r = await draftFromIdea(idea, { ask: askFor(model), voice, rules, now, config, model, sourceNames, clock }); }
+        try { r = await draftFromIdea(idea, { ask: askFor(model), voice, rules, now, config, model, sourceNames, clock, prompt }); }
         catch (e) { if (e && e.guard) { row.stopped = e.message; stopped = true; break; } throw e; }
         row.total++; row.calls.push(...r.callSeconds);
         for (const rs of r.attemptReasons) for (const name of rs) row.reasons[name] = (row.reasons[name] || 0) + 1;
-        if (r.ok) { if (r.attempts === 1) row.firstTry++; else row.afterRetries++; row.passed.push({ ideaId: idea.id, kind: idea.kind, attempts: r.attempts, hook: r.draft.hook, altText: r.draft.altText, text: r.draft.text }); }
+        if (r.ok) { if (r.attempts === 1) row.firstTry++; else row.afterRetries++; row.passed.push({ ideaId: idea.id, kind: idea.kind, attempts: r.attempts, hook: r.draft.hook, altText: r.draft.altText, text: r.draft.text, draft: r.draft }); }
         else { row.givenUp++; row.failedIdeas.push({ ideaId: idea.id, kind: idea.kind, reasons: r.reasons }); }
       }
     } finally { try { await unload(model); } catch { /* the unload is best effort */ } }

@@ -16,7 +16,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseJsonLoose } from './vendor/json-loose/json-loose.mjs';
 import { finalCheck } from './lib.js';
-import { numberFidelity, assembleParts, localAsk, readFreeMemoryPercent, listInstalledModels, unloadModel, MIN_FREE_PERCENT } from './caption.js';
+import { numberFidelity, assembleParts, localAsk, readFreeMemoryPercent, listInstalledModels, unloadModel, MIN_FREE_PERCENT, runBakeoff, pickBakeoffIdeas, PROMPT_V1, PROMPT_V2 } from './caption.js';
+import { CONFIG, voiceGate, rulesCheck } from './lib.js';
 
 export const CALIBRATION_TIMEOUT_MS = 180_000;
 
@@ -206,15 +207,55 @@ export function formatCalibration(rows, { date = '', picked = [], skippedIdeas =
   return out.join('\n') + '\n';
 }
 
+// ── the prompt comparison: both caption prompts on the same ideas, every passing draft judged ──
+/** Caption model only, both prompts, then the judge model over every draft that passed the caption checks. One model in memory at a time. */
+export async function comparePrompts({ ideas, captionModel, judgeModel, installed, memoryFree, unload, askFor, voice = voiceGate, rules = rulesCheck, check = finalCheck, clock = defaultClock, now = new Date(), config = CONFIG, sourceNames }) {
+  for (const m of [captionModel, judgeModel]) {
+    if (!installed.includes(m)) return { skipped: `${m}: not installed` };
+    const free = await memoryFree(m); if (!(free >= MIN_FREE_PERCENT)) return { skipped: `${m}: free memory ${free}% is under ${MIN_FREE_PERCENT}%` };
+  }
+  const runs = [];
+  for (const [name, prompt] of [['v1', PROMPT_V1], ['v2', PROMPT_V2]]) {
+    const [row] = await runBakeoff({ ideas, models: [captionModel], installed, askFor, voice, rules, memoryFree, unload, clock, now, config, sourceNames, prompt });
+    runs.push({ name, row });
+  }
+  const ask = (req) => askFor(judgeModel)({ ...req, timeoutMs: CALIBRATION_TIMEOUT_MS }); const prompts = [];
+  try {
+    for (const { name, row } of runs) {
+      if (!row || row.skipped || row.stopped) { prompts.push({ name, total: row?.total ?? 0, skipped: row?.skipped || row?.stopped || 'no result', judged: [], judgePassed: 0, passedAfterRetries: 0 }); continue; }
+      const judged = [];
+      for (const p of row.passed) { const j = await judgeDraft(p.draft, { ask, model: judgeModel, now, check, clock }); judged.push({ ideaId: p.ideaId, kind: p.kind, attempts: p.attempts, verdict: j.verdict, reasons: j.reasons, seconds: j.seconds, hook: p.hook, text: p.text }); }
+      prompts.push({ name, total: row.total, firstTry: row.firstTry, afterRetries: row.afterRetries, givenUp: row.givenUp, passedAfterRetries: row.firstTry + row.afterRetries, reasons: row.reasons, failedIdeas: row.failedIdeas, meanSeconds: row.meanSeconds, judged, judgePassed: judged.filter((j) => j.verdict === 'pass').length });
+    }
+  } finally { try { await unload(judgeModel); } catch { /* best effort */ } }
+  return { captionModel, judgeModel, prompts };
+}
+
+export function formatComparison(res, { date = '' } = {}) {
+  if (res.skipped) return `# Caption prompt comparison ${date}\n\nNot run: ${res.skipped}\n`;
+  const out = [`# Caption prompt comparison ${date}`, '', `Caption model ${res.captionModel}, judge model ${res.judgeModel}. Same ideas for both prompts; up to 2 retries per idea; every passing draft is judged.`, '',
+    '| prompt | ideas | first try | after retries | given up | passed after retries | judge passed | caption failure reasons (all failed attempts) |', '|---|---|---|---|---|---|---|---|'];
+  for (const p of res.prompts) out.push(p.skipped ? `| ${p.name} | skipped: ${p.skipped} | | | | | | |` : `| ${p.name} | ${p.total} | ${p.firstTry} | ${p.afterRetries} | ${p.givenUp} | ${p.passedAfterRetries} | judge passed ${p.judgePassed} of ${p.passedAfterRetries} | ${Object.entries(p.reasons || {}).map(([k, v]) => `${k} ${v}`).join(', ') || 'none'} |`);
+  for (const p of res.prompts) {
+    if (p.skipped) continue;
+    out.push('', `## ${p.name}: verdict per passing draft`); for (const j of p.judged) out.push(`- ${j.kind} ${j.ideaId} (attempts ${j.attempts}): ${j.verdict}${j.reasons.length ? ` -- ${j.reasons.map((r) => `${r.check}: ${r.detail}`).join(' | ')}` : ''}`);
+    out.push('', `### ${p.name}: drafts the judge passed, in full`); const ok = p.judged.filter((j) => j.verdict === 'pass'); if (!ok.length) out.push('none'); for (const j of ok) out.push('', `#### ${j.kind} ${j.ideaId}`, '```', j.text, '```');
+    if (p.failedIdeas && p.failedIdeas.length) { out.push('', `### ${p.name}: given up`); for (const x of p.failedIdeas) out.push(`- ${x.kind} ${x.ideaId}: ${x.reasons.join(', ')}`); }
+  }
+  return out.join('\n') + '\n';
+}
+
 // ── command line ──
 async function main(argv) {
-  const a = { models: ['qwen3:8b', 'hermes3:8b', 'gpt-oss:20b'], ideas: 14 }; const val = (i) => { if (i + 1 >= argv.length) { console.error(`missing value for ${argv[i]}`); process.exit(2); } return argv[i + 1]; };
+  const a = { models: ['qwen3:8b', 'hermes3:8b', 'gpt-oss:20b'], ideas: null }; const val = (i) => { if (i + 1 >= argv.length) { console.error(`missing value for ${argv[i]}`); process.exit(2); } return argv[i + 1]; };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
-    if (k === '--calibrate') a.calibrate = true; else if (k === '--models') { a.models = val(i).split(',').map((s) => s.trim()).filter(Boolean); i++; } else if (k === '--ideas') { a.ideas = Number(val(i)); i++; }
+    if (k === '--calibrate') a.calibrate = true; else if (k === '--compare-prompts') a.compare = true; else if (k === '--caption-model') { a.captionModel = val(i); i++; } else if (k === '--judge-model') { a.judgeModel = val(i); i++; } else if (k === '--models') { a.models = val(i).split(',').map((s) => s.trim()).filter(Boolean); i++; } else if (k === '--ideas') { a.ideas = Number(val(i)); i++; }
     else if (k === '--out') { a.out = val(i); i++; } else if (k === '--now') { a.now = val(i); i++; } else { console.error(`unknown argument ${k}`); process.exit(2); }
   }
-  if (!a.calibrate) { console.error('usage: node judge.js --calibrate --models qwen3:8b,hermes3:8b,gpt-oss:20b [--ideas 14] [--out <file>] [--now <date>]'); process.exit(2); }
+  if (a.compare) return mainCompare(a);
+  if (!a.calibrate) { console.error('usage: node judge.js --calibrate --models qwen3:8b,hermes3:8b,gpt-oss:20b [--ideas 14] [--out <file>] [--now <date>]\n       node judge.js --compare-prompts [--ideas 10] [--caption-model m] [--judge-model m] [--out <file>] [--now <date>]'); process.exit(2); }
+  if (a.ideas === null) a.ideas = 14;
   if (!Number.isInteger(a.ideas) || a.ideas < 12) { console.error('--ideas needs a whole number of at least 12'); process.exit(2); }
   const { loadIdeaPool } = await import('./idea-drafts.js'); const now = a.now ? new Date(a.now + (/^\d{4}-\d{2}-\d{2}$/.test(a.now) ? 'T00:00:00Z' : '')) : new Date();
   const pool = loadIdeaPool({ now }); if (!pool.ok) { console.error(`calibration not run: ${pool.reason}`); process.exit(2); }
@@ -235,6 +276,16 @@ async function main(argv) {
   const report = formatCalibration(rows, { date: now.toISOString().slice(0, 10), picked: chosen, skippedIdeas: skipped, memoryNotes });
   if (a.out) { fs.mkdirSync(path.dirname(a.out), { recursive: true }); fs.writeFileSync(a.out, report); console.log(`written ${a.out}`); } else console.log(report);
   console.log(JSON.stringify({ best: pickJudgeModel(rows), models: rows.map((r) => (r.skipped ? r : { model: r.model, goodPassed: `${r.good.passed}/${r.good.total}`, badFailed: `${r.badFailed}/${r.badTotal}`, misses: r.misses })) }));
+}
+async function mainCompare(a) {
+  const n = a.ideas === null ? 10 : a.ideas; if (!Number.isInteger(n) || n < 1) { console.error('--ideas needs a positive integer'); process.exit(2); }
+  const { loadIdeaPool, DEFAULT_CAPTION_MODEL, DEFAULT_JUDGE_MODEL } = await import('./idea-drafts.js'); const now = a.now ? new Date(a.now + (/^\d{4}-\d{2}-\d{2}$/.test(a.now) ? 'T00:00:00Z' : '')) : new Date();
+  const pool = loadIdeaPool({ now }); if (!pool.ok) { console.error(`comparison not run: ${pool.reason}`); process.exit(2); }
+  const run = { calls: 0 };
+  const res = await comparePrompts({ ideas: pickBakeoffIdeas(pool.ideas, n), captionModel: a.captionModel || CONFIG.captionModel || DEFAULT_CAPTION_MODEL, judgeModel: a.judgeModel || CONFIG.judgeModel || DEFAULT_JUDGE_MODEL,
+    installed: await listInstalledModels(), memoryFree: readFreeMemoryPercent, unload: unloadModel, askFor: () => localAsk({ run, maxCalls: 400 }), now, sourceNames: pool.sourceNames });
+  const report = formatComparison(res, { date: now.toISOString().slice(0, 10) }); if (a.out) { fs.mkdirSync(path.dirname(a.out), { recursive: true }); fs.writeFileSync(a.out, report); console.log(`written ${a.out}`); } else console.log(report);
+  console.log(JSON.stringify(res.skipped ? res : res.prompts.map((p) => ({ prompt: p.name, ideas: p.total, passedAfterRetries: p.passedAfterRetries, judgePassed: p.judgePassed }))));
 }
 const isMain = process.argv[1] && (() => { try { return fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url)); } catch { return false; } })();
 if (isMain) main(process.argv.slice(2)).catch((e) => { console.error(`judge: ${e && e.guard ? 'stopped by guard: ' : ''}${e.message}`); process.exitCode = 1; });
