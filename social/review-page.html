@@ -69,7 +69,7 @@
 <body>
 <header>
   <h1>Beyond Paradise: review</h1>
-  <p id="step-note">Step 1: look only. Approve and Skip arrive with the next step.</p>
+  <p id="step-note">Step 2: you can decide here. Approve, Skip and Edit are saved at once. Undo is under What I decided.</p>
   <div id="status" aria-live="polite"></div>
   <ul id="problems"></ul>
 </header>
@@ -111,6 +111,7 @@ const LABELS = {
   'library-missing': 'There is no clip library yet.',
   'library-unreadable': 'The clips cannot be read right now.',
   'usage-unreadable': 'The list of clips already used cannot be read right now.',
+  'approvals-unreadable': 'The list of your clip decisions cannot be read right now.',
   'history-unreadable': 'The list of earlier posts cannot be read right now.',
 };
 const FALLBACK = 'The checks refuse it today.';
@@ -132,7 +133,8 @@ const REASON_TEXT = {
   'no-claims': 'The idea has no facts to rest on.',
   'check-failed': 'The checks could not be run today.',
   'bad-hooks-file': 'The list of video texts cannot be read right now.',
-  'bad-approvals-file': 'The list of clip decisions cannot be read right now.',
+  'bad-approvals-file': 'The list of your clip decisions cannot be read right now.',
+  'final-check': 'The wording fails the voice or rules check.',
   'no-approved-hook': 'The automatic posting needs an approved video text for this idea.',
   'no-subject': 'The idea does not name an animal, so no clip can be matched.',
   'no-matching-clip': 'No approved, unused clip shows this animal.',
@@ -269,6 +271,72 @@ function videoFailureAction(o) {
 }
 // Reduced motion: the page never starts the video by itself.
 function shouldAutoplay(reduce) { return !reduce; }
+// ── step 2: decision logic (no DOM) ──
+const EDIT_MAX = 60;
+const REFUSAL_TEXT = {
+  'version-changed': 'This changed after you looked at it. The card is loaded again. Please look at it once more.',
+  'stale': 'The facts behind this text changed. Use Edit to write it again.',
+  'not-found': 'This is gone. The list is loaded again.',
+  'already-approved': 'You already approved this.',
+  'already-skipped': 'You already skipped this.',
+  'not-decided': 'There is nothing to undo here.',
+  'already-used': 'It was already used in a post, so it cannot be undone.',
+  'rights-missing': 'This stock clip has no complete record of where it came from, who made it, its licence and the day it was downloaded.',
+  'version-pending': 'The video is still being prepared. Try again in a moment.',
+  'no-change': 'That is the same text as before. Change it first.',
+  'bad-request': 'That did not work. Reload the page.',
+  'bad-characters': 'The text has characters that cannot be seen. Remove them and try again.',
+  'cannot-decide': 'This card cannot be decided.',
+  'check-failed': 'The checks could not be run now. Nothing was changed.',
+  'usage-unreadable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'history-unreadable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'approvals-unreadable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'hooks-unreadable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'ideas-unavailable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'library-unreadable': 'Something the page needs cannot be read right now. Nothing was changed.',
+  'record-failed': 'Nothing was changed. The decision could not be written down. Try again; if it stays like this, tell Claude.',
+  'write-failed': 'Nothing was changed. The decision could not be saved. Try again; if it stays like this, tell Claude.',
+  'lock-busy': 'The system is busy. Try again in a moment.',
+  'still-stopped': 'Posting is still stopped by another stop switch.',
+  'could-not-stop': 'Posting could not be stopped from here. Use the stop command in WhatsApp.',
+};
+function refusalText(code) {
+  if (typeof code !== 'string' || code === '') return FALLBACK;
+  if (Object.prototype.hasOwnProperty.call(REFUSAL_TEXT, code)) return REFUSAL_TEXT[code];
+  let t = reasonText(code);
+  if (t === FALLBACK && code.indexOf(':') > 0) t = reasonText(code.slice(0, code.indexOf(':')));
+  return t === FALLBACK ? FALLBACK : 'Not saved: ' + t;
+}
+function waitingItems(items) { return items.filter((i) => i.decision === null || i.decision === undefined); }
+function decidedItems(items) { return items.filter((i) => i.decision !== null && i.decision !== undefined).sort((a, b) => Date.parse(b.decision.at) - Date.parse(a.decision.at)); }
+const BAD_EDIT_CHARS = /[\u0000-\u001f\u007f؜​-‏‪-‮⁠-⁤⁦-⁩﻿]/;
+function decisionRequest(item, action, text) {
+  if (!item || !Array.isArray(item.actions) || item.actions.indexOf(action) < 0) return null;
+  const req = { kind: item.kind, id: item.id, version: item.version, action };
+  if (action === 'edit') {
+    if (typeof text !== 'string' || text.trim() === '' || text.length > EDIT_MAX || BAD_EDIT_CHARS.test(text)) return null;
+    req.text = text;
+  }
+  return req;
+}
+const RELOAD_CODES = ['version-changed', 'not-found', 'stale', 'not-decided', 'already-approved', 'already-skipped'];
+function afterRefusal(code) { return RELOAD_CODES.indexOf(code) >= 0 ? 'reload' : 'stay'; }
+function tokenStep(o) { o = o || {}; if (o.status === 200 || o.status === 409) return 'done'; if (o.status === 403 && !o.retried) return 'refresh-and-retry'; return 'give-up'; }
+function keyAction(e, ctx) {
+  if (ctx.editing && e.key === 'Escape') return 'cancel';
+  if (!ctx.wide || ctx.typing || ctx.busy || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return null;
+  const m = { a: 'approve', s: 'skip', e: 'edit' }[String(e.key).toLowerCase()];
+  return m && ctx.actions.indexOf(m) >= 0 ? m : null;
+}
+function decidedLine(item) {
+  const title = item.kind === 'clip' ? clipTitle(item) : item.title;
+  return 'You ' + (item.decision && item.decision.kind === 'skipped' ? 'skipped' : 'approved') + ' "' + title + '".';
+}
+function stopButtonText(o) {
+  o = o || {};
+  if (o.stopped) return o.armed ? 'Tap again to allow posting' : 'Allow posting again';
+  return o.armed ? 'Tap again to stop all posting' : 'Stop all posting';
+}
 // END PURE
 
 const $ = (id) => document.getElementById(id);
