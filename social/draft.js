@@ -19,7 +19,7 @@ export async function runDraft(deps = {}) {
   let ideaDrafts = [];
   if (config.ideaDrafts === true) {
     const { draftIdeas } = await import('./idea-drafts.js'); const { localAsk } = await import('./caption.js');
-    ideaDrafts = await draftIdeas({ config, queue: q, ask: ask || localAsk({ stopOpts }), say, queuePath, ...(ideaPool ? { loadPool: ideaPool } : {}) });
+    ideaDrafts = await draftIdeas({ config, queue: q, ask: ask || localAsk({ stopOpts }), say, queuePath, ...(ideaPool ? { loadPool: ideaPool } : {}), judgeOpts: { ask: deps.judgeAsk, judge: deps.judge, log: deps.judgeLog } });
   }
   const drafts = [...built, ...ideaDrafts];
   const already = new Set(q.drafts.map((d) => d.sourceId));

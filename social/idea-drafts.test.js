@@ -24,7 +24,7 @@ function setup({ ideas = IDEAS, config = {}, answer = () => ANSWER, preQueue, po
   const dir = tmp(); const queuePath = path.join(dir, 'q.json'); if (preQueue) saveQueue(preQueue, queuePath);
   const s = { dir, queuePath, asked: [], poolCalls: 0, lines: [], sent: [], stopOpts: { flagPath: path.join(dir, 'stop'), fleetPath: path.join(dir, 'fleet') } };
   s.deps = { queuePath, stopOpts: s.stopOpts, say: (m) => s.lines.push(m), notify: async (m) => { s.sent.push(m); return true; }, readBriefs: () => [], buildDrafts: async () => [],
-    config: { ...CONFIG, ...config }, ask: async (req) => { s.asked.push(req); const a = answer(req, s.asked.length); if (a instanceof Error) throw a; return a; }, ideaPool: pool || (() => { s.poolCalls++; return { ok: true, ideas, dropped: [], sourceNames: {} }; }) };
+    config: { ...CONFIG, judgeMode: 'off', ...config }, ask: async (req) => { s.asked.push(req); const a = answer(req, s.asked.length); if (a instanceof Error) throw a; return a; }, ideaPool: pool || (() => { s.poolCalls++; return { ok: true, ideas, dropped: [], sourceNames: {} }; }) };
   return s;
 }
 
