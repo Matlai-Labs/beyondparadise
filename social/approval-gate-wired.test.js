@@ -1,10 +1,11 @@
 import './test-env.js';
 import { test } from 'node:test'; import assert from 'node:assert/strict'; import fs from 'node:fs';
 const s = fs.readFileSync(new URL('./approval-server.js', import.meta.url), 'utf8');
-test('approval-server calls claimGate once, inside the approve/postnow branch before any publish', () => {
-  assert.equal((s.match(/claimGate\(d\)/g) || []).length, 1);
-  assert.ok(s.indexOf('claimGate(d)') < s.indexOf('schedule(d.text'));
-  assert.ok(s.indexOf('claimGate(d)') < s.indexOf('publish(d.text'));
+test('the claim gate runs once (claimGateWhy in approveGuards, draft-actions.js), never in the approval server, and approveGuards precedes scheduleDraft and publish in the approval server', () => {
+  const da = fs.readFileSync(new URL('./draft-actions.js', import.meta.url), 'utf8');
+  assert.equal((da.match(/claimGateWhy\(/g) || []).length, 1); assert.equal((s.match(/claimGate(Why)?\(/g) || []).length, 0);
+  assert.ok(s.indexOf('await approveGuards(') >= 0 && s.indexOf('await approveGuards(') < s.indexOf('scheduleDraft('));
+  assert.ok(s.indexOf('await approveGuards(') < s.indexOf('publish(d.text'));
 });
 test('the edit (applyEdit in draft-actions.js) clears claimSources, the hash and the record time', () => {
   const da = fs.readFileSync(new URL('./draft-actions.js', import.meta.url), 'utf8');

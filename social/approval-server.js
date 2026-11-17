@@ -4,10 +4,10 @@ import http from 'node:http';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { authorize } from './auth.js';
-import { claimGate } from './claim-gate.js';
-import { withQueueLock, loadQueue, saveQueue, STATUS, parseCommand, renderList, nextSlots, schedulePost, publishNow, finalCheck, blockDraft, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, QUEUE_PATH } from './lib.js';
+import { withQueueLock, loadQueue, saveQueue, STATUS, parseCommand, renderList, schedulePost, publishNow, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, QUEUE_PATH } from './lib.js';
 import { stopStatus, engageStop, releaseStop, StoppedError } from './stop.js';
-import { skipDraft, editDraft } from './draft-actions.js';
+import { skipDraft, editDraft, approveGuards, scheduleDraft } from './draft-actions.js';
+import { readQueueStrict } from './draft-version.js';
 import { scheduledAtMetaNote, stopPosting, startPosting } from './bpa-actions.js';
 import { reserveInstagramPublish, releaseInstagramReservation } from './ledger.js';
 import { recordPost, healthTick } from './health.js';
@@ -27,7 +27,10 @@ export async function handle(text, deps = {}) {
   // stop / start never wait for the queue lock (dispatch() below calls them outside it) and never need a readable queue.
   if (c.cmd === 'stop') return stopPosting({ queuePath, stopOpts, now: nowDep || new Date() }).reply;
   if (c.cmd === 'start') return startPosting({ stopOpts }).reply;
-  const q = loadQueue(queuePath); const find = (id) => q.drafts.find((d) => d.id === id);
+  // A command that SAVES never saves a queue it could not read (loadQueue would give an empty one and the save would wipe the real file). A MISSING file keeps the old behaviour: an empty queue, "not found".
+  let q;
+  if (['skip', 'edit', 'approve', 'postnow'].includes(c.cmd) && fs.existsSync(queuePath)) { const r = readQueueStrict(queuePath); if (!r.ok) return '⚠️ The queue file cannot be read, so nothing was changed. Tell Claude.'; q = r.q; } else q = loadQueue(queuePath);
+  const find = (id) => q.drafts.find((d) => d.id === id);
   if (c.cmd === 'help') return 'bpa · bpa list · bpa approve B1 B2 · bpa skip B1 · bpa edit B1: text · bpa post B1 now · bpa status · bpa stop · bpa start';
   if (c.cmd === 'list') return renderList(q);
   if (c.cmd === 'status') { const n = (s) => q.drafts.filter((d) => d.status === s).length; const up = q.drafts.filter((d) => d.status === STATUS.SCHEDULED).map((d) => `${d.id} ${d.scheduledFor.slice(0, 16)}`).join(', ') || 'none'; return `📊 pending ${n(STATUS.PENDING)} · scheduled ${n(STATUS.SCHEDULED)} (${up}) · posted ${n(STATUS.POSTED)} · skipped ${n(STATUS.SKIPPED)} · blocked ${n(STATUS.BLOCKED)}`; }
@@ -38,11 +41,7 @@ export async function handle(text, deps = {}) {
     if (c.cmd === 'skip') { out.push(skipDraft(d).line); continue; }
     if (c.cmd === 'edit') { out.push((await editDraft(d, c.text, { neverPromotePatterns })).line); continue; }
     if (c.cmd === 'approve' || c.cmd === 'postnow') {
-      if (d.status !== STATUS.PENDING) { out.push(`⚠️ ${id} is ${d.status}`); continue; }
-      { const st = stop(); if (st.stopped) { log(`${c.cmd} ${id} refused: ${st.reason}`); out.push(`⏸ ${id}: ${st.reason}. Reply *bpa start* to resume.`); continue; } }
-      { const g = claimGate(d); if (g) { log(`${c.cmd} ${id} refused: ${g}`); out.push(`❌ ${id}: ${g}`); continue; } }
-      // FINAL CHECK on the exact text that is about to go out (voice gate + rules), BEFORE any ledger reservation, schedule or publish call
-      { const fc = await finalCheck(d, { neverPromotePatterns }); if (!fc.ok) { await blockDraft(d, fc, { stage: c.cmd === 'postnow' ? 'posting now' : 'scheduling', notify, say: log }); out.push(`🚫 ${id} blocked: ${fc.ruleIds.join(', ')}. Nothing was posted or scheduled; it will not be retried.`); continue; } }
+      const g = await approveGuards(d, { cmd: c.cmd, stop, neverPromotePatterns, notify, say: log }); if (!g.ok) { out.push(g.line); continue; }
       try {
         if (c.cmd === 'postnow') {
           const r = await publish(d.text); d.status = STATUS.POSTED; d.postId = r.id; d.permalink = r.permalink_url; d.postedAt = new Date().toISOString(); recordPost({ now: new Date(), id, path: lastPostPath }); out.push(`✅ ${id} posted now on the Page: ${r.permalink_url || r.id}`);
@@ -60,9 +59,7 @@ export async function handle(text, deps = {}) {
             }
           }
         } else {
-          const [at] = nextSlots(q, 1); const r = await schedule(d.text, at); d.status = STATUS.SCHEDULED; d.postId = r.id; d.scheduledFor = at; d.decidedAt = new Date().toISOString();
-          if (igOn()) d.ig = { status: 'queued', at };
-          out.push(`📅 ${id} scheduled for ${at.slice(0, 16)} on the Page${igOn() ? ' + Instagram' : ''} (${r.id})`);
+          out.push((await scheduleDraft(q, d, { cmd: c.cmd, schedule, igOn, say: log })).line);
         }
       } catch (e) {
         if (e instanceof StoppedError) { log(`${c.cmd} ${id} refused: ${e.reason}`); out.push(`⏸ ${id}: ${e.reason}. Nothing was posted. Reply *bpa start* to resume.`); continue; }

@@ -72,7 +72,22 @@ test('pin: missing queue file answers not found', async () => {
   const d = tmp(); const k = kit(); const deps = { ...k.deps, queuePath: path.join(d, 'never-created.json') };
   assert.equal(await handle('bpa skip B1', deps), '❌ B1: not found'); noExternal(k.calls);
 });
-test('documents: an unreadable queue file answers not found AND is overwritten with an empty queue (the hazard the extraction fixes)', async () => {
+test('pin: an unreadable queue is refused, not emptied', async () => {
   const k = kit(); fs.writeFileSync(k.queuePath, '{broken');
-  assert.equal(await handle('bpa skip B1', k.deps), '❌ B1: not found'); assert.deepEqual(JSON.parse(fs.readFileSync(k.queuePath, 'utf8')), { seq: 0, drafts: [] }); noExternal(k.calls);
+  assert.equal(await handle('bpa skip B1', k.deps), '⚠️ The queue file cannot be read, so nothing was changed. Tell Claude.'); assert.equal(fs.readFileSync(k.queuePath, 'utf8'), '{broken'); noExternal(k.calls);
+});
+
+const UNREADABLE = '⚠️ The queue file cannot be read, so nothing was changed. Tell Claude.';
+test('F9: with a broken queue file every saving command is refused, nothing is called and the file is byte for byte as it was; list leaves it alone', async () => {
+  for (const cmd of ['bpa skip B1', 'bpa edit B1: Giraffes feed on tall acacia trees.', 'bpa approve B1', 'bpa post B1 now']) {
+    const k = kit(); fs.writeFileSync(k.queuePath, '{broken');
+    assert.equal(await handle(cmd, k.deps), UNREADABLE, cmd); assert.equal(fs.readFileSync(k.queuePath, 'utf8'), '{broken', cmd); noExternal(k.calls); assert.equal(k.calls.notify.length, 0);
+  }
+  const k = kit(); fs.writeFileSync(k.queuePath, '{broken'); await handle('bpa list', k.deps); await handle('bpa status', k.deps); assert.equal(fs.readFileSync(k.queuePath, 'utf8'), '{broken');
+});
+test('F9: a MISSING queue file still answers not found for every saving command', async () => {
+  for (const cmd of ['bpa skip B1', 'bpa edit B1: Giraffes feed on tall acacia trees.', 'bpa approve B1', 'bpa post B1 now']) {
+    const k = kit(); const deps = { ...k.deps, queuePath: path.join(tmp(), 'never.json') };
+    assert.equal(await handle(cmd, deps), '❌ B1: not found', cmd); noExternal(k.calls);
+  }
 });

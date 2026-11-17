@@ -46,20 +46,26 @@ test('publish path 1: the worker calls finalCheck once, after the stop check and
   for (const later of ['reserve({', 'claimIgPublish(', 'await publishIg(']) assert.ok(at < body.indexOf(later), `final check must precede ${later}`);
   assert.ok(body.lastIndexOf('stop()', at) > body.indexOf('igOn()'), 'after the stop check');
 });
-test('publish path 2: the approval server calls finalCheck once, before schedule(), publish() and publishIg()', () => {
+test('publish path 2: approveGuards (draft-actions.js) runs finalCheck once, after the stop check and the claim gate; the approval server calls approveGuards once, before scheduleDraft, publish() and publishIg()', () => {
+  const g = between(read('draft-actions.js'), 'export async function approveGuards', 'export async function scheduleDraft');
+  assert.equal(count(g, /await finalCheck\(/g), 1); assert.equal(count(g, /claimGateWhy\(/g), 1);
+  assert.ok(g.indexOf('stop()') >= 0 && g.indexOf('stop()') < g.indexOf('claimGateWhy(') && g.indexOf('claimGateWhy(') < g.indexOf('await finalCheck('), 'stop, then claim gate, then final check');
+  const sd = between(read('draft-actions.js'), 'export async function scheduleDraft', null);
+  assert.equal(count(sd, /finalCheck/g), 0, 'scheduleDraft runs no check of its own: it needs a draft approveGuards let through'); assert.equal(count(sd, /await schedule\(d\.text/g), 1);
   const s = between(read('approval-server.js'), "if (c.cmd === 'approve' || c.cmd === 'postnow')", 'saveQueue(q, queuePath)');
-  assert.equal(count(s, /await finalCheck\(/g), 1);
-  const at = s.indexOf('await finalCheck(');
-  for (const later of ['await publish(d.text)', 'await schedule(d.text', 'await publishIg(d)', 'reserve({']) assert.ok(at < s.indexOf(later), `final check must precede ${later}`);
+  assert.equal(count(s, /await approveGuards\(/g), 1);
+  const at = s.indexOf('await approveGuards(');
+  for (const later of ['await publish(d.text)', 'await scheduleDraft(', 'await publishIg(d)', 'reserve({']) assert.ok(at < s.indexOf(later), `the guards must precede ${later}`);
 });
 test('every source file that reaches a publish function also runs finalCheck first (fails when a new publisher appears without it)', () => {
   const callers = [];
   for (const f of fs.readdirSync(HERE).filter((x) => x.endsWith('.js') && !x.endsWith('.test.js') && x !== 'lib.js')) {
-    const s = read(f); const m = /\b(?:await\s+)?(?:schedulePost|publishNow|igPostDraftAny|publishIg|publish|schedule)\(/.exec(s.replace(/\/\/.*$/gm, ''));
-    if (m && /\b(schedulePost|publishNow|igPostDraftAny|igPostDraft|igPublish\w*|createPost)\b/.test(s)) callers.push(f);
+    const s = read(f); const m = /\b(?:schedulePost|publishNow|igPostDraftAny|publishIg|publish|schedule|scheduleDraft)\(/.exec(s.replace(/\/\/.*$/gm, ''));
+    if (m) callers.push(f); // ANY file that calls a publisher or receives one as a parameter and calls it
   }
-  assert.deepEqual(callers.sort(), ['approval-server.js', 'worker.js'], 'the set of files that publish changed: each needs finalCheck');
-  for (const f of callers) assert.match(read(f), /await finalCheck\(|await check\(/, `${f} publishes without finalCheck`);
+  assert.deepEqual(callers.sort(), ['approval-server.js', 'draft-actions.js', 'worker.js'], 'the set of files that publish changed: each needs its guard');
+  const guard = { 'approval-server.js': /await approveGuards\(/, 'draft-actions.js': /await finalCheck\(/, 'worker.js': /await check\(/ };
+  for (const f of callers) assert.match(read(f), guard[f], `${f} publishes without its guard`);
 });
 test('finalCheck re-runs BOTH the voice gate and the rules check on every text that goes out', () => {
   const lib = read('lib.js'); const body = between(lib, 'async function outgoingTexts', 'export async function blockDraft');
