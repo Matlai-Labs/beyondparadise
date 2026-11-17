@@ -118,3 +118,7 @@ test('R3 a text over 5000 characters: reason text-too-long, only Skip, the final
 test('R6 a draft with an unreadable creation time shows the expired reason and no actions (as for any expired draft)', async () => {
   for (const createdAt of ['not a time', undefined]) { const { item, r } = await one(draft('B1', { createdAt })); assert.equal(item.reason, 'expired'); assert.deepEqual(item.actions, []); assert.equal(r.calls.check, 0); }
 });
+
+test('R8 the card says hidden-characters for a slide text with a hidden character, and offers Skip and Edit only', async () => {
+  const { item } = await one(draft('B1', { slides: [{ role: 'hook', text: 'Lions​ sleep' }] })); assert.equal(item.reason, 'hidden-characters'); assert.deepEqual(item.actions, ['skip', 'edit']);
+});

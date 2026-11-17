@@ -287,3 +287,10 @@ test('R6 approve on a draft with an unreadable or missing creation time: expired
   }
   assert.equal((await ak().approve()).ok, true);
 });
+
+// ── fix round R8: the slide texts are checked for hidden characters too ────────────────────────────────────────────────
+test('R8 approve refuses hidden characters in any slide text (plain string, text, recap, label); a clean slide list is fine', async () => {
+  const bad = [['Lions​ sleep'], [{ role: 'hook', text: 'Lions​ sleep' }], [{ role: 'do', text: 'Fine', recap: 'Re​cap' }], [{ role: 'do', text: 'Fine', label: 'La​bel' }]];
+  for (const slides of bad) { const k = ak([draft('B1', { slides })]); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'bad-characters' }, JSON.stringify(slides)); nothingHappened(k, b); }
+  const ok = ak([draft('B1', { slides: [{ role: 'hook', text: 'Lions sleep.' }, 'A plain slide.'] })]); assert.equal((await ok.approve()).ok, true);
+});

@@ -2,8 +2,7 @@
 // This file SHOWS; it decides nothing. Every payload is capped and carries no url, no error text, no file path.
 import path from 'node:path';
 import { claimGateWhy } from './claim-gate.js';
-import { draftVersion, draftExpiresAt, textTooLong, TEXT_SHOW_MAX } from './draft-version.js';
-import { hiddenCharsIn } from './invisible-chars.js';
+import { draftVersion, draftExpiresAt, textTooLong, hasHiddenChars, TEXT_SHOW_MAX } from './draft-version.js';
 import { plainTime } from './plain-time.js';
 import { nextSlots } from './lib.js';
 import { mediaIdFor, DECISION_WINDOW_MS } from './review-items.js';
@@ -35,7 +34,7 @@ async function pendingReason(d, { claimWhy, checkFor, stop, approveOn, approvedI
   const exp = draftExpiresAt(d, ttlDays); if (exp === null || now.getTime() > exp) return 'expired'; // an unreadable creation time counts as expired
   if (!nonEmpty(typeof d.text === 'string' ? d.text.trim() : '')) return 'text-missing';
   if (textTooLong(d)) return 'text-too-long';
-  if (hiddenCharsIn(d.text) || hiddenCharsIn(String(d.videoText ?? ''))) return 'hidden-characters';
+  if (hasHiddenChars(d)) return 'hidden-characters';
   const w = claimWhy(d); if (w) return w.code;
   if (stop().stopped) return 'stopped';
   let ok = false; try { ok = (await checkFor(d)).ok === true; } catch { ok = false; } if (!ok) return 'final-check';
