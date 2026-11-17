@@ -175,7 +175,7 @@ async function main(argv) {
     for (const [k, n] of Object.entries(counts).sort((x, y) => y[1] - x[1])) console.log(`  ${String(n).padStart(3)}  ${k}`);
     return;
   }
-  const out = path.resolve(a.out || '/private/tmp/claude-501/-Users-tim-Desktop-AI-projects-MATLAI-VS-CODE-Agent-OS/7f63de80-63e3-4b56-b7f7-af941b2ae5ca/scratchpad/auto-rehearsal');
+  const out = path.resolve(a.out || path.join(os.tmpdir(), 'bpa-auto-rehearsal'));
   // prepareAutoPost writes no queue, state, ledger or log: its only output is the video in `out`; the real files are only read
   const manifest = readManifestReal(defaultLibraryDir()); const usage = readUsageReal(defaultUsagePath());
   fs.mkdirSync(out, { recursive: true });
