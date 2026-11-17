@@ -33,6 +33,8 @@ async function runWorkerInner(deps) {
     if (d.status === STATUS.PENDING && now.getTime() - new Date(d.createdAt).getTime() > CONFIG.draftTtlDays * 86400e3) { d.status = STATUS.EXPIRED; changed = true; say(`${d.id} expired`); }
     // Instagram has no reliable API scheduling: publish queued IG items when their time comes.
     if (d.ig?.status === 'queued' && new Date(d.ig.at).getTime() <= now.getTime() && igOn()) {
+      // an automatic item is only published while config.json says exactly "autoPublish": true; otherwise it is held (stays queued), one log line per item
+      if (d.auto === true && capConfig.autoPublish !== true) { if (state.autoHeld !== d.id) { state.autoHeld = d.id; changed = true; say(`worker: automatic item ${d.id} held: autoPublish is not true in config.json (the item stays queued)`); } continue; }
       { const st = stop(); if (st.stopped) { if (!stopNoted) { stopNoted = true; say(`worker: ${st.reason} (publishing skipped mid-run)`); } continue; } } // re-checked right before the claim
       // FINAL CHECK on the exact text that is about to go out (voice gate + rules). Before the cap reservation, so a blocked item uses no slot; blocked is never retried.
       { const fc = await check(d, { neverPromotePatterns }); if (!fc.ok) { await blockDraft(d, fc, { stage: 'Instagram publish', now, notify, say }); changed = true; continue; } }
@@ -46,7 +48,8 @@ async function runWorkerInner(deps) {
       const claimed = await claimIgPublish(d.id, now, queuePath); // persisted 'publishing' marker before any Meta call
       if (!claimed) { say(`${d.id} instagram claim failed after the reservation; reservation kept`); continue; } // another run took it, or it was changed meanwhile
       d.ig = claimed; base.drafts.find((x) => x.id === d.id).ig = JSON.parse(JSON.stringify(claimed));
-      try { const r = await publishIg(d); d.ig = { status: 'posted', ...r, postedAt: now.toISOString() }; changed = true; say(`${d.id} instagram ${r.permalink}`); recordPost({ now, id: d.id, path: lastPostPath }); }
+      try { const r = await publishIg(d); d.ig = { status: 'posted', ...r, postedAt: now.toISOString() }; changed = true; say(`${d.id} instagram ${r.permalink}`); recordPost({ now, id: d.id, path: lastPostPath });
+        if (d.auto === true) { try { const { afterAutoPublish } = await import('./auto-lane.js'); await afterAutoPublish(d, r, { now, notify, say, usagePath: deps.auto?.usagePath }); } catch (e2) { say(`${d.id} automatic lane follow-up failed (the post is out): ${String(e2.message).slice(0, 160)}`); } } }
       catch (e) {
         if (e instanceof StoppedError) { // a stop arrived after the reservation: nothing reached the network, so give the slot back and requeue (no alert, not a failure)
           d.ig = { status: 'queued', at: claimed.at }; changed = true; const rl = release({ id: d.id, at: now, path: ledgerPath });
@@ -69,6 +72,11 @@ async function runWorkerInner(deps) {
   }
   state.lastRunOk = now.toISOString(); changed = true;
   if (changed) await withQueueLock(async () => saveQueue(mergeQueue(base, q, loadQueue(queuePath)), queuePath), lockOpts);
+  // Automatic lane (B9b), AFTER everything above and only when config.json says exactly "autoPublish": true; the module is not even loaded otherwise.
+  if (capConfig.autoPublish === true) {
+    try { const { ensureDailyAuto } = await import('./auto-lane.js'); await ensureDailyAuto({ ...(deps.auto || {}), config: capConfig, now, queuePath, stopOpts, stop, igOn, notify, say, ledgerPath }); }
+    catch (e) { say(`worker: automatic lane error (ignored, the run goes on): ${String(e.message).slice(0, 200)}`); }
+  }
   return { exitCode: 0, stopped: false, publishFailed };
 }
 

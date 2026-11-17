@@ -3,11 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { createRequire } from 'node:module';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { scoreDraft, renderScore } from './score.js';
 import { modulePath, resourcePath, requireResource, graphCall } from './resources.js';
-import { assertNotStopped } from './stop.js';
+import { assertNotStopped, stateDir } from './stop.js';
 import { rulesGate, loadNeverPromote } from './rules-gate.js';
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(modulePath(import.meta.url));
@@ -184,6 +184,14 @@ async function outgoingTexts(d) {
   if (chooseFormat(d) === 'carousel' && typeof d.text === 'string') { const { slidePlan } = await import('./carousel.js'); const p = slidePlan(d); parts.push(...asTexts(p.slides ?? [])); }
   return [...new Set(parts.filter((x) => typeof x === 'string'))];
 }
+/** Automatic-lane items (auto:true) are verbatim by construction: the text and the on-video text are hashed when the item is prepared, and every claim must still be a line of the text.
+ *  Any later edit of the queue file therefore blocks the item (rule id auto-text-changed), also an edit that no wording rule would notice (a changed figure in a sentence). */
+export const autoTextHash = (d) => createHash('sha256').update(JSON.stringify([d.text ?? null, d.videoText ?? null])).digest('hex');
+export function autoTextIntact(d) {
+  if (!/^[0-9a-f]{64}$/.test(String(d?.autoTextSha256 || '')) || autoTextHash(d) !== d.autoTextSha256) return false;
+  const lines = String(d.text).split('\n'); const claims = Array.isArray(d.claims) ? d.claims : [];
+  return claims.length > 0 && claims.every((c) => c && typeof c.text === 'string' && lines.includes(c.text));
+}
 /** FINAL CHECK, immediately before any publish or schedule: re-runs the voice gate AND the rules check on the exact outgoing text
  *  (so a direct edit of queue.json after the earlier gates cannot get through). Never throws: a crash is a blocking result. */
 export async function finalCheck(d, { neverPromotePatterns, voice = voiceGate } = {}) {
@@ -193,6 +201,7 @@ export async function finalCheck(d, { neverPromotePatterns, voice = voiceGate } 
     let patterns = neverPromotePatterns;
     if (patterns === undefined) { const l = loadNeverPromote(); patterns = l.ok ? l.patterns : null; if (!l.ok) listReason = l.reason; }
     const violations = [];
+    if (d.auto === true && !autoTextIntact(d)) { ids.add('auto-text-changed'); violations.push({ rule: 'auto-text-changed', match: '' }); }
     for (const t of await outgoingTexts(d)) {
       const v = await voice(t); if (!v?.ok) { ids.add('voice-lint'); violations.push({ rule: 'voice-lint', match: '' }); }
       const r = rulesGate(t, { neverPromotePatterns: patterns, claims: d.claims || [] });
@@ -238,7 +247,7 @@ export async function buildDrafts({ briefs, now = new Date(), existingDrafts = [
 
 // ── scheduling slots (one post per day at postHourLocal, skipping taken days) ──
 export function nextSlots(q, count, now = new Date(), tz = CONFIG.timezone) {
-  const taken = new Set(q.drafts.filter((d) => d.status === STATUS.SCHEDULED && d.scheduledFor).map((d) => d.scheduledFor.slice(0, 10)));
+  const taken = new Set(q.drafts.filter((d) => d.status === STATUS.SCHEDULED && d.scheduledFor && d.auto !== true).map((d) => d.scheduledFor.slice(0, 10)));
   const slots = []; const localToday = now.toLocaleDateString('en-CA', { timeZone: tz }); // YYYY-MM-DD in the slot timezone, not UTC
   let day = new Date(localToday + 'T00:00:00Z'); day = new Date(day.getTime() + 86400e3);
   while (slots.length < count) {
@@ -448,9 +457,33 @@ async function postReel(d) {
   const mp4 = renderReel(d.id, cardSpec(d)); const hosted = await hostVideo(mp4, `bpa-${d.id}-${d.sourceDate}`);
   const r = await igPublishReel(d.text, hosted.url); return { ...r, videoUrl: hosted.url, mediaId: hosted.id, format: 'reel' };
 }
+// ── the automatic lane's ready-made reel (B9b): a checked file the lane composed from a library clip, never rendered here ─────────────
+/** The only folder a ready file may live in (outside every repository). */
+export const autoDir = (env = process.env) => path.join(stateDir(env), 'bpa-auto');
+/** Guards on a hand-editable queue item, each BEFORE anything is uploaded: the file is in the lane's folder, is an .mp4, exists, and still has the hash it was checked with. Throws. */
+export function readyFileOf(d, dir = autoDir()) {
+  const f = typeof d?.readyFile === 'string' && d.readyFile ? path.resolve(d.readyFile) : null;
+  if (!f) throw new Error('automatic item has no ready file');
+  if (path.dirname(f) !== path.resolve(dir) || !/^[A-Za-z0-9_.-]+\.mp4$/.test(path.basename(f))) throw new Error('ready file is not an .mp4 in the automatic lane folder');
+  let buf; try { buf = fs.readFileSync(f); } catch { throw new Error('ready file is missing'); }
+  if (!/^[0-9a-f]{64}$/.test(String(d.readyFileSha256 || '')) || createHash('sha256').update(buf).digest('hex') !== d.readyFileSha256) throw new Error('ready file changed since it was checked');
+  return f;
+}
+async function verifyReadyFile(f) {
+  const { checkRendered } = await import('./reel-clip.js'); const { checkReel } = await import('./reel-qa.js');
+  const a = await checkRendered(f); const b = checkReel(f);
+  if (!a.ok || !b.ok) throw new Error(`ready file failed the render checks: ${[...a.problems, ...b.problems].join('; ')}`);
+}
+/** guards, then host, then publish: nothing is uploaded before the file has passed every guard again. `host`, `publishReel`, `verify`, `dir` are injectable for tests. */
+export async function postReadyReel(d, { host = hostVideo, publishReel = igPublishReel, verify = verifyReadyFile, dir = autoDir() } = {}) {
+  const f = readyFileOf(d, dir); await verify(f);
+  const hosted = await host(f, `bpa-${d.id}-${d.sourceDate}`);
+  const r = await publishReel(d.text, hosted.url); return { ...r, videoUrl: hosted.url, mediaId: hosted.id, format: 'reel', lane: 'auto' };
+}
 /** Post a draft to Instagram in the format chosen for its kind (see chooseFormat). */
 export async function igPostDraftAny(d) {
   assertNotStopped(); // before any rendering or upload, not only before the final publish call
+  if (d.auto === true) return postReadyReel(d); // automatic lane: its ready file only, never rendered or re-written here
   const fmt = chooseFormat(d);
   if (fmt === 'carousel') {
     const { planCarousel, renderCarousel } = await import('./carousel.js');

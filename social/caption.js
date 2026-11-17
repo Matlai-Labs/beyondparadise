@@ -159,12 +159,17 @@ export function sourceLine(claims, { sourceNames } = {}) {
   return `Source: ${parts.join('; ')}`;
 }
 /** Hook, one sentence per line (the carousel planner turns each line into a slide), source line, pointer (only for a path on our own site), tags. */
+/** The lines code adds under the text: the source line, the pointer (only for a path on our own site), then the hashtags line (last). One place, used by the model path and the verbatim path. */
+export function codeLinesFor(idea, opts = {}) {
+  const codeLines = [sourceLine(idea.claims, opts)];
+  if (typeof idea.link === 'string' && idea.link.startsWith('/')) codeLines.push(FIXED_LINES.pointer);
+  codeLines.push(hashtagsFor(idea).join(' '));
+  return codeLines;
+}
 export function assembleParts(idea, ans, opts = {}) {
   const hook = ans.hook.replace(/\s+/g, ' ').trim();
   const sentences = ans.caption.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+/).filter(Boolean);
-  const codeLines = [sourceLine(idea.claims, opts)];
-  if (typeof idea.link === 'string' && idea.link.startsWith('/')) codeLines.push(FIXED_LINES.pointer);
-  const tags = hashtagsFor(idea).join(' '); codeLines.push(tags);
+  const codeLines = codeLinesFor(idea, opts); const tags = codeLines[codeLines.length - 1];
   const lines = [hook, '', ...sentences, ...codeLines.slice(0, -1), '', tags];
   return { hook, sentences, codeLines, text: lines.join('\n') };
 }
