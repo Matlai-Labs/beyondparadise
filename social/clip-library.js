@@ -2,7 +2,7 @@
 // enter a private library. Clips are NOT cut on the fly for posting. Node built-ins only, local ffmpeg
 // only, no network, nothing is uploaded or posted from here. Sources are only read.
 //
-//   node clip-library.js --build [--catalog <path>] [--root <path>]
+//   node clip-library.js --build [--dry-run] [--catalog <path>] [--root <path>]    --dry-run prints what a build would do and renders and writes nothing; judged clips are never touched by a build
 //   node clip-library.js --summary
 //   node clip-library.js --split <id> <cuts> --by <text> [--notes <text>]       cut a clip that holds more than one shot into single-shot children (cuts: 2.9 or 3.25-4.25, comma separated)
 //   node clip-library.js --verdict <id> pass|fail --by <text> [--notes <text>] [--single-subject yes|no]
@@ -62,7 +62,7 @@ export async function buildPlan(catalog, { seed = 'clip-library', run, root, ffm
   };
   const ledger = []; const plan = [];
   for (let i = 0; i < 1000; i += 1) {
-    const p = planClip(all, { usedLedger: ledger, seed: `${seed}-${i}` });
+    const p = planClip(all, { usedLedger: ledger, seed: `${seed}-${i}`, stable: true });
     if (!p.ok) break;
     ledger.push(...p.usedShots);
     const first = p.spans[0];
@@ -92,34 +92,52 @@ function writeManifest(dir, manifest) {
 const sameSource = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length
   && a.every((s, i) => s.videoId === b[i].videoId && s.startSec === b[i].startSec && s.endSec === b[i].endSec);
 
+/** A clip a person judged or worked on: a verdict, a record of what it shows, children, or itself a split child. A build never changes or renders over it. */
+export const isProtected = (c) => Boolean(c && (c.verified || c.shows || isSuperseded(c) || c.parent));
+const spansOverlap = (a, b) => a.some((x) => b.some((y) => x.videoId === y.videoId && Math.min(x.endSec, y.endSec) - Math.max(x.startSec, y.startSec) > OVERLAP_SEC));
+
 /**
  * Render every planned clip WITHOUT text into `dir`, check each, and write `manifest.json` (atomic, 0600).
- * A clip whose id, file and source spans are unchanged and whose file is present is kept as it is (not
- * re-rendered) with its `verified` and `flash`; a changed or missing one is rendered again and both reset to null.
- * Clips of an earlier manifest that are no longer planned leave the manifest; their files are never deleted.
+ * PROTECTED clips of the earlier manifest (a verdict, a `shows` record, `supersededBy` children, or a split child) are never
+ * rendered over, changed or dropped: when the plan gives such an id another span (or a missing file), or no longer plans it, the old
+ * entry and file stay as they are and the id goes to `counts.protectedChanged`. A planned clip that overlaps the footage of a
+ * protected clip gets no clip of its own (`counts.skippedOverVerdicts`); a non-overlapping one is a new clip.
+ * An unprotected clip whose id, file and source spans are unchanged is kept; a changed or missing one is rendered again
+ * (verified and flash null), and one no longer planned leaves the manifest (its file is never deleted).
+ * `dryRun: true` computes the same counts and renders and writes nothing, not even the folder.
  */
-export async function renderLibrary(plan, { dir = libraryDir(), run = defaultRun, probe, root = defaultRoot(), ffmpeg = 'ffmpeg', repoRoot, gitTopLevel, now = () => new Date() } = {}) {
+export async function renderLibrary(plan, { dir = libraryDir(), run = defaultRun, probe, root = defaultRoot(), ffmpeg = 'ffmpeg', repoRoot, gitTopLevel, now = () => new Date(), dryRun = false } = {}) {
   dir = path.resolve(dir);
   try { assertOutsideRepo(dir, { repoRoot, gitTopLevel }); } catch (e) { throw new Error(`the clip library folder must be outside every repository: ${e.message}`); }
   const rel = path.relative(path.resolve(root), dir);
   if (!rel.startsWith('..') && !path.isAbsolute(rel)) throw new Error('refusing to put the clip library inside the media root: the source videos must not be touched');
-  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  if (!dryRun) fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
   const old = readManifest(dir);
   const oldById = new Map(((old && old.clips) || []).map((c) => [c.id, c]));
-  const clips = []; const counts = { planned: plan.length, rendered: 0, kept: 0, renderFailed: 0, droppedFromManifest: 0, carriedChildren: 0, splitRefused: [] };
+  const protectedSources = [...oldById.values()].filter(isProtected).map((c) => c.source || []);
+  const clips = []; const counts = { planned: plan.length, rendered: 0, newClips: 0, unjudgedRerendered: 0, kept: 0, renderFailed: 0, droppedFromManifest: 0, unjudgedDropped: 0, carriedChildren: 0, splitRefused: [], protectedChanged: [], skippedOverVerdicts: [] };
   for (const p of plan) {
     const file = `${p.id}.mp4`; const out = path.join(dir, file);
     const source = p.source || p.spans.map((s) => ({ videoId: s.id, startSec: s.startSec, endSec: s.endSec }));
     const prev = oldById.get(p.id);
-    if (prev && isSuperseded(prev) && !(prev.file === file && sameSource(prev.source, source) && fs.existsSync(out))) { // split by a reviewer: never re-rendered or replaced by a build
-      clips.push(prev); counts.splitRefused.push(`${p.id}: split into ${prev.supersededBy.join(', ')}, but the new plan cuts it from different footage (or its file is missing): left as it is, a reviewer must decide`);
+    const same = Boolean(prev && prev.file === file && sameSource(prev.source, source) && fs.existsSync(out));
+    if (prev && isProtected(prev)) {
+      clips.push(prev); // never changed, not even durationSec or subject
+      if (!same) {
+        counts.protectedChanged.push({ id: p.id, reason: prev.file === file && sameSource(prev.source, source) ? 'its file is missing' : 'planned from other footage' });
+        if (isSuperseded(prev)) counts.splitRefused.push(`${p.id}: split into ${prev.supersededBy.join(', ')}, but the new plan cuts it from different footage (or its file is missing): left as it is, a reviewer must decide`);
+      } else counts.kept += 1;
       continue;
     }
-    if (prev && prev.file === file && sameSource(prev.source, source) && fs.existsSync(out)) {
+    if (same) {
       clips.push({ ...prev, durationSec: p.durationSec, subject: p.subject ?? prev.subject ?? null });
       counts.kept += 1;
       continue;
     }
+    if (protectedSources.some((ps) => spansOverlap(source, ps))) { counts.skippedOverVerdicts.push({ id: p.id }); continue; } // that footage is already a judged clip's
+    if (prev) counts.unjudgedRerendered += 1; else counts.newClips += 1;
+    counts.rendered += 1;
+    if (dryRun) continue;
     let checks; let durationSec = p.durationSec;
     try {
       await renderClip(p, { out, hook: null, run, root, ffmpeg, repoRoot, gitTopLevel });
@@ -130,18 +148,19 @@ export async function renderLibrary(plan, { dir = libraryDir(), run = defaultRun
       checks = [`render failed: ${String(e.message).split('\n')[0]}`];
     }
     if (checks !== 'ok') counts.renderFailed += 1;
-    counts.rendered += 1;
     clips.push({ id: p.id, file, durationSec, source, subject: p.subject ?? null, renderedAt: now().toISOString(), checks: { rendered: checks }, flash: null, verified: null });
   }
-  // a clip a reviewer split is theirs: its children (verdicts, tags), and a split parent the plan no longer holds, are carried over, never dropped
-  const have = new Set(clips.map((c) => c.id)); const carried = [...oldById.values()].filter((c) => !have.has(c.id) && (c.parent || isSuperseded(c)));
+  // a protected clip the plan no longer holds, and the children of a split, are carried over, never dropped
+  const have = new Set(clips.map((c) => c.id)); const carried = [...oldById.values()].filter((c) => !have.has(c.id) && isProtected(c));
+  for (const c of carried) if (!c.parent && !plan.some((p) => p.id === c.id)) counts.protectedChanged.push({ id: c.id, reason: 'no longer planned' });
   const withKids = []; const placed = new Set();
   for (const c of clips) { withKids.push(c); for (const k of carried) if (k.parent === c.id && !placed.has(k.id)) { withKids.push(k); placed.add(k.id); } }
   for (const k of carried) if (!placed.has(k.id)) withKids.push(k);
   counts.carriedChildren = carried.filter((c) => c.parent).length;
-  counts.droppedFromManifest = [...oldById.keys()].filter((id) => !plan.some((p) => p.id === id) && !carried.some((c) => c.id === id)).length;
+  counts.unjudgedDropped = [...oldById.values()].filter((c) => !have.has(c.id) && !isProtected(c) && !plan.some((p) => p.id === c.id)).length;
+  counts.droppedFromManifest = counts.unjudgedDropped;
   const manifest = { version: 1, updatedAt: now().toISOString(), clips: withKids };
-  writeManifest(dir, manifest);
+  if (!dryRun) writeManifest(dir, manifest);
   return { manifest, counts, dir };
 }
 
@@ -394,10 +413,11 @@ export function summarise(manifest, usage = [], opts = {}) {
 // ---------------------------------------------------------------- command line
 
 function parseArgs(argv) {
-  const a = { build: false, summary: false, verdict: null, word: null, shows: null, tagList: null, split: null, cutList: null, singleSubject: undefined, by: null, notes: '', catalog: null, root: null, bad: null };
+  const a = { build: false, dryRun: false, summary: false, verdict: null, word: null, shows: null, tagList: null, split: null, cutList: null, singleSubject: undefined, by: null, notes: '', catalog: null, root: null, bad: null };
   for (let i = 0; i < argv.length; i += 1) {
     const t = argv[i];
     if (t === '--build') a.build = true;
+    else if (t === '--dry-run') a.dryRun = true;
     else if (t === '--summary') a.summary = true;
     else if (t === '--verdict') {
       if (!argv[i + 1] || !argv[i + 2] || argv[i + 1].startsWith('--') || argv[i + 2].startsWith('--')) { a.bad = '--verdict needs <id> pass|fail'; break; }
@@ -417,6 +437,7 @@ function parseArgs(argv) {
     } else { a.bad = `unknown argument ${t}`; break; }
   }
   if (!a.bad && [a.build, a.summary, a.verdict !== null, a.shows !== null, a.split !== null].filter(Boolean).length !== 1) a.bad = 'give exactly one of --build, --summary, --verdict, --shows, --split';
+  if (!a.bad && a.dryRun && !a.build) a.bad = '--dry-run only goes with --build';
   return a;
 }
 
@@ -425,7 +446,7 @@ export async function main(argv, env = process.env, deps = {}) {
   const error = deps.error || ((s) => console.error(s));
   const args = parseArgs(argv);
   if (args.bad) {
-    error(`${args.bad}\nusage: clip-library.js --build [--catalog <path>] [--root <path>] | --summary | --split <id> <cuts> --by <text> [--notes <text>] | --verdict <id> pass|fail --by <text> [--notes <text>] [--single-subject yes|no] | --shows <id> <tag,tag,...> --by <text> [--notes <text>]`);
+    error(`${args.bad}\nusage: clip-library.js --build [--dry-run] [--catalog <path>] [--root <path>] | --summary | --split <id> <cuts> --by <text> [--notes <text>] | --verdict <id> pass|fail --by <text> [--notes <text>] [--single-subject yes|no] | --shows <id> <tag,tag,...> --by <text> [--notes <text>]`);
     return 2;
   }
   const dir = path.resolve(libraryDir(env));
@@ -436,24 +457,27 @@ export async function main(argv, env = process.env, deps = {}) {
     try { catalog = JSON.parse(fs.readFileSync(args.catalog || defaultCatalog(env), 'utf8')); } catch (e) { error(`cannot read the catalogue: ${e.message}`); return 4; }
     const ffmpeg = env.BPA_FFMPEG || 'ffmpeg';
     const renderBin = env.BPA_FFMPEG_RENDER || ffmpeg;
-    const plan = await buildPlan(catalog, { seed: 'clip-library', run: deps.run, root, ffmpeg });
+    const plan = deps.plan || await buildPlan(catalog, { seed: 'clip-library', run: deps.run, root, ffmpeg });
     let result;
     try {
-      result = await renderLibrary(plan, { dir, run: deps.run, probe: deps.probe, root, ffmpeg: renderBin, repoRoot: deps.repoRoot, gitTopLevel: deps.gitTopLevel });
+      result = await renderLibrary(plan, { dir, run: deps.run, probe: deps.probe, root, ffmpeg: renderBin, repoRoot: deps.repoRoot, gitTopLevel: deps.gitTopLevel, dryRun: args.dryRun });
     } catch (e) { error(e.message); return 3; }
     let flashErrors = 0;
-    for (const c of result.manifest.clips) {
-      if (c.checks.rendered !== 'ok' || c.flash !== null) continue;
+    for (const c of args.dryRun ? [] : result.manifest.clips) {
+      if (isProtected(c) || c.checks.rendered !== 'ok' || c.flash !== null) continue; // a judged clip's entry is never changed by a build
       try { c.flash = await detectFlash(path.join(dir, c.file), { run: deps.run, ffmpeg }); } catch (e) { flashErrors += 1; error(`flash check failed for ${c.id}: ${e.message}`); }
     }
-    result.manifest.updatedAt = new Date().toISOString();
-    writeManifest(dir, result.manifest);
+    if (!args.dryRun) { result.manifest.updatedAt = new Date().toISOString(); writeManifest(dir, result.manifest); }
     const flashed = result.manifest.clips.filter((c) => c.flash && c.flash.flash);
     for (const m of result.counts.splitRefused) error(`split clip not rebuilt: ${m}`);
-    log(`planned ${result.counts.planned}, rendered ${result.counts.rendered}, kept ${result.counts.kept}, render check failed ${result.counts.renderFailed}, flash ${flashed.length}, flash check errors ${flashErrors}, split children carried ${result.counts.carriedChildren}, split clips refused ${result.counts.splitRefused.length}`);
+    const k = result.counts; const ids = k.protectedChanged.map((x) => x.id);
+    log(`${args.dryRun ? 'DRY RUN, nothing rendered or written: ' : ''}planned ${k.planned}, kept unchanged ${k.kept}, new clips ${args.dryRun ? 'to render' : 'rendered'} ${k.newClips}, judged clips planned differently (kept as they are) ${ids.length}${ids.length ? `: ${ids.join(', ')}` : ''}, unjudged clips ${args.dryRun ? 'to re-render' : 're-rendered'} ${k.unjudgedRerendered}, unjudged clips dropped ${k.unjudgedDropped}`);
+    log(`render check failed ${k.renderFailed}, flash ${flashed.length}, flash check errors ${flashErrors}, split children carried ${k.carriedChildren}, split clips refused ${k.splitRefused.length}, planned over judged footage and skipped ${k.skippedOverVerdicts.length}`);
+    for (const x of k.protectedChanged) log(`  protected ${x.id}: ${x.reason}`);
     for (const c of flashed) log(`  flash ${c.id} at ${c.flash.atSec.join(', ')} s`);
+    if (ids.length) error(`${ids.length} judged clips were planned differently and were kept as they are: ${ids.join(', ')}`);
     log(`library: ${dir}`);
-    return result.counts.renderFailed || flashErrors || result.counts.splitRefused.length ? 5 : 0;
+    return k.renderFailed || flashErrors || ids.length ? 5 : 0;
   }
   const manifest = readManifest(dir);
   if (!manifest) { error(`no manifest in ${dir}: run --build first`); return 4; }

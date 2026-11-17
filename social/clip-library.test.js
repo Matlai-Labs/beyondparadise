@@ -98,11 +98,11 @@ test('renderLibrary: verified and flash survive a re-run when file and spans are
   assert.deepEqual(manifest.clips[0].flash, { flash: false, atSec: [] });
   assert.equal(manifest.clips[1].verified, null);
 });
-test('renderLibrary: verified and flash are reset when the source spans changed (same id), and when the file is gone', async () => {
+test('renderLibrary: flash is reset when the source spans changed (same id) and when the file is gone, for clips nobody judged; a judged clip is protected (clip-build-guard.test.js)', async () => {
   const dir = path.join(tmp(), 'lib');
   await renderLibrary(mkPlan(), common(dir));
   const m = readManifest(dir);
-  for (const c of m.clips) { c.verified = { verdict: 'pass', by: 'me', at: 'x', notes: '' }; c.flash = { flash: false, atSec: [] }; }
+  for (const c of m.clips) c.flash = { flash: false, atSec: [] };
   fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(m));
   fs.rmSync(path.join(dir, m.clips[1].file));
   const changed = mkPlan();
