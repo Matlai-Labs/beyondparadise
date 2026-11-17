@@ -8,7 +8,7 @@ import path from 'node:path';
 import { main, setShows, readManifest, SHOW_TAGS, ANIMAL_TAGS, SCENE_TAGS, manifestPath } from './clip-library.js';
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bpa-shows-'));
-const entry = (id) => ({ id, file: `${id}.mp4`, durationSec: 7, source: [{ videoId: 'v', startSec: 1, endSec: 8 }], subject: 'x', checks: { rendered: 'ok' }, flash: { flash: false, atSec: [] }, verified: { verdict: 'pass', by: 't', at: '2026-11-16T00:00:00Z', notes: '' } });
+const entry = (id) => ({ id, file: `${id}.mp4`, durationSec: 7, source: [{ videoId: 'v', startSec: 1, endSec: 8 }], subject: 'x', checks: { rendered: 'ok' }, flash: { flash: false, atSec: [] }, verified: { verdict: 'pass', by: 't', at: '2026-11-16T00:00:00Z', notes: '', singleSubject: 'yes' } });
 function lib() { const dir = tmp(); fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(manifestPath(dir), JSON.stringify({ version: 1, clips: [entry('clip-a'), entry('clip-b')] })); return dir; }
 const cli = (argv, dir) => { const out = []; const err = []; return main(argv, { HOME: tmp(), BPA_CLIP_LIBRARY: dir, BPA_STATE_DIR: path.join(tmp(), 'state') }, { log: (s) => out.push(s), error: (s) => err.push(s) }).then((code) => ({ code, out, err })); };
 

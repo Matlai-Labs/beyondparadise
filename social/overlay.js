@@ -10,8 +10,8 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { assertOutsideRepo } from './media-catalog.js';
-import { checkRendered, OUT_FPS } from './reel-clip.js';
-import { checkReel } from './reel-qa.js';
+import { checkRendered, OUT_FPS, LIBRARY_CLIP_MIN_SEC, DURATION_TOLERANCE_SEC } from './reel-clip.js';
+import { checkReel, LIMITS } from './reel-qa.js';
 
 const execFileP = promisify(execFile);
 export const OVERLAY_PY = path.join(path.dirname(fileURLToPath(import.meta.url)), 'overlay.py');
@@ -36,7 +36,10 @@ export function buildComposeArgs({ clipFile, overlayPng, out }) {
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-pix_fmt', 'yuv420p', '-r', String(OUT_FPS), '-movflags', '+faststart', out];
 }
 
-export async function composeClip({ clipFile, overlayPng, out, run = defaultRun, ffmpeg = 'ffmpeg', check = checkRendered, qa = checkReel, repoRoot, gitTopLevel } = {}) {
+/** The reel QA with the library clip's own lower length limit (a single shot of 3 s is a valid reel here; the card reels keep LIMITS as they are). */
+export const checkLibraryClip = (file) => checkReel(file, { ...LIMITS, minSec: LIBRARY_CLIP_MIN_SEC - DURATION_TOLERANCE_SEC });
+
+export async function composeClip({ clipFile, overlayPng, out, run = defaultRun, ffmpeg = 'ffmpeg', check = checkRendered, qa = checkLibraryClip, repoRoot, gitTopLevel } = {}) {
   const refuse = (msg) => ({ ok: false, problems: [msg], out: null, rendered: null, qa: null });
   if (!clipFile || !fs.existsSync(clipFile)) return refuse(`clip file not found: ${path.basename(String(clipFile || ''))}`);
   if (!overlayPng || !fs.existsSync(overlayPng)) return refuse(`overlay file not found: ${path.basename(String(overlayPng || ''))}`);

@@ -4,7 +4,8 @@
 //
 //   node clip-library.js --build [--catalog <path>] [--root <path>]
 //   node clip-library.js --summary
-//   node clip-library.js --verdict <id> pass|fail --by <text> [--notes <text>]
+//   node clip-library.js --split <id> <cuts> --by <text> [--notes <text>]       cut a clip that holds more than one shot into single-shot children (cuts: 2.9 or 3.25-4.25, comma separated)
+//   node clip-library.js --verdict <id> pass|fail --by <text> [--notes <text>] [--single-subject yes|no]
 //   node clip-library.js --shows <id> <tag,tag,...> --by <text> [--notes <text>]   what the clip shows (fixed vocabulary), recorded by the reviewer
 //
 // Why: reel-clip.js checks stretches one frame every 2 s and its shot detection misses dissolves, wipes
@@ -21,7 +22,11 @@ import { fileURLToPath } from 'node:url';
 import { assertOutsideRepo, writeFileAtomic } from './media-catalog.js';
 import {
   usableStretches, analyseStretches, planClip, renderClip, checkRendered, readUsage, defaultRoot, defaultCatalog, defaultUsagePath,
+  MIN_SHOT_SEC, LIBRARY_CLIP_MIN_SEC, OUT_FPS,
 } from './reel-clip.js';
+
+// one shot of at least MIN_SHOT_SEC is the shortest library clip (the ONE limit lives in LIBRARY_CLIP_MIN_SEC); re-exported so the library and its tests read it here
+export { MIN_SHOT_SEC, LIBRARY_CLIP_MIN_SEC, checkRendered };
 
 const execFileP = promisify(execFile);
 const finite = (x) => typeof x === 'number' && Number.isFinite(x);
@@ -186,13 +191,18 @@ const inLedger = (clip, usage) => (usage || []).some((u) => u && (
   (typeof u.clipId === 'string' && u.clipId === clip.id)
   || (typeof u.id === 'string' && finite(u.startSec) && finite(u.endSec) && (clip.source || []).some((s) => s.videoId === u.id && overlaps(s, u)))));
 
-/** Only clips rendered ok, flash.flash === false, verified.verdict === "pass", file present, not in the usage ledger. */
+const isSuperseded = (c) => Array.isArray(c && c.supersededBy) && c.supersededBy.length > 0;
+/** `verified.singleSubject` recorded by the reviewer: one shot, one clearly identifiable subject for the whole clip. Anything but exactly "yes" (also: not recorded) is no. */
+export const SINGLE_SUBJECT_YES = 'yes';
+
+/** Only clips rendered ok, flash.flash === false, verified.verdict === "pass" AND verified.singleSubject === "yes", file present, not superseded by children, not in the usage ledger. */
 export function eligibleClips(manifest, usage = [], { dir = libraryDir(), exists = fs.existsSync } = {}) {
   const clips = manifest && Array.isArray(manifest.clips) ? manifest.clips : [];
   return clips.filter((c) => c
     && c.checks && c.checks.rendered === 'ok'
     && c.flash && c.flash.flash === false
-    && c.verified && c.verified.verdict === 'pass'
+    && c.verified && c.verified.verdict === 'pass' && c.verified.singleSubject === SINGLE_SUBJECT_YES
+    && !isSuperseded(c)
     && typeof c.file === 'string' && c.file !== '' && exists(path.join(dir, c.file))
     && !inLedger(c, usage));
 }
@@ -203,7 +213,7 @@ export function eligibleClips(manifest, usage = [], { dir = libraryDir(), exists
 const PERSON_WORDS = /\b(man|men|woman|women|boy|girl|child|children|kid|kids|lady|guy|male|female|young|elderly|wearing|wears|shirt|dress|hat|hair|skin|face|beard|bald|blonde)\b/i;
 
 /** The only way a verdict is written. Returns a NEW manifest; the input is not changed. */
-export function setVerdict(manifest, id, { verdict, by, at = new Date().toISOString(), notes = '' } = {}) {
+export function setVerdict(manifest, id, { verdict, by, at = new Date().toISOString(), notes = '', singleSubject } = {}) {
   const clips = manifest && Array.isArray(manifest.clips) ? manifest.clips : [];
   if (!clips.some((c) => c.id === id)) throw new Error(`unknown clip ${id}`);
   if (verdict !== 'pass' && verdict !== 'fail') throw new Error('verdict must be exactly "pass" or "fail"');
@@ -211,7 +221,9 @@ export function setVerdict(manifest, id, { verdict, by, at = new Date().toISOStr
   if (typeof at !== 'string' || Number.isNaN(Date.parse(at))) throw new Error('"at" must be a date');
   if (typeof notes !== 'string' || notes.length > 300) throw new Error('notes must be text of at most 300 characters');
   if (PERSON_WORDS.test(notes)) throw new Error('notes may not describe a person: write the reason only, like "person at 3.5 s"');
-  return { ...manifest, clips: clips.map((c) => (c.id === id ? { ...c, verified: { verdict, by: by.trim(), at, notes } } : c)) };
+  if (singleSubject !== undefined && singleSubject !== 'yes' && singleSubject !== 'no') throw new Error('--single-subject must be exactly "yes" or "no"');
+  const verified = { verdict, by: by.trim(), at, notes, ...(singleSubject === undefined ? {} : { singleSubject }) };
+  return { ...manifest, clips: clips.map((c) => (c.id === id ? { ...c, verified } : c)) };
 }
 
 // ---------------------------------------------------------------- what a clip shows
@@ -235,14 +247,123 @@ export function setShows(manifest, id, { tags, by, at = new Date().toISOString()
   return { ...manifest, clips: clips.map((c) => (c.id === id ? { ...c, shows: { tags: [...new Set(tags)], by: by.trim(), at, notes } } : c)) };
 }
 
+// ---------------------------------------------------------------- split into single shots
+
+/** A boundary the reviewer wrote around a point is cut out on both sides: a hard cut is not frame exact in the compilation, and the nearest frames may still hold the other shot. */
+export const SPLIT_POINT_DROP_SEC = 0.2;
+const EPS = 1e-6;
+const refused = (msg) => Object.assign(new Error(msg), { code: 'refused' });
+const CUT_RE = /^(\d+(?:\.\d+)?)(?:-(\d+(?:\.\d+)?))?$/;
+
+/** `2.9` (a point) or `3.25-4.25` (a range to drop), comma separated, in order, inside the clip: `{ drops: [[from, to], ...] }`. Anything else is refused (code 'refused'). */
+export function parseCuts(text, durationSec) {
+  const parts = String(text ?? '').split(',').map((x) => x.trim());
+  if (parts.some((x) => x === '')) throw refused('cuts: a comma separated list of seconds (2.9) or ranges (3.25-4.25), no empty entry');
+  const drops = [];
+  for (const part of parts) {
+    const m = CUT_RE.exec(part); if (!m) throw refused(`cuts: ${JSON.stringify(part)} is neither seconds (2.9) nor a range (3.25-4.25)`);
+    const a = Number(m[1]);
+    if (m[2] === undefined) {
+      if (!(a > 0 && a < durationSec)) throw refused(`cuts: ${a} is outside the clip (0 to ${durationSec} s)`);
+      drops.push([r3(Math.max(0, a - SPLIT_POINT_DROP_SEC)), r3(Math.min(durationSec, a + SPLIT_POINT_DROP_SEC))]);
+    } else {
+      const b = Number(m[2]);
+      if (!(b > a)) throw refused(`cuts: range ${part} must end after it starts`);
+      if (b > durationSec) throw refused(`cuts: ${part} is outside the clip (0 to ${durationSec} s)`);
+      drops.push([a, b]);
+    }
+  }
+  for (let i = 1; i < drops.length; i += 1) if (drops[i][0] < drops[i - 1][1] - EPS) throw refused('cuts: boundaries must be in order and may not overlap (a point also drops 0.2 s on each side)');
+  return { drops };
+}
+
+/** What is left between the drops: `keep` = pieces of at least MIN_SHOT_SEC, `short` = shorter ones (dropped). */
+export function planPieces(durationSec, drops) {
+  const keep = []; const short = []; let at = 0;
+  const add = (s, e) => { if (e - s <= EPS) return; (e - s >= MIN_SHOT_SEC - EPS ? keep : short).push({ startSec: r3(s), endSec: r3(e) }); };
+  for (const [a, b] of drops) { add(at, a); at = b; }
+  add(at, durationSec);
+  return { keep, short };
+}
+
+/** The part of the parent's source ranges that the piece [a, b] (seconds in the clip) was cut from. The clip is its source ranges joined in order. */
+export function narrowSource(source, a, b) {
+  const out = []; let off = 0;
+  for (const s of source) {
+    const len = s.endSec - s.startSec; const lo = Math.max(a, off); const hi = Math.min(b, off + len);
+    if (hi - lo > 0.01) out.push({ videoId: s.videoId, startSec: r3(s.startSec + lo - off), endSec: r3(s.startSec + hi - off) });
+    off += len;
+  }
+  return out;
+}
+
+/** The re-encode of one piece, the settings the library render uses (no text, no audio, 30 fps). The seek is after -i: frame accurate. */
+export function buildCutArgs({ file, startSec, lengthSec, out }) {
+  return ['-nostdin', '-hide_banner', '-y', '-i', file, '-ss', String(startSec), '-t', String(r3(lengthSec)), '-an',
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-pix_fmt', 'yuv420p', '-r', String(OUT_FPS), '-movflags', '+faststart', out];
+}
+
+/**
+ * Cut a clip that holds more than one shot into single-shot children `<id>-s1`, `-s2` ... (pieces of at least MIN_SHOT_SEC; the rest is dropped).
+ * Everything is checked BEFORE anything is written; the children are cut to temporary names, checked (render check, flash) and only then renamed,
+ * then the manifest is written atomically. Any failure removes what was made. Children carry NO verdict and NO shows. The parent gets `supersededBy`.
+ * Errors: code 'refused' (the request is wrong), 'unsafe' (library inside a repository), 'check-failed' (a cut did not pass the render check), else ffmpeg's own.
+ */
+export async function splitClip(dir, id, cutsText, { by, notes = '', run = defaultRun, probe, ffmpeg = 'ffmpeg', repoRoot, gitTopLevel, now = () => new Date() } = {}) {
+  if (typeof by !== 'string' || !by.trim()) throw refused('--split needs --by <text> (who looked, how)');
+  if (typeof notes !== 'string' || notes.length > 300) throw refused('notes must be text of at most 300 characters');
+  if (PERSON_WORDS.test(notes)) throw refused('notes may not describe a person');
+  dir = path.resolve(dir);
+  const manifest = readManifest(dir);
+  const clips = manifest && Array.isArray(manifest.clips) ? manifest.clips : [];
+  const parent = clips.find((c) => c && c.id === id);
+  if (!parent) throw refused(`unknown clip ${id}`);
+  if (isSuperseded(parent)) throw refused(`${id} is already split (superseded by ${parent.supersededBy.join(', ')})`);
+  if (parent.parent) throw refused(`${id} is itself a child of ${parent.parent}: a child is one shot already`);
+  if (!finite(parent.durationSec) || parent.durationSec <= 0 || !Array.isArray(parent.source) || !parent.source.length) throw refused(`${id} has no usable duration or source`);
+  const parentFile = path.resolve(dir, String(parent.file || ''));
+  if (path.dirname(parentFile) !== dir || !fs.existsSync(parentFile)) throw refused(`the file of ${id} is not in the library folder`);
+  const { drops } = parseCuts(cutsText, parent.durationSec);
+  const { keep, short } = planPieces(parent.durationSec, drops);
+  if (!keep.length) throw refused(`no piece of at least ${MIN_SHOT_SEC} s is left (dropped: ${short.map((p) => `${p.startSec}-${p.endSec}`).join(', ') || 'none'})`);
+  const childId = (i) => `${id}-s${i + 1}`;
+  for (let i = 0; i < keep.length; i += 1) if (clips.some((c) => c && c.id === childId(i)) || fs.existsSync(path.join(dir, `${childId(i)}.mp4`))) throw refused(`${childId(i)} already exists`);
+  try { assertOutsideRepo(dir, { repoRoot, gitTopLevel }); } catch (e) { throw Object.assign(new Error(`the clip library folder must be outside every repository: ${e.message}`), { code: 'unsafe' }); }
+
+  const made = []; const finals = [];
+  const cleanup = () => { for (const f of [...made, ...finals]) { try { fs.rmSync(f, { force: true }); } catch { /* nothing to clean */ } } };
+  try {
+    const children = [];
+    for (let i = 0; i < keep.length; i += 1) {
+      const piece = keep[i]; const cid = childId(i);
+      const tmpFile = path.join(dir, `.${cid}.${process.pid}.tmp.mp4`); made.push(tmpFile);
+      await run(ffmpeg, buildCutArgs({ file: parentFile, startSec: piece.startSec, lengthSec: piece.endSec - piece.startSec, out: tmpFile }));
+      const q = await checkRendered(tmpFile, { probe });
+      if (!q.ok) throw Object.assign(new Error(`${cid} failed the render check: ${q.problems.join('; ')}`), { code: 'check-failed' });
+      const flash = await detectFlash(tmpFile, { run, ffmpeg });
+      children.push({ id: cid, file: `${cid}.mp4`, parent: id, durationSec: r2(q.durationSec ?? piece.endSec - piece.startSec), source: narrowSource(parent.source, piece.startSec, piece.endSec),
+        subject: parent.subject ?? null, renderedAt: now().toISOString(), checks: { rendered: 'ok' }, flash, verified: null });
+    }
+    for (const c of children) { fs.renameSync(path.join(dir, `.${c.id}.${process.pid}.tmp.mp4`), path.join(dir, c.file)); made.splice(made.indexOf(path.join(dir, `.${c.id}.${process.pid}.tmp.mp4`)), 1); finals.push(path.join(dir, c.file)); }
+    const at = now().toISOString();
+    const next = { ...manifest, updatedAt: at, clips: clips.flatMap((c) => (c === parent
+      ? [{ ...parent, supersededBy: children.map((k) => k.id), split: { by: by.trim(), at, cuts: String(cutsText), notes } }, ...children] : [c])) };
+    writeManifest(dir, next);
+    return { children, short, manifest: next };
+  } catch (e) { cleanup(); throw e; }
+}
+
 // ---------------------------------------------------------------- summary
 
 export function summarise(manifest, usage = [], opts = {}) {
   const clips = manifest && Array.isArray(manifest.clips) ? manifest.clips : [];
   const eligible = eligibleClips(manifest, usage, opts);
-  const count = (f) => clips.filter(f).length;
+  const live = clips.filter((c) => !isSuperseded(c)); // a superseded parent is not a clip anymore: its children are
+  const count = (f) => live.filter(f).length;
   return {
     total: clips.length,
+    superseded: clips.length - live.length,
+    singleSubject: count((c) => c.verified && c.verified.singleSubject === SINGLE_SUBJECT_YES),
     renderOk: count((c) => c.checks && c.checks.rendered === 'ok'),
     renderFailed: count((c) => !(c.checks && c.checks.rendered === 'ok')),
     flash: count((c) => c.flash && c.flash.flash === true),
@@ -258,7 +379,7 @@ export function summarise(manifest, usage = [], opts = {}) {
 // ---------------------------------------------------------------- command line
 
 function parseArgs(argv) {
-  const a = { build: false, summary: false, verdict: null, word: null, shows: null, tagList: null, by: null, notes: '', catalog: null, root: null, bad: null };
+  const a = { build: false, summary: false, verdict: null, word: null, shows: null, tagList: null, split: null, cutList: null, singleSubject: undefined, by: null, notes: '', catalog: null, root: null, bad: null };
   for (let i = 0; i < argv.length; i += 1) {
     const t = argv[i];
     if (t === '--build') a.build = true;
@@ -269,12 +390,18 @@ function parseArgs(argv) {
     } else if (t === '--shows') {
       if (!argv[i + 1] || !argv[i + 2] || argv[i + 1].startsWith('--') || argv[i + 2].startsWith('--')) { a.bad = '--shows needs <id> <tag,tag,...>'; break; }
       a.shows = argv[i + 1]; a.tagList = argv[i + 2]; i += 2;
+    } else if (t === '--split') {
+      if (!argv[i + 1] || !argv[i + 2] || argv[i + 1].startsWith('--') || argv[i + 2].startsWith('--')) { a.bad = '--split needs <id> <cuts>'; break; }
+      a.split = argv[i + 1]; a.cutList = argv[i + 2]; i += 2;
+    } else if (t === '--single-subject') {
+      if (argv[i + 1] === undefined || argv[i + 1].startsWith('--')) { a.bad = '--single-subject needs yes or no'; break; }
+      a.singleSubject = argv[i + 1]; i += 1;
     } else if (['--by', '--notes', '--catalog', '--root'].includes(t)) {
       if (argv[i + 1] === undefined || argv[i + 1].startsWith('--')) { a.bad = `${t} needs a value`; break; }
       a[t.slice(2)] = argv[i + 1]; i += 1;
     } else { a.bad = `unknown argument ${t}`; break; }
   }
-  if (!a.bad && [a.build, a.summary, a.verdict !== null, a.shows !== null].filter(Boolean).length !== 1) a.bad = 'give exactly one of --build, --summary, --verdict, --shows';
+  if (!a.bad && [a.build, a.summary, a.verdict !== null, a.shows !== null, a.split !== null].filter(Boolean).length !== 1) a.bad = 'give exactly one of --build, --summary, --verdict, --shows, --split';
   return a;
 }
 
@@ -283,7 +410,7 @@ export async function main(argv, env = process.env, deps = {}) {
   const error = deps.error || ((s) => console.error(s));
   const args = parseArgs(argv);
   if (args.bad) {
-    error(`${args.bad}\nusage: clip-library.js --build [--catalog <path>] [--root <path>] | --summary | --verdict <id> pass|fail --by <text> [--notes <text>] | --shows <id> <tag,tag,...> --by <text> [--notes <text>]`);
+    error(`${args.bad}\nusage: clip-library.js --build [--catalog <path>] [--root <path>] | --summary | --split <id> <cuts> --by <text> [--notes <text>] | --verdict <id> pass|fail --by <text> [--notes <text>] [--single-subject yes|no] | --shows <id> <tag,tag,...> --by <text> [--notes <text>]`);
     return 2;
   }
   const dir = path.resolve(libraryDir(env));
@@ -316,8 +443,26 @@ export async function main(argv, env = process.env, deps = {}) {
   if (!manifest) { error(`no manifest in ${dir}: run --build first`); return 4; }
   if (args.summary) {
     const s = summarise(manifest, readUsage(usageFile), { dir });
-    log(`clips ${s.total}; render ok ${s.renderOk}, failed ${s.renderFailed}; flash ${s.flash} (checked ${s.flashChecked}); verdict pass ${s.pass}, fail ${s.fail}, none ${s.unverified}; eligible ${s.eligible} (${s.eligibleSec} s)`);
-    for (const c of manifest.clips || []) { const t = c && c.shows && Array.isArray(c.shows.tags) && c.shows.tags.length ? c.shows.tags.join(', ') : null; log(`  ${c.id}  ${t ? `shows: ${t}` : 'no tags'}`); }
+    log(`clips ${s.total} (${s.superseded} superseded by their children); render ok ${s.renderOk}, failed ${s.renderFailed}; flash ${s.flash} (checked ${s.flashChecked}); verdict pass ${s.pass}, fail ${s.fail}, none ${s.unverified}; single-subject yes ${s.singleSubject}; eligible ${s.eligible} (${s.eligibleSec} s)`);
+    for (const c of manifest.clips || []) {
+      if (!c) continue;
+      const t = c.shows && Array.isArray(c.shows.tags) && c.shows.tags.length ? c.shows.tags.join(', ') : null;
+      if (isSuperseded(c)) { log(`  ${c.id}  superseded by ${c.supersededBy.join(', ')}`); continue; }
+      const v = c.verified && c.verified.verdict; const missing = [];
+      if (v !== 'fail') { if (!v) missing.push('verdict'); if (!(c.verified && (c.verified.singleSubject === 'yes' || c.verified.singleSubject === 'no'))) missing.push('single-subject'); if (!t) missing.push('tags'); }
+      log(`  ${c.id}  ${c.parent ? `child of ${c.parent}  ` : ''}${t ? `shows: ${t}` : 'no tags'}${missing.length ? `  missing: ${missing.join(', ')}` : ''}`);
+    }
+    return 0;
+  }
+  if (args.split !== null) {
+    if (typeof args.by !== 'string' || !args.by.trim()) { error('--split needs --by <text>'); return 2; }
+    const ffmpeg = env.BPA_FFMPEG || 'ffmpeg';
+    let r;
+    try { r = await splitClip(dir, args.split, args.cutList, { by: args.by, notes: args.notes, run: deps.run, probe: deps.probe, ffmpeg: env.BPA_FFMPEG_RENDER || ffmpeg, repoRoot: deps.repoRoot, gitTopLevel: deps.gitTopLevel }); } catch (e) {
+      error(e.message); return e.code === 'refused' ? 2 : e.code === 'unsafe' ? 3 : 5;
+    }
+    log(`split ${args.split} into ${r.children.length}: ${r.children.map((c) => `${c.id} ${c.durationSec} s`).join(', ')}`);
+    log(`dropped as too short (under ${MIN_SHOT_SEC} s): ${r.short.length ? r.short.map((p) => `${p.startSec}-${p.endSec}`).join(', ') : 'none'}`);
     return 0;
   }
   if (args.shows !== null) {
@@ -331,11 +476,11 @@ export async function main(argv, env = process.env, deps = {}) {
     return 0;
   }
   try {
-    const next = setVerdict(manifest, args.verdict, { verdict: args.word, by: args.by ?? '', notes: args.notes });
+    const next = setVerdict(manifest, args.verdict, { verdict: args.word, by: args.by ?? '', notes: args.notes, singleSubject: args.singleSubject });
     next.updatedAt = new Date().toISOString();
     writeManifest(dir, next);
   } catch (e) { error(e.message); return 4; }
-  log(`${args.verdict}: ${args.word}`);
+  log(`${args.verdict}: ${args.word}${args.word === 'pass' && args.singleSubject !== 'yes' ? ' (not eligible for the automatic lane until --single-subject yes is recorded)' : ''}`);
   return 0;
 }
 

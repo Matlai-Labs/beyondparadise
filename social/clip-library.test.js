@@ -164,7 +164,7 @@ test('detectFlash: no frames at all is an error, never "no flash"', async () => 
 // ---------------------------------------------------------------- eligibleClips
 const good = (id = 'clip-AAAAAAAAAAA-150') => ({
   id, file: `${id}.mp4`, durationSec: 7, source: [{ videoId: 'AAAAAAAAAAA', startSec: 15, endSec: 22 }], subject: 's', renderedAt: 'x',
-  checks: { rendered: 'ok' }, flash: { flash: false, atSec: [] }, verified: { verdict: 'pass', by: 'me', at: 'x', notes: '' },
+  checks: { rendered: 'ok' }, flash: { flash: false, atSec: [] }, verified: { verdict: 'pass', by: 'me', at: 'x', notes: '', singleSubject: 'yes' },
 });
 const elig = (clip, usage = [], exists = () => true) => eligibleClips({ clips: [clip] }, usage, { dir: '/d', exists }).length === 1;
 test('eligibleClips: a fully good clip is eligible', () => assert.equal(elig(good()), true));
@@ -175,7 +175,7 @@ test('eligibleClips: every null and every wrong value makes a clip ineligible', 
     'flash null': { flash: null }, 'flash true': { flash: { flash: true, atSec: [1] } }, 'flash string': { flash: { flash: 'false', atSec: [] } },
     'flash undefined': { flash: undefined }, 'flash empty object': { flash: {} }, 'flash.flash null': { flash: { flash: null, atSec: [] } },
     'verified null': { verified: null }, 'verified fail': { verified: { verdict: 'fail' } }, 'verified empty': { verified: {} },
-    'verified verdict null': { verified: { verdict: null } }, 'verified PASS': { verified: { verdict: 'PASS' } }, 'verified undefined': { verified: undefined },
+    'verified verdict null': { verified: { verdict: null } }, 'verified PASS': { verified: { verdict: 'PASS' } }, 'verified undefined': { verified: undefined }, 'singleSubject missing': { verified: { verdict: 'pass', by: 'me', at: 'x', notes: '' } }, 'singleSubject no': { verified: { verdict: 'pass', singleSubject: 'no' } }, 'superseded': { supersededBy: ['clip-AAAAAAAAAAA-150-s1'] },
     'file null': { file: null }, 'file empty': { file: '' },
   };
   for (const [name, patch] of Object.entries(variants)) assert.equal(elig({ ...good(), ...patch }), false, name);
@@ -234,7 +234,7 @@ test('--build then --summary then --verdict, end to end with fakes', async () =>
   assert.ok(m.clips.length >= 4);
   assert.ok(m.clips.every((c) => c.checks.rendered === 'ok' && c.flash && c.flash.flash === false && c.verified === null));
   const id = m.clips[0].id;
-  const v = await cli(['--verdict', id, 'pass', '--by', 'dense look', '--notes', 'nothing'], env);
+  const v = await cli(['--verdict', id, 'pass', '--by', 'dense look', '--notes', 'nothing', '--single-subject', 'yes'], env);
   assert.equal(v.code, 0, v.err.join('\n'));
   assert.equal(readManifest(dir).clips[0].verified.verdict, 'pass');
   const s = await cli(['--summary'], env);
