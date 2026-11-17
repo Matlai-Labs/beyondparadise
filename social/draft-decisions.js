@@ -67,6 +67,7 @@ export function createDraftActions(options = {}) {
     if (hiddenCharsIn(text)) return fail('bad-characters');
     return queueLocked(async () => {
       const o = open(req); if (o.fail) return o.fail;
+      if (o.d.auto === true) return fail('cannot-decide'); // an edit would fail the automatic lane's own text check for good: not offered, not accepted
       if (draftVersion(o.d) !== req.version) return fail('version-changed');
       if (text === o.d.text) return fail('no-change');
       const c = await checkEdit(o.d, text, { neverPromotePatterns }); if (!c.ok) return fail(c.code);

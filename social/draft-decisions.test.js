@@ -294,3 +294,10 @@ test('R8 approve refuses hidden characters in any slide text (plain string, text
   for (const slides of bad) { const k = ak([draft('B1', { slides })]); const b = k.bytes(); assert.deepEqual(await k.approve(), { ok: false, code: 'bad-characters' }, JSON.stringify(slides)); nothingHappened(k, b); }
   const ok = ak([draft('B1', { slides: [{ role: 'hook', text: 'Lions sleep.' }, 'A plain slide.'] })]); assert.equal((await ok.approve()).ok, true);
 });
+
+// ── fix round R9: an automatically prepared draft cannot be edited on the page ─────────────────────────────────────────
+test('R9 the page edit of a draft made by the automatic lane is refused with cannot-decide: nothing written, no record line', async () => {
+  const k = kit([draft('B1', { auto: true })]); const b = k.bytes();
+  assert.deepEqual(await k.actions.editDraft(editReq(k, 'Giraffes feed on tall acacia trees.'), k.ctx), { ok: false, code: 'cannot-decide' }); assert.equal(k.bytes(), b); assert.equal(k.lines().length, 0);
+  const plain = kit([draft('B1')]); assert.equal((await plain.actions.editDraft(editReq(plain, 'Giraffes feed on tall acacia trees.'), plain.ctx)).ok, true);
+});

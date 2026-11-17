@@ -122,3 +122,15 @@ test('R6 a draft with an unreadable creation time shows the expired reason and n
 test('R8 the card says hidden-characters for a slide text with a hidden character, and offers Skip and Edit only', async () => {
   const { item } = await one(draft('B1', { slides: [{ role: 'hook', text: 'Lions​ sleep' }] })); assert.equal(item.reason, 'hidden-characters'); assert.deepEqual(item.actions, ['skip', 'edit']);
 });
+
+test('R9 a pending draft made by the automatic lane is offered no Edit, in every state; others keep it', async () => {
+  const a = await one(draft('B1', { auto: true })); assert.deepEqual(a.item.actions, ['approve', 'skip']); assert.equal(a.item.facts.auto, true);
+  const off = await one(draft('B1', { auto: true }), { approveOn: () => false }); assert.deepEqual(off.item.actions, ['skip']);
+  const hid = await one(draft('B1', { auto: true, text: 'Lions​ sleep' })); assert.deepEqual(hid.item.actions, ['skip']);
+  const n = await one(draft('B1')); assert.deepEqual(n.item.actions, ['approve', 'skip', 'edit']);
+});
+
+test('R10 the card facts say whether the draft was edited and whether it has slides', async () => {
+  const a = await one(draft('B1', { editedAt: '2026-11-18T09:00:00Z', slides: [{ role: 'hook', text: 'Lions sleep.' }], videoText: 'Lions sleep' })); assert.equal(a.item.facts.edited, true); assert.equal(a.item.facts.hasSlides, true);
+  const b = await one(draft('B1')); assert.equal(b.item.facts.edited, false); assert.equal(b.item.facts.hasSlides, false);
+});

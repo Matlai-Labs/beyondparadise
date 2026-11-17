@@ -292,3 +292,14 @@ test('R2 a card changed without a re-render: the stale box sends nothing and clo
   s.list[0].facts.nextSlot = OTHER; p.$('confirm-yes').click(); await p.flush(); assert.equal(p.posts('api/decide').length, 0); assert.ok(!open(p, 'confirm-box'));
   const q = await openPage(withDraft()); q.$('act-approve').click(); await q.flush(); q.$('confirm-yes').click(); await q.flush(); assert.equal(q.posts('api/decide')[0].body.slot, SLOT);
 });
+test('R9 a waiting post made by the automatic posting shows why it has no Edit', async () => {
+  const p = await openPage(withDraft({ actions: ['approve', 'skip'], facts: { auto: true } })); assert.ok(p.$('act-edit').classList.contains('hidden')); assert.ok(!p.$('act-approve').classList.contains('hidden'));
+  assert.match(p.$('facts').textContent, /made by the automatic posting\. It cannot be edited here/);
+  const n = await openPage(withDraft()); assert.ok(!/cannot be edited here/.test(n.$('facts').textContent));
+});
+test('R10 after an edit of a post that has text on the video or slides, the card says those were not changed', async () => {
+  const a = await openPage(withDraft({ facts: { edited: true, videoText: 'Lions sleep', hasSlides: false } })); assert.match(a.$('facts').textContent, /The edit changed only the caption\. The text on the video and the slides were not changed\./);
+  const b = await openPage(withDraft({ facts: { edited: true, videoText: null, hasSlides: true } })); assert.match(b.$('facts').textContent, /were not changed/);
+  const c = await openPage(withDraft({ facts: { edited: true, videoText: null, hasSlides: false } })); assert.ok(!/were not changed/.test(c.$('facts').textContent));
+  const d = await openPage(withDraft({ facts: { edited: false, videoText: 'Lions sleep', hasSlides: true } })); assert.ok(!/were not changed/.test(d.$('facts').textContent));
+});

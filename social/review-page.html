@@ -293,6 +293,8 @@ function draftFactLines(item) {
   if (pending) out.push(['Instagram:', f.instagram ? 'The system also posts it on Instagram later.' : 'Not on Instagram.']);
   if (Array.isArray(f.blockedRules) && f.blockedRules.length) out.push(['Rules that refused it:', f.blockedRules.map(words).join(', ')]);
   if (f.lastTryFailed) out.push(['Last try:', 'Meta did not accept the last try.']);
+  if (pending && f.auto) out.push(['Note:', 'This post was made by the automatic posting. It cannot be edited here: an edit would make the checks hold it back for good. You can approve or skip it.']);
+  if (pending && f.edited && (f.videoText || f.hasSlides)) out.push(['Note:', 'The edit changed only the caption. The text on the video and the slides were not changed.']);
   return out;
 }
 function factLines(item) {

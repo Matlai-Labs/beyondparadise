@@ -24,7 +24,7 @@ function factsOf(d, { q, now, ttlDays, igOn, pending }) {
     text: typeof d.text === 'string' ? cut(d.text, TEXT_MAX) : '', videoText: typeof d.videoText === 'string' && d.videoText !== '' ? cut(d.videoText, TEXT_MAX) : null,
     draftKind: typeof d.kind === 'string' && /^[a-z0-9_-]{1,30}$/.test(d.kind) ? d.kind : null, sources,
     expiresText: exp === null ? null : plainTime(exp), whenText: nonEmpty(d.scheduledFor) ? plainTime(d.scheduledFor) : null, nextSlot: slot, nextSlotText: slot ? plainTime(slot) : null,
-    instagram: pending ? igOn() === true : Boolean(d.ig), auto: d.auto === true, blockedRules: rules, lastTryFailed: nonEmpty(d.lastError), // the error text itself is never sent
+    instagram: pending ? igOn() === true : Boolean(d.ig), auto: d.auto === true, edited: nonEmpty(d.editedAt), hasSlides: Array.isArray(d.slides) && d.slides.length > 0, blockedRules: rules, lastTryFailed: nonEmpty(d.lastError), // the error text itself is never sent
   };
 }
 
@@ -64,7 +64,7 @@ export async function buildDraftItems({ readQueue, claimWhy = claimGateWhy, chec
       const preview = { mediaId: null, note: NOTE_DRAFT_NO_PICTURE };
       if (d.status === 'pending_approval') {
         const reason = await pendingReason(d, { claimWhy, checkFor, stop, approveOn, approvedIds, ttlDays, now });
-        items.push({ ...base, preview, facts: factsOf(d, { q, now, ttlDays, igOn, pending: true }), state: reason === null || reason === 'approve-off' ? 'waiting' : `refused: ${reason}`, reason, decision: null, actions: [...(ACTIONS[reason] ?? ['skip', 'edit'])] });
+        items.push({ ...base, preview, facts: factsOf(d, { q, now, ttlDays, igOn, pending: true }), state: reason === null || reason === 'approve-off' ? 'waiting' : `refused: ${reason}`, reason, decision: null, actions: [...(ACTIONS[reason] ?? ['skip', 'edit'])].filter((a) => !(a === 'edit' && d.auto === true)) }); // an automatic draft is never edited on the page
       } else if (d.status === 'blocked') {
         items.push({ ...base, preview, facts: factsOf(d, { q, now, ttlDays, igOn, pending: false }), state: 'blocked', reason: 'blocked', decision: null, actions: [] });
       } else if (d.status === 'scheduled' && d.auto === true) {
