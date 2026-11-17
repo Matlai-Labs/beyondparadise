@@ -189,3 +189,9 @@ test('retired list read as text equals what the redirect stub script imports', a
   assert.ok(loadRetired(ROOT).length >= 7);
   assert.deepEqual(loadRetired('/nonexistent-root'), []);
 });
+test('titleFromOtherField: title and claim text from different strings are marked with a reason; a cut of the same text is not', () => {
+  const p = pool({ facts: [fact({ id: 'd', claim: 'The buffalo is listed as Least Concern.', value: 'Near Threatened (IUCN 2019)' }), fact({ id: 's', claim: 'The Serengeti  covers about 30,000 square kilometres.', value: 'the serengeti covers about 30,000 square kilometres.' }), fact({ id: 'n', value: undefined, claim: 'A long claim sentence about the park and its many resident animals that goes on and on past the cut.' })] });
+  const by = (id) => p.ideas.find((i) => i.claims[0].factId === id);
+  assert.equal(by('d').titleFromOtherField, true); assert.ok(by('d').reasons.some((r) => /different strings/.test(r)));
+  assert.equal(by('s').titleFromOtherField, undefined); assert.equal(by('n').titleFromOtherField, undefined);
+});

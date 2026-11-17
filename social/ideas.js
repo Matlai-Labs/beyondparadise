@@ -115,6 +115,7 @@ export function buildIdeaPool({ facts = [], pages = [], rules = [], history = []
     idea.reasons = [`fresh: source dated ${idea.claims[0].sourceDate}, ${Math.floor(age)} days old (+${fresh.toFixed(1)})`];
     if (bonus) idea.reasons.push(`month match: ${nowMonth} is in the source's season (+${MONTH_BONUS})`);
     if (weight !== 1) idea.reasons.push(`topic weight ${topic} x${weight}`);
+    if (idea.titleFromOtherField) idea.reasons.push('title comes from the record\'s claim sentence, the text from its value: they are different strings and may contradict each other (not for the automatic lane)');
     const why = repeatReason(idea); if (why) return drop(kind, sourceId, why);
     ideas.push(idea);
   };
@@ -127,7 +128,8 @@ export function buildIdeaPool({ facts = [], pages = [], rules = [], history = []
     const text = String(f.value ?? f.claim); const title = f.value != null ? String(f.claim) : shorten(f.claim);
     const bad = textReason(title, [text]); if (bad) { drop('fact', f.id, bad); continue; }
     const link = (publishable.find((p) => String(p.path).split('/').filter(Boolean).pop() === f.region) || {}).path ?? null;
-    finish('fact', f.id, { id: ideaId('fact', f.id), sourceId: `fact:${f.id}`, kind: 'fact', topic: f.topic ?? null, title, claims: [{ text, factId: f.id, sourceDate }], link }, monthsOf(f), f.topic);
+    const norm = (x) => String(x).replace(/\s+/g, ' ').trim().toLowerCase(), t = norm(title).replace(/…$/, ''), differ = !norm(text).startsWith(t); // title and claim text from two different strings: they may contradict each other
+    finish('fact', f.id, { id: ideaId('fact', f.id), sourceId: `fact:${f.id}`, kind: 'fact', topic: f.topic ?? null, title, claims: [{ text, factId: f.id, sourceDate }], link, ...(differ ? { titleFromOtherField: true } : {}) }, monthsOf(f), f.topic);
   }
 
   for (const p of pageList) {
