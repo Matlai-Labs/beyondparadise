@@ -278,9 +278,8 @@ const withP = (over = {}, fmt = {}) => ({ streams: over.streams || [{ ...good.st
 const chk = (p) => checkRendered('f.mp4', { probe: async () => p });
 test('checkRendered: a good file passes', async () => { assert.deepEqual(await chk(good), { ok: true, problems: [], durationSec: 7.5 }); });
 test('checkRendered: duration limits, both sides of each', async () => {
-  assert.equal((await chk(withP({}, { duration: '3' }))).ok, true); // a single-shot library clip (LIBRARY_CLIP_MIN_SEC)
-  assert.equal((await chk(withP({}, { duration: '2.95' }))).ok, true); // a re-encode may land a frame short
-  assert.equal((await chk(withP({}, { duration: '2.8' }))).ok, false);
+  assert.equal((await chk(withP({}, { duration: '5' }))).ok, true);
+  assert.equal((await chk(withP({}, { duration: '4.99' }))).ok, false); // the default floor is the old 5 s; the library passes its own (clip-split.test.js)
   assert.equal((await chk(withP({}, { duration: '10' }))).ok, true);
   assert.equal((await chk(withP({}, { duration: '10.01' }))).ok, false);
 });

@@ -7,8 +7,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { MIN_SHOT_SEC, LIBRARY_CLIP_MIN_SEC, checkRendered, parseCuts, planPieces, narrowSource, eligibleClips, readManifest, setVerdict, summarise, main } from './clip-library.js';
+import { MIN_SHOT_SEC, LIBRARY_CLIP_MIN_SEC, LIBRARY_CLIP_FLOOR_SEC, checkRendered, renderLibrary, setShows, parseCuts, planPieces, narrowSource, eligibleClips, readManifest, setVerdict, summarise, main } from './clip-library.js';
 import { composeClip } from './overlay.js';
+import { postReadyReel } from './lib.js';
+import { checkReel } from './reel-qa.js';
+import { createHash } from 'node:crypto';
 
 const tmp = () => fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'cl-split-')));
 const noGit = () => null;
@@ -94,7 +97,7 @@ test('--split refusals exit 2, write nothing and leave no file', async () => {
   const cases = {
     'unknown id': ['--split', 'clip-nope', '3.5', '--by', 'x'], 'already superseded': ['--split', 'clip-G-1', '3.5', '--by', 'x'], 'a child': ['--split', 'clip-AAAAAAAAAAA-100-s1', '3.5', '--by', 'x'],
     'out of range': ['--split', 'clip-AAAAAAAAAAA-100', '8', '--by', 'x'], 'unordered': ['--split', 'clip-AAAAAAAAAAA-100', '4,2', '--by', 'x'], 'overlapping': ['--split', 'clip-AAAAAAAAAAA-100', '3,3.2', '--by', 'x'],
-    'no piece long enough': ['--split', 'clip-AAAAAAAAAAA-100', '2,5', '--by', 'x'], 'missing --by': ['--split', 'clip-AAAAAAAAAAA-100', '3.5'], 'empty --by': ['--split', 'clip-AAAAAAAAAAA-100', '3.5', '--by', ' '],
+    'no piece long enough': ['--split', 'clip-AAAAAAAAAAA-100', '2.0,5.0', '--by', 'x'], 'missing --by': ['--split', 'clip-AAAAAAAAAAA-100', '3.5'], 'empty --by': ['--split', 'clip-AAAAAAAAAAA-100', '3.5', '--by', ' '],
     'missing cuts': ['--split', 'clip-AAAAAAAAAAA-100'], 'notes describe a person': ['--split', 'clip-AAAAAAAAAAA-100', '3.5', '--by', 'x', '--notes', 'a man in a hat'],
   };
   for (const [name, argv] of Object.entries(cases)) {
@@ -152,8 +155,9 @@ test('usage: using a child blocks the same range and not a sibling with a differ
 const probeOf = (dur) => async () => ({ streams: [{ codec_type: 'video', width: 1080, height: 1920, r_frame_rate: '30/1' }], format: { duration: String(dur) } });
 test('LIBRARY_CLIP_MIN_SEC is the single lower limit: a 3 s single-shot clip passes the render check, 2.8 s does not', async () => {
   assert.equal(LIBRARY_CLIP_MIN_SEC, MIN_SHOT_SEC);
-  for (const d of [3, 2.97, 3.3, 9, 10]) assert.equal((await checkRendered('f.mp4', { probe: probeOf(d) })).ok, true, `${d}`);
-  for (const d of [2.8, 10.01]) assert.equal((await checkRendered('f.mp4', { probe: probeOf(d) })).ok, false, `${d}`);
+  const lib = { minSec: LIBRARY_CLIP_FLOOR_SEC };
+  for (const d of [3, 2.97, 3.3, 9, 10]) assert.equal((await checkRendered('f.mp4', { probe: probeOf(d), ...lib })).ok, true, `${d}`);
+  for (const d of [2.8, 10.01]) assert.equal((await checkRendered('f.mp4', { probe: probeOf(d), ...lib })).ok, false, `${d}`);
 });
 test('composeClip: the QA of a composed 2.93 s clip (a 3 s shot a frame short) uses the same limit (real ffmpeg)', async (t) => {
   if (spawnSync('ffmpeg', ['-version']).status !== 0) return t.skip('no local ffmpeg');
@@ -174,7 +178,9 @@ test('setVerdict records singleSubject yes|no, refuses other values; without it 
 });
 test('--verdict --single-subject: writes the field; a bad value exits 4 and writes nothing', async () => {
   const dir = lib([parentOf({ verified: null })]);
-  assert.equal((await cli(['--verdict', 'clip-AAAAAAAAAAA-100', 'pass', '--by', 'dense look', '--single-subject', 'yes'], dir)).code, 0);
+  const bare = await cli(['--verdict', 'clip-AAAAAAAAAAA-100', 'pass', '--by', 'dense look'], dir); assert.equal(bare.code, 0);
+  assert.equal(bare.out.filter((l) => /NOT eligible/.test(l)).length, 1); assert.match(bare.out.join('\n'), /NOT eligible .*--single-subject yes/);
+  const yes = await cli(['--verdict', 'clip-AAAAAAAAAAA-100', 'pass', '--by', 'dense look', '--single-subject', 'yes'], dir); assert.equal(yes.code, 0); assert.doesNotMatch(yes.out.join('\n'), /NOT eligible/);
   assert.equal(readManifest(dir).clips[0].verified.singleSubject, 'yes');
   const before = fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8');
   assert.equal((await cli(['--verdict', 'clip-AAAAAAAAAAA-100', 'pass', '--by', 'x', '--single-subject', 'perhaps'], dir)).code, 4);
@@ -190,4 +196,62 @@ test('--summary shows parent and children and says what is missing for each clip
   assert.match(line('c-s1'), /child of clip-AAAAAAAAAAA-100/); assert.match(line('c-s1'), /missing: verdict, single-subject, tags/);
   assert.match(line('c-s2'), /missing: single-subject, tags/); assert.doesNotMatch(line('c-s2'), /missing: verdict/);
   const sm = summarise({ clips: [parent, s1, s2] }, [], { dir: '/d', exists: () => true }); assert.equal(sm.superseded, 1); assert.equal(sm.eligible, 0);
+});
+
+// ---------------------------------------------------------------- review round: build keeps children, one floor, orphans, comma decimals
+const planFor = (over = {}) => [{ ok: true, id: 'clip-AAAAAAAAAAA-100', durationSec: 7, subject: 's', spans: [{ id: 'AAAAAAAAAAA', file: 'africa/AAAAAAAAAAA.mp4', startSec: 100, endSec: 107 }], source: [{ videoId: 'AAAAAAAAAAA', startSec: 100, endSec: 107 }], ...over }];
+const buildDeps = (dir, extra = {}) => ({ dir, root: '/media', run: async (c, a) => { fs.writeFileSync(a[a.length - 1], 'x'); return { stdout: '', stderr: '' }; }, probe: async () => ({ streams: [{ codec_type: 'video', width: 1080, height: 1920, r_frame_rate: '30/1' }], format: { duration: '7' } }), repoRoot: tmp(), gitTopLevel: noGit, ...extra });
+async function splitAndJudge() {
+  const dir = lib([parentOf({ verified: null, shows: undefined })]);
+  assert.equal((await cli(['--split', 'clip-AAAAAAAAAAA-100', '3.5', '--by', 'x'], dir, fakes())).code, 0);
+  let m = readManifest(dir);
+  for (const id of ['clip-AAAAAAAAAAA-100-s1', 'clip-AAAAAAAAAAA-100-s2']) { m = setVerdict(m, id, { verdict: 'pass', by: 'me', singleSubject: 'yes' }); m = setShows(m, id, { tags: ['lion'], by: 'me' }); }
+  fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(m)); return dir;
+}
+const eligIds = (dir) => eligibleClips(readManifest(dir), [], { dir }).map((c) => c.id);
+test('--build after a split keeps the children with their verdicts and tags, and they stay eligible', async () => {
+  const dir = await splitAndJudge(); const before = readManifest(dir).clips; const ids = eligIds(dir); assert.equal(ids.length, 2);
+  const r = await renderLibrary(planFor(), buildDeps(dir)); const after = r.manifest.clips;
+  assert.deepEqual(after.map((c) => c.id), before.map((c) => c.id));
+  for (const id of ids) { const a = after.find((c) => c.id === id); const b = before.find((c) => c.id === id); assert.deepEqual(a.verified, b.verified); assert.deepEqual(a.shows, b.shows); assert.deepEqual(a.source, b.source); assert.equal(a.parent, 'clip-AAAAAAAAAAA-100'); }
+  assert.deepEqual(after[0].supersededBy, ['clip-AAAAAAAAAAA-100-s1', 'clip-AAAAAAAAAAA-100-s2']); assert.deepEqual(eligIds(dir), ids); assert.deepEqual(r.counts.splitRefused, []);
+});
+test('--build: a superseded parent whose source the plan CHANGES is refused for that clip (message, not re-rendered, children kept); a parent no longer planned is kept with its children', async () => {
+  const dir = await splitAndJudge(); const before = fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'); let rendered = 0;
+  const run = async (c, a) => { rendered += 1; fs.writeFileSync(a[a.length - 1], 'x'); return { stdout: '', stderr: '' }; };
+  const changed = await renderLibrary(planFor({ source: [{ videoId: 'AAAAAAAAAAA', startSec: 100, endSec: 108 }] }), buildDeps(dir, { run }));
+  assert.equal(rendered, 0); assert.equal(changed.counts.splitRefused.length, 1); assert.match(changed.counts.splitRefused[0], /clip-AAAAAAAAAAA-100.*split.*decide/);
+  assert.deepEqual(changed.manifest.clips.map((c) => c.id), JSON.parse(before).clips.map((c) => c.id)); assert.deepEqual(changed.manifest.clips[0].supersededBy, JSON.parse(before).clips[0].supersededBy);
+  assert.equal(changed.manifest.clips[1].verified.verdict, 'pass'); assert.deepEqual(eligIds(dir).length, 2);
+  const gone = await renderLibrary([], buildDeps(dir, { run })); assert.deepEqual(gone.manifest.clips.map((c) => c.id), JSON.parse(before).clips.map((c) => c.id)); assert.equal(rendered, 0);
+});
+const probe3 = (d) => async () => ({ streams: [{ codec_type: 'video', width: 1080, height: 1920, r_frame_rate: '30/1' }], format: { duration: String(d) } });
+test('checkRendered: the lower bound is a parameter; the default (--build, the clip tool) keeps its old 5 s floor, the library floor is 2.9 s', async () => {
+  assert.equal(LIBRARY_CLIP_FLOOR_SEC, LIBRARY_CLIP_MIN_SEC - 0.1);
+  assert.equal((await checkRendered('f.mp4', { probe: probe3(4.95) })).ok, false); assert.equal((await checkRendered('f.mp4', { probe: probe3(5) })).ok, true); assert.equal((await checkRendered('f.mp4', { probe: probe3(3) })).ok, false);
+  assert.equal((await checkRendered('f.mp4', { probe: probe3(2.95), minSec: LIBRARY_CLIP_FLOOR_SEC })).ok, true); assert.equal((await checkRendered('f.mp4', { probe: probe3(2.85), minSec: LIBRARY_CLIP_FLOOR_SEC })).ok, false);
+  const dir = tmp(); const r = await renderLibrary(planFor({ durationSec: 3 }), buildDeps(dir, { probe: probe3(3) })); assert.ok(Array.isArray(r.manifest.clips[0].checks.rendered), '--build still refuses a 3 s clip');
+});
+test('--split replaces child files that are not in the manifest (a crash leftover) and sweeps old temp files', async () => {
+  const dir = lib(); fs.writeFileSync(path.join(dir, 'clip-AAAAAAAAAAA-100-s1.mp4'), 'orphan'); fs.writeFileSync(path.join(dir, '.clip-AAAAAAAAAAA-100-s2.99999.tmp.mp4'), 'old temp');
+  const r = await cli(['--split', 'clip-AAAAAAAAAAA-100', '3.5', '--by', 'x'], dir, fakes()); assert.equal(r.code, 0, r.err.join('\n'));
+  assert.equal(fs.readFileSync(path.join(dir, 'clip-AAAAAAAAAAA-100-s1.mp4'), 'utf8'), 'child-bytes'); assert.deepEqual(listing(dir), ['clip-AAAAAAAAAAA-100-s1.mp4', 'clip-AAAAAAAAAAA-100-s2.mp4', 'clip-AAAAAAAAAAA-100.mp4', 'manifest.json']);
+  const dup = lib([parentOf(), parentOf({ id: 'clip-AAAAAAAAAAA-100-s1', file: 'clip-AAAAAAAAAAA-100-s1.mp4', parent: 'other' })]); assert.equal((await cli(['--split', 'clip-AAAAAAAAAAA-100', '3.5', '--by', 'x'], dup, fakes())).code, 2, 'an id that IS in the manifest is still refused');
+});
+test('parseCuts: a comma decimal (2,9) is refused; points must be 0.5 s apart; the pieces are printed before anything is written', async () => {
+  for (const t of ['2,9', '1,5']) assert.throws(() => parseCuts(t, 12), (e) => e.code === 'refused' && /decimal point|comma/.test(e.message), t); // a single digit after a bare integer
+  assert.deepEqual(parseCuts('2.0,9.0', 12).drops, [[1.8, 2.2], [8.8, 9.2]]); assert.deepEqual(parseCuts('2,10', 12).drops.length, 2); assert.deepEqual(parseCuts('2.9', 12).drops, [[2.7, 3.1]]);
+  assert.throws(() => parseCuts('3.0,3.4', 12), (e) => e.code === 'refused' && /0\.5/.test(e.message)); assert.doesNotThrow(() => parseCuts('3.0,3.5', 12)); assert.doesNotThrow(() => parseCuts('3.0,4.0-4.5', 12));
+  const dir = lib(); const r = await cli(['--split', 'clip-AAAAAAAAAAA-100', '3.5', '--by', 'x'], dir, fakes()); const plan = r.out.findIndex((l) => /^plan/.test(l)); assert.ok(plan >= 0); assert.match(r.out.slice(plan).join('\n'), /keep 0-3\.3 .*keep 3\.7-7/s);
+  const bad = lib(); assert.equal((await cli(['--split', 'clip-AAAAAAAAAAA-100', '2,9', '--by', 'x'], bad, fakes())).code, 2);
+});
+test('one floor: a file compose accepted is accepted by the automatic lane\'s publish check; the weekly reel limits are unchanged', async (t) => {
+  if (spawnSync('ffmpeg', ['-version']).status !== 0) return t.skip('no local ffmpeg');
+  const d = tmp(); const clip = path.join(d, 'c.mp4'); const png = path.join(d, 'o.png'); const auto = path.join(d, 'auto');
+  assert.equal(spawnSync('ffmpeg', ['-nostdin', '-hide_banner', '-y', '-f', 'lavfi', '-i', 'testsrc2=size=1080x1920:rate=30:duration=2.93', '-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', clip]).status, 0);
+  assert.equal(spawnSync('ffmpeg', ['-nostdin', '-hide_banner', '-y', '-f', 'lavfi', '-i', 'color=c=black@0.0:s=1080x1920,format=rgba', '-frames:v', '1', png]).status, 0);
+  const out = path.join(auto, 'auto-x.mp4'); const c = await composeClip({ clipFile: clip, overlayPng: png, out, repoRoot: tmp(), gitTopLevel: noGit }); assert.equal(c.ok, true, c.problems.join('; '));
+  const item = { id: 'x', sourceDate: '2026-11-17', text: 't', auto: true, readyFile: out, readyFileSha256: createHash('sha256').update(fs.readFileSync(out)).digest('hex') };
+  const posted = await postReadyReel(item, { dir: auto, host: async () => ({ url: 'u', id: 'i' }), publishReel: async () => ({ permalink: 'p' }) }); assert.equal(posted.lane, 'auto');
+  assert.equal(checkReel(out).ok, false, 'a weekly reel of this length keeps today\'s 3 s minimum'); assert.equal((await checkRendered(out)).ok, false);
 });

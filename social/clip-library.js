@@ -22,11 +22,11 @@ import { fileURLToPath } from 'node:url';
 import { assertOutsideRepo, writeFileAtomic } from './media-catalog.js';
 import {
   usableStretches, analyseStretches, planClip, renderClip, checkRendered, readUsage, defaultRoot, defaultCatalog, defaultUsagePath,
-  MIN_SHOT_SEC, LIBRARY_CLIP_MIN_SEC, OUT_FPS,
+  MIN_SHOT_SEC, LIBRARY_CLIP_MIN_SEC, LIBRARY_CLIP_FLOOR_SEC, OUT_FPS,
 } from './reel-clip.js';
 
 // one shot of at least MIN_SHOT_SEC is the shortest library clip (the ONE limit lives in LIBRARY_CLIP_MIN_SEC); re-exported so the library and its tests read it here
-export { MIN_SHOT_SEC, LIBRARY_CLIP_MIN_SEC, checkRendered };
+export { MIN_SHOT_SEC, LIBRARY_CLIP_MIN_SEC, LIBRARY_CLIP_FLOOR_SEC, checkRendered };
 
 const execFileP = promisify(execFile);
 const finite = (x) => typeof x === 'number' && Number.isFinite(x);
@@ -106,11 +106,15 @@ export async function renderLibrary(plan, { dir = libraryDir(), run = defaultRun
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
   const old = readManifest(dir);
   const oldById = new Map(((old && old.clips) || []).map((c) => [c.id, c]));
-  const clips = []; const counts = { planned: plan.length, rendered: 0, kept: 0, renderFailed: 0, droppedFromManifest: 0 };
+  const clips = []; const counts = { planned: plan.length, rendered: 0, kept: 0, renderFailed: 0, droppedFromManifest: 0, carriedChildren: 0, splitRefused: [] };
   for (const p of plan) {
     const file = `${p.id}.mp4`; const out = path.join(dir, file);
     const source = p.source || p.spans.map((s) => ({ videoId: s.id, startSec: s.startSec, endSec: s.endSec }));
     const prev = oldById.get(p.id);
+    if (prev && isSuperseded(prev) && !(prev.file === file && sameSource(prev.source, source) && fs.existsSync(out))) { // split by a reviewer: never re-rendered or replaced by a build
+      clips.push(prev); counts.splitRefused.push(`${p.id}: split into ${prev.supersededBy.join(', ')}, but the new plan cuts it from different footage (or its file is missing): left as it is, a reviewer must decide`);
+      continue;
+    }
     if (prev && prev.file === file && sameSource(prev.source, source) && fs.existsSync(out)) {
       clips.push({ ...prev, durationSec: p.durationSec, subject: p.subject ?? prev.subject ?? null });
       counts.kept += 1;
@@ -129,8 +133,14 @@ export async function renderLibrary(plan, { dir = libraryDir(), run = defaultRun
     counts.rendered += 1;
     clips.push({ id: p.id, file, durationSec, source, subject: p.subject ?? null, renderedAt: now().toISOString(), checks: { rendered: checks }, flash: null, verified: null });
   }
-  counts.droppedFromManifest = [...oldById.keys()].filter((id) => !plan.some((p) => p.id === id)).length;
-  const manifest = { version: 1, updatedAt: now().toISOString(), clips };
+  // a clip a reviewer split is theirs: its children (verdicts, tags), and a split parent the plan no longer holds, are carried over, never dropped
+  const have = new Set(clips.map((c) => c.id)); const carried = [...oldById.values()].filter((c) => !have.has(c.id) && (c.parent || isSuperseded(c)));
+  const withKids = []; const placed = new Set();
+  for (const c of clips) { withKids.push(c); for (const k of carried) if (k.parent === c.id && !placed.has(k.id)) { withKids.push(k); placed.add(k.id); } }
+  for (const k of carried) if (!placed.has(k.id)) withKids.push(k);
+  counts.carriedChildren = carried.filter((c) => c.parent).length;
+  counts.droppedFromManifest = [...oldById.keys()].filter((id) => !plan.some((p) => p.id === id) && !carried.some((c) => c.id === id)).length;
+  const manifest = { version: 1, updatedAt: now().toISOString(), clips: withKids };
   writeManifest(dir, manifest);
   return { manifest, counts, dir };
 }
@@ -259,18 +269,21 @@ const CUT_RE = /^(\d+(?:\.\d+)?)(?:-(\d+(?:\.\d+)?))?$/;
 export function parseCuts(text, durationSec) {
   const parts = String(text ?? '').split(',').map((x) => x.trim());
   if (parts.some((x) => x === '')) throw refused('cuts: a comma separated list of seconds (2.9) or ranges (3.25-4.25), no empty entry');
-  const drops = [];
+  parts.forEach((x, i) => { if (i > 0 && /^\d$/.test(x) && /^\d+$/.test(parts[i - 1])) throw refused(`cuts: "${parts[i - 1]},${x}" reads like a comma decimal. Write seconds with a decimal POINT (${parts[i - 1]}.${x}); for two separate cut points write them as ${parts[i - 1]}.0,${x}.0`); });
+  const drops = []; const points = [];
   for (const part of parts) {
     const m = CUT_RE.exec(part); if (!m) throw refused(`cuts: ${JSON.stringify(part)} is neither seconds (2.9) nor a range (3.25-4.25)`);
     const a = Number(m[1]);
     if (m[2] === undefined) {
       if (!(a > 0 && a < durationSec)) throw refused(`cuts: ${a} is outside the clip (0 to ${durationSec} s)`);
+      if (points.length && a - points[points.length - 1] < 0.5 - EPS) throw refused(`cuts: points ${points[points.length - 1]} and ${a} are closer than 0.5 s: one shot change is one point`);
+      points.push(a);
       drops.push([r3(Math.max(0, a - SPLIT_POINT_DROP_SEC)), r3(Math.min(durationSec, a + SPLIT_POINT_DROP_SEC))]);
     } else {
       const b = Number(m[2]);
       if (!(b > a)) throw refused(`cuts: range ${part} must end after it starts`);
       if (b > durationSec) throw refused(`cuts: ${part} is outside the clip (0 to ${durationSec} s)`);
-      drops.push([a, b]);
+      points.length = 0; drops.push([a, b]);
     }
   }
   for (let i = 1; i < drops.length; i += 1) if (drops[i][0] < drops[i - 1][1] - EPS) throw refused('cuts: boundaries must be in order and may not overlap (a point also drops 0.2 s on each side)');
@@ -309,7 +322,7 @@ export function buildCutArgs({ file, startSec, lengthSec, out }) {
  * then the manifest is written atomically. Any failure removes what was made. Children carry NO verdict and NO shows. The parent gets `supersededBy`.
  * Errors: code 'refused' (the request is wrong), 'unsafe' (library inside a repository), 'check-failed' (a cut did not pass the render check), else ffmpeg's own.
  */
-export async function splitClip(dir, id, cutsText, { by, notes = '', run = defaultRun, probe, ffmpeg = 'ffmpeg', repoRoot, gitTopLevel, now = () => new Date() } = {}) {
+export async function splitClip(dir, id, cutsText, { by, notes = '', run = defaultRun, probe, ffmpeg = 'ffmpeg', repoRoot, gitTopLevel, now = () => new Date(), say = () => {} } = {}) {
   if (typeof by !== 'string' || !by.trim()) throw refused('--split needs --by <text> (who looked, how)');
   if (typeof notes !== 'string' || notes.length > 300) throw refused('notes must be text of at most 300 characters');
   if (PERSON_WORDS.test(notes)) throw refused('notes may not describe a person');
@@ -327,9 +340,11 @@ export async function splitClip(dir, id, cutsText, { by, notes = '', run = defau
   const { keep, short } = planPieces(parent.durationSec, drops);
   if (!keep.length) throw refused(`no piece of at least ${MIN_SHOT_SEC} s is left (dropped: ${short.map((p) => `${p.startSec}-${p.endSec}`).join(', ') || 'none'})`);
   const childId = (i) => `${id}-s${i + 1}`;
-  for (let i = 0; i < keep.length; i += 1) if (clips.some((c) => c && c.id === childId(i)) || fs.existsSync(path.join(dir, `${childId(i)}.mp4`))) throw refused(`${childId(i)} already exists`);
+  for (let i = 0; i < keep.length; i += 1) if (clips.some((c) => c && c.id === childId(i))) throw refused(`${childId(i)} already exists in the manifest`); // a child FILE that is not in the manifest is a leftover of a crashed split and is replaced
   try { assertOutsideRepo(dir, { repoRoot, gitTopLevel }); } catch (e) { throw Object.assign(new Error(`the clip library folder must be outside every repository: ${e.message}`), { code: 'unsafe' }); }
 
+  say(`plan for ${id} (${r2(parent.durationSec)} s): ${[...keep.map((p, i) => ({ ...p, k: `keep ${p.startSec}-${p.endSec} (${r2(p.endSec - p.startSec)} s) as ${childId(i)}` })), ...short.map((p) => ({ ...p, k: `drop ${p.startSec}-${p.endSec} (too short)` })), ...drops.map(([a, b]) => ({ startSec: a, k: `drop ${a}-${b} (the cut)` }))].sort((x, y) => x.startSec - y.startSec).map((x) => x.k).join('; ')}`);
+  for (const f of fs.readdirSync(dir)) if (/^\..+\.\d+\.tmp\.mp4$/.test(f)) fs.rmSync(path.join(dir, f), { force: true }); // temp files of earlier runs that died
   const made = []; const finals = [];
   const cleanup = () => { for (const f of [...made, ...finals]) { try { fs.rmSync(f, { force: true }); } catch { /* nothing to clean */ } } };
   try {
@@ -338,7 +353,7 @@ export async function splitClip(dir, id, cutsText, { by, notes = '', run = defau
       const piece = keep[i]; const cid = childId(i);
       const tmpFile = path.join(dir, `.${cid}.${process.pid}.tmp.mp4`); made.push(tmpFile);
       await run(ffmpeg, buildCutArgs({ file: parentFile, startSec: piece.startSec, lengthSec: piece.endSec - piece.startSec, out: tmpFile }));
-      const q = await checkRendered(tmpFile, { probe });
+      const q = await checkRendered(tmpFile, { probe, minSec: LIBRARY_CLIP_FLOOR_SEC });
       if (!q.ok) throw Object.assign(new Error(`${cid} failed the render check: ${q.problems.join('; ')}`), { code: 'check-failed' });
       const flash = await detectFlash(tmpFile, { run, ffmpeg });
       children.push({ id: cid, file: `${cid}.mp4`, parent: id, durationSec: r2(q.durationSec ?? piece.endSec - piece.startSec), source: narrowSource(parent.source, piece.startSec, piece.endSec),
@@ -434,10 +449,11 @@ export async function main(argv, env = process.env, deps = {}) {
     result.manifest.updatedAt = new Date().toISOString();
     writeManifest(dir, result.manifest);
     const flashed = result.manifest.clips.filter((c) => c.flash && c.flash.flash);
-    log(`planned ${result.counts.planned}, rendered ${result.counts.rendered}, kept ${result.counts.kept}, render check failed ${result.counts.renderFailed}, flash ${flashed.length}, flash check errors ${flashErrors}`);
+    for (const m of result.counts.splitRefused) error(`split clip not rebuilt: ${m}`);
+    log(`planned ${result.counts.planned}, rendered ${result.counts.rendered}, kept ${result.counts.kept}, render check failed ${result.counts.renderFailed}, flash ${flashed.length}, flash check errors ${flashErrors}, split children carried ${result.counts.carriedChildren}, split clips refused ${result.counts.splitRefused.length}`);
     for (const c of flashed) log(`  flash ${c.id} at ${c.flash.atSec.join(', ')} s`);
     log(`library: ${dir}`);
-    return result.counts.renderFailed || flashErrors ? 5 : 0;
+    return result.counts.renderFailed || flashErrors || result.counts.splitRefused.length ? 5 : 0;
   }
   const manifest = readManifest(dir);
   if (!manifest) { error(`no manifest in ${dir}: run --build first`); return 4; }
@@ -455,10 +471,9 @@ export async function main(argv, env = process.env, deps = {}) {
     return 0;
   }
   if (args.split !== null) {
-    if (typeof args.by !== 'string' || !args.by.trim()) { error('--split needs --by <text>'); return 2; }
     const ffmpeg = env.BPA_FFMPEG || 'ffmpeg';
     let r;
-    try { r = await splitClip(dir, args.split, args.cutList, { by: args.by, notes: args.notes, run: deps.run, probe: deps.probe, ffmpeg: env.BPA_FFMPEG_RENDER || ffmpeg, repoRoot: deps.repoRoot, gitTopLevel: deps.gitTopLevel }); } catch (e) {
+    try { r = await splitClip(dir, args.split, args.cutList, { by: args.by, notes: args.notes, run: deps.run, probe: deps.probe, ffmpeg: env.BPA_FFMPEG_RENDER || ffmpeg, repoRoot: deps.repoRoot, gitTopLevel: deps.gitTopLevel, say: log }); } catch (e) {
       error(e.message); return e.code === 'refused' ? 2 : e.code === 'unsafe' ? 3 : 5;
     }
     log(`split ${args.split} into ${r.children.length}: ${r.children.map((c) => `${c.id} ${c.durationSec} s`).join(', ')}`);
@@ -480,7 +495,8 @@ export async function main(argv, env = process.env, deps = {}) {
     next.updatedAt = new Date().toISOString();
     writeManifest(dir, next);
   } catch (e) { error(e.message); return 4; }
-  log(`${args.verdict}: ${args.word}${args.word === 'pass' && args.singleSubject !== 'yes' ? ' (not eligible for the automatic lane until --single-subject yes is recorded)' : ''}`);
+  log(`${args.verdict}: ${args.word}`);
+  if (args.word === 'pass' && args.singleSubject !== 'yes') log(`NOT eligible for the automatic lane: ${args.verdict} has no single-subject answer, record it with --single-subject yes`);
   return 0;
 }
 
