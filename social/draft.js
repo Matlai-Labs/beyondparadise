@@ -8,13 +8,20 @@ import { hookAdvice, loadHookTypes } from './hookpatterns.js';
 import { stopStatus } from './stop.js';
 
 export async function runDraft(deps = {}) {
-  const { dry = false, queuePath = QUEUE_PATH, readBriefs = readBriefsReal, buildDrafts = buildDraftsReal, notify = whatsapp, say = log, stopOpts, stop = () => stopStatus(stopOpts) } = deps;
+  const { dry = false, queuePath = QUEUE_PATH, readBriefs = readBriefsReal, buildDrafts = buildDraftsReal, notify = whatsapp, say = log, stopOpts, stop = () => stopStatus(stopOpts), config = CONFIG, ask, ideaPool } = deps;
   // stop flag (own or fleet-wide): draft nothing, queue nothing, send nothing; one line; exit code stays 0
   { const st = stop(); if (st.stopped) { say(`draft: ${st.reason}`); return { exitCode: 0, stopped: true }; } }
   const topTypes = loadHookTypes();
   const briefs = readBriefs();
   const q = loadQueue(queuePath); const had = new Set(q.drafts.map((d) => d.id));
-  const drafts = await buildDrafts({ briefs, existingDrafts: q.drafts });
+  const built = await buildDrafts({ briefs, existingDrafts: q.drafts });
+  // Switch, OFF unless config.json says exactly `"ideaDrafts": true`: drafts from the post-idea pool, written by the LOCAL model only. The new code is not even loaded otherwise.
+  let ideaDrafts = [];
+  if (config.ideaDrafts === true) {
+    const { draftIdeas } = await import('./idea-drafts.js'); const { localAsk } = await import('./caption.js');
+    ideaDrafts = await draftIdeas({ config, queue: q, ask: ask || localAsk({ stopOpts }), say, queuePath, ...(ideaPool ? { loadPool: ideaPool } : {}) });
+  }
+  const drafts = [...built, ...ideaDrafts];
   const already = new Set(q.drafts.map((d) => d.sourceId));
   let added = 0, rejected = 0;
   for (const d of drafts) {
