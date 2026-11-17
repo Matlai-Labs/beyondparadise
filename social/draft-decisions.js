@@ -96,10 +96,10 @@ export function createDraftActions(options = {}) {
       const g = await approveGuards(d, { cmd: 'approve', stop, neverPromotePatterns, notify, say, onCheckError: 'refuse', finalCheck });
       if (!g.ok) { if (g.code === 'blocked') { try { save(q, queuePath); } catch { /* best effort: the alert was sent */ } } return fail(g.code); }
       const rec = await recordLocked(ctx, { kind: 'draft', id: req.id, version: req.version, decision: 'approve' }); if (!rec) return fail('record-failed');
-      const r = await scheduleDraft(q, d, { cmd: 'approve', schedule: scheduleBounded, igOn, say, now, at });
+      const r = await scheduleDraft(q, d, { cmd: 'approve', schedule: scheduleBounded, igOn, persist: (qq) => save(qq, queuePath), say, now, at });
       if (!r.ok) {
         if (r.code === 'schedule-failed') { d.metaUnknown = { at: now().toISOString() }; try { save(q, queuePath); } catch { /* best effort: lastError */ } return fail('schedule-failed'); } // outcome unknown: the record line stays
-        await recordLocked(ctx, { void: rec.n }); return fail(r.code === 'stopped' ? 'stopped' : 'check-failed'); // nothing reached Meta
+        await recordLocked(ctx, { void: rec.n }); return fail(r.code === 'stopped' || r.code === 'write-failed' ? r.code : 'check-failed'); // nothing reached Meta
       }
       try { save(q, queuePath); } catch { log('review failed: schedule-not-saved'); d.metaUnknown = { at: now().toISOString() }; try { save(q, queuePath); } catch { /* the record line is the durable guard */ } return fail('schedule-not-saved'); } // the post exists: no void
       return { ok: true, change: { kind: 'draft', id: req.id, decision: 'scheduled' }, scheduledFor: r.scheduledFor, scheduledForText: plainTime(r.scheduledFor) };

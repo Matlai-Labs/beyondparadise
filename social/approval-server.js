@@ -23,7 +23,8 @@ export async function dispatch(text, deps = {}) {
 }
 export async function handle(text, deps = {}) {
   const { queuePath = QUEUE_PATH, stopOpts, stop = () => stopStatus(stopOpts), schedule = schedulePost, publish = publishNow, publishIg = igPostDraftAny, igOn = igEnabled, reserve = reserveInstagramPublish, release = releaseInstagramReservation, now: nowDep, ledgerPath, config: capConfig = CONFIG, lastPostPath, notify = whatsapp, neverPromotePatterns } = deps;
-  const parsed = parseCommand(text); const again = parsed.cmd === 'approveagain'; const c = again ? { ...parsed, cmd: 'approve' } : parsed; // `bpa approve B1 again` is an approve that first clears the "check Meta first" mark
+  const parsed = parseCommand(text); const again = parsed.cmd === 'approveagain' || parsed.cmd === 'postnowagain'; const c = again ? { ...parsed, cmd: parsed.cmd === 'postnowagain' ? 'postnow' : 'approve' } : parsed; // `bpa approve B1 again` and `bpa post B1 now again` are the normal command after the "check Meta first" mark is cleared
+  const persist = (qq) => saveQueue(qq, queuePath); // write-ahead: the mark reaches the disk before any call to Meta
   // stop / start never wait for the queue lock (dispatch() below calls them outside it) and never need a readable queue.
   if (c.cmd === 'stop') return stopPosting({ queuePath, stopOpts, now: nowDep || new Date() }).reply;
   if (c.cmd === 'start') return startPosting({ stopOpts }).reply;
@@ -42,13 +43,15 @@ export async function handle(text, deps = {}) {
     if (c.cmd === 'edit') { out.push((await editDraft(d, c.text, { neverPromotePatterns })).line); continue; }
     if (again) { // the way out of "check Meta first": the owner looked and no post is there. Same queue lock, then the normal approve with every guard.
       if (!d.metaUnknown) { out.push(`❌ ${id}: nothing to repeat`); continue; }
-      delete d.metaUnknown; log(`approve again ${id}`);
+      delete d.metaUnknown; log(`${parsed.cmd === 'postnowagain' ? 'post now again' : 'approve again'} ${id}`);
     }
     if (c.cmd === 'approve' || c.cmd === 'postnow') {
       const g = await approveGuards(d, { cmd: c.cmd, stop, neverPromotePatterns, notify, say: log }); if (!g.ok) { out.push(g.line); continue; }
       try {
         if (c.cmd === 'postnow') {
-          const r = await publish(d.text); d.status = STATUS.POSTED; d.postId = r.id; d.permalink = r.permalink_url; d.postedAt = new Date().toISOString(); recordPost({ now: new Date(), id, path: lastPostPath }); out.push(`✅ ${id} posted now on the Page: ${r.permalink_url || r.id}`);
+          d.metaUnknown = { at: new Date().toISOString() }; // write-ahead: the post may exist at Meta from here on
+          try { persist(q); } catch { delete d.metaUnknown; log(`postnow ${id} not started: the queue could not be saved`); out.push(`❌ ${id}: the queue could not be saved, so nothing was posted.`); continue; }
+          const r = await publish(d.text); delete d.metaUnknown; d.status = STATUS.POSTED; d.postId = r.id; d.permalink = r.permalink_url; d.postedAt = new Date().toISOString(); recordPost({ now: new Date(), id, path: lastPostPath }); out.push(`✅ ${id} posted now on the Page: ${r.permalink_url || r.id}`);
           if (igOn()) {
             const rAt = new Date(); const rs = reserve({ id, now: rAt, config: capConfig, path: ledgerPath }); // daily cap: ledger line written before the network call
             if (!rs.ok) { d.ig = { status: 'queued', at: new Date().toISOString() }; log(`${id} instagram publish held, queued for the next free day: ${rs.reason}`); out.push(`📸 ${id} Instagram not posted: ${rs.reason}. It is queued; the worker will post it on the next free day.`); }
@@ -63,10 +66,10 @@ export async function handle(text, deps = {}) {
             }
           }
         } else {
-          out.push((await scheduleDraft(q, d, { cmd: c.cmd, schedule, igOn, say: log })).line);
+          out.push((await scheduleDraft(q, d, { cmd: c.cmd, schedule, igOn, persist, say: log })).line);
         }
       } catch (e) {
-        if (e instanceof StoppedError) { log(`${c.cmd} ${id} refused: ${e.reason}`); out.push(`⏸ ${id}: ${e.reason}. Nothing was posted. Reply *bpa start* to resume.`); continue; }
+        if (e instanceof StoppedError) { delete d.metaUnknown; try { persist(q); } catch { /* the mark stays on disk: fail closed */ } log(`${c.cmd} ${id} refused: ${e.reason}`); out.push(`⏸ ${id}: ${e.reason}. Nothing was posted. Reply *bpa start* to resume.`); continue; }
         d.lastError = e.message; log(`${c.cmd} ${id} failed: ${e.message}`); out.push(`❌ ${id}: ${e.message.slice(0, 160)}`); }
     }
   }

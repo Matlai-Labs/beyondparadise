@@ -49,17 +49,21 @@ export async function approveGuards(d, { cmd = 'approve', stop, neverPromotePatt
   }
   PASSED.add(d); return { ok: true };
 }
-/** Schedules the Facebook post at Meta through the INJECTED `schedule` (no default) and records it on the draft. Needs a draft that approveGuards let through, once. */
-export async function scheduleDraft(q, d, { cmd = 'approve', schedule, igOn, say = log, now = () => new Date(), at } = {}) {
+/** Schedules the Facebook post at Meta through the INJECTED `schedule` (no default) and records it on the draft. Needs a draft that approveGuards let through, once.
+ *  WRITE-AHEAD: the "may be at Meta" mark is set and `persist(q)` (injected, no default) writes the queue BEFORE the call, so a process that dies inside the call, or a save that fails after it, still leaves the mark on disk.
+ *  Success removes the mark (the caller saves); a stop refusal removes it and persists (nothing reached Meta); any other failure keeps it. */
+export async function scheduleDraft(q, d, { cmd = 'approve', schedule, igOn, persist, say = log, now = () => new Date(), at } = {}) {
   if (!PASSED.has(d)) return { ok: false, code: 'check-failed', line: `❌ ${d.id}: checks were not run` };
   PASSED.delete(d);
-  if (typeof schedule !== 'function' || typeof igOn !== 'function') return { ok: false, code: 'schedule-failed', line: `❌ ${d.id}: scheduling is not available` }; // before the Meta call: a TypeError after it would be read as a failure while the post exists
+  if (typeof schedule !== 'function' || typeof igOn !== 'function' || typeof persist !== 'function') return { ok: false, code: 'schedule-failed', line: `❌ ${d.id}: scheduling is not available` }; // before the Meta call: a TypeError after it would be read as a failure while the post exists
+  d.metaUnknown = { at: now().toISOString() };
+  try { persist(q); } catch { delete d.metaUnknown; say(`${cmd} ${d.id} not started: the queue could not be saved`, 'write-failed'); return { ok: false, code: 'write-failed', line: `❌ ${d.id}: the queue could not be saved, so nothing was scheduled.` }; } // nothing was called
   try {
-    at = at ?? nextSlots(q, 1, now())[0]; const r = await schedule(d.text, at); d.status = STATUS.SCHEDULED; d.postId = r.id; d.scheduledFor = at; d.decidedAt = now().toISOString();
+    at = at ?? nextSlots(q, 1, now())[0]; const r = await schedule(d.text, at); delete d.metaUnknown; d.status = STATUS.SCHEDULED; d.postId = r.id; d.scheduledFor = at; d.decidedAt = now().toISOString();
     const ig = igOn(); if (ig) d.ig = { status: 'queued', at };
     return { ok: true, line: `📅 ${d.id} scheduled for ${at.slice(0, 16)} on the Page${ig ? ' + Instagram' : ''} (${r.id})`, scheduledFor: at, postId: r.id };
   } catch (e) {
-    if (e instanceof StoppedError) { say(`${cmd} ${d.id} refused: ${e.reason}`, 'stopped'); return { ok: false, code: 'stopped', line: `⏸ ${d.id}: ${e.reason}. Nothing was posted. Reply *bpa start* to resume.` }; }
-    d.lastError = e.message; d.metaUnknown = { at: now().toISOString() }; say(`${cmd} ${d.id} failed: ${e.message}`, 'schedule-failed'); return { ok: false, code: 'schedule-failed', line: `❌ ${d.id}: ${e.message.slice(0, 160)}` };
+    if (e instanceof StoppedError) { delete d.metaUnknown; try { persist(q); } catch { /* the mark stays on disk: fail closed */ } say(`${cmd} ${d.id} refused: ${e.reason}`, 'stopped'); return { ok: false, code: 'stopped', line: `⏸ ${d.id}: ${e.reason}. Nothing was posted. Reply *bpa start* to resume.` }; }
+    d.lastError = e.message; say(`${cmd} ${d.id} failed: ${e.message}`, 'schedule-failed'); return { ok: false, code: 'schedule-failed', line: `❌ ${d.id}: ${e.message.slice(0, 160)}` };
   }
 }

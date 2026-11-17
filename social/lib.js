@@ -301,6 +301,7 @@ export function parseCommand(text) {
   if ((m = t.match(/^approve\s+((?:b\d+[\s,]*)+)$/i))) return { cmd: 'approve', ids: m[1].toUpperCase().match(/B\d+/g) };
   if ((m = t.match(/^approve\s+(b\d+)\s+again$/i))) return { cmd: 'approveagain', ids: [m[1].toUpperCase()] };
   if ((m = t.match(/^skip\s+((?:b\d+[\s,]*)+)$/i))) return { cmd: 'skip', ids: m[1].toUpperCase().match(/B\d+/g) };
+  if ((m = t.match(/^post\s+(b\d+)\s+now\s+again$/i))) return { cmd: 'postnowagain', ids: [m[1].toUpperCase()] };
   if ((m = t.match(/^post\s+(b\d+)\s+now$/i))) return { cmd: 'postnow', ids: [m[1].toUpperCase()] };
   if ((m = t.match(/^edit\s+(b\d+)\s*:\s*([\s\S]+)$/i))) return { cmd: 'edit', ids: [m[1].toUpperCase()], text: m[2].trim() };
   return { cmd: 'unknown', raw: t };

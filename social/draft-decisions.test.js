@@ -169,7 +169,7 @@ test('A5 a stop during the call voids the record; an ordinary failure keeps it a
   { const k = ak(undefined, { schedule: async () => { throw new Error('boom'); } }); assert.deepEqual(await k.approve(), { ok: false, code: 'schedule-failed' }); assert.equal(k.q().drafts[0].lastError, 'boom'); assert.equal(k.q().drafts[0].status, 'pending_approval'); const l = k.lines(); assert.equal(l.length, 1); assert.equal(l[0].decision, 'approve'); }
 });
 test('A6 a save that fails after a good schedule: schedule-not-saved, no void, the log has the code and no text', async () => {
-  let n = 0; const k = ak(undefined, { save: (q, p) => { if (n++ === 0) throw new Error('disk full: Lions sleep'); saveQueue(q, p); } }); const was = logSize();
+  let n = 0; const k = ak(undefined, { save: (q, p) => { if (n++ === 1) throw new Error('disk full: Lions sleep'); /* the first save is the write-ahead mark */ saveQueue(q, p); } }); const was = logSize();
   assert.deepEqual(await k.approve(), { ok: false, code: 'schedule-not-saved' }); assert.equal(k.calls.schedule.length, 1); const l = k.lines(); assert.equal(l.length, 1); assert.equal(l[0].decision, 'approve');
   const lines = logLines(was).join('\n'); assert.match(lines, /review failed: schedule-not-saved/); assert.ok(!lines.includes('Lions')); assert.ok(!lines.includes('disk full'));
 });
@@ -214,7 +214,7 @@ test('A12 static: no publisher, one scheduleDraft after the guards and the recor
 // ══ Task 9b: no second approve after an unknown outcome, the date the owner saw, a time limit ═══════════════════════════════
 const hang = () => new Promise(() => {});
 test('B1 an approve whose outcome may be at Meta blocks a second approve: a save that fails after success, even from a fresh instance (a crash after Meta)', async () => {
-  const k = ak(undefined, { save: () => { throw new Error('disk full'); } }); const rq = k.req(); assert.equal((await k.approve(rq)).code, 'schedule-not-saved');
+  let sn = 0; const k = ak(undefined, { save: (q, p) => { if (sn++ >= 1) throw new Error('disk full'); saveQueue(q, p); } }); const rq = k.req(); assert.equal((await k.approve(rq)).code, 'schedule-not-saved');
   const again = createDraftActions({ ...k.opts, save: saveQueue }); assert.deepEqual(await again.approveDraft(rq, k.ctx), { ok: false, code: 'check-meta' }); assert.equal(k.calls.schedule.length, 1); assert.equal(k.lines().length, 1);
 });
 test('B2 a schedule that never answers (time limit) blocks a second approve', { timeout: 2000 }, async () => {

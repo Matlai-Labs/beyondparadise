@@ -53,7 +53,7 @@ const FIG = 'The park fee is 25 USD per adult.';
 function gk(d = pend(), over = {}) {
   const log = []; const calls = { notify: [], schedule: [], igOn: 0 };
   const opts = { cmd: 'approve', stop: () => ({ stopped: false }), neverPromotePatterns: NP, notify: async (m) => { calls.notify.push(m); return true; }, say: (t, c) => log.push([t, c]), ...over };
-  const sched = { schedule: async (text, at) => { calls.schedule.push([text, at]); return { id: 'p1' }; }, igOn: () => { calls.igOn++; return false; }, say: opts.say, now: NOW };
+  const sched = { schedule: async (text, at) => { calls.schedule.push([text, at]); return { id: 'p1' }; }, igOn: () => { calls.igOn++; return false; }, persist: () => {}, say: opts.say, now: NOW };
   return { d, opts, calls, log, sched };
 }
 test('approveGuards: every refusal has its code and pinned line, says the old text AND the code, calls nothing else', async () => {
@@ -96,7 +96,7 @@ test('F10: scheduleDraft without a pass from approveGuards calls nothing; a seco
   const k = gk(); const r = await scheduleDraft({ drafts: [] }, k.d, k.sched); assert.deepEqual(r, { ok: false, code: 'check-failed', line: '❌ B1: checks were not run' }); assert.equal(k.calls.schedule.length, 0); assert.equal(k.calls.igOn, 0); assert.equal(k.d.status, 'pending_approval');
   await approveGuards(k.d, k.opts); await scheduleDraft({ drafts: [] }, k.d, k.sched); assert.equal(k.calls.schedule.length, 1);
   const s2 = await scheduleDraft({ drafts: [] }, k.d, k.sched); assert.equal(s2.code, 'check-failed'); assert.equal(k.calls.schedule.length, 1);
-  for (const missing of ['schedule', 'igOn']) { const m = gk(); await approveGuards(m.d, m.opts); const r2 = await scheduleDraft({ drafts: [] }, m.d, { ...m.sched, [missing]: undefined }); assert.equal(r2.code, 'schedule-failed'); assert.equal(m.calls.schedule.length, 0); assert.equal(m.d.status, 'pending_approval'); }
+  for (const missing of ['schedule', 'igOn', 'persist']) { const m = gk(); await approveGuards(m.d, m.opts); const r2 = await scheduleDraft({ drafts: [] }, m.d, { ...m.sched, [missing]: undefined }); assert.equal(r2.code, 'schedule-failed'); assert.equal(m.calls.schedule.length, 0); assert.equal(m.d.status, 'pending_approval'); }
 });
 test('scheduleDraft: the success shape, igOn once and only for d.ig, the slot from nextSlots(now) or the given one, schedule called once with (text, at)', async () => {
   const k = gk(); await approveGuards(k.d, k.opts); const r = await scheduleDraft({ drafts: [] }, k.d, k.sched);
