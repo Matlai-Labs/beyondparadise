@@ -33,6 +33,10 @@
   #video-slot video { width: 100%; max-height: 45vh; display: block; }
   #video-quiet { margin: 0 0 8px; font-size: 0.85rem; color: var(--muted); }
   #video-slot:empty { display: none; }
+  .vwrap { position: relative; }
+  .play-big { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); min-height: 64px; min-width: 200px; padding: 14px 28px; font-size: 1.4rem; font-weight: 700; background: #ffffff; color: #000000; border: 3px solid #000000; outline: 3px solid #ffffff; border-radius: 14px; z-index: 2; }
+  .play-big:focus-visible { outline: 4px solid #ffcc00; outline-offset: 3px; }
+  .video-line { margin: 0; padding: 6px 12px; font-size: 0.9rem; color: #eee; background: #111; }
   .hint { display: block; font-size: 0.8rem; color: var(--muted); white-space: normal; }
   #status span[tabindex] { text-decoration: underline dotted; cursor: help; }
   .video-note { padding: 16px; margin: 0; color: #ddd; text-align: center; }
@@ -241,6 +245,22 @@ function statusLines(s, nowMs) {
   out.push(lr ? 'Last check by the system ' + lr : 'Last check by the system: could not be read');
   return out;
 }
+const PLAY_TEXT = 'Play video';
+const PLAYING_LINE = 'Playing, no sound. The clip repeats.';
+const PAUSED_LINE = 'Paused.';
+const VIDEO_FAILED_TEXT = 'This browser could not play the video. Tap Reload. If it stays like this, tell Claude.';
+const VIDEO_WAIT_MS = 8000;
+// What the video box shows. A failure (error event, or nothing loaded 8 s after the source was set) wins over everything;
+// a playing video hides the button; everything else (never started, autoplay blocked, reduced motion, paused) shows the button.
+// reduce and playRejected change how the video got here, never whether the button is shown: a clip that is not playing always has one.
+function videoUi(s) {
+  s = s || {};
+  if (s.errored || s.loadedWithin8s === false) return { button: false, errorSentence: true, playingLine: false, pausedLine: false };
+  if (s.playing) return { button: false, errorSentence: false, playingLine: true, pausedLine: false };
+  return { button: true, errorSentence: false, playingLine: false, pausedLine: true };
+}
+// Reduced motion: the page never starts the video by itself.
+function shouldAutoplay(reduce) { return !reduce; }
 // END PURE
 
 const $ = (id) => document.getElementById(id);
@@ -267,7 +287,9 @@ function showStatus(s, problems) {
 
 function shownItems() { return filterItems(state.items, state.kind); }
 
+let videoTimer = null;
 function stopVideo() {
+  if (videoTimer) { clearTimeout(videoTimer); videoTimer = null; }
   const slot = $('video-slot');
   for (const v of Array.from(slot.querySelectorAll('video'))) { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); }
   clear(slot);
@@ -280,11 +302,35 @@ function showVideo(item) {
   if (item.preview && item.preview.mediaId) {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const v = document.createElement('video');
-    v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = !reduce; v.controls = reduce;
+    v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = false; v.controls = true;
     v.setAttribute('aria-label', 'Preview video');
-    v.addEventListener('error', () => { stopVideo(); slot.appendChild(el('p', 'The video could not be loaded. Tap Reload.', 'video-note')); });
+    const wrap = el('div', undefined, 'vwrap'); const btn = el('button', PLAY_TEXT, 'play-big'); btn.type = 'button';
+    const line = el('p', '', 'video-line'); line.setAttribute('aria-live', 'polite');
+    const st = { reduce, playing: false, playRejected: false, errored: false, loadedWithin8s: undefined };
+    let dead = false;
+    const refresh = () => {
+      if (dead) return;
+      const ui = videoUi(st);
+      if (ui.errorSentence) { dead = true; stopVideo(); slot.appendChild(el('p', VIDEO_FAILED_TEXT, 'video-note')); return; }
+      btn.classList.toggle('hidden', !ui.button);
+      line.textContent = ui.playingLine ? PLAYING_LINE : (ui.pausedLine ? PAUSED_LINE : '');
+    };
+    const sync = () => { st.playing = !v.paused && !v.ended; refresh(); };
+    const start = () => {
+      const p = v.play();
+      if (p && typeof p.then === 'function') p.then(() => { st.playRejected = false; sync(); }, () => { if (!dead) { st.playRejected = true; sync(); } });
+    };
+    for (const ev of ['play', 'playing', 'pause', 'ended']) v.addEventListener(ev, sync);
+    v.addEventListener('loadeddata', () => { if (videoTimer) { clearTimeout(videoTimer); videoTimer = null; } st.loadedWithin8s = true; refresh(); });
+    v.addEventListener('error', () => { st.errored = true; refresh(); });
+    btn.addEventListener('click', (e) => { e.stopPropagation(); start(); });
+    // Most browsers already toggle pause and play when the picture is clicked (native controls are on). If the click changed nothing, toggle here; if it did, do nothing, or the two would cancel each other.
+    v.addEventListener('click', () => { const before = v.paused; setTimeout(() => { if (!dead && v.paused === before) { if (before) start(); else v.pause(); } }, 60); });
     v.src = 'media/' + item.preview.mediaId;
-    slot.appendChild(v);
+    videoTimer = setTimeout(() => { videoTimer = null; st.loadedWithin8s = false; refresh(); }, VIDEO_WAIT_MS);
+    wrap.appendChild(v); wrap.appendChild(btn); slot.appendChild(wrap); slot.appendChild(line);
+    refresh();
+    if (shouldAutoplay(reduce)) start();
     if (item.kind === 'hook') slot.appendChild(el('p', EXAMPLE_NOTE, 'video-note'));
   } else {
     slot.appendChild(el('p', noteText(item) || 'No video.', 'video-note'));
