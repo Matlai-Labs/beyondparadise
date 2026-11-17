@@ -30,3 +30,13 @@ test('static: nothing writes the switch file; approve-on appears only in approve
 test('static: draft-decisions.js never calls approveSwitchOn (it receives approveOn as a parameter); the count of calls is pinned in review-step3-guards.test.js', () => {
   assert.ok(!sources().find(([f]) => f === 'draft-decisions.js')[1].includes('approveSwitchOn'));
 });
+
+// ── fix round R7: the file must belong to the account that runs the server ─────────────────────────────────────────────
+test('R7 a good file owned by another account is off; owned by this account is on; an unknown owner function is off', () => {
+  const d = tmp(); const env = envOf(d); const f = approveSwitchPath(env); fs.writeFileSync(f, '', { mode: 0o600 }); fs.chmodSync(f, 0o600);
+  const real = fs.lstatSync(f); const me = process.getuid();
+  const as = (uid) => ({ lstat: () => ({ isFile: () => true, mode: 0o100600, uid }) });
+  assert.equal(approveSwitchOn(env, as(me)), true); assert.equal(approveSwitchOn(env, as(me + 1)), false); assert.equal(approveSwitchOn(env, as(0 === me ? 1 : 0)), false);
+  assert.equal(approveSwitchOn(env, { lstat: () => real }), true, 'the real file of this account'); assert.equal(approveSwitchOn(env, { lstat: () => real, getuid: undefined }), true, 'the default owner function is process.getuid');
+  assert.equal(approveSwitchOn(env, { lstat: () => real, getuid: () => me + 1 }), false); assert.equal(approveSwitchOn(env, { lstat: () => ({ isFile: () => true, mode: 0o100600 }) }), false, 'no owner in the answer is off');
+});
