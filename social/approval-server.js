@@ -2,6 +2,7 @@
 // 127.0.0.1:3028 — the `bpa` WhatsApp command family (bridge → POST /bpa/action {text} → {message}).
 import http from 'node:http';
 import fs from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { authorize } from './auth.js';
 import { withQueueLock, loadQueue, saveQueue, STATUS, parseCommand, renderList, schedulePost, publishNow, whatsapp, log, CONFIG, igEnabled, igPostDraftAny, QUEUE_PATH } from './lib.js';
@@ -11,7 +12,8 @@ import { readQueueStrict } from './draft-version.js';
 import { scheduledAtMetaNote, stopPosting, startPosting } from './bpa-actions.js';
 import { reserveInstagramPublish, releaseInstagramReservation } from './ledger.js';
 import { recordPost, healthTick } from './health.js';
-import { createReviewHandler, defaultInputs, defaultActions, refuse } from './review-routes.js';
+import { createReviewHandler, defaultInputs, defaultActions, refuse, defaultPreviewDir } from './review-routes.js';
+import { createPreviewMaker } from './review-preview.js';
 import { createSessions, loadAccess, checkHealthAccess, hasProxyHeaders } from './review-auth.js';
 const PORT = CONFIG.approvalPort;
 export { scheduledAtMetaNote };
@@ -78,7 +80,9 @@ export async function handle(text, deps = {}) {
   saveQueue(q, queuePath); return out.join('\n');
 }
 const reviewSessions = createSessions();
-const reviewHandler = createReviewHandler({ sessions: reviewSessions, loadInputs: defaultInputs, loadActions: defaultActions, log });
+// H.264 copies of the clips for the page's player, made with the local ffmpeg ($0) in a folder inside the preview folder the media route allows; the originals are never touched.
+const previewMaker = createPreviewMaker({ cacheDir: path.join(defaultPreviewDir(), 'h264'), log });
+const reviewHandler = createReviewHandler({ sessions: reviewSessions, loadInputs: defaultInputs, loadActions: defaultActions, log, previewMaker });
 export const server = http.createServer(async (req, res) => {
   const send = (code, obj) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(obj)); };
   if (reviewHandler(req, res)) return; // /review/*: its own access rule (login + cookie), see review-routes.js

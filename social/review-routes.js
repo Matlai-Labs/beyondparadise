@@ -111,14 +111,19 @@ const BODY_WAIT_MS = 10000;
 // path -> { route, method }; a Map, so a hostile path such as /review/api/__proto__ is just a miss. /review/media/<id> is matched by prefix.
 const ROUTES = new Map([['/review/', { route: 'page', method: 'GET' }], ['/review/api/items', { route: 'items', method: 'GET' }], ['/review/api/session', { route: 'session', method: 'POST' }], ['/review/api/decide', { route: 'decide', method: 'POST' }], ['/review/api/posting', { route: 'posting', method: 'POST' }]]);
 
-export function createReviewHandler({ sessions, loadInputs = defaultInputs, loadActions = () => { throw new Error('no actions configured'); }, recordFile = decisionsFilePath(), postingOpts = {}, log = () => {}, env = process.env, cacheMs = 10000, now = Date.now, pageFile = path.join(HERE, 'review-page.html'), previewDir = path.join(stateDir(env), 'bpa-review-previews') } = {}) {
+export const defaultPreviewDir = (env = process.env) => path.join(stateDir(env), 'bpa-review-previews');
+
+export function createReviewHandler({ sessions, loadInputs = defaultInputs, loadActions = () => { throw new Error('no actions configured'); }, recordFile = decisionsFilePath(), postingOpts = {}, log = () => {}, env = process.env, cacheMs = 10000, now = Date.now, pageFile = path.join(HERE, 'review-page.html'), previewDir = defaultPreviewDir(env), previewMaker = null, previewWaitMs = 5000 } = {}) {
   let cache = null; // { at, built: Promise }
+  const warmPreviews = (media) => { if (!previewMaker) return; try { const list = []; for (const v of media.values()) if (v && typeof v.size === 'number' && typeof v.path === 'string') list.push({ path: v.path, size: v.size, mtimeMs: v.mtimeMs, ino: v.ino }); const p = previewMaker.warm(list); if (p && typeof p.catch === 'function') p.catch(() => {}); } catch { /* the page never depends on the copies */ } };
   let lastMedia = new Map(); let lastLibraryDir = null; let lastAutoDir = null; // the id to file map of the latest item build: media requests are answered from it, never by building a list
   const built = () => {
     if (cache && now() - cache.at < cacheMs) return cache.built;
-    const p = (async () => { const inp = loadInputs(env); const b = await buildItems(inp); lastMedia = b.media; lastLibraryDir = inp.libraryDir; lastAutoDir = inp.autoFolder; return b; })(); cache = { at: now(), built: p }; p.catch(() => { if (cache && cache.built === p) cache = null; });
+    const p = (async () => { const inp = loadInputs(env); const b = await buildItems(inp); lastMedia = b.media; lastLibraryDir = inp.libraryDir; lastAutoDir = inp.autoFolder; warmPreviews(b.media); return b; })(); cache = { at: now(), built: p }; p.catch(() => { if (cache && cache.built === p) cache = null; });
     return p;
   };
+  // With a copy maker, start making the copies as soon as the server is up (the first look at the page then finds them ready), not at the first page load.
+  if (previewMaker) { const t0 = setTimeout(() => { built().catch(() => {}); }, 0); t0.unref?.(); }
   // The one refusal that clears itself: another new session was issued under 2 s ago. A tiny page, no script, that asks again in 3 s. Same headers and the same CSP as the real page.
   const waitPage = (res) => {
     const nonce = crypto.randomBytes(16).toString('hex');
@@ -192,7 +197,14 @@ export function createReviewHandler({ sessions, loadInputs = defaultInputs, load
         let st; try { st = fs.lstatSync(entry.path); } catch { return text(res, 404); }
         if (st.isSymbolicLink() || !st.isFile() || st.size !== entry.size || st.mtimeMs !== entry.mtimeMs || st.ino !== entry.ino) return text(res, 404);
       }
-      const r = resolveMediaPath(entry.path, [lastLibraryDir, lastAutoDir, previewDir].filter(Boolean));
+      const roots = [lastLibraryDir, lastAutoDir, previewDir].filter(Boolean);
+      // The player gets the conservative H.264 copy when there is one (a stock Chrome or Edge on Windows may not play the original); the copy is checked like any file. No copy, a failure or a refused path: the original.
+      let r = null;
+      // A copy still being made after previewWaitMs: this request gets the original (the page gives up after 8 s); the next one gets the copy.
+      if (previewMaker && typeof entry.size === 'number') {
+        try { const pp = await Promise.race([previewMaker.get(entry), new Promise((ok) => { const t = setTimeout(() => ok(null), previewWaitMs); t.unref?.(); })]); if (typeof pp === 'string' && pp !== '') { const rp = resolveMediaPath(pp, roots); if (rp.ok) r = rp; else log(`review media: copy refused: ${rp.reason}`); } } catch { /* the original is served */ }
+      }
+      if (!r) r = resolveMediaPath(entry.path, roots);
       if (!r.ok) { log(`review media refused: ${r.reason}`); return text(res, 404); }
       res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
       return serveMedia(req, res, { path: r.path });
