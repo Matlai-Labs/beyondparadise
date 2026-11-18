@@ -384,7 +384,7 @@ and the evidence-based skip list. Case study: `matlai_wix/docs/seo-ai-2030-deep-
 This repo is one of Tim's fleet projects (id `beyondparadiseadventures`). Its operating brief — verification command, backlog, deploy
 method, never-do rules and the agents to use — is printed automatically at session start from Agent OS
 `registries/project-profiles.json`; full version: `cd ../MATLAI_VS_CODE_Agent_OS && npm run brief -- beyondparadiseadventures`.
-Use the roster agents the brief names (implementer, code-reviewer, security-reviewer, build-error-resolver, explorer, tdd-guide, delegate-runner, known-setup-reviewer, product-boundary-reviewer, gan-planner): subagents run as `matlai-shared:<id>` via the Agent tool,
+Use the roster agents the brief names (the "Agents to use" list printed at session start; full list: `npm run brief -- <project-id>` in Agent OS): subagents run as `matlai-shared:<id>` via the Agent tool,
 skills via the Skill tool, large files/summaries via `npm run delegate` in Agent OS — do not do their job in the
 main thread. Before building any integration: `npm run known-setups -- --for beyondparadiseadventures` there. Wrong brief? Fix the
 profile in Agent OS, not this file.
