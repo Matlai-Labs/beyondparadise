@@ -221,23 +221,23 @@ beyondparadiseadventures/
 ### lodges.json entry
 ```json
 {
-  "id": "singita-grumeti",
-  "name": "Singita Grumeti",
+  "id": "example-lodge",
+  "name": "Example Lodge",
   "region": "serengeti",
   "sub_region": "Western Corridor",
   "country": "tz",
-  "tim_score": 94,
-  "tim_score_date": "2026-01",
+  "tim_score": null,
+  "tim_score_date": null,
   "price_per_night_eur": 3200,
   "price_all_in": true,
   "price_includes": ["accommodation", "meals", "game-drives", "park-fees", "transfers"],
   "best_season": ["jun", "jul", "aug", "sep"],
   "tags": ["big-five", "migration", "ultra-luxury", "serengeti"],
-  "status": "recommended",
-  "tim_visited": true,
-  "tim_visit_date": "2025-11",
+  "status": "unscored",
+  "tim_visited": false,
+  "tim_visit_date": null,
   "description": "Tim's short verdict (2–3 sentences, first-person)",
-  "website": "https://singita.com/lodge/singita-grumeti/",
+  "website": "https://example.com/example-lodge/",
   "affiliate_url": ""
 }
 ```
