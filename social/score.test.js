@@ -56,3 +56,24 @@ test('buildDrafts output carries score; renderList shows it', async () => {
   assert.equal(typeof d.score.total, 'number'); assert.equal(d.score.rubric.length, 12);
   assert.match(renderList({ drafts: [{ id: 'B1', status: STATUS.PENDING, kind: 'signal', sourceDate: '2026-09-11', text: 'x', score: d.score }] }), /score \d+\/100/);
 });
+
+// rehook rule (2026-11-26, idea hook-rehook-retention-structure): a craft warning, never a block.
+test('hookScore warns when a question hook answers itself on the same line, and lowers the score', () => {
+  const open = hookScore('How many nights should you book in Zanzibar before the 15 December rush?');
+  const answered = hookScore('How many nights should you book in Zanzibar? Five, before the 15 December rush.');
+  assert.deepEqual(open.rehook, []);
+  assert.equal(answered.rehook.length, 1);
+  assert.match(answered.rehook[0], /answers itself/);
+  assert.ok(answered.signals.some((s) => /rehook/.test(s)));
+  assert.ok(answered.score < open.score, `${answered.score} vs ${open.score}`);
+});
+test('rehook warning ignores statement hooks and trailing hashtags/emoji after the question', () => {
+  assert.deepEqual(hookScore('Stone Town fills by 80% in three weeks').rehook, []);
+  assert.deepEqual(hookScore('Which beach is quiet in January? #Zanzibar').rehook, []);
+  assert.deepEqual(hookScore('Which beach is quiet in January? 🌴').rehook, []);
+});
+test('scoreDraft carries the rehook warning and never blocks', () => {
+  const s = scoreDraft({ text: GOOD.replace(/^[^\n]+/, 'Which beach is quiet in January? Nungwi, by far.') });
+  assert.equal(s.hook.rehook.length, 1);
+  assert.equal(typeof s.total, 'number');
+});

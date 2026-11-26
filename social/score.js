@@ -22,10 +22,20 @@ const words = (t) => str(t).split(/\s+/).filter(Boolean).length;
 const SLOP = ['delve', 'tapestry', 'game-changer', 'game changer', 'unlock the', 'stop scrolling', 'in today\'s video', 'follow for more', 'tag someone who needs', 'the algorithm loves', 'run don\'t walk', 'hidden gem', 'bucket list', 'paradise awaits', 'look no further', 'nestled', 'testament to', 'elevate your', 'embark on', 'seamless'];
 const CTA = /\b(message me|dm me|send me|comment|reply|book|save this|share this|follow|tap|click|link in bio|contact|ask me|get in touch|plan your|check availability|visit)\b/gi;
 
+// Rehook rule (idea hook-rehook-retention-structure, 2026-11-26): a question hook should hold its answer back.
+// Craft rule, NOT a proven lever (the source reel showed no data): a warning that lowers the hook score by 2, never a block.
+// Fires only when a question hook carries its own answer after the last "?" on the same line.
+export function rehookWarnings(hook) {
+  const h = stripTags(str(hook)); const q = h.lastIndexOf('?');
+  if (q < 0) return [];
+  const tail = h.slice(q + 1).replace(/[\p{Extended_Pictographic}\s️‍]/gu, '');
+  return /[\p{L}\p{N}]/u.test(tail) ? [`hook answers itself in the first line ("${h.slice(q + 1).trim().slice(0, 40)}"): hold the answer back, rehook, then reveal`] : [];
+}
+
 export function hookScore(text, subject = '') {
   const signals = []; let score = 0;
   const raw = firstLine(text);
-  if (!raw) return { score: 0, signals: ['no hook line'] };
+  if (!raw) return { score: 0, signals: ['no hook line'], rehook: [] };
   const hook = stripTags(raw);
   const hasTag = hook !== raw;
   const bare = hook.replace(/[\p{Extended_Pictographic}\s️‍]/gu, '');
@@ -39,7 +49,9 @@ export function hookScore(text, subject = '') {
   if (!hasTag) { score += 2; signals.push('no hashtag in the hook'); } else signals.push('hashtag in the hook line');
   if (bare.length) { score += 1; } else signals.push('emoji-only or empty hook');
   if (!/^(hey|hi|hello|good morning)\b|stop scrolling|in today's/i.test(hook)) { score += 1; } else signals.push('greeting/preamble opener');
-  return { score, signals };
+  const rehook = rehookWarnings(hook);
+  if (rehook.length) { score = Math.max(0, score - 2); signals.push(`rehook: ${rehook[0]}`); }
+  return { score, signals, rehook };
 }
 function clean(s) { return String(s || '').replace(/\s+/g, ' ').trim(); }
 
